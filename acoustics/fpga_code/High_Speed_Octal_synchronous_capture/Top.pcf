@@ -1,0 +1,189 @@
+//! **************************************************************************
+// Written by: Map J.40 on Sat May 02 20:14:28 2009
+//! **************************************************************************
+
+SCHEMATIC START;
+COMP "chan_b_led" LOCATE = SITE "U7" LEVEL 1;
+COMP "_mr" LOCATE = SITE "J16" LEVEL 1;
+COMP "dco_n" LOCATE = SITE "B12" LEVEL 1;
+COMP "dco_p" LOCATE = SITE "A12" LEVEL 1;
+COMP "chan_d_led" LOCATE = SITE "Y16" LEVEL 1;
+COMP "ffa" LOCATE = SITE "G16" LEVEL 1;
+COMP "rclk" LOCATE = SITE "G15" LEVEL 1;
+COMP "dout<0>" LOCATE = SITE "V12" LEVEL 1;
+COMP "dout<1>" LOCATE = SITE "V13" LEVEL 1;
+COMP "dout<2>" LOCATE = SITE "V14" LEVEL 1;
+COMP "dout<3>" LOCATE = SITE "U14" LEVEL 1;
+COMP "dout<4>" LOCATE = SITE "W13" LEVEL 1;
+COMP "csb_in" LOCATE = SITE "J15" LEVEL 1;
+COMP "dout<5>" LOCATE = SITE "Y13" LEVEL 1;
+COMP "gate_in" LOCATE = SITE "AE13" LEVEL 1;
+COMP "dout<6>" LOCATE = SITE "W14" LEVEL 1;
+COMP "_wen" LOCATE = SITE "G14" LEVEL 1;
+COMP "dout<7>" LOCATE = SITE "W15" LEVEL 1;
+COMP "dout<8>" LOCATE = SITE "V11" LEVEL 1;
+COMP "fco_n" LOCATE = SITE "C12" LEVEL 1;
+COMP "dout<9>" LOCATE = SITE "W11" LEVEL 1;
+COMP "fco_p" LOCATE = SITE "C13" LEVEL 1;
+COMP "chan_a_led" LOCATE = SITE "Y15" LEVEL 1;
+COMP "sdi_in" LOCATE = SITE "K12" LEVEL 1;
+COMP "chan_c_led" LOCATE = SITE "Y6" LEVEL 1;
+COMP "sclk_in" LOCATE = SITE "H13" LEVEL 1;
+COMP "dout<10>" LOCATE = SITE "U15" LEVEL 1;
+COMP "dout<11>" LOCATE = SITE "U16" LEVEL 1;
+COMP "din_an" LOCATE = SITE "A9" LEVEL 1;
+COMP "dout<12>" LOCATE = SITE "Y11" LEVEL 1;
+COMP "din_ap" LOCATE = SITE "B9" LEVEL 1;
+COMP "dout<13>" LOCATE = SITE "Y12" LEVEL 1;
+COMP "dout<14>" LOCATE = SITE "W16" LEVEL 1;
+COMP "dout<15>" LOCATE = SITE "V16" LEVEL 1;
+COMP "_renA" LOCATE = SITE "H14" LEVEL 1;
+COMP "_renB" LOCATE = SITE "J13" LEVEL 1;
+PIN U2/F1/U00/RAMB16_U1_pins<34> = BEL "U2/F1/U00/RAMB16_U1" PINNAME CLKA;
+PIN U2/F1/U01/RAMB16_U1_pins<34> = BEL "U2/F1/U01/RAMB16_U1" PINNAME CLKA;
+PIN U2/F1/U02/RAMB16_U1_pins<34> = BEL "U2/F1/U02/RAMB16_U1" PINNAME CLKA;
+PIN U2/F1/U03/RAMB16_U1_pins<34> = BEL "U2/F1/U03/RAMB16_U1" PINNAME CLKA;
+PIN U2/F1/U04/RAMB16_U1_pins<34> = BEL "U2/F1/U04/RAMB16_U1" PINNAME CLKA;
+PIN U2/F1/U05/RAMB16_U1_pins<34> = BEL "U2/F1/U05/RAMB16_U1" PINNAME CLKA;
+PIN U2/F1/U06/RAMB16_U1_pins<34> = BEL "U2/F1/U06/RAMB16_U1" PINNAME CLKA;
+TIMEGRP U1_clk0f = BEL "chan_a_led" BEL "chan_d_led" BEL "U1/count_15" BEL
+        "U1/count_14" BEL "U1/count_13" BEL "U1/count_12" BEL "U1/count_11"
+        BEL "U1/count_10" BEL "U1/count_9" BEL "U1/count_8" BEL "U1/count_7"
+        BEL "U1/count_6" BEL "U1/count_5" BEL "U1/count_4" BEL "U1/count_3"
+        BEL "U1/count_2" BEL "U1/count_1" BEL "U1/count_0" BEL "U1/fco1" BEL
+        "U1/load" BEL "U1/gate" BEL "U2/wr_addr_12" BEL "U2/wr_addr_11" BEL
+        "U2/wr_addr_10" BEL "U2/wr_addr_9" BEL "U2/wr_addr_8" BEL
+        "U2/wr_addr_7" BEL "U2/wr_addr_6" BEL "U2/wr_addr_5" BEL
+        "U2/wr_addr_4" BEL "U2/wr_addr_3" BEL "U2/wr_addr_2" BEL
+        "U2/wr_addr_1" BEL "U2/wr_addr_0" BEL "U2/full" BEL "chan_b_led" BEL
+        "ffa" BEL "U1/Mshreg_doutA_13/SRL16E" BEL "U1/doutA_13" BEL
+        "U1/Mshreg_doutA_12/SRL16E" BEL "U1/doutA_12" BEL
+        "U1/Mshreg_doutA_11/SRL16E" BEL "U1/doutA_11" BEL
+        "U1/Mshreg_doutA_10/SRL16E" BEL "U1/doutA_10" BEL
+        "U1/Mshreg_doutA_9/SRL16E" BEL "U1/doutA_9" BEL
+        "U1/Mshreg_doutA_8/SRL16E" BEL "U1/doutA_8" BEL
+        "U1/Mshreg_doutA_7/SRL16E" BEL "U1/doutA_7" BEL
+        "U1/Mshreg_doutA_6/SRL16E" BEL "U1/doutA_6" BEL
+        "U1/Mshreg_doutA_5/SRL16E" BEL "U1/doutA_5" BEL
+        "U1/Mshreg_doutA_4/SRL16E" BEL "U1/doutA_4" BEL
+        "U1/Mshreg_doutA_3/SRL16E" BEL "U1/doutA_3" BEL
+        "U1/Mshreg_doutA_0/SRL16E" BEL "U1/doutA_0" BEL
+        "U1/Mshreg_doutA_2/SRL16E" BEL "U1/doutA_2" BEL
+        "U1/Mshreg_doutA_1/SRL16E" BEL "U1/doutA_1" PIN
+        "U2/F1/U00/RAMB16_U1_pins<34>" PIN "U2/F1/U01/RAMB16_U1_pins<34>" PIN
+        "U2/F1/U02/RAMB16_U1_pins<34>" PIN "U2/F1/U03/RAMB16_U1_pins<34>" PIN
+        "U2/F1/U04/RAMB16_U1_pins<34>" PIN "U2/F1/U05/RAMB16_U1_pins<34>" PIN
+        "U2/F1/U06/RAMB16_U1_pins<34>";
+TIMEGRP U1_clk0f_0 = BEL "chan_a_led" BEL "chan_d_led" BEL "U1/count_15" BEL
+        "U1/count_14" BEL "U1/count_13" BEL "U1/count_12" BEL "U1/count_11"
+        BEL "U1/count_10" BEL "U1/count_9" BEL "U1/count_8" BEL "U1/count_7"
+        BEL "U1/count_6" BEL "U1/count_5" BEL "U1/count_4" BEL "U1/count_3"
+        BEL "U1/count_2" BEL "U1/count_1" BEL "U1/count_0" BEL "U1/fco1" BEL
+        "U1/load" BEL "U1/gate" BEL "U2/wr_addr_12" BEL "U2/wr_addr_11" BEL
+        "U2/wr_addr_10" BEL "U2/wr_addr_9" BEL "U2/wr_addr_8" BEL
+        "U2/wr_addr_7" BEL "U2/wr_addr_6" BEL "U2/wr_addr_5" BEL
+        "U2/wr_addr_4" BEL "U2/wr_addr_3" BEL "U2/wr_addr_2" BEL
+        "U2/wr_addr_1" BEL "U2/wr_addr_0" BEL "U2/full" BEL "chan_b_led" BEL
+        "ffa" BEL "U1/Mshreg_doutA_13/SRL16E" BEL "U1/doutA_13" BEL
+        "U1/Mshreg_doutA_12/SRL16E" BEL "U1/doutA_12" BEL
+        "U1/Mshreg_doutA_11/SRL16E" BEL "U1/doutA_11" BEL
+        "U1/Mshreg_doutA_10/SRL16E" BEL "U1/doutA_10" BEL
+        "U1/Mshreg_doutA_9/SRL16E" BEL "U1/doutA_9" BEL
+        "U1/Mshreg_doutA_8/SRL16E" BEL "U1/doutA_8" BEL
+        "U1/Mshreg_doutA_7/SRL16E" BEL "U1/doutA_7" BEL
+        "U1/Mshreg_doutA_6/SRL16E" BEL "U1/doutA_6" BEL
+        "U1/Mshreg_doutA_5/SRL16E" BEL "U1/doutA_5" BEL
+        "U1/Mshreg_doutA_4/SRL16E" BEL "U1/doutA_4" BEL
+        "U1/Mshreg_doutA_3/SRL16E" BEL "U1/doutA_3" BEL
+        "U1/Mshreg_doutA_0/SRL16E" BEL "U1/doutA_0" BEL
+        "U1/Mshreg_doutA_2/SRL16E" BEL "U1/doutA_2" BEL
+        "U1/Mshreg_doutA_1/SRL16E" BEL "U1/doutA_1" PIN
+        "U2/F1/U00/RAMB16_U1_pins<34>" PIN "U2/F1/U01/RAMB16_U1_pins<34>" PIN
+        "U2/F1/U02/RAMB16_U1_pins<34>" PIN "U2/F1/U03/RAMB16_U1_pins<34>" PIN
+        "U2/F1/U04/RAMB16_U1_pins<34>" PIN "U2/F1/U05/RAMB16_U1_pins<34>" PIN
+        "U2/F1/U06/RAMB16_U1_pins<34>";
+TIMEGRP sclk_in = BEL "U3/count_4" BEL "U3/count_3" BEL "U3/count_2" BEL
+        "U3/count_1" BEL "U3/count_0" BEL "U3/data_7" BEL "U3/data_2" BEL
+        "U3/data_1" BEL "U3/data_0" BEL "U3/gate" BEL "U3/Mshreg_data_6" BEL
+        "U3/data_6";
+TIMEGRP U1_dcoshifted = BEL "U1/I1/FF0" BEL "U1/I1/FF1" BEL "U1/I1/FF2" BEL
+        "U1/I1/FF3" BEL "U1/fco2" BEL "U1/dat_q2_a_6" BEL "U1/dat_q2_a_5" BEL
+        "U1/dat_q2_a_4" BEL "U1/dat_q2_a_3" BEL "U1/dat_q2_a_2" BEL
+        "U1/dat_q2_a_1" BEL "U1/dat_q2_a_0" BEL "U1/dat_q1_a_6" BEL
+        "U1/dat_q1_a_5" BEL "U1/dat_q1_a_4" BEL "U1/dat_q1_a_3" BEL
+        "U1/dat_q1_a_2" BEL "U1/dat_q1_a_1" BEL "U1/dat_q1_a_0" BEL "U1/fco1"
+        BEL "U1/fcostb" BEL "U1/Mshreg_dout_a_reg_13" BEL "U1/dout_a_reg_13"
+        BEL "U1/Mshreg_dout_a_reg_12" BEL "U1/dout_a_reg_12" BEL
+        "U1/Mshreg_dout_a_reg_11" BEL "U1/dout_a_reg_11" BEL
+        "U1/Mshreg_dout_a_reg_10" BEL "U1/dout_a_reg_10" BEL
+        "U1/Mshreg_dout_a_reg_7" BEL "U1/dout_a_reg_7" BEL
+        "U1/Mshreg_dout_a_reg_9" BEL "U1/dout_a_reg_9" BEL
+        "U1/Mshreg_dout_a_reg_8" BEL "U1/dout_a_reg_8" BEL
+        "U1/Mshreg_dout_a_reg_6" BEL "U1/dout_a_reg_6" BEL
+        "U1/Mshreg_dout_a_reg_5" BEL "U1/dout_a_reg_5" BEL
+        "U1/Mshreg_dout_a_reg_4" BEL "U1/dout_a_reg_4" BEL
+        "U1/Mshreg_dout_a_reg_3" BEL "U1/dout_a_reg_3" BEL
+        "U1/Mshreg_dout_a_reg_0" BEL "U1/dout_a_reg_0" BEL
+        "U1/Mshreg_dout_a_reg_2" BEL "U1/dout_a_reg_2" BEL
+        "U1/Mshreg_dout_a_reg_1" BEL "U1/dout_a_reg_1";
+TIMEGRP U1_dcoshifted_0 = BEL "U1/I1/FF0" BEL "U1/I1/FF1" BEL "U1/I1/FF2" BEL
+        "U1/I1/FF3" BEL "U1/fco2" BEL "U1/dat_q2_a_6" BEL "U1/dat_q2_a_5" BEL
+        "U1/dat_q2_a_4" BEL "U1/dat_q2_a_3" BEL "U1/dat_q2_a_2" BEL
+        "U1/dat_q2_a_1" BEL "U1/dat_q2_a_0" BEL "U1/dat_q1_a_6" BEL
+        "U1/dat_q1_a_5" BEL "U1/dat_q1_a_4" BEL "U1/dat_q1_a_3" BEL
+        "U1/dat_q1_a_2" BEL "U1/dat_q1_a_1" BEL "U1/dat_q1_a_0" BEL "U1/fco1"
+        BEL "U1/fcostb" BEL "U1/Mshreg_dout_a_reg_13" BEL "U1/dout_a_reg_13"
+        BEL "U1/Mshreg_dout_a_reg_12" BEL "U1/dout_a_reg_12" BEL
+        "U1/Mshreg_dout_a_reg_11" BEL "U1/dout_a_reg_11" BEL
+        "U1/Mshreg_dout_a_reg_10" BEL "U1/dout_a_reg_10" BEL
+        "U1/Mshreg_dout_a_reg_7" BEL "U1/dout_a_reg_7" BEL
+        "U1/Mshreg_dout_a_reg_9" BEL "U1/dout_a_reg_9" BEL
+        "U1/Mshreg_dout_a_reg_8" BEL "U1/dout_a_reg_8" BEL
+        "U1/Mshreg_dout_a_reg_6" BEL "U1/dout_a_reg_6" BEL
+        "U1/Mshreg_dout_a_reg_5" BEL "U1/dout_a_reg_5" BEL
+        "U1/Mshreg_dout_a_reg_4" BEL "U1/dout_a_reg_4" BEL
+        "U1/Mshreg_dout_a_reg_3" BEL "U1/dout_a_reg_3" BEL
+        "U1/Mshreg_dout_a_reg_0" BEL "U1/dout_a_reg_0" BEL
+        "U1/Mshreg_dout_a_reg_2" BEL "U1/dout_a_reg_2" BEL
+        "U1/Mshreg_dout_a_reg_1" BEL "U1/dout_a_reg_1";
+PIN U2/F1/U00/RAMB16_U1_pins<35> = BEL "U2/F1/U00/RAMB16_U1" PINNAME CLKB;
+PIN U2/F1/U01/RAMB16_U1_pins<35> = BEL "U2/F1/U01/RAMB16_U1" PINNAME CLKB;
+PIN U2/F1/U02/RAMB16_U1_pins<35> = BEL "U2/F1/U02/RAMB16_U1" PINNAME CLKB;
+PIN U2/F1/U03/RAMB16_U1_pins<35> = BEL "U2/F1/U03/RAMB16_U1" PINNAME CLKB;
+PIN U2/F1/U04/RAMB16_U1_pins<35> = BEL "U2/F1/U04/RAMB16_U1" PINNAME CLKB;
+PIN U2/F1/U05/RAMB16_U1_pins<35> = BEL "U2/F1/U05/RAMB16_U1" PINNAME CLKB;
+PIN U2/F1/U06/RAMB16_U1_pins<35> = BEL "U2/F1/U06/RAMB16_U1" PINNAME CLKB;
+TIMEGRP rclk = BEL "U2/rd_addr_12" BEL "U2/rd_addr_11" BEL "U2/rd_addr_10" BEL
+        "U2/rd_addr_9" BEL "U2/rd_addr_8" BEL "U2/rd_addr_7" BEL
+        "U2/rd_addr_6" BEL "U2/rd_addr_5" BEL "U2/rd_addr_4" BEL
+        "U2/rd_addr_3" BEL "U2/rd_addr_2" BEL "U2/rd_addr_1" BEL
+        "U2/rd_addr_0" BEL "U2/dout_15" BEL "U2/dout_14" BEL "U2/dout_13" BEL
+        "U2/dout_12" BEL "U2/dout_11" BEL "U2/dout_10" BEL "U2/dout_9" BEL
+        "U2/dout_8" BEL "U2/dout_7" BEL "U2/dout_6" BEL "U2/dout_5" BEL
+        "U2/dout_4" BEL "U2/dout_3" BEL "U2/dout_2" BEL "U2/rst_addr" BEL
+        "U2/prev_cntrl_bits_2" BEL "U2/prev_cntrl_bits_1" BEL
+        "U2/prev_cntrl_bits_0" PIN "U2/F1/U00/RAMB16_U1_pins<35>" PIN
+        "U2/F1/U01/RAMB16_U1_pins<35>" PIN "U2/F1/U02/RAMB16_U1_pins<35>" PIN
+        "U2/F1/U03/RAMB16_U1_pins<35>" PIN "U2/F1/U04/RAMB16_U1_pins<35>" PIN
+        "U2/F1/U05/RAMB16_U1_pins<35>" PIN "U2/F1/U06/RAMB16_U1_pins<35>";
+PIN DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1_pins<10> = BEL
+        "DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1" PINNAME CLKIN;
+TIMEGRP dco_n = PIN "DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1_pins<10>";
+TIMEGRP dco_p = PIN "DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1_pins<10>";
+PIN DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2_pins<10> = BEL
+        "DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2" PINNAME CLKIN;
+TIMEGRP fco_n = PIN "DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2_pins<10>";
+TIMEGRP fco_p = PIN "DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2_pins<10>";
+TS_dco_p = PERIOD TIMEGRP "dco_p" 390 MHz HIGH 50%;
+TS_dco_n = PERIOD TIMEGRP "dco_n" 390 MHz HIGH 50%;
+TS_fco_p = PERIOD TIMEGRP "fco_p" 65 MHz HIGH 50%;
+TS_fco_n = PERIOD TIMEGRP "fco_n" 65 MHz HIGH 50%;
+TS_rclk = PERIOD TIMEGRP "rclk" 50 MHz HIGH 50%;
+TS_sclk_in = PERIOD TIMEGRP "sclk_in" 8 ns HIGH 66%;
+TS_U1_clk0f = PERIOD TIMEGRP "U1_clk0f" TS_fco_n HIGH 50%;
+TS_U1_clk0f_0 = PERIOD TIMEGRP "U1_clk0f_0" TS_fco_p HIGH 50%;
+TS_U1_dcoshifted = PERIOD TIMEGRP "U1_dcoshifted" TS_dco_n PHASE 0.641 ns HIGH
+        50%;
+TS_U1_dcoshifted_0 = PERIOD TIMEGRP "U1_dcoshifted_0" TS_dco_p PHASE 0.641 ns
+        HIGH 50%;
+SCHEMATIC END;

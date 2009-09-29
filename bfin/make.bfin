@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+CC="/opt/uClinux/bfin-uclinux/bin/bfin-uclinux-gcc"
+CFLAGS="--std=c99 -Wall -pedantic -Iinclude -I../bfin/include/"
+#CFLAGS="${CFLAGS} -DSEAWOLF_DEBUG"n
+LIBFLAGS="-L../bfin/lib/ -lpthread -lm -lmysqlclient_r -lm"
+
+SRCS=src/*.c
+HEADERS=include/seawolf/*.h
+
+source ../misc/make.sh
+
+case "$1" in
+  "clean")
+    rmNoFail *.so
+    ;;
+  *)
+    runcmd ${CC} -c ${CFLAGS} ${SRCS}
+    runcmd ar rcs libseawolf.a *.o
+    runcmd ${CC} -Wl,-elf2flt ${CFLAGS} -o bfin_test bfin_test.c libseawolf.a ${LIBFLAGS}
+    #runcmd /opt/uClinux/bfin-uclinux/bin/bfin-uclinux-strip bfin_test
+esac

@@ -1,0 +1,1 @@
+gcc -o HUD main.c -lX11 -lGL -lGLU -L../../libseawolf/ -lseawolf -I../../libseawolf/include -lrt

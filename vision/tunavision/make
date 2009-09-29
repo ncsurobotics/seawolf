@@ -1,0 +1,4 @@
+#!/bin/sh
+C="gcc -g --std=c99 -pedantic -Wall -I../../libseawolf/include -I../../../laso/include -L../../../laso/lib -L../../libseawolf/ -lcv -lhighgui -lseawolf -lrt -lm -o tunavision *.c"
+echo $C
+exec $C

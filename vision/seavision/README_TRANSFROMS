@@ -1,0 +1,11 @@
+Every transform is required to have the following 3 functions in them, even if they are blank:
+
+void <transform>_<implementation>_init()
+Initializes variables that will be persistant.  Has to 
+
+<transform>_<implementation>
+The prototype for this is user defined.  This is where the actual transform takes place.
+If the arguments contain an IplImage, the type must be checked inside an "#ifdef debug_image_typecheck".
+
+void <transform>_<implementation>_free()
+This is run at the end of every frame.  This function does not free anything the transform returns, that's the job of whatever program is using this transform.

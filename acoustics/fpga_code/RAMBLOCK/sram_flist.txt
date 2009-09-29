@@ -1,0 +1,11 @@
+# Output products list for <sram>
+sram.xco
+sram_xmdf.tcl
+sram.vhd
+sram.vho
+sram.v
+sram.veo
+sram.asy
+sram.sym
+sram_flist.txt
+sram.ngc

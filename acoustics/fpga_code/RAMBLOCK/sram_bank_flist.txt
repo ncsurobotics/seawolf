@@ -1,0 +1,11 @@
+# Output products list for <sram_bank>
+sram_bank.xco
+sram_bank.vhd
+sram_bank.vho
+sram_bank.v
+sram_bank.veo
+sram_bank.asy
+sram_bank.sym
+sram_bank_xmdf.tcl
+sram_bank.ngc
+sram_bank_flist.txt

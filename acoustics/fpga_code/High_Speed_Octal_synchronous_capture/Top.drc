@@ -1,0 +1,57 @@
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/CLKOUT is sourced by a combinatorial pin.
+   This is not good design practice. Use the CE pin to control the loading of
+   data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK<3> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK<2> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK<6> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK<4> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK<1> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK<5> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/CLKOUT is sourced by a combinatorial pin.
+   This is not good design practice. Use the CE pin to control the loading of
+   data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK<6> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK<4> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK<3> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK<1> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK<5> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+WARNING:PhysDesignRules:372 - Gated clock. Clock net
+   DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK<2> is sourced by a combinatorial
+   pin. This is not good design practice. Use the CE pin to control the loading
+   of data into the flip-flop.
+DRC detected 0 errors and 14 warnings.

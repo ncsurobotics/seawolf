@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RootFolder label="COREGEN" treetype="folder" language="COREGEN">
+	<Folder label="VERILOG Component Instantiation" treetype="folder">
+		<Template label="decimate" treetype="template">
+ 
+ 
+// The following must be inserted into your Verilog file for this
+// core to be instantiated. Change the instance name and port connections
+// (in parentheses) to your own signal names.
+ 
+decimate YourInstanceName (
+    .din(din), // Bus [11 : 0] 
+    .nd(nd),
+    .clk(clk),
+    .dout(dout), // Bus [15 : 0] 
+    .rdy(rdy),
+    .rfd(rfd));
+
+ 
+		</Template>
+		<Template label="sram_bank" treetype="template">
+ 
+ 
+// The following must be inserted into your Verilog file for this
+// core to be instantiated. Change the instance name and port connections
+// (in parentheses) to your own signal names.
+ 
+sram_bank YourInstanceName (
+    .addra(addra), // Bus [12 : 0] 
+    .addrb(addrb), // Bus [12 : 0] 
+    .clka(clka),
+    .clkb(clkb),
+    .dina(dina), // Bus [15 : 0] 
+    .doutb(doutb), // Bus [15 : 0] 
+    .ena(ena),
+    .enb(enb),
+    .ndb(ndb),
+    .rfdb(rfdb),
+    .rdyb(rdyb),
+    .wea(wea));
+
+ 
+		</Template>
+		<Template label="sram_bank_large" treetype="template">
+ 
+ 
+// The following must be inserted into your Verilog file for this
+// core to be instantiated. Change the instance name and port connections
+// (in parentheses) to your own signal names.
+ 
+sram_bank_large YourInstanceName (
+    .addra(addra), // Bus [13 : 0] 
+    .addrb(addrb), // Bus [13 : 0] 
+    .clka(clka),
+    .clkb(clkb),
+    .dina(dina), // Bus [15 : 0] 
+    .doutb(doutb), // Bus [15 : 0] 
+    .ena(ena),
+    .enb(enb),
+    .ndb(ndb),
+    .rfdb(rfdb),
+    .rdyb(rdyb),
+    .wea(wea));
+
+ 
+		</Template>
+	</Folder>
+	<Folder label="VHDL Component Instantiation" treetype="folder">
+		<Template label="decimate" treetype="template">
+ 
+ 
+-- The following code must appear in the VHDL architecture header:
+ 
+component decimate
+    port (
+    din: IN std_logic_VECTOR(11 downto 0);
+    nd: IN std_logic;
+    clk: IN std_logic;
+    dout: OUT std_logic_VECTOR(15 downto 0);
+    rdy: OUT std_logic;
+    rfd: OUT std_logic);
+end component;
+
+
+ 
+-------------------------------------------------------------
+ 
+-- The following code must appear in the VHDL architecture body.
+-- Substitute your own instance name and net names.
+ 
+your_instance_name : decimate
+        port map (
+            din =&gt; din,
+            nd =&gt; nd,
+            clk =&gt; clk,
+            dout =&gt; dout,
+            rdy =&gt; rdy,
+            rfd =&gt; rfd);
+ 
+		</Template>
+		<Template label="sram_bank" treetype="template">
+ 
+ 
+-- The following code must appear in the VHDL architecture header:
+ 
+component sram_bank
+    port (
+    addra: IN std_logic_VECTOR(12 downto 0);
+    addrb: IN std_logic_VECTOR(12 downto 0);
+    clka: IN std_logic;
+    clkb: IN std_logic;
+    dina: IN std_logic_VECTOR(15 downto 0);
+    doutb: OUT std_logic_VECTOR(15 downto 0);
+    ena: IN std_logic;
+    enb: IN std_logic;
+    ndb: IN std_logic;
+    rfdb: OUT std_logic;
+    rdyb: OUT std_logic;
+    wea: IN std_logic);
+end component;
+
+
+ 
+-------------------------------------------------------------
+ 
+-- The following code must appear in the VHDL architecture body.
+-- Substitute your own instance name and net names.
+ 
+your_instance_name : sram_bank
+        port map (
+            addra =&gt; addra,
+            addrb =&gt; addrb,
+            clka =&gt; clka,
+            clkb =&gt; clkb,
+            dina =&gt; dina,
+            doutb =&gt; doutb,
+            ena =&gt; ena,
+            enb =&gt; enb,
+            ndb =&gt; ndb,
+            rfdb =&gt; rfdb,
+            rdyb =&gt; rdyb,
+            wea =&gt; wea);
+ 
+		</Template>
+		<Template label="sram_bank_large" treetype="template">
+ 
+ 
+-- The following code must appear in the VHDL architecture header:
+ 
+component sram_bank_large
+    port (
+    addra: IN std_logic_VECTOR(13 downto 0);
+    addrb: IN std_logic_VECTOR(13 downto 0);
+    clka: IN std_logic;
+    clkb: IN std_logic;
+    dina: IN std_logic_VECTOR(15 downto 0);
+    doutb: OUT std_logic_VECTOR(15 downto 0);
+    ena: IN std_logic;
+    enb: IN std_logic;
+    ndb: IN std_logic;
+    rfdb: OUT std_logic;
+    rdyb: OUT std_logic;
+    wea: IN std_logic);
+end component;
+
+
+ 
+-------------------------------------------------------------
+ 
+-- The following code must appear in the VHDL architecture body.
+-- Substitute your own instance name and net names.
+ 
+your_instance_name : sram_bank_large
+        port map (
+            addra =&gt; addra,
+            addrb =&gt; addrb,
+            clka =&gt; clka,
+            clkb =&gt; clkb,
+            dina =&gt; dina,
+            doutb =&gt; doutb,
+            ena =&gt; ena,
+            enb =&gt; enb,
+            ndb =&gt; ndb,
+            rfdb =&gt; rfdb,
+            rdyb =&gt; rdyb,
+            wea =&gt; wea);
+ 
+		</Template>
+	</Folder>
+</RootFolder>

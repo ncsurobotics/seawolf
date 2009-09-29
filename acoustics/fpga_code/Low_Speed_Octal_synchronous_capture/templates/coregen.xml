@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RootFolder label="COREGEN" treetype="folder" language="COREGEN">
+	<Folder label="VERILOG Component Instantiation" treetype="folder">
+		<Template label="decimate" treetype="template">
+ 
+ 
+// The following must be inserted into your Verilog file for this
+// core to be instantiated. Change the instance name and port connections
+// (in parentheses) to your own signal names.
+ 
+decimate YourInstanceName (
+    .din(din), // Bus [11 : 0] 
+    .nd(nd),
+    .clk(clk),
+    .dout(dout), // Bus [15 : 0] 
+    .rdy(rdy),
+    .rfd(rfd));
+
+ 
+		</Template>
+	</Folder>
+	<Folder label="VHDL Component Instantiation" treetype="folder">
+		<Template label="decimate" treetype="template">
+ 
+ 
+-- The following code must appear in the VHDL architecture header:
+ 
+component decimate
+    port (
+    din: IN std_logic_VECTOR(11 downto 0);
+    nd: IN std_logic;
+    clk: IN std_logic;
+    dout: OUT std_logic_VECTOR(15 downto 0);
+    rdy: OUT std_logic;
+    rfd: OUT std_logic);
+end component;
+
+
+ 
+-------------------------------------------------------------
+ 
+-- The following code must appear in the VHDL architecture body.
+-- Substitute your own instance name and net names.
+ 
+your_instance_name : decimate
+        port map (
+            din =&gt; din,
+            nd =&gt; nd,
+            clk =&gt; clk,
+            dout =&gt; dout,
+            rdy =&gt; rdy,
+            rfd =&gt; rfd);
+ 
+		</Template>
+	</Folder>
+</RootFolder>

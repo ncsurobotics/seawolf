@@ -1,0 +1,301 @@
+\newpage
+\section{API and Function Reference} \label{api}
+This section covers all functions targeted at application developers as well as
+those functions used by the serial components. Functions only used internally by
+\libseawolf{} are documented in the sections on extending and modifying
+\libseawolf{} (see \interlink{extending}{Extending the Seawolf Software Stack}).
+
+\subsection{Top Level} \label{apitop}
+\subsubsection{Seawolf\_init} \label{apiseawolfinit}
+\cdoc{void Seawolf_init(const char* name)} Initialize all \libseawolf{} sub
+components. Only configuration related function calls should be made before this
+is executed. \texttt{name} should be a descriptive name for the application.
+
+\subsubsection{Seawolf\_close} \label{apiseawolfclose}
+\cdoc{void Seawolf_close(void)} Close all \libseawolf{} components and close
+network connections and free memory. This should always be the last
+\libseawolf{} function call made.
+
+\subsubsection{Seawolf\_getName} \label{apiseawolfgetname}
+\cdoc{char* Seawolf_getName(void)} Return the name of this application as passed
+to \inlinelink{apiseawolfinit}{\func{Seawolf\_init}}.
+
+\subsubsection{Seawolf\_loadConfig} \label{apiseawolfconfig}
+\cdoc{void Seawolf_loadConfig(const char* filename)} Load a configuration file
+for \libseawolf{} with options to configure all subcomponents. The format of
+this configuration file is documented in the
+\inlinelink{formatsseawolfconf}{Seawolf Configuration File} section.
+
+\subsection{SeaSQL} \label{apiseasql}
+\subsubsection{SeaSQL\_get\bracket{var}} \label{apiseasqlget}
+\cdoc{float SeaSQL_get<var>(void)} Retrieve the most recent value of the
+variable \bracket{var} as a floating point value.  Possible variables are listed
+below. If additional variables are needed, they should be added directly to
+\libseawolf{} (see \interlink{extendingseasql}{Extending SeaSQL}) and documented here.
+\begin{center}
+\begin{tabular}{l l}
+MissionID & MissionStatus
+\end{tabular}\vspace{5pt}
+
+\begin{tabular}{l l l l l}
+Aft & PortX & PortY & StarX & StarY
+\end{tabular}\vspace{5pt}
+
+\begin{tabular}{l l l l}
+Depth & DepthHeading & Altitude & AltitudeHeading \\
+\end{tabular}\vspace{5pt}
+
+\begin{tabular}{l l l}
+SEA\_Roll & SEA\_Yaw & SEA\_Pitch \\
+IEA\_Roll & IEA\_Yaw & IEA\_Pitch \\
+IV\_MagField\_X & IV\_MagField\_Y & IV\_MagField\_Z \\
+IV\_Accel\_X & IV\_Accel\_Y & IV\_Accel\_Z \\
+IV\_AngRate\_X & IV\_AngRate\_Y & IV\_AngRate\_Z \\
+IOM\_11 & IOM\_21 & IOM\_31 \\
+IOM\_12 & IOM\_22 & IOM\_32 \\
+IOM\_13 & IOM\_23 & IOM\_33 \\
+\end{tabular}
+\end{center}
+
+\subsubsection{SeaSQL\_set\bracket{var}} \label{apiseasqlset}
+\cdoc{int SeaSQL_set<var>(float value)} Set the value of the variable whose name
+is \bracket{var} to the floating point value given by \texttt{value}. This
+function returns 0 to indicate success, any other value indicates error. See
+\interlink{apiseasqlget}{SeaSQL\_get\bracket{var}} for the list of valid
+values for \bracket{var}.
+
+\subsection{SeaSQL\_setAutoNotify} \label{apiseasqlnotify}
+\cdoc{void SeaSQL_setAutoNotify(bool do_notify)} Set whether SeaSQL should
+automatically send out a Notify \texttt{UPDATED} message (see
+\interlink{overviewnotify}{Notify}) with every call to
+\inlinelink{apiseasqlset}{\func{SeaSQL\_set\bracket{var}}}. By default this is true,
+but certain applications may prefer to send out these message manually to
+control when they are sent.
+
+\subsubsection{SeaSQL\_configFile} \label{apiseasqlconfigfile}
+\cdoc{void SeaSQL_configFile(char* filename)} \deprecated{} (see
+\interlink{apiseawolfconfig}{\func{Seawolf\_loadConfig}}) - Load SeaSQL
+configuration information from the file pointed to by \texttt{filename}. The
+path, if relative, is relative to the working directory where the application is
+executed from. It is recommended to use absolute paths when possible. This
+function should be called before any initialization methods are called. The
+format of this configuration file is documented in the
+\inlinelink{formatsseasqlconf}{SeaSQL Configuration File} section.
+
+\subsubsection{SeaSQL\_configPrompt} \label{apiseasqlconfigprompt}
+\cdoc{void SeaSQL_configPrompt(void)} Prompt for configuration values from
+standard input. All settings are prompted for and values must be given for
+each. For a list of configuration options see
+\interlink{apiseasqlconfigfile}{SeaSQL\_configFile}.
+
+
+\subsection{Logging} \label{apilogging}
+\subsubsection{Logging\_log} \label{apilogginglog}
+\cdoc{void Logging_log(short level, char* message)} Log the string stored in
+\texttt{message} to the log table of the SeaSQL database and associates this log
+item with the severity level given by \texttt{level}. Possible levels include
+\texttt{DEBUG}, \texttt{INFO}, \texttt{NORMAL}, \texttt{WARNING},
+\texttt{ERROR}, and \texttt{CRITICAL}. This message will not be logged if the
+level given is lower than the minimum logging level. The minimum logging level
+is \texttt{NORMAL} by default and can be changed through
+\inlinelink{apiloggingsetthreshold}{\func{Logging\_setThreshold}}.
+
+\subsubsection{Logging\_setThreshold} \label{apiloggingsetthreshold}
+\cdoc{void Logging_setThreshold(short level)} Set the minimum level of log
+message to write to the database. See \interlink{apilogginglog}{Logging\_log}
+for possible values of \texttt{level}. This can also be set in the
+\inlinelink{formatsseawolfconf}{Seawolf Configuration File}. 
+
+\subsubsection{Logging\_replicateStdio} \label{apiloggingreplicate}
+\cdoc{void Logging_replicateStdio(bool do_replicate)} Set whether logged message
+should be written to the standard output as well as to the database. This can
+also be set in the \inlinelink{formatsseawolfconf}{Seawolf Configuration File}.
+
+
+\subsection{Serial} \label{apiserial}
+\subsubsection{Serial\_open} \label{apiserialopen}
+\cdoc{SerialPort Serial_open(const char* device_path)} Open the specified device
+and return a handle to it that can be passed to future Serial calls. As well as
+opening the device, a number of standard options are set on the port to ready it
+for communication. In the event that an error occurs while attempting to open
+the device the value 0 will be returned. 
+
+\subsubsection{Serial\_closePort} \label{apiserialclose}
+\cdoc{int Serial_closePort(SerialPort sp)} Close the specified serial
+device. After this call the serial device can not be passed to any future Serial
+calls. This is executed for all devices left open at the time of
+\inlinelink{apiseawolfclose}{\func{Seawolf\_close}} being called to ensure that
+devices are not left open when the application terminates.
+
+\subsubsection{Serial\_setBlocking} \label{apiserialblocking}
+\cdoc{void Serial_setBlocking(SerialPort sp)} Set the specified serial port to
+be placed into blocking mode. When in blocking mode, calls to any
+\func{Serial\_get*} functions will not return until data is available. If a port
+is in non-blocking mode then these functions will return immediately if data is
+not already available.
+
+\subsubsection{Serial\_setNonBlocking} \label{apiserialnonblocking}
+\cdoc{void Serial_setNonBlocking(SerialPort sp)} Set the specified serial port
+to be placed into non-blocking mode. See
+\interlink{apiserialblocking}{\func{Serial\_setBlocking}}.
+
+\subsubsection{Serial\_getByte} \label{apiserialgetbyte}
+\cdoc{int Serial_getByte(SerialPort sp)} Return the next byte in the incoming
+buffer for the specified serial port. If the port is in non-blocking mode (see
+\interlink{apiserialblocking}{\func{Serial\_setBlocking}}) and no data is
+available -1 is returned. 
+
+\subsubsection{Serial\_get} \label{apiserialget}
+\cdoc{void Serial_get(SerialPort sp, void* buffer, size_t count)} Read
+\texttt{count} bytes from the serial port into the buffer pointed to by
+\texttt{buffer}. This function is guaranteed to return the requested number of
+bytes and is therefore incompatible with non-blocking mode (see
+\interlink{apiserialblocking}{\func{Serial\_setBlocking}}).
+
+\subsubsection{Serial\_getLine} \label{apiserialgetlin}
+\cdoc{void Serial_getLine(SerialPort sp, char* buffer)} Read characters from the
+serial buffer into the buffer pointed to by \texttt{buffer} until a newline is
+reached. This assumes that the serial device is using a human readable protocol
+and is in non-blocking mode (see
+\interlink{apiserialblocking}{\func{Serial\_setBlocking}}).
+
+\subsubsection{Serial\_sendByte} \label{apiserialsendbyte}
+\cdoc{void Serial_sendByte(SerialPort sp, unsigned char b)} Send the single byte
+\texttt{b} using the given serial port.
+
+\subsubsection{Serial\_send} \label{apiserialsend}
+\cdoc{void Serial_send(SerialPort sp, void* buffer, size_t count)} Send
+\texttt{count} bytes from the buffer pointed to by \texttt{buffer} using the
+given serial port.
+
+
+\subsection{ArdComm} \label{apiardcomm}
+\subsubsection{ArdComm\_getId} \label{apiardcommgetid}
+\cdoc{int ArdComm_getId(SerialPort sp, char* id)} Attempt to read the identifier
+for a serial device compliant with the ArdComm protocol (see
+\interlink{formatsardcomm}{ArdComm Serial Protocol}) attached to the given
+serial port. If an error is encountered while attempting to obtain the
+identifier then -1 will be returned. Upon success, 0 will be returned and the
+identifier stored in \texttt{id}.
+
+\subsubsection{ArdComm\_handshake} \label{apiardcommhandshake}
+\cdoc{void ArdComm_handshake(SerialPort sp)} Attempt to complete a handshake
+with an ArdComm compliant device attached to the given serial port. After this
+call both the remote device and the local system are ready for communication.
+
+
+\subsection{Notify} \label{apinotify}
+\subsubsection{Notify\_setMode} \label{apinotifysetmode}
+\cdoc{void Notify_setMode(int mode)} Set the IO mode for Notify to
+utilize. Possible values are \texttt{NOTIFY\_NET} and
+\texttt{NOTIFY\_STDIO}. The default is \texttt{NOTIFY\_NET} which works by
+connecting to a ``hub'' server (see \interlink{overviewhub}{The Hub Server}) and
+having all message relayed through it. \texttt{NOTIFY\_STDIO} uses standard
+input and output to receive and send messages; this is useful for debugging
+purposes or running without a hub server. This function can only be called
+before initialization functions are called. This can also be set in the
+\inlinelink{formatsseawolfconf}{Seawolf Configuration File}.
+
+\subsubsection{Notify\_setServer} \label{apinotifysetserver}
+\cdoc{void Notify_setServer(char* hostname)} When using the \texttt{NOTIFY\_NET}
+IO mode, Notify needs to connect to a ``hub'' server (see
+\interlink{overviewhub}{The Hub Server}) at port 31427 on some network host. The
+default host is localhost (127.0.0.1) but this can be overridden by calling this
+function and passing a server name as a string in \texttt{hostname}. This
+function only has an effect when in \texttt{NOTIFY\_NET} mode and must be called
+before initialization functions are called. This can also be set in the
+\inlinelink{formatsseawolfconf}{Seawolf Configuration File}.
+
+\subsubsection{Notify\_get} \label{apinotifyget}
+\cdoc{void Notify_get(char* action, char* param)} Retrieves the most recent
+inbound Notify message or waits for one to become available before
+returning. When a message is available which matches a filter (see
+\interlink{apinotifyfilter}{Notify\_filter}), it is split and the action is
+stored in \texttt{action} and the parameters are stored as a single string in
+\texttt{param}.
+
+\subsubsection{Notify\_send} \label{apinotifysend}
+\cdoc{void Notify_send(char* action, char* param)} Generates and sends
+out a message using the given action and parameter string. The
+parameter string should be a single string with all parameters
+embedded already.
+
+\subsubsection{Notify\_filter} \label{apinotifyfilter}
+\cdoc{void Notify_filter(int filter_type, char* filter)} Enable a new
+filter. When a call to \inlinelink{apinotifyget}{\func{Notify\_get}} is made,
+the incoming message is checked against all filters. If at least one filter
+matches then the message passes through, otherwise it is discarded. If no
+filters are present then all messages pass. To remove all filters, call this
+function as \lstinline[language=Cextended]!Notify_filter(0, NULL)!.  To add a
+new filter, specify a filter type in \texttt{filter\_type} and specify the
+filter text in \texttt{filter}. There are three filter types, each of which
+perform a different method of filtering. The first filter type is
+\texttt{FILTER\_MATCH} which will perform a full message (action and parameters)
+match using the filter. If a \texttt{FILTER\_MATCH} filter with text
+\lstinline[language=Cextended]!"UPDATED Depth"! is added then only the message
+``UPDATED Depth'' will match this filter. The second filter type is
+\texttt{FILTER\_ACTION} which performs a match on the action of a
+message. Parameters are ignored and the message's action must match perfectly
+with the content of the filter. The last type of filter type is
+\texttt{FILTER\_PREFIX} which performs a test on the message and matches when
+the filter is a substring of the full message which starts with the first
+character of the message.
+
+\subsection{Utilities} \label{apiutilities}
+\subsubsection{Util\_usleep} \label{apiutilsleep}
+\cdoc{void Util_usleep(double s)} Halt execution of the program and sleep for a
+number of seconds equal to \texttt{s}. 
+
+\subsubsection{Util\_format} \label{apiutilformat}
+\cdoc{char* Util_format(char* format, ...)} Return a formatted string. Consult
+documentation for the sprintf function for the syntax for \texttt{format}. This
+function is provided as a convience function so formatting may be done in place.
+
+\subsubsection{Util\_strip} \label{apiutilstrip}
+\cdoc{void Util_strip(char* buffer)} Remove white space from the beginning end
+of the given string. The string is modified in place.
+
+\subsubsection{Util\_split} \label{apiutilsplit}
+\cdoc{int Util_split(const char* buffer, char split, char* p1, char* p2)} Split
+the string in \texttt{buffer} by the first occurennce of \texttt{split}. Store
+the first part in \texttt{p1} and rest in \texttt{p2}. Returns 1 in the case of
+failure, 0 otherwise.
+
+\subsubsection{Util\_max} \label{apiutilmax}
+\cdoc{#define Util_max(a, b)} This macro returns the greater of a and b. Because
+this is a macro, it is up to the user to ensure only valid types are passed to
+it.
+
+\subsubsection{Util\_min} \label{apiutilmin}
+\cdoc{#define Util_min(a, b)} This macro returns the lesser of a and b. Because
+this is a macro, it is up to the user to ensure only valid types are passed to
+it.
+
+\subsubsection{Util\_inRange} \label{apiutilrange}
+\cdoc{#define Util_inRange(a, x, b)} This macro returns the value \texttt{x}
+bounded by \texttt{a} and \texttt{b} such that a $a \leq x \leq b$. If $x < a$
+then \texttt{a} is returned. Likewise, if $x > b$ then \texttt{b} is
+returned. Otherwise, \texttt{x} is returned unmodified. Because this is a macro,
+it is up to the user to ensure only valid types are passed to it.
+
+\subsection{Timer} \label{apitimer}
+\subsubsection{Timer\_new} \label{apitimernew}
+\cdoc{Timer* Timer_new(void)} Return a new timer object
+
+\subsubsection{Timer\_getDelta} \label{apitimerdelta}
+\cdoc{double Timer_getDelta(Timer* tm)} Return the time in seconds since the 
+last call to \func{Timer\_getDelta}, or since the time the timer object was
+created or reset
+
+\subsubsection{Timer\_getTotal} \label{apitimertotal}
+\cdoc{double Timer_getTotal(Timer* tm)} Return the time since the timer was 
+created or last reset.
+
+\subsubsection{Timer\_reset} \label{apitimerreset}
+\cdoc{void Timer_reset(Timer* tm)} Resets the timer such that future 
+\func{Timer\_*} calls are with respect to the current time and no longer the 
+time of the timer's creation
+
+\subsubsection{Timer\_destroy} \label{apitimerdestroy}
+\cdoc{void Timer_destroy(Timer* tm)} Destroy a timer object and free the memory
+associated with it.

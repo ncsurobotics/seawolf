@@ -1,0 +1,55 @@
+
+\newpage
+\section{Protocols and File Formats} \label{formats}
+\subsection{Seawolf Configuration File} \label{formatsseawolfconf}
+This file is a single configuration file for configuring all components of
+\libseawolf{}. The file is formatted as follows. Comments are ignored by the
+parser and extend from a '\#' to the end of the current line. Whitespace is
+ignored expect for newlines which separate records. Records are in the format
+\bracket{option} = \bracket{value}. The following example configuration file
+outlines all options and their possible values.
+\begin{lstlisting}[caption=Example Seawolf configuration file]
+# Seawolf configuration file
+
+# MySQL host
+SeaSQL_hostname = localhost
+
+# MySQL user name
+SeaSQL_username = root
+
+# MySQL database
+SeaSQL_database = test
+
+# MySQL password
+#SeaSQL_password = 
+
+# Use a server running on localhost for notify IO
+Notify_method = net
+Notify_server = localhost
+
+# Replicate all logging messages to standard output
+Logging_replicateStdio = true
+
+# Debug logging level. One of debug, info, normal,
+# warning, or critical
+Logging_threshold = debug
+\end{lstlisting}
+
+\subsection{SeaSQL Configuration File} \label{formatsseasqlconf}
+Comments extend from a '\#' to the end of the line, white space is ignored
+except newlines which separate records, and all values are unquoted ASCII
+strings. All values are optional and default to the values in the following
+example configuration file.
+\begin{lstlisting}[caption=Example SeaSQL configuration file]
+# SeaSQL configuration file
+hostname = localhost
+username = root
+database = seasql
+password = 
+port = 3306
+\end{lstlisting}
+\textbf{\textit{NOTE}}: This configuration method is deprecated in favor of \inlinelink{apiseawolfconfig}{\func{Seawolf\_loadConfig}} and its corresponding configuration file documented in \interlink{formatsseawolfconf}{Seawolf Configuration File}. 
+
+\subsection{ArdComm Serial Protocol} \label{formatsardcomm}
+\textit{This section yet to be compeleted}
+

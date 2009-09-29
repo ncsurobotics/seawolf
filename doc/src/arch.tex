@@ -1,0 +1,55 @@
+
+\newpage
+\section{Seawolf Component Architecture} \label{architecture}
+\subsection{Components} \label{archcomp}
+\subsubsection{\libseawolf{}} \label{libarch}
+Seawolf applications are built around the Seawolf library known as
+\libseawolf{}. This library forms the foundation for any application being
+developed as part of Seawolf and provides functionalities to allow communication
+between Seawolf applications, provide persistant, shared storage of data through
+the SeaSQL database component and hardware interfacing through the serial
+component. \libseawolf{} contains more components in addition to these mentioned
+that provide additional functionality to Seawolf application developers to
+utilize.
+
+\subsubsection{Applications} \label{apparch}
+Any applications which fully utilizes \libseawolf{} are considered ``Seawolf
+Applications'' and are automatically placed into active communication with all
+other Seawolf applications. With the exception of the hub server, all
+applications which run as part of Seawolf should be Seawolf applications. This
+includes all serial applications which are simply a special class of Seawolf
+applications.
+
+\subsubsection{Serial Management} \label{serialarch}
+Seawolf's software must be able to integrate with a wide array of hardware
+devices and providing as much isolation and abstraction between these hardware
+devices and Seawolf applications as possible is highly desirable. Seawolf's
+serial management applications were written to do this. To provide this
+abstraction, Seawolf's serial applications handle all direct communication with
+serial devices on the behalf of Seawolf applications. Seawolf applications can
+indirectly communicate with devices by writing and reading from special
+variables managed by SeaSQL. These variables act as a single channel of
+communication with external devices. For example, there is a serial application
+which communicates with a thruster control board. Seawolf application developers
+can make calls to \func{SeaSQL\_setThruster} to update the value of what this
+thruster should run at. The serial thruster application will look for this
+variable to be updated and then communicate these updates to the thruster
+control board. The serial applications include one \texttt{serialapp}
+application which is responsible for identifying and spawning handlers for
+serial devices. The rest of the serial applications are responsible for managing
+particular serial devices such as thrusters, depth sensors, or altimeters.
+
+\subsection{Architecture} \label{archarch}
+Seawolf's software forms a multi application architecture where applications
+perform single tasks and the combination of these individual applications create
+higher level functionality. These applications communicate with one another
+through a database exposed through SeaSQL and through a event notification
+system provided by Notify. These components use network communication even when
+applications are running on the same physical system. This choice of
+communication medium means that it is trivial to grow the computational power of
+Seawolf from a single system to multiple networked machines which are just as
+easily able to communicate. To provide this communication two auxilliary
+applications must be run. First is a MySQL database to provide data
+persistence. The second requirement is that a ``hub'' server is running. This
+server is distributed with \libseawolf{} and is responsibly for distributing
+message sent through the Notify system.

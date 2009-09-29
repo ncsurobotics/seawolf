@@ -1,0 +1,31 @@
+if(i>0 && obj->bitmap[i-1][j]>0)
+				{
+						obj->bitmap[i][j]=obj->bitmap[i-1][j];
+						objects[obj->bitmap[i-1][j]].right=i;
+				}
+				else if(j>0 && obj->bitmap[i][j-1]>0)
+				{
+						obj->bitmap[i][j]=obj->bitmap[i][j-1];
+						objects[obj->bitmap[i][j-1]].bottom=j;
+				}
+				else if(i>0 && j>0 && obj->bitmap[i-1][j-1]>0)
+				{
+						obj->bitmap[i][j]=obj->bitmap[i-1][j-1];
+						objects[obj->bitmap[i-1][j-1]].right=i;
+						objects[obj->bitmap[i-1][j-1]].bottom=j;
+				}
+				else if(i<x && j>0 && obj->bitmap[i+1][j-1]>0)
+				{
+						obj->bitmap[i][j]=obj->bitmap[i+1][j-1];
+						objects[obj->bitmap[i-1][j-1]].bottom=j;
+				}
+				else
+				{
+					obj->bitmap[i][j]=num_objects;
+					objects[num_objects].number=num_objects+1;
+					objects[num_objects].top=j;
+					objects[num_objects].bottom=j;
+					objects[num_objects].left=i;
+					objects[num_objects].right=i;
+					num_objects++;
+				}

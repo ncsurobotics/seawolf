@@ -1,0 +1,77 @@
+
+\documentclass[11pt,a4paper,titlepage]{article}
+
+% Packages
+\usepackage{color}
+\usepackage{listings}
+\usepackage{hyperref}
+
+% Packages setup
+\hypersetup{pdfborder={0 0 0}}
+
+% Document meta information
+\title{Seawolf III Software Handbook}
+\author{Christopher Thunes}
+\date{\today}
+
+% Shorthand
+\newcommand{\libseawolf}{\texttt{libseawolf}}
+\newcommand{\folder}[1]{\textit{#1/}}
+\newcommand{\file}[1]{\textit{#1}}
+\newcommand{\lt}{$<$}
+\newcommand{\gt}{$>$}
+\newcommand{\bracket}[1]{\lt{}#1\gt{}}
+\newcommand{\cdefine}[1]{\lstinline[language=Cextended]!#1!}
+\newcommand{\cdoc}[1]{\hangindent=0.8cm \hspace{0.8cm}\cdefine{#1}\vspace{8pt}\newline}
+\newcommand{\func}[1]{\textsf{#1}}
+\newcommand{\interlink}[2]{\textit{\hyperref[#1]{\ref{#1} #2}}}
+\newcommand{\inlinelink}[2]{\textit{\hyperref[#1]{#2}}}
+\newcommand{\deprecated}{\textbf{\textit{DEPRECATED}}}
+
+% Print 
+\pagestyle{headings}
+
+\input{src/c_extended_highlighting}
+
+% Begin document
+\begin{document}
+
+% Set defaults for listings
+\lstset{frame=lines, basicstyle=\small, aboveskip=25pt, belowskip=20pt, 
+        showspaces=false, showtabs=false}
+
+% Title page
+\thispagestyle{empty}
+\maketitle
+
+% Contents page
+\tableofcontents
+
+% Include introduction
+\input{src/intro.tex}
+
+% Include architecture
+\input{src/arch.tex}
+
+% Include libseawolf documentation 
+\input{src/libseawolf.tex}
+
+% Include API documentation (large) 
+\input{src/api.tex}
+
+% Include serial management section
+\input{src/serial.tex}
+
+% Include documentation on running applications
+\input{src/running.tex}
+
+% Include documentation on extending Seawolf
+\input{src/extending.tex}
+
+% Build system documentation
+\input{src/buildsystem.tex}
+
+% Include formation and protocol documentation
+\input{src/formats.tex}
+
+\end{document}

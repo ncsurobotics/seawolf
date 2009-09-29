@@ -1,0 +1,91 @@
+Release 9.2.04i Map J.40
+Xilinx Map Application Log File for Design 'Top'
+
+Design Information
+------------------
+Command Line   : map -ise
+/afs/unity.ncsu.edu/users/b/bmhendri/w00t/woosha/High_Speed_Octal_synchronous_ca
+pture/High_Speed_Octal_synchronous_capture.ise -intstyle ise -p
+xc4vfx20-ff672-10 -cm area -pr b -k 4 -c 100 -o Top_map.ncd Top.ngd Top.pcf 
+Target Device  : xc4vfx20
+Target Package : ff672
+Target Speed   : -10
+Mapper Version : virtex4 -- $Revision: 1.36 $
+Mapped Date    : Sat May  2 20:14:14 2009
+
+Mapping design into LUTs...
+Running directed packing...
+Running delay-based LUT packing...
+Running related packing...
+
+Design Summary
+--------------
+
+Design Summary:
+Number of errors:      0
+Number of warnings:   30
+Logic Utilization:
+  Number of Slice Flip Flops:         123 out of  17,088    1%
+    Number of Slice FFs used for
+    DCM autocalibration logic:         14 out of     123   11%
+  Number of 4 input LUTs:              60 out of  17,088    1%
+    Number of LUTs used for
+    DCM autocalibration logic:          8 out of      60   13%
+      *See INFO below for an explanation of the DCM autocalibration logic
+       added by Map
+Logic Distribution:
+  Number of occupied Slices:                          116 out of   8,544    1%
+    Number of Slices containing only related logic:     116 out of     116  100%
+    Number of Slices containing unrelated logic:          0 out of     116    0%
+      *See NOTES below for an explanation of the effects of unrelated logic
+Total Number of 4 input LUTs:            142 out of  17,088    1%
+  Number used as logic:                 60
+  Number used as a route-thru:          39
+  Number used as Shift registers:       43
+  Number of bonded IOBs:               36 out of     320   11%
+  Number of BUFG/BUFGCTRLs:             6 out of      32   18%
+    Number used as BUFGs:                6
+    Number used as BUFGCTRLs:            0
+  Number of FIFO16/RAMB16s:             7 out of      68   10%
+    Number used as FIFO16s:              0
+    Number used as RAMB16s:              7
+  Number of DCM_ADVs:                   2 out of       4   50%
+
+Total equivalent gate count for design:  463,305
+Additional JTAG gate count for IOBs:  1,728
+Peak Memory Usage:  207 MB
+Total REAL time to MAP completion:  19 secs 
+Total CPU time to MAP completion:   12 secs 
+
+NOTES:
+
+   Related logic is defined as being logic that shares connectivity - e.g. two
+   LUTs are "related" if they share common inputs.  When assembling slices,
+   Map gives priority to combine logic that is related.  Doing so results in
+   the best timing performance.
+
+   Unrelated logic shares no connectivity.  Map will only begin packing
+   unrelated logic into a slice once 99% of the slices are occupied through
+   related logic packing.
+
+   Note that once logic distribution reaches the 99% level through related
+   logic packing, this does not mean the device is completely utilized.
+   Unrelated logic packing will then begin, continuing until all usable LUTs
+   and FFs are occupied.  Depending on your timing budget, increased levels of
+   unrelated logic packing may adversely affect the overall timing performance
+   of your design.
+
+INFO:
+
+   Logic has been added to automatically put the DCMs in auto-calibration
+   mode if the clock input or clock feedback ever stops. This is recommended
+   to ensure that the DCMs will maintain maximum operating frequency for the
+   following Virtex-4 devices: Production Step 2 for LX/SX, and all Productions
+   for FX.  The extra logic insertion can be disabled by placing the
+   DCM_AUTOCALIBRATION=FALSE attribute on each applicable DCM or by setting
+   the environment variable XIL_DCM_AUTOCALIBRATION_OFF.  For more information
+   regarding the DCM auto-calibration mode, please consult Answer Record 21435.
+
+
+Mapping completed.
+See MAP report file "Top_map.mrp" for details.

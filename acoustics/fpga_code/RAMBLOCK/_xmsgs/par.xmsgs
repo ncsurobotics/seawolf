@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- IMPORTANT: This is an internal file that has been generated
+     by the Xilinx ISE software.  Any direct editing or
+     changes made to this file may result in unpredictable
+     behavior or data corruption.  It is strongly advised that
+     users do not edit the contents of this file. -->
+<messages>
+<msg type="warning" file="Par" num="288" delta="unknown" >The signal <arg fmt="%s" index="1">addr&lt;0&gt;_IBUF</arg> has no load.  PAR will not attempt to route this signal.
+</msg>
+
+<msg type="warning" file="Par" num="288" delta="unknown" >The signal <arg fmt="%s" index="1">bank_select&lt;0&gt;_IBUF</arg> has no load.  PAR will not attempt to route this signal.
+</msg>
+
+<msg type="warning" file="Par" num="288" delta="unknown" >The signal <arg fmt="%s" index="1">bank_select&lt;1&gt;_IBUF</arg> has no load.  PAR will not attempt to route this signal.
+</msg>
+
+<msg type="warning" file="Par" num="288" delta="unknown" >The signal <arg fmt="%s" index="1">addr&lt;17&gt;_IBUF</arg> has no load.  PAR will not attempt to route this signal.
+</msg>
+
+<msg type="warning" file="Par" num="288" delta="unknown" >The signal <arg fmt="%s" index="1">addr&lt;18&gt;_IBUF</arg> has no load.  PAR will not attempt to route this signal.
+</msg>
+
+<msg type="warning" file="Place" num="644" delta="unknown" >A clock IOB clock component is not placed at an optimal clock IOB site. The clock IOB component &lt;<arg fmt="%s" index="1">testClk</arg>&gt; is placed at site &lt;<arg fmt="%s" index="2">J11</arg>&gt;. The clock IO site can use the fast path between the IO and the Clock buffer/GCLK if the IOB is placed in the master Clock IOB Site. This is normally an ERROR but the environment variable XIL_PLACE_ALLOW_LOCAL_BUFG_ROUTING is set allowing your design to continue.
+</msg>
+
+<msg type="warning" file="Par" num="283" delta="unknown" >There are <arg fmt="%d" index="1">5</arg> loadless signals in this design. This design will cause Bitgen to issue DRC warnings.
+
+</msg>
+
+<msg type="warning" file="ParHelpers" num="361" delta="unknown" >There are <arg fmt="%d" index="1">5</arg> loadless signals in this design. This design will cause Bitgen to issue DRC warnings.
+
+</msg>
+
+</messages>
+

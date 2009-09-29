@@ -1,0 +1,41 @@
+#!/bin/sh
+
+CC="/usr/bin/gcc"
+CFLAGS="-g --std=c99 -Wall -pedantic -I../libseawolf/include -L../libseawolf"
+LIBFLAGS="-lseawolf -lrt"
+
+. ../misc/make.sh
+
+case "$1" in
+  "clean")
+    rmNoFail apps/*
+    rmNoFail serialapp
+    ;;
+  "run")
+    runcmd export LD_LIBRARY_PATH=../libseawolf/
+    runcmd ./serialapp
+    ;;
+  *)
+    in="src/serialapp.c"
+    out="serialapp"
+    if isOutDated $out $in; then
+        runcmd ${CC} ${CFLAGS} ${LIBFLAGS} -o "$out" "$in"
+    fi
+
+    if [ ! -d "apps" ]; then
+        runcmd mkdir -p "apps"
+    fi
+    for in in src/apps/ard/*.c; do
+        out="apps/`basename ${in} .c`"
+        if isOutDated $out $in; then
+            runcmd ${CC} ${CFLAGS} ${LIBFLAGS} -o "$out" src/apps/ard.c "$in"
+        fi
+    done;
+
+    for in in src/apps/other/*.c; do
+        out="apps/`basename ${in} .c`"
+        if isOutDated $out $in; then
+            runcmd ${CC} ${CFLAGS} ${LIBFLAGS} -o "$out" "$in"
+        fi
+    done;
+esac

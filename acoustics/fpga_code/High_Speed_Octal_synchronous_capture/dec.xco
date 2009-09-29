@@ -1,0 +1,62 @@
+##############################################################
+#
+# Xilinx Core Generator version J.40
+# Date: Thu Apr 30 03:29:27 2009
+#
+##############################################################
+#
+#  This file contains the customisation parameters for a
+#  Xilinx CORE Generator IP GUI. It is strongly recommended
+#  that you do not manually alter this file as it may cause
+#  unexpected and unsupported behavior.
+#
+##############################################################
+#
+# BEGIN Project Options
+SET addpads = False
+SET asysymbol = True
+SET busformat = BusFormatAngleBracketNotRipped
+SET createndf = False
+SET designentry = VHDL
+SET device = xc4vfx20
+SET devicefamily = virtex4
+SET flowvendor = Foundation_iSE
+SET formalverification = False
+SET foundationsym = False
+SET implementationfiletype = Ngc
+SET package = ff672
+SET removerpms = False
+SET simulationfiles = Behavioral
+SET speedgrade = -10
+SET verilogsim = True
+SET vhdlsim = True
+# END Project Options
+# BEGIN Select
+SELECT CIC_Compiler family Xilinx,_Inc. 1.0
+# END Select
+# BEGIN Parameters
+CSET ce=true
+CSET clock_frequency=65
+CSET component_name=dec
+CSET differential_delay=1
+CSET filter_type=Decimation
+CSET fixed_or_initial_rate=16
+CSET input_data_width=14
+CSET input_sample_frequency=65
+CSET maximum_rate=16
+CSET minimum_rate=16
+CSET number_of_channels=1
+CSET number_of_stages=3
+CSET output_data_width=14
+CSET passband_max=0.5
+CSET passband_min=0.0
+CSET quantization=Truncation
+CSET sample_rate_changes=Fixed
+CSET sclr=true
+CSET stopband_max=1.0
+CSET stopband_min=0.5
+CSET use_xtreme_dsp_slice=false
+# END Parameters
+GENERATE
+# CRC: 42860582
+

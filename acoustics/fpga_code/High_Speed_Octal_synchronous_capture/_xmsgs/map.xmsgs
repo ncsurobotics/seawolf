@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- IMPORTANT: This is an internal file that has been generated
+     by the Xilinx ISE software.  Any direct editing or
+     changes made to this file may result in unpredictable
+     behavior or data corruption.  It is strongly advised that
+     users do not edit the contents of this file. -->
+<messages>
+<msg type="info" file="MapLib" num="562" delta="unknown" >No environment variables are currently set.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_hp</arg> connected to top level port <arg fmt="%s" index="2">din_hp</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_hn</arg> connected to top level port <arg fmt="%s" index="2">din_hn</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_gp</arg> connected to top level port <arg fmt="%s" index="2">din_gp</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_gn</arg> connected to top level port <arg fmt="%s" index="2">din_gn</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_fp</arg> connected to top level port <arg fmt="%s" index="2">din_fp</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_fn</arg> connected to top level port <arg fmt="%s" index="2">din_fn</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_ep</arg> connected to top level port <arg fmt="%s" index="2">din_ep</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_en</arg> connected to top level port <arg fmt="%s" index="2">din_en</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_dp</arg> connected to top level port <arg fmt="%s" index="2">din_dp</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_dn</arg> connected to top level port <arg fmt="%s" index="2">din_dn</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_cp</arg> connected to top level port <arg fmt="%s" index="2">din_cp</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_cn</arg> connected to top level port <arg fmt="%s" index="2">din_cn</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_bp</arg> connected to top level port <arg fmt="%s" index="2">din_bp</arg> has been removed.
+</msg>
+
+<msg type="warning" file="MapLib" num="701" delta="unknown" >Signal <arg fmt="%s" index="1">din_bn</arg> connected to top level port <arg fmt="%s" index="2">din_bn</arg> has been removed.
+</msg>
+
+<msg type="info" file="MapLib" num="796" delta="unknown" >Due to DCM autocalibration, the DCM component <arg fmt="%s" index="1">U1/DCM1</arg> in your design has a new hierarchical name: <arg fmt="%s" index="2">DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1</arg>. Your simulation or formal verification flow may be affected.
+</msg>
+
+<msg type="info" file="MapLib" num="796" delta="unknown" >Due to DCM autocalibration, the DCM component <arg fmt="%s" index="1">U1/DCM2</arg> in your design has a new hierarchical name: <arg fmt="%s" index="2">DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2</arg>. Your simulation or formal verification flow may be affected.
+</msg>
+
+<msg type="info" file="LIT" num="244" delta="unknown" >All of the single ended outputs in this design are using slew rate limited output drivers. The delay on speed critical single ended outputs can be dramatically reduced by designating them as fast outputs in the schematic.
+</msg>
+
+<msg type="warning" file="LIT" num="176" delta="unknown" >Clock buffer is designated to drive clock loads. <arg fmt="%s" index="1">BUFG symbol &quot;U1/B2&quot; (output signal=data_clk)</arg> has a mix of clock and non-clock loads. The non-clock loads are:
+<arg fmt="%s" index="2">Pin D of U1/fco1
+Pin I0 of DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/md/_n00001
+Pin I1 of DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/md/_n00011</arg>
+</msg>
+
+<msg type="warning" file="LIT" num="176" delta="unknown" >Clock buffer is designated to drive clock loads. <arg fmt="%s" index="1">BUFG symbol &quot;U1/B1&quot; (output signal=U1/dcofb)</arg> has a mix of clock and non-clock loads. The non-clock loads are:
+<arg fmt="%s" index="2">Pin I0 of DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/md/_n00001
+Pin I1 of DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/md/_n00011</arg>
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/CLKOUT</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/CLKOUT</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK&lt;3&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK&lt;2&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK&lt;6&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK&lt;6&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK&lt;4&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK&lt;3&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK&lt;4&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK&lt;1&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK&lt;1&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK&lt;5&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM1/U1/DCM1/cd/CLK&lt;5&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+<msg type="warning" file="PhysDesignRules" num="372" delta="unknown" >Gated clock. Clock net <arg fmt="%s" index="1">DCM_AUTOCALIBRATION_U1/DCM2/U1/DCM2/cd/CLK&lt;2&gt;</arg> is sourced by a combinatorial pin. This is not good design practice. Use the CE pin to control the loading of data into the flip-flop.
+</msg>
+
+</messages>
+

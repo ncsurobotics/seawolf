@@ -1,0 +1,30 @@
+SET_COMMAND_CONTEXT STRING webbrowserpath C:\Program Files\Internet Explorer\IEXPLORE.EXE
+SET_COMMAND_CONTEXT STRING pdfviewerpath "C:\Program Files\Adobe\Acrobat 7.0\Reader\AcroRd32.exe"
+SET_COMMAND_CONTEXT INT mainwindowxcoord 0
+SET_COMMAND_CONTEXT INT mainwindowycoord 0
+SET_COMMAND_CONTEXT INT mainwindowwidth 200
+SET_COMMAND_CONTEXT INT mainwindowheight 400
+SET_PARAMETER number_of_stages 3
+SET_PARAMETER number_of_channels 1
+SET_PARAMETER filter_type Decimation
+SET_PARAMETER passband_max 0.5
+SET_PARAMETER stopband_max 1.0
+SET_PARAMETER ce false
+SET_PARAMETER input_sample_frequency 50
+SET_PARAMETER output_data_width 33
+SET_PARAMETER passband_min 0.0
+SET_PARAMETER stopband_min 0.5
+SET_PARAMETER clock_frequency 50
+SET_PARAMETER differential_delay 1
+SET_PARAMETER minimum_rate 32
+SET_PARAMETER component_name dec
+SET_PARAMETER fixed_or_initial_rate 32
+SET_PARAMETER sclr false
+SET_PARAMETER quantization Truncation
+SET_PARAMETER maximum_rate 32
+SET_PARAMETER use_xtreme_dsp_slice false
+SET_PARAMETER sample_rate_changes Fixed
+SET_PARAMETER input_data_width 18
+SET_ERROR_CODE 0
+SET_ERROR_MSG 
+SET_ERROR_TEXT 

@@ -1,0 +1,6 @@
+verilog work "fifo8k_by_2.v"
+verilog work "fifo8k.v"
+verilog work "storage.v"
+verilog work "spi_write_8b.v"
+verilog work "capture.v"
+verilog work "Top.v"

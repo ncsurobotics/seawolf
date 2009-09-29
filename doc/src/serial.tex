@@ -1,0 +1,43 @@
+
+\newpage
+\section{Serial Management} \label{serial}
+As described in \inlinelink{serialarch}{Serial Management} in the component
+overview, the serial managment applications are a set of programs which serve to
+act as a buffer between the physical components and normal applications. The
+serial management code handles identifying serial devices, fingerprinting them
+to determine their device type, and spawning appropriate handler applications to
+manage the device after the point of identification. Lets start by taking a look
+at the directory structure at \folder{seawolf3/serial}.
+
+\begin{lstlisting}[language=FileList, caption=Serial directory structure, escapeinside={{*@}{@*}}]
+serial/
+  +make
+  +serialapp
+  apps/
+    +altimeter
+    +depth-bin
+    *@\ldots{}@*
+  src/
+    +serialapp.c
+    apps/
+      +ard.c
+      ard/
+        +depth-bin.c
+        +thruster12-bin.c
+        *@\ldots{}@*
+      other/
+        +altimeter.c
+        +imu.c
+        *@\ldots{}@*
+\end{lstlisting}
+
+Of these files, \file{serialapp} and those located in \folder{apps} are binaries
+produced from the build system and are of interest here. \file{serialapp}
+contains a list of potential serial devices as well as mappings between a
+potential device type and the corresponding handler application in
+\folder{apps}. When \file{serialapp} opens a device it attempts to
+``fingerprint'' it in order to determine its device type. Once a device is
+identified the serial port is closed and the correct application from
+\folder{apps} is spawned with the device path passes as the only argument. It is
+then up to the individual application to handle the device, and \file{serialapp}
+will no longer attempt to handle it. 

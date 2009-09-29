@@ -1,0 +1,72 @@
+Release 9.2.04i Map J.40
+Xilinx Map Application Log File for Design 'Top'
+
+Design Information
+------------------
+Command Line   : C:\Xilinx92i\bin\nt\map.exe -ise C:/Documents and
+Settings/bmhendri/Desktop/Low_Speed_Octal_synchronous_capture/Low_Speed_Octal_sy
+nchronous_capture.ise -intstyle ise -p xc4vfx20-ff672-10 -cm area -pr b -k 4 -c
+100 -o Top_map.ncd Top.ngd Top.pcf 
+Target Device  : xc4vfx20
+Target Package : ff672
+Target Speed   : -10
+Mapper Version : virtex4 -- $Revision: 1.36 $
+Mapped Date    : Fri Jun 05 21:12:11 2009
+
+Mapping design into LUTs...
+Running directed packing...
+Running delay-based LUT packing...
+Running related packing...
+
+Design Summary
+--------------
+
+Design Summary:
+Number of errors:      0
+Number of warnings:    1
+Logic Utilization:
+  Number of Slice Flip Flops:         505 out of  17,088    2%
+  Number of 4 input LUTs:             346 out of  17,088    2%
+Logic Distribution:
+  Number of occupied Slices:                          397 out of   8,544    4%
+    Number of Slices containing only related logic:     397 out of     397  100%
+    Number of Slices containing unrelated logic:          0 out of     397    0%
+      *See NOTES below for an explanation of the effects of unrelated logic
+Total Number of 4 input LUTs:            542 out of  17,088    3%
+  Number used as logic:                346
+  Number used as a route-thru:          47
+  Number used as Shift registers:      149
+  Number of bonded IOBs:               49 out of     320   15%
+  Number of BUFG/BUFGCTRLs:             5 out of      32   15%
+    Number used as BUFGs:                5
+    Number used as BUFGCTRLs:            0
+  Number of FIFO16/RAMB16s:            56 out of      68   82%
+    Number used as FIFO16s:              0
+    Number used as RAMB16s:             56
+
+Total equivalent gate count for design:  3,687,196
+Additional JTAG gate count for IOBs:  2,352
+Peak Memory Usage:  212 MB
+Total REAL time to MAP completion:  13 secs 
+Total CPU time to MAP completion:   12 secs 
+
+NOTES:
+
+   Related logic is defined as being logic that shares connectivity - e.g. two
+   LUTs are "related" if they share common inputs.  When assembling slices,
+   Map gives priority to combine logic that is related.  Doing so results in
+   the best timing performance.
+
+   Unrelated logic shares no connectivity.  Map will only begin packing
+   unrelated logic into a slice once 99% of the slices are occupied through
+   related logic packing.
+
+   Note that once logic distribution reaches the 99% level through related
+   logic packing, this does not mean the device is completely utilized.
+   Unrelated logic packing will then begin, continuing until all usable LUTs
+   and FFs are occupied.  Depending on your timing budget, increased levels of
+   unrelated logic packing may adversely affect the overall timing performance
+   of your design.
+
+Mapping completed.
+See MAP report file "Top_map.mrp" for details.

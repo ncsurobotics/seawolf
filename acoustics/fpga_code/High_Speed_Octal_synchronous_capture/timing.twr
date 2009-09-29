@@ -1,0 +1,32 @@
+Number of Timing Constraints that were not applied: 2
+
+Asterisk (*) preceding a constraint indicates it was not met.
+   This may be due to a setup or hold violation.
+
+------------------------------------------------------------------------------------------------------
+  Constraint                                |  Check  | Worst Case |  Best Case | Timing |   Timing   
+                                            |         |    Slack   | Achievable | Errors |    Score   
+------------------------------------------------------------------------------------------------------
+* TS_U1_dcoshifted = PERIOD TIMEGRP "U1_dco | SETUP   |    -0.502ns|     3.066ns|       1|         502
+  shifted" TS_dco_p PHASE 0.641 ns HIGH     | HOLD    |     0.523ns|            |       0|           0
+        50%                                 |         |            |            |        |            
+------------------------------------------------------------------------------------------------------
+  TS_sclk_in = PERIOD TIMEGRP "sclk_in" 8 n | SETUP   |     5.437ns|     2.563ns|       0|           0
+  s HIGH 66%                                | HOLD    |     0.544ns|            |       0|           0
+------------------------------------------------------------------------------------------------------
+  TS_U1_clk0f = PERIOD TIMEGRP "U1_clk0f" T | SETUP   |     9.234ns|     6.150ns|       0|           0
+  S_fco_p HIGH 50%                          | HOLD    |     0.278ns|            |       0|           0
+------------------------------------------------------------------------------------------------------
+  TS_dco_p = PERIOD TIMEGRP "dco_p" 390 MHz | N/A     |         N/A|         N/A|     N/A|         N/A
+   HIGH 50%                                 |         |            |            |        |            
+------------------------------------------------------------------------------------------------------
+  TS_fco_p = PERIOD TIMEGRP "fco_p" 65 MHz  | N/A     |         N/A|         N/A|     N/A|         N/A
+  HIGH 50%                                  |         |            |            |        |            
+------------------------------------------------------------------------------------------------------
+
+
+1 constraint not met.
+INFO:Timing:2761 - N/A entries in the Constraints list may indicate that the 
+   constraint does not cover any paths or that it has no requested value.
+
+

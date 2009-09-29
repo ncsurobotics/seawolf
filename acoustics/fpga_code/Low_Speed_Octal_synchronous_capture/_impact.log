@@ -1,0 +1,92 @@
+iMPACT Version: 
+iMPACT log file Started on Fri Jun 05 21:13:59 2009
+
+The following values are set for this run of the wizard
+SUBMODE_TYPE is SUBMODE_PFFSERIAL
+MULTIBOOT_DEVICE is DEVICE_NONE
+MULTIBOOT_TYPE is TYPE_NONE
+Downstream Daisy-Chain type is CHAINTYPE_NONE
+setMultiBootSelect is FALSE
+setSPISelect is FALSE
+// *** BATCH CMD : setMode -pff
+// *** BATCH CMD : setMode -pff
+// *** BATCH CMD : addConfigDevice  -name "Untitled" -path "C:\Documents andSettings\bmhendri\Desktop\Low_Speed_Octal_synchronous_capture\"
+// *** BATCH CMD : setSubmode -pffserial
+// *** BATCH CMD : setAttribute -configdevice -attr multibootBpiType -value ""
+// *** BATCH CMD : addDesign -version 0 -name ""
+// *** BATCH CMD : setMode -pff
+// *** BATCH CMD : addDeviceChain -index 0
+// *** BATCH CMD : setMode -pff
+// *** BATCH CMD : addDeviceChain -index 0
+Override chain at index 0.
+Overriding chain at index 0.
+// *** BATCH CMD : setAttribute -configdevice -attr compressed -value "FALSE"
+// *** BATCH CMD : setAttribute -configdevice -attr compressed -value "FALSE"
+// *** BATCH CMD : setAttribute -configdevice -attr autoSize -value "FALSE"
+// *** BATCH CMD : setAttribute -configdevice -attr fileFormat -value "bin"
+// *** BATCH CMD : setAttribute -configdevice -attr fillValue -value "FF"
+// *** BATCH CMD : setAttribute -configdevice -attr swapBit -value "FALSE"
+// *** BATCH CMD : setAttribute -configdevice -attr dir -value "UP"
+// *** BATCH CMD : setAttribute -configdevice -attr multiboot -value "FALSE"
+// *** BATCH CMD : setAttribute -configdevice -attr multiboot -value "FALSE"
+// *** BATCH CMD : setAttribute -configdevice -attr spiSelected -value "FALSE"
+// *** BATCH CMD : setAttribute -configdevice -attr spiSelected -value "FALSE"
+// *** BATCH CMD : setMode -pff
+------------------------  GUI: PFFView Wizard Data Report ------------------------
+SubMode: PFF_SERIAL
+MB Master Device: 
+MB Mode: 
+MB Chain: 
+getMultiBootSelected(): FALSE
+getSPISelected(): FALSE
+------------------------  GUI: End PFFView Report  ------------------------
+// *** BATCH CMD : setMode -pff
+// *** BATCH CMD : setCurrentDesign -version 0
+// *** BATCH CMD : setCurrentDeviceChain -index 0
+// *** BATCH CMD : setCurrentDeviceChain -index 0
+// *** BATCH CMD : deleteDesign -version 0
+// *** BATCH CMD : setCurrentDesign -version -1
+// *** BATCH CMD : setMode -pff
+// *** BATCH CMD : addConfigDevice -size 512 -name "Untitled" -path"C:\Documents andSettings\bmhendri\Desktop\Low_Speed_Octal_synchronous_capture\/"
+// *** BATCH CMD : setSubmode -pffserial
+// *** BATCH CMD : setAttribute -configdevice -attr dir -value "UP"
+// *** BATCH CMD : setAttribute -configdevice -attr flashDataWidth -value "8"
+// *** BATCH CMD : setMode -pff
+// *** BATCH CMD : setSubmode -pffserial
+// *** BATCH CMD : setAttribute -configdevice -attr dir -value "UP"
+// *** BATCH CMD : addDesign -version 0 -name "0000"
+// *** BATCH CMD : setMode -pff
+// *** BATCH CMD : addDeviceChain -index 0
+// *** BATCH CMD : setCurrentDeviceChain -index 0
+------------------------  GUI: Wizard Data Report  ---------------------------
+      PROM Mode : Serial
+      Compression : false
+      Fill Value : FF
+      Output Format : mcs
+      Swap Bits : true
+      LoadDirection : UP
+      PROM Basename : Untitled
+      File Location : C:\Documents andSettings\bmhendri\Desktop\Low_Speed_Octal_synchronous_capture\/
+      Auto Selcet : false
+      Number of Data Stream : 1
+      Number of PROMs : 0
+-------------------------- END of Report ----------------------------
+// *** BATCH CMD : setCurrentDeviceChain -index 0
+// *** BATCH CMD : setAttribute -design -attr name -value "0"
+// *** BATCH CMD : addDevice -p 1 -file "C:/Documents andSettings/bmhendri/Desktop/Low_Speed_Octal_synchronous_capture/top.bit"
+'1': Loading file 'C:/Documents andSettings/bmhendri/Desktop/Low_Speed_Octal_synchronous_capture/top.bit' ...
+INFO:iMPACT - Elapsed time =      1 sec.
+done.
+INFO:iMPACT:501 - '1': Added Device xc4vfx20 successfully.
+----------------------------------------------------------------------
+----------------------------------------------------------------------
+Add one device.WARNING:ProjectMgmt - Could not remove the file <C:/Documents and   Settings/bmhendri/Desktop/Low_Speed_Octal_synchronous_capture/_impact.cmd> -   cleanup failed.
+WARNING:ProjectMgmt - Could not remove the file <C:/Documents and   Settings/bmhendri/Desktop/Low_Speed_Octal_synchronous_capture/_impact.log> -   cleanup failed.
+// *** BATCH CMD : setMode -pff
+// *** BATCH CMD : setCurrentDesign -version 0
+// *** BATCH CMD : setCurrentDeviceChain -index 0
+// *** BATCH CMD : deleteDevice -position 1
+// *** BATCH CMD : setCurrentDeviceChain -index 0
+// *** BATCH CMD : deleteDesign -version 0
+// *** BATCH CMD : setCurrentDesign -version -1
+// *** BATCH CMD : setMode -pff

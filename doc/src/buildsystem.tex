@@ -1,0 +1,83 @@
+
+\newpage
+\section{Seawolf Build System} \label{build}
+In lieu of a Make based build system, Seawolf's software stack is built with a
+simple collection of shell scripts which emulate a number of Make-like features.
+
+\subsection{Using the Build System} \label{buildusing}
+In directories such as \folder{applications}, \folder{doc}, \folder{serial}, and
+\folder{libseawolf} you will find shell scripts called \file{make}, and each of
+these is the build script for their respective component. To start a build,
+begin by nagivating to the given directory and then executing
+\texttt{./make}. This should generate all output files for the given
+component. If you instead execute \texttt{./make clean} the script should remove
+all output files.
+
+\subsection{Writing a build script} \label{buildwriting}
+To write a build script begin with the following template which is canonically
+named \file{make}.
+
+\begin{lstlisting}[language=sh, caption=Build script template]
+#!/bin/sh
+
+CC=``/usr/bin/gcc''
+CFLAGS=``--std=c99 -Wall -pedantic -g''
+
+source ../misc/make.sh
+
+case ``$1'' in
+  ``clean'')
+    # Remove files
+    ;;
+  *)
+    # Build files 
+    ;;
+esac
+\end{lstlisting}
+
+More targets be can added as desired by introducing new branches to the main
+case statement. Functions included from \file{misc/make.sh} can make writing
+these targets easier. 
+
+The function \func{runcmd} takes a program to run as its argument and will print
+the program and its argumets before actually running it. This should be used to
+provide visual feedback for all commands which are executed.
+
+The function \func{isOutDated} can be used to determine if an output file needs
+to be updated. The first argument is the output file name and the rest of the
+arguments are the source files that the output file is made from. If any of the
+dependencies have more recent modification times then the output file then the
+output file is considered out-of-date and the function returns true. If the
+output file is the most recently modified then it is up-to-date and the function
+returns false.
+
+The function \func{rmNoFail} will remove a file if it exists and return
+immediadately otherwise. This can be used to write simple ``clean'' targets. 
+
+The following is an example make script. This one in paricular builds the
+applications.
+
+\begin{lstlisting}[language=sh, caption=Applications build script]
+#!/bin/sh
+
+CC="/usr/bin/gcc"
+CFLAGS="--std=c99 -Wall -pedantic"
+INCLUDES="-I../libseawolf/include"
+LIBFLAGS="-g -lncurses -lrt -lseawolf -lpthread -L../libseawolf/"
+OUTPUTDIR="bin"
+
+source ../misc/make.sh
+
+case "$1" in
+  "clean")
+    rmNoFail ${OUTPUTDIR}/*
+    ;;
+  *)
+    for in in src/*.c; do
+        out="${OUTPUTDIR}/`basename ${in} .c`"
+        if isOutDated $out $in; then
+            runcmd ${CC} ${CFLAGS} ${INCLUDES} -o $out $in ${LIBFLAGS}
+        fi
+    done;
+esac
+\end{lstlisting}

@@ -1,0 +1,3 @@
+Sample code for signal processing data.
+
+You will need FFTW to be able to process FFTs and IFFTs correctly.

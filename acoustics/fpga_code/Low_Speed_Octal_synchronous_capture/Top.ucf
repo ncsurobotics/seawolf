@@ -1,0 +1,228 @@
+########################################################################################################
+# Company: 			Analog Devices
+# Engineer: 		Alex Arrants	
+# Create Date:   	1/21/08
+# Design Name:   	FIFO5 for Octals 
+# Module Name:   	Top.UCF
+# Project Name:  	 
+# Target Device:  
+# Tool versions:	ISE 9.2  
+# Description: 	 
+# Revision:
+# Comments:
+# 	
+#########################################################################################################    
+NET "dco_p" TNM_NET = "dco_p";
+TIMESPEC TS_dco_p = PERIOD "dco_p" 390 MHz;	
+NET "fco_p" TNM_NET = "fco_p";
+TIMESPEC TS_fco_p = PERIOD "fco_p" 65 MHz;	
+
+NET "_ffa" LOC = "G16";
+
+#NET "dco_p" TNM_NET = "dco_p";
+#TIMESPEC TS_dco_p = PERIOD "dco_p" 400 MHz;	
+#NET "fco_p" TNM_NET = "fco_p";
+#TIMESPEC TS_fco_p = PERIOD "fco_p" 65 MHz;	
+#NET "din_dp" TNM_NET = "din_dp";
+#TIMESPEC TS_din_dp = PERIOD "din_dp" 65 MHz;
+###################################################
+# J3 Parallel Data Port
+###################################################
+#NET "din_p<0>"  LOC = "D6"  ; 
+#NET "din_p<1>"  LOC = "H9"  ; 
+#NET "din_p<2>"  LOC = "E8"  ; 
+#NET "din_p<3>"  LOC = "L10"  ; 
+#NET "din_p<4>"  LOC = "J9"  ;  # reversed polarity
+#NET "din_p<5>"  LOC = "C3"  ; 
+#NET "din_p<6>"  LOC = "E3"  ; 
+#NET "din_p<7>"  LOC = "D5"  ; 
+#NET "din_p<8>"  LOC = "C4"  ; 
+#NET "din_p<9>"  LOC = "B7"  ; 
+#NET "din_p<10>"  LOC = "B6"  ; 
+#NET "din_p<11>"  LOC = "D9"  ;  # reversed polarity 
+#NET "din_p<12>"  LOC = "D8"  ;  # reversed polarity 
+#NET "din_p<13>"  LOC = "C11"  ;  # reversed polarity 
+#NET "din_p<14>"  LOC = "E10"  ; 
+#NET "din_p<15>"  LOC = "G10"  ; 
+#NET "din_p<16>"  LOC = "E11"  ; 
+#NET "din_p<17>"  LOC = "G12"  ; 
+#NET "din_n<0>"  LOC = "E6"  ; 
+#NET "din_n<1>"  LOC = "G9"  ; 
+#NET "din_n<2>"  LOC = "E7"  ; 
+#NET "din_n<3>"  LOC = "L9"  ; 
+#NET "din_n<4>"  LOC = "K10"  ;  # reversed polarity 
+#NET "din_n<5>"  LOC = "D3"  ; 
+#NET "din_n<6>"  LOC = "F3"  ; 
+#NET "din_n<7>"  LOC = "E5"  ; 
+#NET "din_n<8>"  LOC = "D4"  ; 
+#NET "din_n<9>"  LOC = "C7"  ;
+#NET "din_n<10>"  LOC = "C6"  ; 
+#NET "din_n<11>"  LOC = "C9"  ;  # reversed polarity 
+#NET "din_n<12>"  LOC = "C8"  ;  # reversed polarity 
+#NET "din_n<13>"  LOC = "B11"  ;  # reversed polarity 
+#NET "din_n<14>"  LOC = "D10"  ; 
+#NET "din_n<15>"  LOC = "F10"  ; 
+#NET "din_n<16>"  LOC = "D11"  ; 
+#NET "din_n<17>"  LOC = "G11"  ;
+#NET "clkin_p"  LOC = "A14"  ;
+#NET "clkin_n"  LOC = "A13"  ;
+###################################################
+# J2 Parallel Data Port
+###################################################
+#NET "din_p<0>"  LOC = "T4"  ;
+#NET "din_n<0>"  LOC = "T3"  ;
+#NET "din_p<1>"  LOC = "M4"  ;  
+#NET "din_n<1>"  LOC = "N4"  ;  
+#NET "din_p<2>"  LOC = "P4"  ;
+#NET "din_n<2>"  LOC = "R3"  ;
+#NET "din_p<3>"  LOC = "M5"  ;  
+#NET "din_n<3>"  LOC = "L5"  ;  
+#NET "din_p<4>"  LOC = "L4"  ;  
+#NET "din_n<4>"  LOC = "L3"  ;  
+NET "dco_p"  LOC = "A12"  ;	
+NET "dco_n"  LOC = "B12"  ;
+NET "fco_p"  LOC = "C13"  ;  
+NET "fco_n"  LOC = "C12"  ;  
+NET "din_ap"  LOC = "B9"  ;
+NET "din_an"  LOC = "A9"  ;
+NET "din_bp"  LOC = "F8"  ;
+NET "din_bn"  LOC = "F7"  ;
+NET "din_cp"  LOC = "H8"  ;
+NET "din_cn"  LOC = "H7"  ;
+NET "din_dp"  LOC = "G5"  ;  
+NET "din_dn"  LOC = "F4"  ;  
+NET "din_ep"  LOC = "J4"  ;
+NET "din_en"  LOC = "H3"  ;
+NET "din_fp"  LOC = "K3"  ;
+NET "din_fn"  LOC = "J3"  ;
+NET "din_gp"  LOC = "M5"  ;
+NET "din_gn"  LOC = "L5"  ;
+NET "din_hp"  LOC = "M4"  ;  
+NET "din_hn"  LOC = "N4"  ;  
+#NET "din_p<6>"  LOC = "G7"  ;
+#NET "din_n<6>"  LOC = "H6"  ;
+#NET "din_p<7>"  LOC = "H8"  ;
+#NET "din_n<7>"  LOC = "H7"  ;
+#NET "din_p<8>"  LOC = "K8"  ;
+#NET "din_n<8>"  LOC = "K7"  ;
+#NET "din_p<9>"  LOC = "F8"  ;  
+#NET "din_n<9>"  LOC = "F7"  ;  
+#NET "din_p<10>" LOC = "A8"  ;
+#NET "din_n<10>" LOC = "A7"  ;
+#NET "din_p<11>" LOC = "B9"  ; # MSB
+#NET "din_n<11>" LOC = "A9"  ; # MSB 
+#NET "din_p<12>" LOC = "B10" ;	# OTR
+#NET "din_n<12>" LOC = "A10" ; # OTR
+#NET "clkin_p"  LOC = "C13"  ;
+#NET "clkin_n"  LOC = "C12"  ;
+###################################################
+# USB Interface
+###################################################
+NET "dout<0>"  LOC = "V12"  ;
+NET "dout<1>"  LOC = "V13"  ; 
+NET "dout<2>"  LOC = "V14"  ; 
+NET "dout<3>"  LOC = "U14"  ; 
+NET "dout<4>"  LOC = "W13"  ; 
+NET "dout<5>"  LOC = "Y13"  ; 
+NET "dout<6>"  LOC = "W14"  ; 
+NET "dout<7>"  LOC = "W15"  ; 
+NET "dout<8>"  LOC = "V11"  ; 
+NET "dout<9>"  LOC = "W11"  ;  
+NET "dout<10>"  LOC = "U15"  ; 
+NET "dout<11>"  LOC = "U16"  ; 
+NET "dout<12>"  LOC = "Y11"  ; 
+NET "dout<13>"  LOC = "Y12"  ; 
+NET "dout<14>"  LOC = "W16"  ; 
+NET "dout<15>"  LOC = "V16"  ;
+
+NET "_mr"  LOC = "J16"  ; 
+NET "_wen"  LOC = "G14"  ;
+NET "rclk"  LOC = "G15"  ; 
+NET "_renA"  LOC = "H14"  ; # _ren_A
+NET "_renB"  LOC = "J13"  ; # _ren_B
+#NET "m3"  LOC = "K11" ; 
+#NET "m4"  LOC = "V6" ;  
+
+###################################################
+# SPI Pins
+###################################################
+
+NET "sclk_in" TNM_NET = "sclk_in";
+TIMESPEC "TS_sclk_in" = PERIOD "sclk_in" 8.0 ns HIGH 66 %;
+
+NET "sclk_in" LOC = "H13" | IOSTANDARD = LVCMOS25;# | PULLDOWN;
+#NET "sclk_in" IOSTANDARD = "LVCMOS25" ;
+#NET "sclk_in" PULLDOWN;
+NET "csb_in"  LOC = "J15" | IOSTANDARD = LVCMOS25 | PULLUP ;
+NET "csb_in" IOSTANDARD = "LVCMOS25";
+NET "csb_in" PULLUP;
+NET "sdi_in"  LOC = "K12" | IOSTANDARD = LVCMOS25 | PULLUP ;
+NET "sdi_in" IOSTANDARD = "LVCMOS25";
+NET "sdi_in" PULLUP;
+
+#NET "sdo_out"  LOC = "H12" | IOSTANDARD = LVCMOS25 ;
+#NET "sdo_out" IOSTANDARD = "LVCMOS25";
+#
+#NET "sclk_out" LOC = "H3" | IOSTANDARD = LVCMOS25 ;
+#NET "sclk_out" IOSTANDARD = "LVCMOS25";
+#NET "csb_out"  LOC = "L5" | IOSTANDARD = LVCMOS25 ;
+#NET "csb_out" IOSTANDARD = "LVCMOS25";
+#NET "sdi_out" LOC = "J3" | IOSTANDARD = LVCMOS25 ;
+#NET "sdi_out" IOSTANDARD = "LVCMOS25";
+#NET "sdo_in" LOC = "C12" | IOSTANDARD = LVCMOS25 | PULLDOWN ;
+#NET "sdo_in" IOSTANDARD = "LVCMOS25";
+#NET "sdo_in" PULLDOWN;
+###################################################
+# SPI LEDs
+###################################################
+NET "chan_a_led" LOC = Y15 | IOSTANDARD = "LVCMOS25";
+NET "chan_a_led" IOSTANDARD = "LVCMOS25";
+NET "chan_b_led" LOC = U7 | IOSTANDARD = "LVCMOS25";
+#NET "chan_b_led" LOC = W10 | IOSTANDARD = "LVCMOS25";
+NET "chan_b_led" IOSTANDARD = "LVCMOS25";
+NET "chan_c_led" LOC = Y6 | IOSTANDARD = "LVCMOS25";
+NET "chan_c_led" IOSTANDARD = "LVCMOS25";
+NET "chan_d_led" LOC = Y16 | IOSTANDARD = "LVCMOS25";
+NET "chan_d_led" IOSTANDARD = "LVCMOS25";
+
+###################################################
+# Test Points
+###################################################
+#NET "tp_sclk" LOC = "AB7" | IOSTANDARD = LVCMOS25 ;
+#NET "tp_sclk" IOSTANDARD = "LVCMOS25";
+#NET "tp_cs_fpga" LOC = "AD4" | IOSTANDARD = LVCMOS25 ;
+#NET "tp_cs_fpga" IOSTANDARD = "LVCMOS25";
+#NET "tp_sdi" LOC = "AD5" | IOSTANDARD = LVCMOS25 ;
+#NET "tp_sdi" IOSTANDARD = "LVCMOS25";
+#
+#NET "tp_d0" LOC = "AC9" | IOSTANDARD = LVCMOS25 | PULLUP ;
+#NET "tp_d0" IOSTANDARD = "LVCMOS25";
+#NET "tp_d1" LOC = "AA8" | IOSTANDARD = LVCMOS25 ;
+#NET "tp_d1" IOSTANDARD = "LVCMOS25";
+#NET "tp_d2" LOC = "AA7" | IOSTANDARD = LVCMOS25 ;
+#NET "tp_d2" IOSTANDARD = "LVCMOS25";
+#NET "tp_d3" LOC = "AD6" | IOSTANDARD = LVCMOS25 ;
+#NET "tp_d3" IOSTANDARD = "LVCMOS25";
+
+#NET "tp_bw0" LOC = AD4 | IOSTANDARD = "LVCMOS25" | PULLUP;
+#NET "tp_bw0" IOSTANDARD = "LVCMOS25";
+#NET "tp_bw0" PULLUP;
+#NET "tp_bw1" LOC = AB7 | IOSTANDARD = "LVCMOS25" | PULLUP;
+#NET "tp_bw1" IOSTANDARD = "LVCMOS25";
+#NET "tp_bw1" PULLUP;
+
+#NET "tp_Clock_Mux_Select" LOC = AD5 | IOSTANDARD = "LVCMOS25" | PULLUP;
+#NET "tp_Clock_Mux_Select" IOSTANDARD = "LVCMOS25";
+#NET "tp_Clock_Mux_Select" PULLUP;
+#NET "dco_p" IOSTANDARD = "LVDS_25";
+#NET "dco_n" IOSTANDARD = "LVDS_25";
+#NET "din_an" IOSTANDARD = "LVDS_25";  
+#NET "din_ap" IOSTANDARD = "LVDS_25";
+#NET "din_bn" IOSTANDARD = "LVDS_25";
+#NET "din_bp" IOSTANDARD = "LVDS_25";
+#NET "din_cn" IOSTANDARD = "LVDS_25";
+#NET "din_cp" IOSTANDARD = "LVDS_25";
+#NET "din_dp" IOSTANDARD = "LVDS_25";
+#NET "din_dn" IOSTANDARD = "LVDS_25";
+#NET "fco_n" IOSTANDARD = "LVDS_25";
+#NET "fco_p" IOSTANDARD = "LVDS_25";

@@ -1,0 +1,21 @@
+Asterisk (*) preceding a constraint indicates it was not met.
+   This may be due to a setup or hold violation.
+
+------------------------------------------------------------------------------------------------------
+  Constraint                                |  Check  | Worst Case |  Best Case | Timing |   Timing   
+                                            |         |    Slack   | Achievable | Errors |    Score   
+------------------------------------------------------------------------------------------------------
+* TS_dco_p = PERIOD TIMEGRP "dco_p" 390 MHz | SETUP   |    -0.465ns|     3.029ns|       1|         465
+   HIGH 50%                                 | HOLD    |     0.515ns|            |       0|           0
+------------------------------------------------------------------------------------------------------
+  TS_sclk_in = PERIOD TIMEGRP "sclk_in" 8 n | SETUP   |     5.088ns|     2.912ns|       0|           0
+  s HIGH 66%                                | HOLD    |     0.525ns|            |       0|           0
+------------------------------------------------------------------------------------------------------
+  TS_fco_p = PERIOD TIMEGRP "fco_p" 65 MHz  | SETUP   |     7.606ns|     7.778ns|       0|           0
+  HIGH 50%                                  | HOLD    |     0.498ns|            |       0|           0
+------------------------------------------------------------------------------------------------------
+
+
+1 constraint not met.
+
+
