@@ -24,7 +24,7 @@ CFLAGS += -Dimage_record
 #CFLAGS += -Ddebug_tuna
 #CFLAGS += -Ddebug_grid
 #CFLAGS += -Ddebug_bins
-#CFLAGS += -Ddebug_skip_go_wait
+CFLAGS += -Ddebug_skip_go_wait
 
 all: mission switcher
 

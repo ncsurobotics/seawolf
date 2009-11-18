@@ -35,23 +35,16 @@ void summationMix(short req_roll[2], short req_pitch[3], short req_depth[3], sho
     out[PORTY] = req_roll[PORT] + req_pitch[PORT] + req_depth[PORT];
     out[STARY] = req_roll[STAR] + req_pitch[STAR] + req_depth[STAR];
     out[AFT] = req_pitch[AFT] + req_depth[AFT];
-    /*out[PORTX] = req_forward[PORT] + req_yaw[PORT];
-      out[STARX] = req_forward[STAR] + req_yaw[STAR];*/
-    out[PORTX] = 63 + req_yaw[PORT];
-    out[STARX] = 63 + req_yaw[STAR];
-
+    out[PORTX] = req_forward[PORT] + req_yaw[PORT];
+    out[STARX] = req_forward[STAR] + req_yaw[STAR];
 }
 
 void setThrusters(short out[5]) {
     /* Set all thurster values */
-    /*    SeaSQL_setPortY(out[PORTY]);
+    SeaSQL_setPortY(out[PORTY]);
     SeaSQL_setStarY(out[STARY]);
-    SeaSQL_setAft(out[AFT]);*/
+    SeaSQL_setAft(out[AFT]);
 
-    SeaSQL_setPortY(63);
-    SeaSQL_setStarY(63);
-    SeaSQL_setAft(-63);
-    
     SeaSQL_setPortX(out[PORTX]);
     SeaSQL_setStarX(out[STARX]);
 }
@@ -75,7 +68,6 @@ int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("PID Mixer");
 
-    Logging_log(DEBUG, "YO BITCH! IMMA BROKE");
     SeaSQL_setDepthHeading(0.5);
     SeaSQL_setYawHeading(SeaSQL_getSEA_Yaw());
 
