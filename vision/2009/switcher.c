@@ -20,8 +20,8 @@ int main(int argc, char** argv)
         multicam_set_camera(2,argv[1]);
     } else {
         multicam_set_camera(0,"0");
-        multicam_set_camera(1,"0");
-        multicam_set_camera(2,"0");
+        multicam_set_camera(1,"1");
+        multicam_set_camera(2,"2");
     }
     IplImage* frame;
     int current_cam = 0;
@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 
     while (1)
     {
-	printf("Got frame...\n");
+        //printf("Got frame...\n");
         frame = multicam_get_frame(current_cam);
         cvShowImage("Camera", frame);
         int key = cvWaitKey(500);
