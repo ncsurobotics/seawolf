@@ -23,7 +23,7 @@ float SeaSQL_getMostRecent(char* name);              /* Store the most recent ve
 void SeaSQL_clearVariables(void);                    /* Reset the variables table */
 
 /* Make defining accessors easy */
-#define MYSQL_ACCESSOR_HEADER(name) float SeaSQL_get##name(); \
+#define MYSQL_ACCESSOR_HEADER(name) float SeaSQL_get##name(void); \
                                     int SeaSQL_set##name(float value);
 
 /* Define all variables and accessors */

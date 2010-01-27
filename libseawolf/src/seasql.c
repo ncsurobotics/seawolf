@@ -10,7 +10,7 @@
 #include <mysql/mysql.h>
 
 /* Make defining accessors easy */
-#define MYSQL_ACCESSOR(name) float SeaSQL_get##name(){return SeaSQL_getMostRecent(#name);} \
+#define MYSQL_ACCESSOR(name) float SeaSQL_get##name(void){return SeaSQL_getMostRecent(#name);} \
                              int SeaSQL_set##name(float value){return SeaSQL_updateVariable(#name, value);}
 
 /* Define all variables and accessors */
