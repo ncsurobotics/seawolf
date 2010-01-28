@@ -3,12 +3,10 @@ all: seawolf.pdf
 
 # Run twice (second time generates indexes and whatnot)
 seawolf.pdf:
+	mkdir -p work
 	latex -output-format=pdf -output-directory=work/ src/seawolf.tex
 	latex -output-format=pdf -output-directory=work/ src/seawolf.tex
 	mv work/seawolf.pdf .
-
-work:
-	mkdir -p work
 
 clean:
 	@for _f in seawolf.pdf work/*; do \
@@ -18,4 +16,4 @@ clean:
 	  fi; \
 	done;
 
-.PHONY: all clean work seawolf.pdf
+.PHONY: all clean seawolf.pdf

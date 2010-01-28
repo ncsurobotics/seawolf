@@ -72,23 +72,6 @@ automatically send out a Notify \texttt{UPDATED} message (see
 but certain applications may prefer to send out these message manually to
 control when they are sent.
 
-\subsubsection{SeaSQL\_configFile} \label{apiseasqlconfigfile}
-\cdoc{void SeaSQL_configFile(char* filename)} \deprecated{} (see
-\interlink{apiseawolfconfig}{\func{Seawolf\_loadConfig}}) - Load SeaSQL
-configuration information from the file pointed to by \texttt{filename}. The
-path, if relative, is relative to the working directory where the application is
-executed from. It is recommended to use absolute paths when possible. This
-function should be called before any initialization methods are called. The
-format of this configuration file is documented in the
-\inlinelink{formatsseasqlconf}{SeaSQL Configuration File} section.
-
-\subsubsection{SeaSQL\_configPrompt} \label{apiseasqlconfigprompt}
-\cdoc{void SeaSQL_configPrompt(void)} Prompt for configuration values from
-standard input. All settings are prompted for and values must be given for
-each. For a list of configuration options see
-\interlink{apiseasqlconfigfile}{SeaSQL\_configFile}.
-
-
 \subsection{Logging} \label{apilogging}
 \subsubsection{Logging\_log} \label{apilogginglog}
 \cdoc{void Logging_log(short level, char* message)} Log the string stored in
