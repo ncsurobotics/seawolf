@@ -21,17 +21,21 @@
 #define FRAC_FORWARD 0.5
 #define FRAC_YAW 0.5
 
+static int count;
+
 /* Simple proportional mixing algorithm */
-void proportionalMix(short req_roll[2], short req_pitch[3], short req_depth[3], short req_forward[2], short req_yaw[2], short out[5]) {
+#if 0
+static void proportionalMix(short req_roll[2], short req_pitch[3], short req_depth[3], short req_forward[2], short req_yaw[2], short out[5]) {
     out[PORTY] = (req_roll[PORT] * FRAC_ROLL) + (req_pitch[PORT] * FRAC_PITCH) + (req_depth[PORT] * FRAC_DEPTH);
     out[STARY] = (req_roll[STAR] * FRAC_ROLL) + (req_pitch[STAR] * FRAC_PITCH) + (req_depth[STAR] * FRAC_DEPTH);
     out[AFT] = (req_pitch[AFT] * FRAC_PITCH) + (req_depth[AFT] * FRAC_DEPTH);
     out[PORTX] = (req_forward[PORT] * FRAC_FORWARD) + (req_yaw[PORT] * FRAC_YAW);
     out[STARX] = (req_forward[STAR] * FRAC_FORWARD) + (req_yaw[STAR] * FRAC_YAW);
 }
+#endif // #if 0
 
 /* Simple summing mixing algorithm */
-void summationMix(short req_roll[2], short req_pitch[3], short req_depth[3], short req_forward[2], short req_yaw[2], short out[5]) {
+static void summationMix(short req_roll[2], short req_pitch[3], short req_depth[3], short req_forward[2], short req_yaw[2], short out[5]) {
     out[PORTY] = req_roll[PORT] + req_pitch[PORT] + req_depth[PORT];
     out[STARY] = req_roll[STAR] + req_pitch[STAR] + req_depth[STAR];
     out[AFT] = req_pitch[AFT] + req_depth[AFT];
@@ -39,7 +43,7 @@ void summationMix(short req_roll[2], short req_pitch[3], short req_depth[3], sho
     out[STARX] = req_forward[STAR] + req_yaw[STAR];
 }
 
-void setThrusters(short out[5]) {
+static void setThrusters(short out[5]) {
     /* Set all thurster values */
     SeaSQL_setPortY(out[PORTY]);
     SeaSQL_setStarY(out[STARY]);
@@ -49,9 +53,7 @@ void setThrusters(short out[5]) {
     SeaSQL_setStarX(out[STARX]);
 }
 
-static int count;
-
-int rate(void) {
+static int rate(void) {
     Timer* t = Timer_new();
 
     while(true) {

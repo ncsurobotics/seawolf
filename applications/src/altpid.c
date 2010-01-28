@@ -1,7 +1,7 @@
 
 #include "seawolf.h"
 
-void dataOut(double mv) {
+static void dataOut(double mv) {
     int out = Util_inRange(-THRUSTER_MAX, (int) mv, THRUSTER_MAX);
     int front = (int) out * 0.7;
     Notify_send("THRUSTER_REQUEST", Util_format("Alt %d %d %d", front, front, out));

@@ -1,7 +1,7 @@
 
 #include "seawolf.h"
 
-void dataOut(double mv) {
+static void dataOut(double mv) {
     Notify_send("THRUSTER_REQUEST", Util_format("Yaw %d %d", (int) mv, (int) -mv));
 }
 
@@ -12,16 +12,16 @@ int main(void) {
     PID* pid;
     char action[64], data[64];
     double mv;
-    bool do_yaw;
+    bool do_yaw = (SeaSQL_getPIDDoYaw() == 1.0);
     float yaw;
-    float yaw_heading;
+    float yaw_heading = SeaSQL_getYawHeading();
     
     Notify_filter(FILTER_MATCH, "UPDATED IMU");
     Notify_filter(FILTER_MATCH, "UPDATED YawPID");
     Notify_filter(FILTER_MATCH, "UPDATED YawHeading");
     Notify_filter(FILTER_MATCH, "UPDATED PIDDoYaw");
 
-    pid = PID_new(SeaSQL_getYawHeading(),
+    pid = PID_new(yaw_heading,
                   SeaSQL_getYawPID_p(),
                   SeaSQL_getYawPID_i(),
                   SeaSQL_getYawPID_d());

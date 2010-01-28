@@ -1,6 +1,6 @@
 
 export CC= gcc
-export CFLAGS= --std=c99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../libseawolf/include -g
+export CFLAGS= --std=c99 -Wall -Werror -pedantic -Wmissing-prototypes -I$(PWD)/../libseawolf/include -O2
 export BIN_DIR= $(PWD)/bin
 export LDFLAGS= -lncurses -lrt -lseawolf -lpthread -L$(PWD)/../libseawolf/
 
