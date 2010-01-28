@@ -6,6 +6,8 @@
 #define SIGNBIT(x) (((x) & (1<<7)) ? (((~((x)-1)) | (((x) & (1 << 7)) >> 1))) : (x))
 #define DEAD_BAND 8
 
+void manage(SerialPort sp);
+
 const char* app_name = "Serial : thruster3";
 
 void manage(SerialPort sp) {
