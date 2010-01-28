@@ -104,7 +104,8 @@ kind of functionality isn't needed for Seawolf's applications however so
 track state.  This greatly reduces the complexity from both the application and
 \libseawolf{} programmer's perspective. When using global variables in your own
 components, insure that they are statically declared so that they are accessible
-only from within the given file. Reference existing components for help.
+only from within the given file. Refer to existing code as documentation of
+these practices.
 
 \paragraph{Header File}
 The simplest method for constructing an appropriate header file is to copy the
@@ -127,9 +128,9 @@ so if you are writing a component called MyComponent then the outline should be 
   *@\ldots{}@*
 #endif // #ifndef __SEAWOLF_MYCOMPONENT_INCLUDE_H
 \end{lstlisting}
-It is very important to make these modifications because they insure that the
-header file will be included into the code to be compiled at very most once,
-even if it is explicately included multiple times.
+These lines are important and keep a header from being included more than once
+in a given source file. If you don't do this, it is likely that the library and
+applications will fail to build.
 
 \subsubsection{Integrating}
 Changes to two existing files will be necessary to finalize the integration
@@ -146,9 +147,15 @@ body. Function calls to component close methods are in reverse order of their
 init calls in \inlinelink{apiseawolfinit}{\func{Seawolf\_init}}.
 
 \subsubsection{Adding to the Build System}
-You don't need to make any modifications to the build script for your component
-to be included. The build system includes all \texttt{.c} files in
-\folder{libseawolf/src} as part of the library build process.
+In \file{src/Makefile} find the definition given as
+\begin{lstlisting}[language=Cextended, caption=src/Makefile, escapeinside={{*@}{@*}}]
+  *@\ldots{}@*
+LIB_SRC= ardcomm.c logging.c main.c notify.c pid.c \
+	seasql.c seasql_config.c seawolf_config.c \
+	serial.c stack.c task.c timer.c util.c
+  *@\ldots{}@*
+\end{lstlisting}
+Add the name of the new component to the list of source files and it will be included in the build process.
 
 \subsection{Adding Support for New Serial Devices}
 \textit{This section yet to be compeleted}

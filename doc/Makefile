@@ -1,16 +1,14 @@
 
-SRCS= $(vpath %.tex srC)
-
 all: seawolf.pdf
 
-seawolf.pdf: work/seawolf.pdf
-	cp work/seawolf.pdf seawolf.pdf
-
-work/seawolf.pdf: work $(SRCS)
+# Run twice (second time generates indexes and whatnot)
+seawolf.pdf:
 	latex -output-format=pdf -output-directory=work/ src/seawolf.tex
+	latex -output-format=pdf -output-directory=work/ src/seawolf.tex
+	mv work/seawolf.pdf .
 
 work:
-	mkdir work
+	mkdir -p work
 
 clean:
 	@for _f in seawolf.pdf work/*; do \
@@ -20,4 +18,4 @@ clean:
 	  fi; \
 	done;
 
-.PHONY: all clean
+.PHONY: all clean work seawolf.pdf

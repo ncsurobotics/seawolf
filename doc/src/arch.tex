@@ -13,31 +13,22 @@ that provide additional functionality to Seawolf application developers to
 utilize.
 
 \subsubsection{Applications} \label{apparch}
-Any applications which fully utilizes \libseawolf{} are considered ``Seawolf
-Applications'' and are automatically placed into active communication with all
-other Seawolf applications. With the exception of the hub server, all
-applications which run as part of Seawolf should be Seawolf applications. This
-includes all serial applications which are simply a special class of Seawolf
-applications.
+\libseawolf{} does nothing by itself, but it used by 
+applications which provide all control and logic for the craft. These
+applications are simply refered to as ``Seawolf Applications'' and form the bulk
+of the code base. Not included with the applications are the serial drivers
+which are considered separate, and the hub which is considered to be part
+of \libseawolf{}.
 
 \subsubsection{Serial Management} \label{serialarch}
-Seawolf's software must be able to integrate with a wide array of hardware
-devices and providing as much isolation and abstraction between these hardware
-devices and Seawolf applications as possible is highly desirable. Seawolf's
-serial management applications were written to do this. To provide this
-abstraction, Seawolf's serial applications handle all direct communication with
-serial devices on the behalf of Seawolf applications. Seawolf applications can
-indirectly communicate with devices by writing and reading from special
-variables managed by SeaSQL. These variables act as a single channel of
-communication with external devices. For example, there is a serial application
-which communicates with a thruster control board. Seawolf application developers
-can make calls to \func{SeaSQL\_setThruster} to update the value of what this
-thruster should run at. The serial thruster application will look for this
-variable to be updated and then communicate these updates to the thruster
-control board. The serial applications include one \texttt{serialapp}
-application which is responsible for identifying and spawning handlers for
-serial devices. The rest of the serial applications are responsible for managing
-particular serial devices such as thrusters, depth sensors, or altimeters.
+Seawolf is responsible for managing many IO devices and nearly all of these
+operate over serial connections. Serial management is handled by individual
+user-space drivers running for each IO device and a serial management
+application (\texttt{serialapp}) is responsible for associating drivers with
+serial devices through a process which automatically detects the device type on
+each serial port. Each serial driver, once running, communicates with
+applications through \libseawolf{} to provide abstracted access to the hardware
+devices.
 
 \subsection{Architecture} \label{archarch}
 Seawolf's software forms a multi application architecture where applications
