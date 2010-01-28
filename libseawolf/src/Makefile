@@ -5,8 +5,8 @@ HUB_LDFLAGS=
 INCLUDES=../include/seawolf/* ../include/seawolf.h
 
 LIB_SRC= ardcomm.c logging.c main.c notify.c pid.c \
-	seasql.c seasql_config.c seawolf_config.c \
-	serial.c stack.c task.c timer.c util.c
+	seasql.c seawolf_config.c serial.c stack.c \
+	task.c timer.c util.c
 LIB_OBJECTS= $(LIB_SRC:.c=.o)
 
 HUB_SRC= hub/hub.c

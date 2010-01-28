@@ -6,22 +6,6 @@
 
 #include <mysql/mysql.h>
 
-#include "seawolf/seasql_config.h"
-
-/* Basic methods */
-void SeaSQL_init(void);          /* Initialize SeaSQL backend */
-void SeaSQL_close(void);         /* Close SeaSQL backend */
-void SeaSQL_setAutoNotify(bool do_notify); /* Automatically use notify to send variable update notifications */
-int SeaSQL_execute(char* cmd);   /* Execute the given SQL expression */
-
-/* Helpful functions */
-bool SeaSQL_table_exists(char* tbl);   /* Does the table exists? */
-
-/* Variable updating methods */
-int SeaSQL_updateVariable(char* name, float value);  /* Update the value of variable 'name' to 'value' */
-float SeaSQL_getMostRecent(char* name);              /* Store the most recent version of variable 'name' and store it to 'value' */
-void SeaSQL_clearVariables(void);                    /* Reset the variables table */
-
 /* Make defining accessors easy */
 #define MYSQL_ACCESSOR_HEADER(name) float SeaSQL_get##name(void); \
                                     int SeaSQL_set##name(float value);
@@ -116,5 +100,37 @@ MYSQL_ACCESSOR_HEADER( PIDDoYaw )
 MYSQL_ACCESSOR_HEADER( PingDelay_a )
 MYSQL_ACCESSOR_HEADER( PingDelay_b )
 MYSQL_ACCESSOR_HEADER( PingDelay_c )
+
+/* Basic methods */
+void SeaSQL_init(void);          /* Initialize SeaSQL backend */
+void SeaSQL_close(void);         /* Close SeaSQL backend */
+void SeaSQL_setAutoNotify(bool do_notify); /* Automatically use notify to send variable update notifications */
+int SeaSQL_execute(char* cmd);   /* Execute the given SQL expression */
+
+/* Helpful functions */
+bool SeaSQL_table_exists(char* tbl);   /* Does the table exists? */
+
+/* Variable updating methods */
+int SeaSQL_updateVariable(char* name, float value);  /* Update the value of variable 'name' to 'value' */
+float SeaSQL_getMostRecent(char* name);              /* Store the most recent version of variable 'name' and store it to 'value' */
+void SeaSQL_clearVariables(void);                    /* Reset the variables table */
+
+/* Configuration function */
+void SeaSQL_setServer(const char* hostname);
+void SeaSQL_setUsername(const char* username);
+void SeaSQL_setPassword(const char* password);
+void SeaSQL_setDatabase(const char* db_name);
+void SeaSQL_setPort(unsigned short port);
+
+/* SeaSQL configure options (MySQL server settings really) */
+struct SeaSQL_config_s {
+    char hostname[64];
+    char username[64];
+    char password[64];
+    char database[64];
+    int port;
+};
+
+typedef struct SeaSQL_config_s SeaSQL_config;
 
 #endif // #ifndef __SEAWOLF_SEASQL_INCLUDE_H

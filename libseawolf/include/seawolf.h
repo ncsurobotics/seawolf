@@ -13,7 +13,6 @@
 
 /* Include all Seawolf III development headers */
 #include "seawolf/seasql.h"
-#include "seawolf/seasql_config.h"
 #include "seawolf/seawolf_config.h"
 #include "seawolf/logging.h"
 #include "seawolf/notify.h"
