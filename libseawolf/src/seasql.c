@@ -10,7 +10,7 @@
 #include <mysql/mysql.h>
 
 /* Make defining accessors easy */
-#define MYSQL_ACCESSOR(name) float SeaSQL_get##name(){return SeaSQL_getMostRecent(#name);} \
+#define MYSQL_ACCESSOR(name) float SeaSQL_get##name(void){return SeaSQL_getMostRecent(#name);} \
                              int SeaSQL_set##name(float value){return SeaSQL_updateVariable(#name, value);}
 
 /* Define all variables and accessors */
@@ -110,12 +110,55 @@ MYSQL_ACCESSOR( PingDelay_c )
 #define GETVAR_SQL "SELECT value FROM variables WHERE name='%s' ORDER BY id DESC LIMIT 1;"
 #define CREATE_VAR_TABLE "CREATE TABLE IF NOT EXISTS variables (id INT AUTO_INCREMENT UNIQUE PRIMARY KEY, time TIMESTAMP, precisetime DOUBLE, name CHAR(20), value FLOAT);"
 
+/* This is the SeaSQL configuration. These values can be changed with an
+   appropriate call to on of the SeaSQL_config* functions */
+static SeaSQL_config seasql_config = {"localhost",  /* System MySQL is running on */
+                                      "root",       /* MySQL user */
+                                      "",           /* Password corresponding with the username */
+                                      "seasql",     /* Default database name */
+                                      3306 };       /* Default MySQL port, should not change */
+
 /* Global MySQL connection object */
 static MYSQL* mysql_conn = NULL;
 static bool notify = true;
 
 /* MySQL call mutex */
 static pthread_mutex_t* mysql_lock = NULL;
+
+/**
+ * Set the hostname to use for the MySQL server
+ */
+void SeaSQL_setServer(const char* hostname) {
+    strcpy(seasql_config.hostname, hostname);
+}
+
+/**
+ * Set the username for the MySQL server
+ */
+void SeaSQL_setUsername(const char* username) {
+    strcpy(seasql_config.username, username);
+}
+
+/**
+ * Set the password for the MySQL server
+ */
+void SeaSQL_setPassword(const char* password) {
+    strcpy(seasql_config.password, password);
+}
+
+/**
+ * Set the database to connect to
+ */
+void SeaSQL_setDatabase(const char* db_name) {
+    strcpy(seasql_config.database, db_name);
+}
+
+/**
+ * Set the port to connect to for the MySQL server
+ */
+void SeaSQL_setPort(unsigned short port) {
+    seasql_config.port = port;
+}
 
 /**
  * Initialize SeaSQL and connect to MySQL 
@@ -132,17 +175,14 @@ void SeaSQL_init(void) {
     pthread_mutex_init(mysql_lock, &attr);
     pthread_mutexattr_destroy(&attr);
 
-    /* Retreive the configuration */
-    SeaSQL_config* seasql_config = SeaSQL_getConfig();
-
     /* Initialize and connect */
     mysql_conn = mysql_init(NULL);
     if(mysql_real_connect(mysql_conn, 
-                          seasql_config->hostname,  /* Configuration options */
-                          seasql_config->username,
-                          seasql_config->password,
-                          seasql_config->database,
-                          seasql_config->port,
+                          seasql_config.hostname,  /* Configuration options */
+                          seasql_config.username,
+                          seasql_config.password,
+                          seasql_config.database,
+                          seasql_config.port,
                           NULL, 0)) {
         /* Create variables table */
         SeaSQL_execute(CREATE_VAR_TABLE);
@@ -253,3 +293,4 @@ void SeaSQL_clearVariables(void) {
     SeaSQL_execute("ALTER TABLE variables AUTO_INCREMENT=1;");
     pthread_mutex_unlock(mysql_lock);
 }
+

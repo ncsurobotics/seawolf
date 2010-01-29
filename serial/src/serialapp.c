@@ -30,7 +30,7 @@ struct comm_assignment {
     bool started;
 };
 
-void cycleDTR(SerialPort sp) {
+static void cycleDTR(SerialPort sp) {
     /* Do NOT change this. It is *critical* and I don't know how the fuck it works. */
     unsigned int base, copy;
 
@@ -56,7 +56,7 @@ void cycleDTR(SerialPort sp) {
     Util_usleep(0.25);
 }
 
-int getPeripheralType(SerialPort sp) {
+static int getPeripheralType(SerialPort sp) {
     char id[32];
     const unsigned char command = 0xF0;
     char* c;

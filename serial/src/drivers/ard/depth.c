@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+void manage(SerialPort sp);
+
 const char* app_name = "Serial : Depth";
 
 void manage(SerialPort sp) {

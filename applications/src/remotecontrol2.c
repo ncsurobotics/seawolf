@@ -17,7 +17,7 @@
 static float depth_heading = SURFACE;
 static bool running = true;
 
-void* notify_monitor(void* _n) {
+static void* notify_monitor(void* _n) {
     char action[64], data[64];
     int aft = 0, portx = 0, porty = 0, starx = 0, stary = 0;
     float depth = 0;
@@ -71,7 +71,7 @@ void* notify_monitor(void* _n) {
     return NULL;
 }
 
-void updateThrusters(int magnitude, int rotate) {
+static void updateThrusters(int magnitude, int rotate) {
     float mag_f = (float) abs(magnitude);
     float rot_f = (float) abs(rotate);
     int mag_sign = SIGN(magnitude);

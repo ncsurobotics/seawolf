@@ -17,19 +17,18 @@ order to notify applications of variables updates.
 SeaSQL to write logging and debugging information to the MySQL database. This
 logging information can then accessed by logging into the MySQL server and
 browsing the 'log' table in the database. This can be done with the command line
-utility \texttt{mysql} or something like phpMyAdmin. Graphical tools for
-Microsoft Windows operating systems are available,
+utility \texttt{mysql} or a web-based utility such as phpMyAdmin. Graphical
+tools for Microsoft Windows operating systems are available,
 \url{http://dev.mysql.com/downloads/gui-tools/5.0.html}. The Logging components
 can also be configured to output message to the standard output to assist in
 real time debugging.
 
 \subsubsection{Serial} \label{overviewserial}
-The serial component of \libseawolf{} is meant to ease the effort involved in
-communicating with serial devices in C. This components provides functions to
-open and close serial ports, set serial port settings, and high level functions
-for reading and writing to and from serial devices. This component is only used
-by the serial applications (see \interlink{serialarch}{Serial Management}) so it
-is of little concern to application developers.
+The serial component provides a set of convenience functions for interacting
+with serial devices under Linux. It provides functions to open and close serial
+ports, set serial port settings, and high level functions for reading from and
+writing to serial devices. Functions in this component should only ever be
+directly accessed by serial drivers.
 
 \subsubsection{Notify} \label{overviewnotify}
 Notify is a component of \libseawolf{} critical to maintaining quick and
@@ -67,6 +66,16 @@ to keep track of running time as well as provide time deltas for reoccuring
 events. These Timers are well suited to writing PIDs and were written for such a
 purpose.
 
+\subsubsection{PID} \label{overviewpid}
+The PID component provides an easy to use implementation of a generic PID
+controller.
+
+\subsubsection{Stack} \label{overviewstack}
+An implementation of a stack-like data structure is provided for general use.
+
+\subsubsection{Task} \label{overviewtask}
+Provides basic job scheduling and queueing through a simple interface.
+
 \subsubsection{ArdComm} \label{overviewardcomm}
 ArdComm is a useful set of functions to provide high level communication with
 serial devices which support the ArdComm protocol. This component was designed
@@ -85,11 +94,11 @@ message and send it back out to all other connected clients. In this way it acts
 very similarly to a hub or repeater.
 
 \subsection {Using \libseawolf} \label{usinglibseawolf}
-\libseawolf{} is provided as a shared library (DLL in Windows, Shared Object in
-*NIX) along with a set of header files which provide definitions for functions
-available through \libseawolf{}. Writing applications is as simple as placing
-your application in a predefined location and it will automatically be
-integrated with the build system.
+\libseawolf{} is provided as a shared library along with a set of header files
+ which provide definitions for functions available
+through \libseawolf{}. Writing applications is as simple as placing your
+application in a predefined location and it will automatically be integrated
+by the build system.
 
 \subsubsection{The Environment} \label{environment}
 All general purpose Seawolf applications are located under a single directory in
@@ -100,7 +109,7 @@ built with the rest of the general purpose Seawolf applications.
 \begin{lstlisting}[language=FileList, caption=Directory structure, escapeinside={{*@}{@*}}]
 seawolf3/          /* The root directory. CODE2009 in the SVN */
   applications/
-    +make           /* Applications build script */
+    +Makefile       /* Applications build script */
     bin            /* Binaries placed here by the build system */
     src/           /* Source files for applications */
   
@@ -108,7 +117,7 @@ seawolf3/          /* The root directory. CODE2009 in the SVN */
     *@\ldots{}@*
  
   libseawolf/      /* libseawolf code */
-    +make
+    +Makefile
     src/
     include/
       +seawolf.h

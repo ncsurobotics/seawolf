@@ -64,30 +64,13 @@ function returns 0 to indicate success, any other value indicates error. See
 \interlink{apiseasqlget}{SeaSQL\_get\bracket{var}} for the list of valid
 values for \bracket{var}.
 
-\subsection{SeaSQL\_setAutoNotify} \label{apiseasqlnotify}
+\subsubsection{SeaSQL\_setAutoNotify} \label{apiseasqlnotify}
 \cdoc{void SeaSQL_setAutoNotify(bool do_notify)} Set whether SeaSQL should
 automatically send out a Notify \texttt{UPDATED} message (see
 \interlink{overviewnotify}{Notify}) with every call to
 \inlinelink{apiseasqlset}{\func{SeaSQL\_set\bracket{var}}}. By default this is true,
 but certain applications may prefer to send out these message manually to
 control when they are sent.
-
-\subsubsection{SeaSQL\_configFile} \label{apiseasqlconfigfile}
-\cdoc{void SeaSQL_configFile(char* filename)} \deprecated{} (see
-\interlink{apiseawolfconfig}{\func{Seawolf\_loadConfig}}) - Load SeaSQL
-configuration information from the file pointed to by \texttt{filename}. The
-path, if relative, is relative to the working directory where the application is
-executed from. It is recommended to use absolute paths when possible. This
-function should be called before any initialization methods are called. The
-format of this configuration file is documented in the
-\inlinelink{formatsseasqlconf}{SeaSQL Configuration File} section.
-
-\subsubsection{SeaSQL\_configPrompt} \label{apiseasqlconfigprompt}
-\cdoc{void SeaSQL_configPrompt(void)} Prompt for configuration values from
-standard input. All settings are prompted for and values must be given for
-each. For a list of configuration options see
-\interlink{apiseasqlconfigfile}{SeaSQL\_configFile}.
-
 
 \subsection{Logging} \label{apilogging}
 \subsubsection{Logging\_log} \label{apilogginglog}
@@ -299,3 +282,60 @@ time of the timer's creation
 \subsubsection{Timer\_destroy} \label{apitimerdestroy}
 \cdoc{void Timer_destroy(Timer* tm)} Destroy a timer object and free the memory
 associated with it.
+
+\subsection{PID} \label{apipid}
+\subsubsection{PID\_new} \label{apipidnew}
+\cdoc{PID* PID_new(double sp, double p, double i, double d)} Return a new PID
+associated with the given p, i, and d values given as well as the initial set
+point `sp'
+
+\subsubsection{PID\_start} \label{apipidstart}
+\cdoc{double PID_start(PID* pid, double pv)} Start/restart the controll with
+the initial process value bbpv. Returns only the proportional part of the error.
+
+\subsubsection{PID\_update} \label{apipidupdate}
+\cdoc{double PID_update(PID* pid, double pv)} Return a new output value for the
+given process value pv.
+
+\subsubsection{PID\_resetIntegral} \label{apipidresetint}
+\cdoc{void PID_resetIntegral(PID* pid)} Reset the integral component of the PID.
+
+\subsubsection{PID\_setSetPoint} \label{apipidsetsp}
+\cdoc{void PID_setSetPoint(PID* pid, double sp)} Give a new set point for the
+PID. You should also restart the PID at this point unless you know exactly what
+you are doing.
+
+\subsubsection{PID\_setCoefficients} \label{apipidsetcoff}
+\cdoc{void PID_setCoefficients(PID* pid, double p, double i, double d)} Set new
+coefficients for the controller
+
+\subsubsection{PID\_destroy} \label{apipiddestroy}
+\cdoc{void PID_destroy(PID* pid)} Free the memory associated with the
+controller.
+
+\subsection{Stack} \label{apistack}
+\subsubsection{Stack\_new} \label{apistacknew}
+\cdoc{Stack* Stack_new(void)} Return a new stack object
+
+\subsubsection{Stack\_push} \label{apistackpush}
+\cdoc{void Stack_push(Stack* stack, void* v)} Push the value v onto the given
+stack
+
+\subsubsection{Stack\_pop} \label{apistackpop}
+\cdoc{void* Stack_pop(Stack* stack)} Pop the first value off of the top of the
+stack and return it
+
+\subsubsection{Stack\_top} \label{apistacktop}
+\cdoc{void* Stack_top(Stack* stack)} Return the first value off the top of the
+stack without removing it.
+
+\subsubsection{Stack\_getSize} \label{apistacksize}
+\cdoc{int Stack_getSize(Stack* stack)} Returns the number of elements in the
+stack
+
+\subsubsection{Stack\_destroy} \label{apistackdestroy}
+\cdoc{void Stack_destroy(Stack* stack)} Destroy the stack and free the memory
+associated with it
+
+\subsection{Task} \label{apitask}
+\textit{This is a rather specialized and technical component. If someone would like it documented let me know}

@@ -18,8 +18,8 @@
 #define NET_PORT ((unsigned short)31427)
 
 /* System control methods */
-void Notify_init();
-void Notify_close();
+void Notify_init(void);
+void Notify_close(void);
 void Notify_setMode(int mode);                /* Read/write messages to from the given source */
 void Notify_setServer(char* hostname);        /* Set the name of the repeater server */
 

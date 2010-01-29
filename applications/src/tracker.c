@@ -26,7 +26,7 @@
 #define RHO_Ki 0
 #define RHO_Kd 0
 
-void dataOut(double mv[3], bool do_depth, bool do_yaw) {
+static void dataOut(double mv[3], bool do_depth, bool do_yaw) {
     /* Base value for horizontal thrusters */
     float port_x, star_x;
     port_x = Util_inRange(-THRUSTER_MAX, mv[RHO], THRUSTER_MAX);

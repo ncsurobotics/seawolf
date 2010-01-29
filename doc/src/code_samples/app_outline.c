@@ -6,8 +6,9 @@ int main(void) {
   /* Load the Seawolf configuration file */
   Seawolf_loadConfig("../conf/seawolf.conf");
 
-  /* Initialize all libseawolf components */
-  Seawolf_init();
+  /* Initialize all libseawolf components and register
+     this application with the given name */
+  Seawolf_init("Test Application");
 
   /* your code goes here... */
 

@@ -17,7 +17,7 @@
 static float depth_heading = 0;
 static bool quit = false;
 
-void* control_heading(void* _n) {
+static void* control_heading(void* _n) {
     int c;
     WINDOW* w = newwin(1, 1, 0, 0);
     SeaSQL_setDepthHeading(depth_heading);

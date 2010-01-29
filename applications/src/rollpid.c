@@ -1,7 +1,7 @@
 
 #include "seawolf.h"
 
-void dataOut(double mv) {
+static void dataOut(double mv) {
     int out = Util_inRange(-THRUSTER_MAX, (int) mv, THRUSTER_MAX);
     Notify_send("THRUSTER_REQUEST", Util_format("Roll %d %d", out, -out));
 }

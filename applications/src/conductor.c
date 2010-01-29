@@ -9,7 +9,7 @@
 /* Top level Seawolf directory */
 #define SEAWOLF_DIR "../"
 
-int spawn(const char* path) {
+static int spawn(const char* path) {
     int pid = fork();
     if(pid == 0) {
         /* Replace current process with the given application */
@@ -23,7 +23,7 @@ int spawn(const char* path) {
     return pid;
 }
 
-int spawn_vision(const char* path, char* cam1, char* cam2, char* cam3) {
+static int spawn_vision(const char* path, char* cam1, char* cam2, char* cam3) {
     int pid = fork();
     if(pid == 0) {
         /* Replace current process with the given application */
@@ -37,7 +37,7 @@ int spawn_vision(const char* path, char* cam1, char* cam2, char* cam3) {
     return pid;
 }
 
-void usage(char* nm) {
+static void usage(char* nm) {
     fprintf(stderr, "usage: %s {ident|test|arm|mission}\n", nm);
     exit(1);
 }

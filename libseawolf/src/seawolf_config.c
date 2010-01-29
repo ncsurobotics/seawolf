@@ -43,9 +43,6 @@ void Seawolf_loadConfig(const char* filename) {
     char line[MAX_LINE];
     bool comment;
 
-    /* Get a pointer to the configuration so we can update it */
-    SeaSQL_config* seasql_config = SeaSQL_getConfig();
-
     /* Configuration file opened alright? */
     if(config_file == NULL) {
         fprintf(stderr, "Error opening configuration file: %s\n", filename);
@@ -106,15 +103,15 @@ void Seawolf_loadConfig(const char* filename) {
 
         /* Check against configuration option */
         if(strcmp(option, "SeaSQL_hostname") == 0) {
-            strcpy(seasql_config->hostname, value);
+            SeaSQL_setServer(value);
         } else if(strcmp(option, "SeaSQL_username") == 0) {
-            strcpy(seasql_config->username, value);
+            SeaSQL_setUsername(value);
         } else if(strcmp(option, "SeaSQL_password") == 0) {
-            strcpy(seasql_config->password, value);
+            SeaSQL_setPassword(value);
         } else if(strcmp(option, "SeaSQL_database") == 0) {
-            strcpy(seasql_config->database, value);
+            SeaSQL_setDatabase(value);
         } else if(strcmp(option, "SeaSQL_port") == 0) {
-            seasql_config->port = atoi(value);
+            SeaSQL_setPort(atoi(value));
         } else if(strcmp(option, "Notify_method") == 0) {
             strlower(value);
             if(strcmp(value, "stdio") == 0) {

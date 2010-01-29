@@ -16,7 +16,7 @@ static struct {
     } location;
 } state;
 
-int doGate(void) {
+static int doGate(void) {
     SeaSQL_setVisionTarget(VISIONTARGET_GATE);
     SeaSQL_setSetPointSource(SETPOINT_SOURCE_VISION);
     Notify_send("GO", "Gate");
@@ -24,35 +24,35 @@ int doGate(void) {
     return 0;
 }
 
-int doHitBuoy(void) {
+static int doHitBuoy(void) {
     Notify_send("GO", "HitBuoy");
     // -
     Notify_get(NULL, NULL);
     return 0;
 }
 
-int doBarbedWire(void) {
+static int doBarbedWire(void) {
     Notify_send("GO", "BarbedWire");
     // -
     Notify_get(NULL, NULL);
     return 0;
 }
 
-int doBombingRun(void) {
+static int doBombingRun(void) {
     Notify_send("GO", "BombingRun");
     // -
     Notify_get(NULL, NULL);
     return 0;
 }
 
-int doMachineGunNest(void) {
+static int doMachineGunNest(void) {
     Notify_send("GO", "MachineGunNest");
     // -
     Notify_get(NULL, NULL);
     return 0;
 }
 
-int doBriefcase(void) {
+static int doBriefcase(void) {
     Notify_send("GO", "Briefcase");
     // -
     Notify_get(NULL, NULL);

@@ -17,7 +17,8 @@ void Seawolf_init(const char* name) {
     /* Copy name */
     strcpy(app_name, name);
 
-    /* Call all initialization methods. Order here *is* important. Logging relies on the database being up for instance */
+    /* Call all initialization methods. Order here *is* important. Logging
+       relies on the database being up for instance */
     Notify_init();
     SeaSQL_init();
     Logging_init();

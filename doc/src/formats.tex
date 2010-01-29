@@ -35,20 +35,9 @@ Logging_replicateStdio = true
 Logging_threshold = debug
 \end{lstlisting}
 
-\subsection{SeaSQL Configuration File} \label{formatsseasqlconf}
-Comments extend from a '\#' to the end of the line, white space is ignored
-except newlines which separate records, and all values are unquoted ASCII
-strings. All values are optional and default to the values in the following
-example configuration file.
-\begin{lstlisting}[caption=Example SeaSQL configuration file]
-# SeaSQL configuration file
-hostname = localhost
-username = root
-database = seasql
-password = 
-port = 3306
-\end{lstlisting}
-\textbf{\textit{NOTE}}: This configuration method is deprecated in favor of \inlinelink{apiseawolfconfig}{\func{Seawolf\_loadConfig}} and its corresponding configuration file documented in \interlink{formatsseawolfconf}{Seawolf Configuration File}. 
+This file is located at \file{conf/seawolf.conf} under the top level software
+directory. All existing applications look for it in this location and any new
+code should reference this location.
 
 \subsection{ArdComm Serial Protocol} \label{formatsardcomm}
 \textit{This section yet to be compeleted}
