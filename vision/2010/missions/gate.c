@@ -1,6 +1,13 @@
+#include "seawolf.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include "vision.h>"
+#include <cv.h>
+#include <highgui.h>
+#include <math.h>
 
-#include <vision.h>
+
+
 
 //state variables for GATE
 int WHITE_GATE_FLAG =1; //set to zero to look for black gate
@@ -137,6 +144,4 @@ void mission_gate_step()
         edge_opencv_free();
         hough_opencv_free();
     }
-
-    break;
 }
