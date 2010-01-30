@@ -14,6 +14,10 @@
 #define PORT 0
 #define STAR 1
 
+static int count;
+
+#if 0
+
 #define FRAC_ROLL 0.2
 #define FRAC_PITCH 0.2
 #define FRAC_DEPTH 0.6
@@ -21,27 +25,27 @@
 #define FRAC_FORWARD 0.5
 #define FRAC_YAW 0.5
 
-static int count;
-
 /* Simple proportional mixing algorithm */
-#if 0
-static void proportionalMix(short req_roll[2], short req_pitch[3], short req_depth[3], short req_forward[2], short req_yaw[2], short out[5]) {
+static void mix(short req_roll[2], short req_pitch[3], short req_depth[3], short req_forward[2], short req_yaw[2], short out[5]) {
     out[PORTY] = (req_roll[PORT] * FRAC_ROLL) + (req_pitch[PORT] * FRAC_PITCH) + (req_depth[PORT] * FRAC_DEPTH);
     out[STARY] = (req_roll[STAR] * FRAC_ROLL) + (req_pitch[STAR] * FRAC_PITCH) + (req_depth[STAR] * FRAC_DEPTH);
     out[AFT] = (req_pitch[AFT] * FRAC_PITCH) + (req_depth[AFT] * FRAC_DEPTH);
     out[PORTX] = (req_forward[PORT] * FRAC_FORWARD) + (req_yaw[PORT] * FRAC_YAW);
     out[STARX] = (req_forward[STAR] * FRAC_FORWARD) + (req_yaw[STAR] * FRAC_YAW);
 }
-#endif // #if 0
+
+#else
 
 /* Simple summing mixing algorithm */
-static void summationMix(short req_roll[2], short req_pitch[3], short req_depth[3], short req_forward[2], short req_yaw[2], short out[5]) {
+static void mix(short req_roll[2], short req_pitch[3], short req_depth[3], short req_forward[2], short req_yaw[2], short out[5]) {
     out[PORTY] = req_roll[PORT] + req_pitch[PORT] + req_depth[PORT];
     out[STARY] = req_roll[STAR] + req_pitch[STAR] + req_depth[STAR];
     out[AFT] = req_pitch[AFT] + req_depth[AFT];
     out[PORTX] = req_forward[PORT] + req_yaw[PORT];
     out[STARX] = req_forward[STAR] + req_yaw[STAR];
 }
+
+#endif // #if 0
 
 static void setThrusters(short out[5]) {
     /* Set all thurster values */
@@ -118,7 +122,7 @@ int main(void) {
         }
 
         /* Mix */
-        summationMix(req_roll, req_pitch, req_depth, req_forward, req_yaw, out);
+        mix(req_roll, req_pitch, req_depth, req_forward, req_yaw, out);
 
         /* Check bounds on all output values */
         out[PORTY] = Util_inRange(-THRUSTER_MAX, out[PORTY], THRUSTER_MAX);
