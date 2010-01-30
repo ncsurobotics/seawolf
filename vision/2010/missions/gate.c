@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include <vision.h>
 
 //state variables for GATE
@@ -21,7 +23,7 @@ void mission_gate_init()
     seen_both_poles = 0;
 }
 
-void mission_gate_loop()
+void mission_gate_step()
 {
     frame = multicam_get_frame(FORWARD_CAM);
     // Set the depth

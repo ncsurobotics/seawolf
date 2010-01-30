@@ -20,6 +20,13 @@ int main(int argc, char** argv)
     float phi = 0;
     float rho = 0;
 
+struct {
+    is_done
+    theta
+    phi
+    rho
+}
+
     while (1)
     {
         
