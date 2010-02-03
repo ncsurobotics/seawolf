@@ -1,4 +1,4 @@
-#include <vision.h>
+#include <seawolf.h>
 
 #define DELAY 10
 
@@ -20,17 +20,18 @@ int main(int argc, char** argv)
     float phi = 0;
     float rho = 0;
 
-struct {
-    is_done
-    theta
-    phi
-    rho
-}
+//struct {
+    //is_done
+    //theta
+    //phi
+    //rho
+//}
 
     while (1)
     {
         
         // State machine
+        mission_gate_step(frame);
         //TODO
 
         // Give mission control its heading

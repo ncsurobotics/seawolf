@@ -1,9 +1,26 @@
 //header for mission-related files 
+#ifndef __SEAWOLF_VISION_MISSION_INCLUDE_H
+#define ___SEAWOLF_VISION_MISSION_INCLUDE_H
 
 #include <stdbool.h>
 #include <highgui.h>
 #include <opencv/cv.h>
 
+typedef struct {
+
+    // Cylindrical Coordinates
+    float theta;
+    float phi;
+    float rho;
+
+    // Depth
+    //TODO
+
+    bool mission_done;
+
+} MISSION_OUTPUT;
+
+//TODO: Define missions for this year
 #define WAIT 0
 //EACH REAL MISSION INCLUDES FINDING THE NEXT APPROPRIATE MARKER (SINCE THAT IS SPECIFIC TO EACH MISSION) THEN ALLIGN_PATH ALLIGNS US WITH THAT MARKER
 #define GATE 1 
@@ -31,3 +48,4 @@
 void mission_gate_init(IplImage* frame);
 void mission_gate_step(IplImage* frame);
 
+#endif

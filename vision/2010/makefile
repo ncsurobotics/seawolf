@@ -1,9 +1,9 @@
 CC = gcc
-CFLAGS=-g --std=c99
+CFLAGS= -g --std=c99 -Wall -Werror -pedantic -pedantic -Wmissing-prototypes
+
 OPENCV_FLAGS=$(shell pkg-config --libs --cflags opencv)
 SEAWOLF_FLAGS = -I../../libseawolf/include/ -lseawolf -L../../libseawolf/
 VISION_LIB_FLAGS=-Ilib/include/ -Llib/ -lvision_lib
-
 MISSION_FLAGS = $(CFLAGS) $(OPENCV_FLAGS) $(VISION_LIB_FLAGS)
 ALL_FLAGS = $(CFLAGS) $(OPENCV_FLAGS) $(SEAWOLF_FLAGS) $(VISION_LIB_FLAGS)
 
