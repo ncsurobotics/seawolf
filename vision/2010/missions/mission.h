@@ -27,3 +27,7 @@
 #define TUNA_BLOB 12
 #define MOTION 13
 
+//PROTOTYPES OF MISSION FUNCTIONS
+void mission_gate_init(IplImage* frame);
+void mission_gate_step(IplImage* frame);
+

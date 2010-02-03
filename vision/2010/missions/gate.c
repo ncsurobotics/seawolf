@@ -1,36 +1,36 @@
-#include "seawolf.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-#include "vision.h"
 #include <cv.h>
+#include "vision_lib.h"
 #include <highgui.h>
 #include <math.h>
 #include "mission.h"
 
 
 
-//state variables for GATE
-int WHITE_GATE_FLAG =1; //set to zero to look for black gate
-int close_to_gate =0; //number of consecutive frames we've seen something we think is a gate
-int gate_width =0; //the width of the last gate we saw 
-int frames_since_seen_gate = 0; // Frames since we've seen the gate
-int seen_gate = 0;
-int left_pole = 0;
-int right_pole = frame_width;
-int seen_both_poles = 0; //increments every time we see both poles
+//state variables for GATE (static limits scope to file)
+static int WHITE_GATE_FLAG =1; //set to zero to look for black gate
+static int close_to_gate =0; //number of consecutive frames we've seen something we think is a gate
+static int gate_width =0; //the width of the last gate we saw 
+static int frames_since_seen_gate = 0; // Frames since we've seen the gate
+static int seen_gate = 0;
+static int left_pole = 0;
+static int right_pole = 0;
+static int seen_both_poles = 0; //increments every time we see both poles
 
-void mission_gate_init()
+void mission_gate_init(IplImage* frame)
 {
     close_to_gate = 0;
     gate_width = 0;
     frames_since_seen_gate = 0;
     seen_gate = 0;
     left_pole = 0;
-    right_pole = frame_width;
+    right_pole = frame->width;
     seen_both_poles = 0;
 }
 
-void mission_gate_step()
+void mission_gate_step(IplImage* frame)
 {
     frame = multicam_get_frame(FORWARD_CAM);
     // Set the depth

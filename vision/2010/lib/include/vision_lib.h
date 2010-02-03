@@ -1,6 +1,9 @@
 #ifndef __SEAWOLF3_VISION
 #define __SEAWOLF3_VISION
 
+#include <cv.h>
+#include <highgui.h>
+#include <stdbool.h>
 
 typedef struct {
     CvPoint pt[4]; //holds the four corners
