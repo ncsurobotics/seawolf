@@ -1,4 +1,4 @@
-/* hough_opencv.c
+/* hough.c
  * This is a modification of opencv's hough implementation, ported to c.  
  *
  * Debugs specific to this file:
@@ -51,7 +51,7 @@ void houghMouseDraw(int event, int x, int y, int flags, void* param)
     int threshold_slider = 18;
 #endif
 
-void hough_opencv_init()
+void hough_init()
 {
     storage = cvCreateMemStorage(0);
     #ifdef debug_hough_lines
@@ -68,7 +68,7 @@ void hough_opencv_init()
 
 //ARGUMENTS: targetAngle: desired angle ranging from 0-180 degrees
 //           angleThreshold: allowable error in degrees
-CvSeq* hough_opencv(IplImage* img, IplImage* original, int threshold, int linesMax,int targetAngle, int angleThreshold, int clusterSize, int clusterWidth, int clusterHeight)
+CvSeq* hough(IplImage* img, IplImage* original, int threshold, int linesMax,int targetAngle, int angleThreshold, int clusterSize, int clusterWidth, int clusterHeight)
 {
     #ifdef debug_hough_threshold
         threshold = threshold_slider;

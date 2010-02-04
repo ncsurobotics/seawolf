@@ -2,13 +2,11 @@
 #ifndef __SEAWOLF_VISION_MISSION_INCLUDE_H
 #define ___SEAWOLF_VISION_MISSION_INCLUDE_H
 
-#define CV_NO_BACKWARD_COMPATIBILITY
-
 #include <stdbool.h>
 #include <highgui.h>
 #include <opencv/cv.h>
 
-typedef struct {
+struct mission_output {
 
     // Cylindrical Coordinates
     float theta;
@@ -17,10 +15,11 @@ typedef struct {
 
     // Depth
     //TODO
+    float depth;
 
     bool mission_done;
 
-} MISSION_OUTPUT;
+};
 
 //TODO: Define missions for this year
 #define WAIT 0
@@ -53,6 +52,6 @@ typedef struct {
 
 //PROTOTYPES OF MISSION FUNCTIONS
 void mission_gate_init(IplImage* frame);
-void mission_gate_step(void);
+struct mission_output mission_gate_step(struct mission_output);
 
 #endif

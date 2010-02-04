@@ -1,8 +1,6 @@
 #ifndef __SEAWOLF_VISION_LIB_ROOT_INCLUDE_H
 #define __SEAWOLF_VISION_LIB_ROOT_INCLUDE_H
 
-#define CV_NO_BACKWARD_COMPATIBILITY
-
 #include <cv.h>
 #include <highgui.h>
 #include <stdbool.h>
