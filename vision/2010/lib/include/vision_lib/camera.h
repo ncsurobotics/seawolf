@@ -11,7 +11,7 @@ CvCapture* init_camera_from_args(int argc, char** argv);
 CvCapture* init_camera_from_string(char* str);
 
 void multicam_set_camera(int camnumber, char* camstr);
-void multicam_reset_camera();
+void multicam_reset_camera(void);
 
 IplImage* multicam_get_frame(int camnumber);
 IplImage* get_frame(CvCapture* capture);

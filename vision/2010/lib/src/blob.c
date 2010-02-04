@@ -1,8 +1,9 @@
+#include "vision_lib.h"
+
+#include <stdio.h>
+
 #include <cv.h>
 #include <highgui.h>
-#include <stdio.h>
-#include "vision.h"
-//using #define debug_blob
 
 #define MAX_BLOB_AREA 500000
 
@@ -24,7 +25,7 @@ void blob_init()
 //
 // This is takes an image from colorfilter and finds what's left over
 // arugment: center_type: 0 returns the middle of the bounding box
-// 			  1 returns the centroid of the blobs
+//            1 returns the centroid of the blobs
 
 int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_area) {
   #ifdef debug_blob_area
@@ -136,7 +137,7 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
 
   //Allocate the width dimention of the array of pointers to keep track of pixels that have been checked
   for(i=0; i<width; i++)
-	pixlog[i] = (unsigned int*)calloc(height,sizeof(unsigned int));
+    pixlog[i] = (unsigned int*)calloc(height,sizeof(unsigned int));
  
   //now sweep the image looking for blobs (check a grid, not every pixel)
   for(y=0; y<height-3; y+=4 ) {
@@ -144,44 +145,44 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
     for(x=0; x<width-3; x+=4 ) {
        //if the pixel hasn't been blacked out as the wrong color AND has not yet been checked
        if((ptr[3*x+0]||ptr[3*x+1]||ptr[3*x+2])&& pixlog[x][y]==0){
-	  //we've found a new blob, so let's initialize it's values
+      //we've found a new blob, so let's initialize it's values
           blobs[*blobnumber].area = 0; 
           blobs[*blobnumber].top = 0;
           blobs[*blobnumber].bottom = height;
           blobs[*blobnumber].right = 0;
           blobs[*blobnumber].left = width;
-	  blobs[*blobnumber].cent_x = 0;
-	  blobs[*blobnumber].cent_y = 0;
-	  blobs[*blobnumber].mid.x = 0;
-	  blobs[*blobnumber].mid.y = 0;
-	  blobs[*blobnumber].pixels = (CvPoint*)cvAlloc(sizeof(CvPoint)*MAX_BLOB_AREA);
+      blobs[*blobnumber].cent_x = 0;
+      blobs[*blobnumber].cent_y = 0;
+      blobs[*blobnumber].mid.x = 0;
+      blobs[*blobnumber].mid.y = 0;
+      blobs[*blobnumber].pixels = (CvPoint*)cvAlloc(sizeof(CvPoint)*MAX_BLOB_AREA);
           //now let's examine the blob and update it's properties
-	  int depth = 0;
+      int depth = 0;
           checkPixel(Img, x,y, pixlog, &blobs[*blobnumber], depth);
 
-	  //don't bother sorting if we are asked to return ALL the blobs (argument: tracking_number of zero)
-	  if(tracking_number > 0){
+      //don't bother sorting if we are asked to return ALL the blobs (argument: tracking_number of zero)
+      if(tracking_number > 0){
             //now we check to see if this makes our list of top <tracking_number> biggest blobs
             if(blobs[*blobnumber].area > targets[tracking_number-1].area && blobs[*blobnumber].area >= minimum_blob_area){
-	      blobs_found++;
+          blobs_found++;
 
               for(i = tracking_number-1; i >=0; i--){
-	        if(blobs[*blobnumber].area <= targets[i].area){
-		  blob_copy(&targets[i+1],&blobs[*blobnumber]);
+            if(blobs[*blobnumber].area <= targets[i].area){
+          blob_copy(&targets[i+1],&blobs[*blobnumber]);
                   i=-1;//we've found where it goes, don't come back into the loop
-	        }
-	        else if(i+1 < tracking_number){
+            }
+            else if(i+1 < tracking_number){
                   blob_copy(&targets[i+1],&targets[i]);
 
                   //and for the case where this is the biggest blob
                   if(i==0){
-		    blob_copy(&targets[i],&blobs[*blobnumber]);
-	          }
+            blob_copy(&targets[i],&blobs[*blobnumber]);
+              }
                 }
-	      }
-	    }
-	  }
-	  //increment blobnumber
+          }
+        }
+      }
+      //increment blobnumber
           *blobnumber += 1;
        }
     }
@@ -189,7 +190,7 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
 
   //free the pixle log
   for(i=0; i<width; i++)
-	free(pixlog[i]); 
+    free(pixlog[i]); 
   free(pixlog);
 
   //if we want all the blobs, just return blobs and be done

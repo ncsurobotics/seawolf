@@ -6,14 +6,14 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <highgui.h>
 
-#include "vision.h"
+#include "vision_lib.h"
+#include <highgui.h>
 
 int frame_number=0;
 
 // Some state variables for multi camera support
-static char** cameras[3];
+static char* cameras[3];
 int current_cam_num = -1;
 CvCapture* current_capture;
 static int record_dir_num = -1;
@@ -31,7 +31,6 @@ CvCapture* init_camera_from_args(int argc, char** argv) {
         printf("Reading AVI...");
         capture = cvCaptureFromFile( argv[1] );
         if (!capture) {
-            printf("%p\n",capture);
             printf("%s\n",cvErrorStr(cvGetErrStatus()));
             printf("OpenCV AVI read failed, trying custom...");
             //Code Here
@@ -88,7 +87,7 @@ IplImage* multicam_get_frame(int camnumber)
     #ifdef image_record
         if (record_dir_num == -1)
         {
-	    char command[20];
+        char command[20];
             while (1)
             {
                 record_dir_num++;

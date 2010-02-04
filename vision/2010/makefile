@@ -15,7 +15,7 @@ main: vision_lib $(MISSION_OBJS)
 	$(CC) $(ALL_FLAGS) -c main.c
 
 missions/bin:
-	mkdir missions/bin
+	@mkdir missions/bin
 
 vision_lib:
 	$(MAKE) -C lib

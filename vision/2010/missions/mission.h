@@ -2,6 +2,8 @@
 #ifndef __SEAWOLF_VISION_MISSION_INCLUDE_H
 #define ___SEAWOLF_VISION_MISSION_INCLUDE_H
 
+#define CV_NO_BACKWARD_COMPATIBILITY
+
 #include <stdbool.h>
 #include <highgui.h>
 #include <opencv/cv.h>
@@ -44,8 +46,13 @@ typedef struct {
 #define TUNA_BLOB 12
 #define MOTION 13
 
+
+#define MAX_THETA 100
+#define MAX_PHI   20
+#define MAX_RHO   50
+
 //PROTOTYPES OF MISSION FUNCTIONS
 void mission_gate_init(IplImage* frame);
-void mission_gate_step(IplImage* frame);
+void mission_gate_step(void);
 
 #endif

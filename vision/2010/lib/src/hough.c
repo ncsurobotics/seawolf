@@ -7,6 +7,8 @@
  *   debug_hough_threshold
  */
 
+#include "vision_lib.h"
+
 #include <cv.h>
 #include <stdio.h>
 #include <highgui.h>
@@ -129,7 +131,7 @@ CvSeq* hough_opencv(IplImage* img, IplImage* original, int threshold, int linesM
     //allocate memory for the cluster log 
     line_clusters = (int**)cvAlloc(sizeof(accum[0])*linesMax);
     for(i=0;i<linesMax;i++)
-	line_clusters[i] = (int*)cvAlloc(sizeof(accum[0])*clusterSize);
+    line_clusters[i] = (int*)cvAlloc(sizeof(accum[0])*clusterSize);
     
     //initialize cluster log with -1
     for(i=0;i<linesMax;i++)
@@ -138,7 +140,7 @@ CvSeq* hough_opencv(IplImage* img, IplImage* original, int threshold, int linesM
 
     //initialize sort_buf with -1
     for(i=0;i<linesMax;i++)
-	sort_buf[i] = -1;
+    sort_buf[i] = -1;
 
     for( ang = 0, n = 0; n < numangle; ang += theta, n++ )
     {
@@ -171,81 +173,81 @@ CvSeq* hough_opencv(IplImage* img, IplImage* original, int threshold, int linesM
                 accum[base] > accum[base - 1] && accum[base] >= accum[base + 1] &&
                 accum[base] > accum[base - numrho - 2] && accum[base] >= accum[base + numrho + 2] ) {
 
-		//check to make sure this line is in the angle threshold
-		if(low_T < high_T){
-		    if(base/numrho < low_T || base/numrho > high_T) continue;
-		}else{
-		    if(base/numrho < low_T && base/numrho > high_T) continue;
-		}
-		//printf("base/numrho = %d\n",base/numrho);
-		//fflush(NULL);
+        //check to make sure this line is in the angle threshold
+        if(low_T < high_T){
+            if(base/numrho < low_T || base/numrho > high_T) continue;
+        }else{
+            if(base/numrho < low_T && base/numrho > high_T) continue;
+        }
+        //printf("base/numrho = %d\n",base/numrho);
+        //fflush(NULL);
 
-		newcluster = 1;
-		for(i=linesMax-1;i>=0;i--){
-		   //check to see if this max should be placed into this cluster
-		   if(sort_buf[i] != -1 && 
-		      ( //it's within a box
-	(abs(base%(numrho+2) - sort_buf[i]%(numrho+2)) < clusterWidth && abs(base/(numrho+2)-sort_buf[i]/(numrho+2)) < clusterHeight)
-		      || //or it's witthin a box when including rollover
-	(abs(abs(base%(numrho+2)-numrho/2) - abs(sort_buf[i]%(numrho+2)-numrho/2)) < clusterWidth && numangle-abs(base/(numrho+2) - sort_buf[i]/(numrho+2)) < clusterHeight)
-	              )
+        newcluster = 1;
+        for(i=linesMax-1;i>=0;i--){
+           //check to see if this max should be placed into this cluster
+           if(sort_buf[i] != -1 && 
+              ( //it's within a box
+    (abs(base%(numrho+2) - sort_buf[i]%(numrho+2)) < clusterWidth && abs(base/(numrho+2)-sort_buf[i]/(numrho+2)) < clusterHeight)
+              || //or it's witthin a box when including rollover
+    (abs(abs(base%(numrho+2)-numrho/2) - abs(sort_buf[i]%(numrho+2)-numrho/2)) < clusterWidth && numangle-abs(base/(numrho+2) - sort_buf[i]/(numrho+2)) < clusterHeight)
+                  )
                      )   
-		   {
-		      //if so, sort it into that cluster
-		      for(j=0;j<clusterSize;j++){
-			if(line_clusters[i][j] == -1){
-			  line_clusters[i][j] = base;
-			  break;
-			}
-       		        else if(accum[base] > accum[line_clusters[i][j]]){
-			  for(k=clusterSize-1;k>j;k--) 
-			    line_clusters[i][k] = line_clusters[i][k-1];
-                          line_clusters[i][j] = base;
-			  break;
-			}
-		      }
-		      newcluster = 0;
-		      break;      //don't let this line get placed in two clusters
-		   }
-		}
-		//if this is a new cluster, sort it in by accumulator value
-		if(newcluster){
-
-		   k = -1;
-		   for(t=0;t<linesMax;t++){ 
-		      if(sort_buf[t] == -1) k=t; //this slot in the sort buff is empty so we can't check accum
-		      else if (accum[base]>accum[line_clusters[t][0]]) k=t;
-                   }
-	       	   if (k>-1) {
-	 		   for(j=0;j<k;j++){
-			      sort_buf[j] = sort_buf[j+1];
-			      for(i=0; i<clusterSize;i++)
-				 line_clusters[j][i] = line_clusters[j+1][i];
-			   }
-			   sort_buf[k] = base;
-			   line_clusters[k][0] = base; 
-			   for(i=1;i<clusterSize;i++) line_clusters[k][i] = -1;
-		   }
-		}else{// we just added something to a cluster, so we might have to move one cluster up in priority       
-		   for(i=0;i<linesMax-1;i++){
-		      if(line_clusters[i][0] !=-1 && accum[line_clusters[i][0]] > accum[line_clusters[i+1][0]]){
-		         k=i; //this is the out-of-place cluster 
-		         for(t=0;t<clusterSize;t++) 
-                           temp_cluster[t] = line_clusters[k][t];
-		 	 for(j=k;  j<linesMax-1 && accum[temp_cluster[0]] > accum[line_clusters[j+1][0]] ; j++){
-			   for(t=0;t<clusterSize;t++)
-			     line_clusters[j][t] = line_clusters[j+1][t];
-		  	 }
-			 for(t=0;t<clusterSize;t++)
-      			    line_clusters[j][t] = temp_cluster[t];
-			 break;
-		      }
-		   }
-		   for(i=0;i<linesMax;i++) //update sort_buf with the newley sorted list of clusters  
-		     sort_buf[i] = line_clusters[i][0]; //used to be average
-		}
+           {
+              //if so, sort it into that cluster
+              for(j=0;j<clusterSize;j++){
+            if(line_clusters[i][j] == -1){
+              line_clusters[i][j] = base;
+              break;
             }
-		
+                    else if(accum[base] > accum[line_clusters[i][j]]){
+              for(k=clusterSize-1;k>j;k--) 
+                line_clusters[i][k] = line_clusters[i][k-1];
+                          line_clusters[i][j] = base;
+              break;
+            }
+              }
+              newcluster = 0;
+              break;      //don't let this line get placed in two clusters
+           }
+        }
+        //if this is a new cluster, sort it in by accumulator value
+        if(newcluster){
+
+           k = -1;
+           for(t=0;t<linesMax;t++){ 
+              if(sort_buf[t] == -1) k=t; //this slot in the sort buff is empty so we can't check accum
+              else if (accum[base]>accum[line_clusters[t][0]]) k=t;
+                   }
+               if (k>-1) {
+               for(j=0;j<k;j++){
+                  sort_buf[j] = sort_buf[j+1];
+                  for(i=0; i<clusterSize;i++)
+                 line_clusters[j][i] = line_clusters[j+1][i];
+               }
+               sort_buf[k] = base;
+               line_clusters[k][0] = base; 
+               for(i=1;i<clusterSize;i++) line_clusters[k][i] = -1;
+           }
+        }else{// we just added something to a cluster, so we might have to move one cluster up in priority       
+           for(i=0;i<linesMax-1;i++){
+              if(line_clusters[i][0] !=-1 && accum[line_clusters[i][0]] > accum[line_clusters[i+1][0]]){
+                 k=i; //this is the out-of-place cluster 
+                 for(t=0;t<clusterSize;t++) 
+                           temp_cluster[t] = line_clusters[k][t];
+             for(j=k;  j<linesMax-1 && accum[temp_cluster[0]] > accum[line_clusters[j+1][0]] ; j++){
+               for(t=0;t<clusterSize;t++)
+                 line_clusters[j][t] = line_clusters[j+1][t];
+             }
+             for(t=0;t<clusterSize;t++)
+                    line_clusters[j][t] = temp_cluster[t];
+             break;
+              }
+           }
+           for(i=0;i<linesMax;i++) //update sort_buf with the newley sorted list of clusters  
+             sort_buf[i] = line_clusters[i][0]; //used to be average
+        }
+            }
+        
         }
 
     #ifdef debug_hough_graph
@@ -294,8 +296,8 @@ CvSeq* hough_opencv(IplImage* img, IplImage* original, int threshold, int linesM
         line.rho = (r - (numrho - 1)*0.5f) * rho;
         line.angle = n * theta;
         if(idx == -1){
-	   line.rho = -999;
-	}
+       line.rho = -999;
+    }
         cvSeqPush( lines, &line );
         #ifdef debug_hough_graph
             //printf("%f %f\n", line.rho, line.angle);
@@ -315,7 +317,7 @@ CvSeq* hough_opencv(IplImage* img, IplImage* original, int threshold, int linesM
     cvFree( &tabCos );
     cvFree( &accum );
     for(i=0;i<linesMax;i++)
-	cvFree(&line_clusters[i]);
+    cvFree(&line_clusters[i]);
     cvFree( &line_clusters);
 
     #ifdef debug_hough_lines

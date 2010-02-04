@@ -1,3 +1,5 @@
+#include "vision_lib.h"
+
 #include <cv.h>
 #include <highgui.h>
 

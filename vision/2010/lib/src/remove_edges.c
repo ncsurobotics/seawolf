@@ -1,3 +1,5 @@
+#include "vision_lib.h"
+
 #include <cv.h>
 #include <highgui.h>
 //removes highlighted areas from the edge-dectected image 
@@ -47,8 +49,8 @@ IplImage* remove_edges(IplImage* img, IplImage* edge, int rmin, int rmax, int bm
       if (((ptr[3*x+2]>=rmin && ptr[3*x+2]<=rmax) &&
             (ptr[3*x+1]>=bmin && ptr[3*x+1]<=bmax) &&
             (ptr[3*x+0]>=gmin && ptr[3*x+0]<=gmax))) { 
-	for(i=-2;i<=2;i++)
-	  for(j=-2;j<=2;j++)
+    for(i=-2;i<=2;i++)
+      for(j=-2;j<=2;j++)
             ptrN[x+i+j*modified->widthStep] = 0;
       }
     }
@@ -60,7 +62,7 @@ IplImage* remove_edges(IplImage* img, IplImage* edge, int rmin, int rmax, int bm
 
     for(x=0; x<img->width; x++ ) {
       if(!ptr[x+edge->widthStep] || !ptr[x-edge->widthStep])
-	ptrN[x] = 0;
+    ptrN[x] = 0;
     }
   }  
 
@@ -70,7 +72,7 @@ IplImage* remove_edges(IplImage* img, IplImage* edge, int rmin, int rmax, int bm
 
     for(x=0; x<img->width; x++ ) {
       if(!ptrN[x+modified->widthStep] && !ptrN[x-modified->widthStep])
-	ptrN[x] = 0;
+    ptrN[x] = 0;
     }
   }  
   #ifdef debug_remove_edges   

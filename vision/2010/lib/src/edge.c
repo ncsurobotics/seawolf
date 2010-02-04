@@ -7,6 +7,8 @@
  *   debug_edge_args
  */
 
+#include "vision_lib.h"
+
 #include <stdio.h>
 #include <cv.h>
 #include <highgui.h>
@@ -49,7 +51,7 @@ IplImage* edge_opencv(IplImage* frame, int low_threshold, int high_threshold, in
     #endif
 
     for(int i = ret->height * ret->width - 1; i >= ret->height*(ret->width - 10); i--) {
-	ret->imageData[i] = 0; //turn bottom of the screen black, b/c sobel was messing up
+    ret->imageData[i] = 0; //turn bottom of the screen black, b/c sobel was messing up
     }
 
     return ret;

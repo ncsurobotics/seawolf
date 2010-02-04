@@ -1,10 +1,10 @@
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <cv.h>
-#include "vision_lib.h"
-#include <highgui.h>
 #include <math.h>
+
+#include "vision_lib.h"
+#include <cv.h>
+#include <highgui.h>
 
 #include "mission.h"
 
@@ -30,14 +30,19 @@ void mission_gate_init(IplImage* frame)
     seen_both_poles = 0;
 }
 
-void mission_gate_step(IplImage* frame)
+void mission_gate_step()
 {
-    frame = multicam_get_frame(FORWARD_CAM);
+    IplImage* grey;
+    IplImage* edge;
+    IplImage* lines;
+    RGBPixel color = {0xff, 0x00, 0x00};
+    IplImage* frame = multicam_get_frame(FORWARD_CAM);
+    
     // Set the depth
     SeaSQL_setTrackerDoDepth(0.0);
     SeaSQL_setDepthHeading(4.0);
     if(WHITE_GATE_FLAG){ // LOOK FOR WHITE LINES
-        grey = cvCreateImage(cvSize(frame_width,frame_height), 8, 1);
+        grey = cvCreateImage(cvSize(frame->width,frame->height), 8, 1);
         cvCvtColor(frame, grey, CV_BGR2GRAY);
         edge = edge_opencv(grey, 60,100, 3); // This should be much more lenient than normal
         edge = remove_edges(frame, edge, 0,0,0,0,0,0); // For now this isn't neccessary, leavin in for debugging
@@ -76,16 +81,16 @@ void mission_gate_step(IplImage* frame)
         seen_both_poles++;
         frames_since_seen_gate = 0;
         gate_width = abs(pt_gate[0]-pt_gate[1]);
-        if(abs(frame_width - gate_width) < frame_width / 4)
+        if(abs(frame->width - gate_width) < frame->width / 4)
             close_to_gate++;   // We are close to the gate
-        else if(abs(frame_width-gate_width) > frame_width/5)
+        else if(abs(frame->width-gate_width) > frame->width/5)
             close_to_gate = 0; // We arn't close to the gate 
 
         // Assign values to the left and right poles
         left_pole = pt_gate[0]<pt_gate[1]?pt_gate[0]:pt_gate[1];
         right_pole = pt_gate[0]>pt_gate[1]?pt_gate[0]:pt_gate[1];
 
-        theta = ((pt_gate[0]+pt_gate[1])/2-frame_width/2)/2+frame_width/2; // Head towards the middle of the gate
+        theta = ((pt_gate[0]+pt_gate[1])/2-frame->width/2)/2+frame->width/2; // Head towards the middle of the gate
     }else if(rho_gate[1] != -999){ // We only see one line
         seen_gate++;
         frames_since_seen_gate = 0;
@@ -97,14 +102,14 @@ void mission_gate_step(IplImage* frame)
             int difference =  pt_gate[1] - left_pole;
             right_pole = right_pole + difference;
             left_pole = pt_gate[1];
-            theta = frame_width/2 + 15;
+            theta = frame->width/2 + 15;
         }else{
             // We see the right pole
             printf("I see the right pole!");
             int difference =  pt_gate[1] - right_pole;
             left_pole = left_pole + difference;
             right_pole = pt_gate[1];
-            theta = frame_width/2 - 15;
+            theta = frame->width/2 - 15;
         }
 
     }else{ // We don't see anything
@@ -112,7 +117,7 @@ void mission_gate_step(IplImage* frame)
             mission = ALLIGN_PATH;
         }
 
-    theta = frame_width/2;
+    theta = frame->width/2;
     }
 
     // Determine rho
@@ -122,8 +127,8 @@ void mission_gate_step(IplImage* frame)
         rho = 15; // High rho
 
     // Scale output 
-    theta -= frame_width/2;
-    theta = (theta*MAX_THETA / (frame_width/2))/6;
+    theta -= frame->width/2;
+    theta = (theta*MAX_THETA / (frame->width/2))/6;
     phi = 0;
 
     // Free resources
