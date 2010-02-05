@@ -148,17 +148,11 @@ struct mission_output mission_gate_step(struct mission_output result)
     cvRelease((void**) &lines);
 
     if (WHITE_GATE_FLAG) { // Free white gate resources
-        colorfilter_free();
-        edge_opencv_free();
-        hough_free();
-        remove_edges_free();
+        // ...
     } else { // Free black gate resources
         cvReleaseImage(&grey);
         cvReleaseImage(&edge);
         cvRelease((void**) &lines);
-        colorfilter_free();
-        edge_opencv_free();
-        hough_free();
     }
     
     return result;

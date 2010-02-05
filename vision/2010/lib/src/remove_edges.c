@@ -4,35 +4,7 @@
 #include <highgui.h>
 //removes highlighted areas from the edge-dectected image 
 
-int rmin2_slider = 26,rmax2_slider = 255; // 75 255
-int bmin2_slider = 117, bmax2_slider = 255; // 0 50
-int gmin2_slider = 103, gmax2_slider = 255; // 0 175
-
-void remove_edges_init()
-{ 
-  #ifdef debug_remove_edges
-    cvNamedWindow("Remove Edges", CV_WINDOW_AUTOSIZE);
-  #endif
-  #ifdef debug_remove_edges_thresholds
-    cvCreateTrackbar("rmin", "Remove Edges", &rmin2_slider, 255, NULL);
-    cvCreateTrackbar("rmax", "Remove Edges", &rmax2_slider, 255, NULL);
-    cvCreateTrackbar("bmin", "Remove Edges", &bmin2_slider, 255, NULL);
-    cvCreateTrackbar("bmax", "Remove Edges", &bmax2_slider, 255, NULL);
-    cvCreateTrackbar("gmin", "Remove Edges", &gmin2_slider, 255, NULL);
-    cvCreateTrackbar("gmax", "Remove Edges", &gmax2_slider, 255, NULL);
-  #endif
-}
-
 IplImage* remove_edges(IplImage* img, IplImage* edge, int rmin, int rmax, int bmin, int bmax, int gmin, int gmax) {
-
-  #ifdef debug_remove_edges_thresholds
-    rmin = rmin2_slider;
-    rmax = rmax2_slider;
-    bmin = bmin2_slider;
-    bmax = bmax2_slider;
-    gmin = gmin2_slider;
-    gmax = gmax2_slider;
-  #endif
 
   int y,x,i,j; 
 
@@ -75,11 +47,6 @@ IplImage* remove_edges(IplImage* img, IplImage* edge, int rmin, int rmax, int bm
     ptrN[x] = 0;
     }
   }  
-  #ifdef debug_remove_edges   
-    cvShowImage("Remove Edges", modified);
-  #endif
 
   return modified; 
 }
-
-void remove_edges_free() {}

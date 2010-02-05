@@ -48,12 +48,12 @@ int main(int argc, char** argv)
         //TODO
 
         // Give mission control its heading
-        //TODO: Depth
         if (memcmp(&results, &previous_results, sizeof(struct mission_output))) {
             printf("Theta, Phi, Rho: %f, %f, %f\n", results.theta, results.phi, results.rho);
             SeaSQL_setSetPointVision_Theta(results.theta);
             SeaSQL_setSetPointVision_Phi(results.phi);
             SeaSQL_setSetPointVision_Rho(results.rho);
+            //TODO: Depth
             Notify_send("UPDATED", "SetPointVision");
             previous_results = results;
         }

@@ -7,19 +7,6 @@
 
 #define MAX_BLOB_AREA 500000
 
-//it will not make any blob smaller than this a primary blob (it will place it in the list of all blobs, however)
-int minimum_blob_area_slider = 250;
-
-void blob_init()
-{ 
-  #ifdef debug_blob
-    cvNamedWindow("Blob Finder", CV_WINDOW_AUTOSIZE);
-  #endif
-  #ifdef debug_blob_area
-    cvCreateTrackbar("min_blob_area", "Blob Finder", &minimum_blob_area_slider, 500, NULL);
-  #endif
-}
-
 //----------------------------------------------------
 //Function: blob
 //
@@ -28,14 +15,6 @@ void blob_init()
 //            1 returns the centroid of the blobs
 
 int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_area) {
-  #ifdef debug_blob_area
-      minimum_blob_area = minimum_blob_area_slider;
-  #endif
-  
-  #ifdef debug_blob
-      IplImage* blob_pic = cvCreateImage(cvGetSize(Img),8,3);
-      cvCopy(Img, blob_pic, 0);
-  #endif
 
   int blobnumber; //holds the number of blobs we found
 
@@ -48,50 +27,6 @@ int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_a
     (*targets)[i].mid.x = ((*targets)[i].left+(*targets)[i].right)/2;
     (*targets)[i].mid.y = ((*targets)[i].top + (*targets)[i].bottom)/2;
   }
-
-  #ifdef debug_blob 
-     int x,y;
-
-     //bind the blobs
-     for(i=0; i<(blobnumber<tracking_number?blobnumber:tracking_number);i++){
-       //draw the top of the binding box 
-       uchar* ptr = (uchar*) (blob_pic->imageData + (*targets)[i].top * blob_pic->widthStep);     
-       for(x=(*targets)[i].left; x<=(*targets)[i].right;x++){
-         ptr[3*x+0] = 0;
-         ptr[3*x+1] = 254;
-         ptr[3*x+2] = 0;
-       }
-       //draw the bottom of the binding box
-       ptr = (uchar*) (blob_pic->imageData + (*targets)[i].bottom * blob_pic->widthStep);     
-       for(x=(*targets)[i].left; x<=(*targets)[i].right;x++){
-         ptr[3*x+0] = 0;
-         ptr[3*x+1] = 254;
-         ptr[3*x+2] = 0;
-       }
-       //draw the left of the box
-       for(y = (*targets)[i].top; y>= (*targets)[i].bottom; y--){
-         ptr = (uchar*) (blob_pic->imageData + y * blob_pic->widthStep);     
-         x = (*targets)[i].left;
-         ptr[3*x+0] = 0;
-         ptr[3*x+1] = 254;
-         ptr[3*x+2] = 0;
-       }
-
-       //draw the left of the box
-       for(y = (*targets)[i].top; y>= (*targets)[i].bottom; y--){
-         ptr = (uchar*) (blob_pic->imageData + y * blob_pic->widthStep);     
-         x = (*targets)[i].right;
-         ptr[3*x+0] = 0;
-         ptr[3*x+1] = 254;
-         ptr[3*x+2] = 0;
-       }
-     }
-     //Show the image
-     cvShowImage("Blob Finder",blob_pic);
-
-     //release image
-     cvReleaseImage(&blob_pic); 
-  #endif 
 
   //return the number of blobs we found
   return blobnumber;
@@ -202,7 +137,6 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
   for(i=blobs_found;i<tracking_number;i++){
     cvFree(&targets[i].pixels);
   }
-  blob_free(blobs,*blobnumber);
 
   //mark the size of targets
   *blobnumber = tracking_number < blobs_found? tracking_number:blobs_found;
@@ -283,14 +217,3 @@ void blob_copy(BLOB* dest, BLOB* src){
     dest->mid   = src->mid;
     memcpy(dest->pixels,src->pixels,MAX_BLOB_AREA*sizeof(CvPoint));
 }
-
-void blob_free(BLOB* blobs, int blobs_found){
-
-    int i;
-    for(i=0;i<blobs_found;i++){
-        cvFree(&blobs[i].pixels);
-    }
-    free(blobs);
-}
-
-

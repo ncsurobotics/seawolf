@@ -14,7 +14,7 @@ MISSION_OBJS=$(patsubst missions/%.c, missions/bin/%.o, $(wildcard missions/*.c)
 all: main bin/ missions/bin/
 
 main: vision_lib $(MISSION_OBJS) bin/main.o
-	$(CC) $(ALL_FLAGS) bin/main.o lib/vision_lib.o missions/bin/*.o -o main
+	$(CC) $(ALL_FLAGS) bin/main.o lib/vision_lib.o $(MISSION_OBJS) -o main
 
 missions/bin/:
 	@mkdir missions/bin/
@@ -35,3 +35,4 @@ clean:
 	rm missions/bin/*.o
 	rm main 
 	rm bin/*.o
+	$(MAKE) -C lib clean
