@@ -370,6 +370,6 @@ CvSeq* hough(IplImage* img, IplImage* original, int threshold, int linesMax,int 
     return lines;
 }
 
-void hough_opencv_free()
+void hough_free()
 {
 }

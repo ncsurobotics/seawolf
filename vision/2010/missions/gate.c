@@ -60,10 +60,12 @@ struct mission_output mission_gate_step(struct mission_output result)
         color.g=0x00;
         color.b=0x00;
         grey = cvCreateImage(cvGetSize(frame), 8, 1);
+        /*TODO
         IplImageToImage(frame, rgb_tmp);
         num_pixels = FindTargetColor(rgb_tmp, indexed_tmp, &color, 80, 256);
         Image_indexedToRGB(indexed_tmp, rgb_tmp); 
         ImageToIplImage(rgb_tmp, ipl_out);
+        */
         #ifdef debug_tuna
             cvShowImage("out2", ipl_out);
         #endif
