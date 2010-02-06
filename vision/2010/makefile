@@ -11,24 +11,24 @@ ALL_FLAGS=$(CFLAGS) $(OPENCV_FLAGS) $(SEAWOLF_FLAGS) $(VISION_LIB_FLAGS)
 
 MISSION_OBJS=$(patsubst missions/%.c, missions/bin/%.o, $(wildcard missions/*.c))
 
-all: main bin/ missions/bin/
+all: vision_lib main $(PWD)/bin/ $(PWD)/missions/bin/
 
-main: vision_lib $(MISSION_OBJS) bin/main.o
+main: $(MISSION_OBJS) bin/main.o
 	$(CC) $(ALL_FLAGS) bin/main.o lib/vision_lib.o $(MISSION_OBJS) -o main
 
-missions/bin/:
-	@mkdir missions/bin/
+$(PWD)/missions/bin/:
+	mkdir missions/bin/
 
-bin/:
-	@mkdir bin/
+$(PWD)/bin/:
+	mkdir bin/
 
 vision_lib:
 	$(MAKE) -C lib
 
-missions/bin/%.o: vision_lib missions/%.c missions/bin
+missions/bin/%.o: missions/%.c
 	$(CC) $(MISSION_FLAGS) -c missions/$*.c -o missions/bin/$*.o
 
-bin/%.o:
+bin/%.o: %.c
 	$(CC) $(ALL_FLAGS) -c $*.c -o bin/$*.o
 
 clean:
