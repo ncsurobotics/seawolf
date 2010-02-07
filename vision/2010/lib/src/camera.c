@@ -16,7 +16,10 @@ int frame_number=0;
 static char* cameras[3];
 int current_cam_num = -1;
 CvCapture* current_capture;
-static int record_dir_num = -1;
+
+#ifdef VISION_LIB_IMAGE_RECORD
+    static int record_dir_num = -1;
+#endif
 
 CvCapture* init_camera_from_args(int argc, char** argv) {
     CvCapture* capture;
@@ -84,7 +87,7 @@ void multicam_set_camera(int camnumber, char* camstr)
 
 IplImage* multicam_get_frame(int camnumber)
 {
-    #ifdef image_record
+    #ifdef VISION_LIB_IMAGE_RECORD
         if (record_dir_num == -1)
         {
         char command[20];
@@ -126,11 +129,9 @@ void multicam_reset_camera()
 IplImage* get_frame(CvCapture* capture)
 {
 
-    //printf("GETTING FRAME\n");
-    //fflush(NULL);
     IplImage* frame = cvQueryFrame(capture);
 
-    #ifdef image_record
+    #ifdef VISION_LIB_IMAGE_RECORD
         // Record frame
         char pathname[50];
         sprintf(pathname, "capture/%d/%05d.jpg", record_dir_num, frame_number);

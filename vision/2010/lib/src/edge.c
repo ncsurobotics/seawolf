@@ -14,7 +14,7 @@ IplImage* edge_opencv(IplImage* frame, int low_threshold, int high_threshold, in
 {
 
     IplImage* ret = cvCreateImage(cvGetSize(frame), 8, 1);
-    #ifdef debug_image_typecheck
+    #ifdef VISION_LIB_IMAGE_TYPECHECK
         if (frame->nChannels != 1)
         {
           printf("edgeDetect() must take in a single channel image.\nYou probably want to use:\ncvCvtColor(original, modified, CV_BGR2GRAY);\n");

@@ -1,13 +1,21 @@
+SHELL = /bin/sh
 CC=gcc
 CFLAGS=-g --std=c99 -pedantic -Wmissing-prototypes
-#CFLAGS+=-Wall -Werror
+CFLAGS+=-Wall -Werror -Wno-unused
+
+$(shell cp -u debug.mk.sample debug.mk)
+include debug.mk
+export VISION_LIB_FLAGS=$(DEBUG_FLAGS)
+CFLAGS += $(DEBUG_FLAGS)
 
 #OPENCV_FLAGS=$(shell pkg-config --libs --cflags opencv) -DCV_NO_BACKWARD_COMPATIBILITY
-OPENCV_FLAGS=-I/usr/local/include/opencv -lcxcore -lcv -lhighgui -lcvaux -lml -DCV_NO_BACKWARD_COMPATIBILITY
+OPENCV_FLAGS=-I/usr/local/include/opencv -lcxcore -lcv -lhighgui -lcvaux -lml \
+             -DCV_NO_BACKWARD_COMPATIBILITY
 SEAWOLF_FLAGS=-I../../libseawolf/include/ -lseawolf -L../../libseawolf/
-VISION_LIB_FLAGS=-Ilib/include/
-MISSION_FLAGS=$(CFLAGS) $(OPENCV_FLAGS) $(VISION_LIB_FLAGS)
-ALL_FLAGS=$(CFLAGS) $(OPENCV_FLAGS) $(SEAWOLF_FLAGS) $(VISION_LIB_FLAGS)
+VISION_LIB_IFLAGS=-Ilib/include/
+MISSION_FLAGS=$(CFLAGS) $(OPENCV_FLAGS) $(VISION_LIB_IFLAGS) $(DEBUG_FLAGS)
+ALL_FLAGS=$(CFLAGS) $(OPENCV_FLAGS) $(SEAWOLF_FLAGS) $(VISION_LIB_IFLAGS) \
+          $(DEBUG_FLAGS)
 
 MISSION_OBJS=$(patsubst missions/%.c, missions/bin/%.o, $(wildcard missions/*.c))
 

@@ -1,0 +1,16 @@
+# debug.mk / debug.mk.sample
+# This file should contain all debug flags.
+#
+# When make is first run, it coppies "debug.mk.sample" to "debug.mk".  Every
+# time the sample file is more up to date, it is coppied again.  The sample
+# file is revisioned, but the plain .mk file is not.  This is so users can
+# define their own settings without having to worry about committing them every
+# time.  
+#
+# The sample file should contain all of the debugs with their defaults
+# (commented out if their defaults are off).  The "debug.mk" file can turn on
+# or off any of the debugs that the user wants.
+#
+
+DEBUG_FLAGS += -DVISION_LIB_IMAGE_TYPECHECK
+#DEBUG_FLAGS += -DVISION_LIB_IMAGE_RECORD
