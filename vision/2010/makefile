@@ -3,7 +3,7 @@ CC=gcc
 CFLAGS=-g --std=c99 -pedantic -Wmissing-prototypes
 CFLAGS+=-Wall -Werror -Wno-unused
 
-$(shell cp -u debug.mk.sample debug.mk)
+$(shell cp -u debug.mk.default debug.mk)
 include debug.mk
 export VISION_LIB_FLAGS=$(DEBUG_FLAGS)
 CFLAGS += $(DEBUG_FLAGS)

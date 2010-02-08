@@ -17,6 +17,7 @@ struct mission_output {
     //TODO
     float depth;
 
+    IplImage* frame;
     bool mission_done;
 
 };

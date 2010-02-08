@@ -41,6 +41,7 @@ struct mission_output mission_gate_step(struct mission_output result)
     Image* indexed_tmp = NULL;
     CvSeq* lines;
     IplImage* frame = multicam_get_frame(FORWARD_CAM);
+    result.frame = frame;
     int num_pixels;
     
     // Set the depth

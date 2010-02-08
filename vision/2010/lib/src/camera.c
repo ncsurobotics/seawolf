@@ -94,6 +94,7 @@ IplImage* multicam_get_frame(int camnumber)
             while (1)
             {
                 record_dir_num++;
+                system("mkdir capture");
                 // Go through directories until one doesn't exist
                 sprintf(command, "mkdir capture/%d", record_dir_num);
                 int mkdir_ret = system(command);
@@ -117,8 +118,9 @@ IplImage* multicam_get_frame(int camnumber)
         current_capture = init_camera_from_string(cameras[camnumber]); 
     }
     current_cam_num = camnumber;
-    // We have the camera open, just output a frame
-    return get_frame(current_capture);
+    IplImage* frame = get_frame(current_capture);
+    // We have the camera open, output a frame
+    return frame;
 }
 
 void multicam_reset_camera()

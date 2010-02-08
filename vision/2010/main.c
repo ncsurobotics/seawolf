@@ -37,8 +37,12 @@ int main(int argc, char** argv)
     // Set filter for seasql notify messages
     Notify_filter(FILTER_ACTION, "GO");
 
-    struct mission_output results = {0,0,0,0,false};
+    struct mission_output results = {0,0,0,0,NULL,false};
     struct mission_output previous_results = results;
+
+    #ifdef VISION_SHOW_HEADING
+       cvNamedWindow("Heading", CV_WINDOW_AUTOSIZE);
+    #endif
 
     while (1)
     {
@@ -55,6 +59,12 @@ int main(int argc, char** argv)
             SeaSQL_setSetPointVision_Rho(results.rho);
             //TODO: Depth
             Notify_send("UPDATED", "SetPointVision");
+            #ifdef VISION_SHOW_HEADING
+                CvPoint heading = {results.theta + results.frame->width/2,
+                                   results.rho + results.frame->height/2};
+                cvCircle(results.frame, heading, 5, cvScalar(0,255,0,0),1,8,0);
+                cvShowImage("Heading", results.frame);
+            #endif
             previous_results = results;
         }
 
