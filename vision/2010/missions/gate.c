@@ -110,14 +110,14 @@ struct mission_output mission_gate_step(struct mission_output result)
         // If the line we see is closest to the left pole, turn right, else turn left
         if ( abs((int)pt_gate[1]-left_pole) < abs((int)pt_gate[1]-right_pole) ) {
             // We see the left pole
-            printf("I see the left pole!");
+            printf("I see the left pole!\n");
             int difference =  pt_gate[1] - left_pole;
             right_pole = right_pole + difference;
             left_pole = pt_gate[1];
             result.theta = frame->width/2 + 15;
         } else {
             // We see the right pole
-            printf("I see the right pole!");
+            printf("I see the right pole!\n");
             int difference =  pt_gate[1] - right_pole;
             left_pole = left_pole + difference;
             right_pole = pt_gate[1];
