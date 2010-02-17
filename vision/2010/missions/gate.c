@@ -46,7 +46,7 @@ struct mission_output mission_gate_step(struct mission_output result)
     
     // Set the depth
     //TODO: Depth
-    //SeaSQL_setTrackerDoDepth(0.0);
+    //SeaSQL_setTrackerDoDepth(2.0);
     result.depth = 4.0;
 
     // Find lines, white or black
