@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
+
 #include "vision_lib.h"
 #include <cv.h>
 #include <highgui.h>
@@ -45,7 +46,6 @@ struct mission_output mission_gate_step(struct mission_output result)
     //TODO: Depth
     //SeaSQL_setTrackerDoDepth(2.0);
     result.depth = 4.0;
-
     // Find lines, white or black
     if (WHITE_GATE_FLAG) { // LOOK FOR WHITE LINES
         grey = cvCreateImage(cvSize(frame->width,frame->height), 8, 1);
@@ -89,7 +89,7 @@ struct mission_output mission_gate_step(struct mission_output result)
         pt_gate[i] = cos(theta_gate[i])*rho_gate[i];
     }
 
-    // Figure out where the ga    cvNamedWindow("Color Filter", CV_WINDOW_AUTOSIZE);te is
+    // Figure out where the gate is
     if (rho_gate[0] != -999) { // We see two lines
         seen_gate++;
         seen_both_poles++;
@@ -113,14 +113,14 @@ struct mission_output mission_gate_step(struct mission_output result)
         // If the line we see is closest to the left pole, turn right, else turn left
         if ( abs((int)pt_gate[1]-left_pole) < abs((int)pt_gate[1]-right_pole) ) {
             // We see the left pole
-            printf("I see the left pole!\n");
+            printf("I see the left pole!");
             int difference =  pt_gate[1] - left_pole;
             right_pole = right_pole + difference;
             left_pole = pt_gate[1];
             result.theta = frame->width/2 + 15;
         } else {
             // We see the right pole
-            printf("I see the right pole!\n");
+            printf("I see the right pole!");
             int difference =  pt_gate[1] - right_pole;
             left_pole = left_pole + difference;
             right_pole = pt_gate[1];
@@ -146,14 +146,14 @@ struct mission_output mission_gate_step(struct mission_output result)
     result.theta = (result.theta*MAX_THETA / (frame->width/2))/6;
     result.phi = 0;
 
-    if (WHITE_GATE_FLAG) { // Free white gate resources        
-	cvReleaseImage(&grey);
+    if (WHITE_GATE_FLAG) { // Free white gate resources
+        cvReleaseImage(&grey);
         cvReleaseImage(&edge);
         cvRelease((void**) &lines);
     } else { // Free black gate resources
         cvReleaseImage(&grey);
-	cvReleaseImage(&ipl_out);
         cvReleaseImage(&edge);
+	cvReleaseImage(&ipl_out);
         cvRelease((void**) &lines);
     }
     
