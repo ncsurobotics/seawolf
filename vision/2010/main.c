@@ -44,7 +44,7 @@ int main(int argc, char** argv)
        cvNamedWindow("Heading", CV_WINDOW_AUTOSIZE);
     #endif
 
-    for (unsigned int frame_num=0; frame_num<10; frame_num++)
+    for (unsigned int frame_num=0; true; frame_num++)
     {
         
         // State machine
