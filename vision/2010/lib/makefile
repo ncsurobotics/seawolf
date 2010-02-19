@@ -11,14 +11,13 @@ LIB_NAME = vision_lib.o
 BIN_DIR = $(PWD)/bin
 CFLAGS += $(VISION_LIB_FLAGS) # Inherited from an upper level makefile
 
-
-all: $(BIN_DIR) $(LIB_NAME) 
+all: $(LIB_NAME) $(BIN_DIR)
 
 $(LIB_NAME): $(LIB_OBJECTS)
 	$(CC) $(LIB_FLAGS)  $(LIB_OBJECTS) -o $(LIB_NAME)
 
 $(BIN_DIR):
-	-mkdir $(BIN_DIR)
+	mkdir $(BIN_DIR)
 
 bin/%.o: src/%.c
 	$(CC) $(OPENCV_FLAGS) $(CFLAGS) -Iinclude/ -c src/$*.c -o bin/$*.o
