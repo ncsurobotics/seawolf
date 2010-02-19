@@ -44,7 +44,7 @@ int main(int argc, char** argv)
        cvNamedWindow("Heading", CV_WINDOW_AUTOSIZE);
     #endif
 
-    while (1)
+    for (unsigned int frame_num=0; true; frame_num++)
     {
         
         // State machine
@@ -68,7 +68,13 @@ int main(int argc, char** argv)
             previous_results = results;
         }
 
-        cvWaitKey(DELAY);
+        int key = cvWaitKey(DELAY);
+        if ( (char) key == 27) { // Esc to exit
+            break;
+        }
+        switch ( (char) key) {
+            // Keyboard Commands
+        }
 
     }
 

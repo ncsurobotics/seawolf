@@ -15,8 +15,13 @@ typedef struct CvLinePolar
     float angle;
 } CvLinePolar;
 
-//ARGUMENTS: targetAngle: desired angle ranging from 0-180 degrees
-//           angleThreshold: allowable error in degrees
+/**
+ * hough
+ * Runs a hough transform on the given image and returns a sequence of lines
+ * found.
+ * ARGUMENTS: targetAngle: desired angle ranging from 0-180 degrees
+ *           angleThreshold: allowable error in degrees
+ */
 CvSeq* hough(IplImage* img, IplImage* original, int threshold, int linesMax,int targetAngle, int angleThreshold, int clusterSize, int clusterWidth, int clusterHeight)
 {
     CvMemStorage* storage = cvCreateMemStorage(0);
@@ -224,5 +229,40 @@ CvSeq* hough(IplImage* img, IplImage* original, int threshold, int linesMax,int 
     }
     cvFree( &line_clusters);
 
+    // Display Debug
+    #ifdef VISION_LIB_HOUGH_LINES
+        cvNamedWindow("Hough Lines", CV_WINDOW_AUTOSIZE);
+        IplImage* debug_image = cvCreateImage(cvGetSize(img), 8, 3);
+        //cvCopy(img, debug_image, 0);
+        cvConvertImage(img, debug_image, CV_GRAY2BGR);
+        hough_draw_lines(debug_image, lines);
+        cvShowImage("Hough Lines", debug_image);
+    #endif
+
     return lines;
+}
+
+/**
+ * hough_draw_lines
+ * Draws lines found by hough() on the given image.
+ */
+void hough_draw_lines(IplImage* image, CvSeq* lines) {
+    for(int i = 0; ; i++ )
+    {
+        float* line = (float*)cvGetSeqElem(lines,i);
+        if (line == 0) {
+            break;
+        }
+        float rho = line[0];
+        float theta = line[1];
+        CvPoint pt1, pt2;
+        double a = cos(theta), b = sin(theta);
+        double x0 = a*rho, y0 = b*rho;
+        pt1.x = cvRound(x0 + 1000*(-b));
+        pt1.y = cvRound(y0 + 1000*(a));
+        pt2.x = cvRound(x0 - 1000*(-b));
+        pt2.y = cvRound(y0 - 1000*(a));
+        //printf("Rho:%f  Theta:%f\n",rho,theta);
+        cvLine( image, pt1, pt2, CV_RGB(255,0,0), 1, CV_AA, 0 );
+    }
 }

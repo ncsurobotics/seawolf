@@ -54,11 +54,6 @@ struct mission_output mission_gate_step(struct mission_output result)
         edge = remove_edges(frame, edge, 0,0,0,0,0,0); // For now this isn't neccessary, leavin in for debugging
         lines = hough(edge, frame, 27, 2, 90,20, 10, 150, 150);
 
-        #ifdef DEBUG_BLACK_GATE
-            cvNamedWindow("Black_Gate", CV_WINDOW_AUTOSIZE);
-            cvShowImage("Black_Gate", frame);
-        #endif
-
     } else { // LOOK FOR BLACK LINES
         color.r=0x00;
         color.g=0x00;
@@ -70,11 +65,6 @@ struct mission_output mission_gate_step(struct mission_output result)
         edge = edge_opencv(grey, 40, 60, 3);
         edge = remove_edges(frame, edge, 0,0,0,0,0,0); // For now this isn't neccessary, leavin in for debugging
         lines = hough(edge, frame, 24, 2, 90,20, 10, 150, 150);
-
-        #ifdef DEBUG_BLACK_GATE
-            cvNamedWindow("Black_Gate", CV_WINDOW_AUTOSIZE);
-            cvShowImage("Black_Gate", ipl_out);
-        #endif
 
     }
 
@@ -141,6 +131,9 @@ struct mission_output mission_gate_step(struct mission_output result)
     else
         result.rho = 15; // High rho
 
+    // Debugs:
+    hough_draw_lines(result.frame, lines);
+
     // Scale output 
     result.theta -= frame->width/2;
     result.theta = (result.theta*MAX_THETA / (frame->width/2))/6;
@@ -153,9 +146,9 @@ struct mission_output mission_gate_step(struct mission_output result)
     } else { // Free black gate resources
         cvReleaseImage(&grey);
         cvReleaseImage(&edge);
-	cvReleaseImage(&ipl_out);
+        cvReleaseImage(&ipl_out);
         cvRelease((void**) &lines);
     }
-    
+
     return result;
 }
