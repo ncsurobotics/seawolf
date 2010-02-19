@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
-
 #include "vision_lib.h"
 #include <cv.h>
 #include <highgui.h>
@@ -11,7 +10,7 @@
 
 
 // State variables for GATE (static limits scope to file)
-static int WHITE_GATE_FLAG =1; // Set to zero to look for black gate
+static int WHITE_GATE_FLAG =0; // Set to zero to look for black gate
 static int close_to_gate =0; // Number of consecutive frames we've seen something we think is a gate
 static int gate_width =0; // The width of the last gate we saw 
 static int frames_since_seen_gate = 0; // Frames since we've seen the gate
@@ -37,8 +36,6 @@ struct mission_output mission_gate_step(struct mission_output result)
     IplImage* edge;
     IplImage* ipl_out = NULL;
     RGBPixel color = {0xff, 0x00, 0x00};
-    Image* rgb_tmp = NULL;
-    Image* indexed_tmp = NULL;
     CvSeq* lines;
     IplImage* frame = multicam_get_frame(FORWARD_CAM);
     result.frame = frame;
@@ -56,23 +53,29 @@ struct mission_output mission_gate_step(struct mission_output result)
         edge = edge_opencv(grey, 60,100, 3); // This should be much more lenient than normal
         edge = remove_edges(frame, edge, 0,0,0,0,0,0); // For now this isn't neccessary, leavin in for debugging
         lines = hough(edge, frame, 27, 2, 90,20, 10, 150, 150);
+
+        #ifdef DEBUG_BLACK_GATE
+            cvNamedWindow("Black_Gate", CV_WINDOW_AUTOSIZE);
+            cvShowImage("Black_Gate", frame);
+        #endif
+
     } else { // LOOK FOR BLACK LINES
         color.r=0x00;
         color.g=0x00;
         color.b=0x00;
         grey = cvCreateImage(cvGetSize(frame), 8, 1);
-        /*TODO
-        IplImageToImage(frame, rgb_tmp);
-        num_pixels = FindTargetColor(rgb_tmp, indexed_tmp, &color, 80, 256);
-        Image_indexedToRGB(indexed_tmp, rgb_tmp); 
-        ImageToIplImage(rgb_tmp, ipl_out);
-        */
-        #ifdef debug_tuna
-            cvShowImage("out2", ipl_out);
-        #endif
-        cvCvtColor(ipl_out, grey, CV_BGR2GRAY);
+        IplImage* ipl_out = cvCreateImage(cvGetSize(frame),8,3);
+        num_pixels = FindTargetColor(frame, ipl_out, &color, 80, 256);
+        cvCvtColor(ipl_out, grey, CV_BGR2GRAY); 
         edge = edge_opencv(grey, 40, 60, 3);
+        edge = remove_edges(frame, edge, 0,0,0,0,0,0); // For now this isn't neccessary, leavin in for debugging
         lines = hough(edge, frame, 24, 2, 90,20, 10, 150, 150);
+
+        #ifdef DEBUG_BLACK_GATE
+            cvNamedWindow("Black_Gate", CV_WINDOW_AUTOSIZE);
+            cvShowImage("Black_Gate", ipl_out);
+        #endif
+
     }
 
     // Now analyze lines
@@ -86,7 +89,7 @@ struct mission_output mission_gate_step(struct mission_output result)
         pt_gate[i] = cos(theta_gate[i])*rho_gate[i];
     }
 
-    // Figure out where the gate is
+    // Figure out where the ga    cvNamedWindow("Color Filter", CV_WINDOW_AUTOSIZE);te is
     if (rho_gate[0] != -999) { // We see two lines
         seen_gate++;
         seen_both_poles++;
@@ -143,15 +146,13 @@ struct mission_output mission_gate_step(struct mission_output result)
     result.theta = (result.theta*MAX_THETA / (frame->width/2))/6;
     result.phi = 0;
 
-    // Free resources
-    cvReleaseImage(&grey);
-    cvReleaseImage(&edge);
-    cvRelease((void**) &lines);
-
-    if (WHITE_GATE_FLAG) { // Free white gate resources
-        // ...
+    if (WHITE_GATE_FLAG) { // Free white gate resources        
+	cvReleaseImage(&grey);
+        cvReleaseImage(&edge);
+        cvRelease((void**) &lines);
     } else { // Free black gate resources
         cvReleaseImage(&grey);
+	cvReleaseImage(&ipl_out);
         cvReleaseImage(&edge);
         cvRelease((void**) &lines);
     }
