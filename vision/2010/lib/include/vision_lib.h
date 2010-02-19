@@ -12,7 +12,9 @@
 #include "vision_lib/hough.h"
 #include "vision_lib/edge.h"
 #include "vision_lib/remove_edges.h"
+#include "vision_lib/target_color.h"
 
+#if 0
 
 //******************************************************************************************
 // Tunavision header
@@ -96,5 +98,7 @@ int FindTargetColor(Image* in, Image* out, RGBPixel* color, int min_blobsize, in
 /* Image <--> IplImage */
 void IplImageToImage(IplImage* src, Image* dest);
 void ImageToIplImage(Image* src, IplImage* dest);
+
+#endif
 
 #endif // __SEAWOLF_VISION_LIB_ROOT_INCLUDE_H
