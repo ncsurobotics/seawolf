@@ -8,8 +8,8 @@ include debug.mk
 export VISION_LIB_FLAGS=$(DEBUG_FLAGS)
 CFLAGS += $(DEBUG_FLAGS)
 
-#OPENCV_FLAGS=$(shell pkg-config --libs --cflags opencv) -DCV_NO_BACKWARD_COMPATIBILITY
-OPENCV_FLAGS=-I/usr/local/include/opencv -lcxcore -lcv -lhighgui -lcvaux -lml \
+OPENCV_FLAGS=$(shell pkg-config --libs --cflags opencv) -DCV_NO_BACKWARD_COMPATIBILITY
+#OPENCV_FLAGS=-I/usr/local/include/opencv -lcxcore -lcv -lhighgui -lcvaux -lml \
              -DCV_NO_BACKWARD_COMPATIBILITY
 SEAWOLF_FLAGS=-I../../libseawolf/include/ -lseawolf -L../../libseawolf/
 VISION_LIB_IFLAGS=-Ilib/include/
