@@ -7,13 +7,12 @@
 
 #define MAX_BLOB_AREA 500000
 
-//----------------------------------------------------
-//Function: blob
-//
-// This is takes an image from colorfilter and finds what's left over
-// arugment: center_type: 0 returns the middle of the bounding box
-//            1 returns the centroid of the blobs
-
+/**
+ * blob()
+ * This is takes an image from colorfilter and finds what's left over.
+ * arugment: center_type: 0 returns the middle of the bounding box
+ * 1 returns the centroid of the blobs
+ */
 int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_area) {
 
   int blobnumber; //holds the number of blobs we found
