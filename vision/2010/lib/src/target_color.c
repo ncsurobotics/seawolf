@@ -1,9 +1,9 @@
 //************************************************
-//	target_color.c: 
+//  target_color.c: 
 //
-//	Houses FindTargetColor() and related functions
-//	      - returns a blacked-out IplImage (black is
-//			not the color you are looking for)
+//  Houses FindTargetColor() and related functions
+//        - returns a blacked-out IplImage (black is
+//          not the color you are looking for)
 //
 
 #include "vision_lib.h"
@@ -30,13 +30,13 @@ int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsi
 
     //initialize tables
     for(i=0;i<444;i++)
-	sigmas[i] = 0;
+    sigmas[i] = 0;
   
    
     for(i=in->width*in->height; i>=0;i--){ //fill the acumulator tables 
-	tempPixel.r = ptrIn[3*i+2];
-	tempPixel.b = ptrIn[3*i+1];
-	tempPixel.g = ptrIn[3*i+0];
+    tempPixel.r = ptrIn[3*i+2];
+    tempPixel.b = ptrIn[3*i+1];
+    tempPixel.g = ptrIn[3*i+0];
         s = (int)Pixel_stddev(color, &tempPixel); //this function used to keep color data associated with each sigma, so this s got used a lot
         sigmas[s]++;
             //update the average color
@@ -53,26 +53,26 @@ int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsi
 
     for(i=0; (blobsize < min_blobsize || i < smallest_stddev + (averagestddev-smallest_stddev)/2)  && i<dev_threshold;i++){ //analyze data to determine sigma
         if(sigmas[i] != 0 && smallest_stddev < 0 )
-	    smallest_stddev = i;
-	blobsize += sigmas[i]; 
+        smallest_stddev = i;
+    blobsize += sigmas[i]; 
     }
     stddev = i; //save the max. std dev
 
     for(i=in->width*in->height-1;i>=0;i--){ //Update the Output Image
-	tempPixel.r = ptrIn[3*i+2];
-	tempPixel.b = ptrIn[3*i+1];
-	tempPixel.g = ptrIn[3*i+0];
-	if((int)Pixel_stddev(color,&tempPixel) < stddev){
+    tempPixel.r = ptrIn[3*i+2];
+    tempPixel.b = ptrIn[3*i+1];
+    tempPixel.g = ptrIn[3*i+0];
+    if((int)Pixel_stddev(color,&tempPixel) < stddev){
             //this pixel is "close" to the target color, mark it white
-            ptrOut[3*i+2] = 0xff;	
+            ptrOut[3*i+2] = 0xff;   
             ptrOut[3*i+1] = 0xff;
             ptrOut[3*i+0] = 0xff;
-	}else{
+    }else{
             //this pixel is not "close" to the target color: mark it black
-            ptrOut[3*i+2] = 0x00;	
+            ptrOut[3*i+2] = 0x00;   
             ptrOut[3*i+1] = 0x00;
             ptrOut[3*i+0] = 0x00;
-	} 
+    } 
     }
    
     free(sigmas);

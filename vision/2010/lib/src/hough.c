@@ -223,6 +223,7 @@ CvSeq* hough(IplImage* img, IplImage* original, int threshold, int linesMax,int 
     cvFree( &tabSin );
     cvFree( &tabCos );
     cvFree( &accum );
+    cvFree( &temp_cluster );
     for(i=0;i<linesMax;i++)
     {
         cvFree(&line_clusters[i]);

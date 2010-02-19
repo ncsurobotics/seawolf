@@ -59,7 +59,7 @@ struct mission_output mission_gate_step(struct mission_output result)
         color.g=0x00;
         color.b=0x00;
         grey = cvCreateImage(cvGetSize(frame), 8, 1);
-        IplImage* ipl_out = cvCreateImage(cvGetSize(frame),8,3);
+        ipl_out = cvCreateImage(cvGetSize(frame),8,3);
         num_pixels = FindTargetColor(frame, ipl_out, &color, 80, 256);
         cvCvtColor(ipl_out, grey, CV_BGR2GRAY); 
         edge = edge_opencv(grey, 40, 60, 3);
@@ -147,7 +147,7 @@ struct mission_output mission_gate_step(struct mission_output result)
         cvReleaseImage(&grey);
         cvReleaseImage(&edge);
         cvReleaseImage(&ipl_out);
-        cvRelease((void**) &lines);
+        cvReleaseMemStorage(&(lines->storage));
     }
 
     return result;

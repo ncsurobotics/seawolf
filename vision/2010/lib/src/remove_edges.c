@@ -48,5 +48,6 @@ IplImage* remove_edges(IplImage* img, IplImage* edge, int rmin, int rmax, int bm
     }
   }  
 
+    cvReleaseImage(&edge);
   return modified; 
 }

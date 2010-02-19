@@ -44,29 +44,30 @@ int main(int argc, char** argv)
        cvNamedWindow("Heading", CV_WINDOW_AUTOSIZE);
     #endif
 
-    for (unsigned int frame_num=0; true; frame_num++)
+    for (unsigned int frame_num=0; frame_num<10; frame_num++)
     {
         
         // State machine
         results = mission_gate_step(results);
         //TODO
 
+        printf("Theta, Phi, Rho: %f, %f, %f\n", results.theta, results.phi, results.rho);
+
         // Give mission control its heading
         if (memcmp(&results, &previous_results, sizeof(struct mission_output))) {
-            printf("Theta, Phi, Rho: %f, %f, %f\n", results.theta, results.phi, results.rho);
             SeaSQL_setSetPointVision_Theta(results.theta);
             SeaSQL_setSetPointVision_Phi(results.phi);
             SeaSQL_setSetPointVision_Rho(results.rho);
             //TODO: Depth
             Notify_send("UPDATED", "SetPointVision");
-            #ifdef VISION_SHOW_HEADING
-                CvPoint heading = {results.theta + results.frame->width/2,
-                                   results.rho + results.frame->height/2};
-                cvCircle(results.frame, heading, 5, cvScalar(0,255,0,0),1,8,0);
-                cvShowImage("Heading", results.frame);
-            #endif
             previous_results = results;
         }
+        #ifdef VISION_SHOW_HEADING
+            CvPoint heading = {results.theta + results.frame->width/2,
+                               results.rho + results.frame->height/2};
+            cvCircle(results.frame, heading, 5, cvScalar(0,255,0,0),1,8,0);
+            cvShowImage("Heading", results.frame);
+        #endif
 
         int key = cvWaitKey(DELAY);
         if ( (char) key == 27) { // Esc to exit
