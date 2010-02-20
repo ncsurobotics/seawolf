@@ -1,5 +1,4 @@
-#define debug
-
+//#define debug
 
 #include "seawolf.h"
 
