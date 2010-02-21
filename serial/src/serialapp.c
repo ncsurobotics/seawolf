@@ -149,13 +149,13 @@ int main(void) {
     const int device_count = sizeof(device_pool) / sizeof(struct comm_device);
 
     /* App to executable mappings */
-    struct comm_assignment app_pool[] = {[PT_DEPTH]         = {"./apps/depth",          false},
-                                         [PT_THRUSTER12]    = {"./apps/thruster12-bin", false},
-                                         [PT_THRUSTER3]     = {"./apps/thruster3-bin",  false},
-                                         [PT_THRUSTER45]    = {"./apps/thruster45-bin", false},
-                                         [PT_ALTIMETER]     = {"./apps/altimeter",      false},
-                                         [PT_IMU]           = {"./apps/imu",            false},
-                                         [PT_MISSIONSTATUS] = {"./apps/status",         false}};
+    struct comm_assignment app_pool[] = {[PT_DEPTH]         = {"./bin/depth",          false},
+                                         [PT_THRUSTER12]    = {"./bin/thruster12-bin", false},
+                                         [PT_THRUSTER3]     = {"./bin/thruster3-bin",  false},
+                                         [PT_THRUSTER45]    = {"./bin/thruster45-bin", false},
+                                         [PT_ALTIMETER]     = {"./bin/altimeter",      false},
+                                         [PT_IMU]           = {"./bin/imu",            false},
+                                         [PT_MISSIONSTATUS] = {"./bin/status",         false}};
     const int app_count = sizeof(app_pool) / sizeof(struct comm_assignment);
 
     int i = 0;
