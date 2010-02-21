@@ -66,6 +66,12 @@ int main(int argc, char** argv)
             CvPoint heading = {results.theta + results.frame->width/2,
                                results.rho + results.frame->height/2};
             cvCircle(results.frame, heading, 5, cvScalar(0,255,0,0),1,8,0);
+            //cvLine(results.frame, cvPoint(results.frame->width/2, 0), cvPoint(results.frame->width/2, 1), cvScalar(0,0,255,0), 1, 8, 0);
+            //CvPoint pt1 = cvPoint(results.frame->width/2, 0);
+            //CvPoint pt2 = cvPoint(results.frame->width/2, 1);
+            //cvLine(results.frame, pt1, pt2, CV_RGB(255,0,0), 1, CV_AA, 0 );
+            cvCircle(results.frame, cvPoint(results.frame->width/2, results.frame->height/2), 5, cvScalar(0,255,255,0),1,8,0);
+            printf("HIIII\n");
             cvShowImage("Heading", results.frame);
         #endif
 

@@ -94,7 +94,8 @@ struct mission_output mission_gate_step(struct mission_output result)
         left_pole = pt_gate[0]<pt_gate[1]?pt_gate[0]:pt_gate[1];
         right_pole = pt_gate[0]>pt_gate[1]?pt_gate[0]:pt_gate[1];
 
-        result.theta = ((pt_gate[0]+pt_gate[1])/2-frame->width/2)/2+frame->width/2; // Head towards the middle of the gate
+        //result.theta = ((pt_gate[0]+pt_gate[1])/2-frame->width/2)/2+frame->width/2; // Head towards the middle of the gate
+        result.theta = (pt_gate[0]+pt_gate[1])/2; // - frame->width/2;
 
     } else if (rho_gate[1] != -999) { // We only see one line
         seen_gate++;
@@ -133,6 +134,7 @@ struct mission_output mission_gate_step(struct mission_output result)
 
     // Debugs:
     hough_draw_lines(result.frame, lines);
+    cvCircle(result.frame, cvPoint(result.theta, frame->height/2), 5, cvScalar(0,0,0,255),1,8,0);
 
     // Scale output 
     result.theta -= frame->width/2;
