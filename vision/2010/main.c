@@ -64,7 +64,7 @@ int main(int argc, char** argv)
         }
         #ifdef VISION_SHOW_HEADING
             CvPoint heading = {results.theta + results.frame->width/2,
-                               results.rho + results.frame->height/2};
+                               results.phi + results.frame->height/2};
             cvCircle(results.frame, heading, 5, cvScalar(0,255,0,0),1,8,0);
             //cvLine(results.frame, cvPoint(results.frame->width/2, 0), cvPoint(results.frame->width/2, 1), cvScalar(0,0,255,0), 1, 8, 0);
             //CvPoint pt1 = cvPoint(results.frame->width/2, 0);

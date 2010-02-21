@@ -55,8 +55,8 @@ struct mission_output mission_gate_step(struct mission_output result)
         lines = hough(edge, frame, 27, 2, 90,20, 10, 150, 150);
 
     } else { // LOOK FOR BLACK LINES
-        color.r=0x00;
-        color.g=0x00;
+        color.r=0xFF;
+        color.g=0xA6;
         color.b=0x00;
         grey = cvCreateImage(cvGetSize(frame), 8, 1);
         ipl_out = cvCreateImage(cvGetSize(frame),8,3);
@@ -64,7 +64,12 @@ struct mission_output mission_gate_step(struct mission_output result)
         cvCvtColor(ipl_out, grey, CV_BGR2GRAY); 
         edge = edge_opencv(grey, 40, 60, 3);
         edge = remove_edges(frame, edge, 0,0,0,0,0,0); // For now this isn't neccessary, leavin in for debugging
-        lines = hough(edge, frame, 24, 2, 90,20, 10, 150, 150);
+        lines = hough(edge, frame, 20, 2, 90,20, 10, 150, 150);
+
+        #ifdef DEBUG_BLACK_GATE
+            cvNamedWindow("Black_Gate", CV_WINDOW_AUTOSIZE);
+            cvShowImage("Black_Gate", ipl_out);
+        #endif
 
     }
 

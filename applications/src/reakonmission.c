@@ -5,11 +5,12 @@ int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("Mission Controller");
 
-    Notify_filter(FILTER_ACTION, "MISSIONTRIGGER");
-    Notify_get(NULL, NULL);
+    //Notify_filter(FILTER_ACTION, "MISSIONTRIGGER");
+    //Notify_get(NULL, NULL);
 
     Notify_send("THRUSTER_REQUEST", Util_format("Forward %d %d", 0, 0));
     SeaSQL_setYawHeading(SeaSQL_getSEA_Yaw());
+    SeaSQL_setPIDDoYaw(1.0);
     SeaSQL_setDepthHeading(0.0);
     Notify_send("THRUSTER_REQUEST", Util_format("Forward %d %d", 40, 40));
 
