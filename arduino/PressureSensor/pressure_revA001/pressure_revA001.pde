@@ -1,46 +1,36 @@
-int analogPin = 3;     // potentiometer wiper (middle terminal) connected to analog pin 3
-                       // outside leads to ground and +5V
-int val = 0;           // variable to store the value read
-float voltage = 0;
-float psi = 0;
-float depth = 0;
 
+/* The output pin (wiper) is connected to pin 3 */
+#define READ_PIN 3
 
-//These are varbiable depending on your location, weather, and purity of water!!!
-float PSI_PER_FOOT = 0.4335;
-float AIR_PRESSURE = 14.23;
+/* Air and water pressure constants. Varies by location (calibration recommended) */
+#define PSI_PER_FOOT 0.4335
+#define AIR_PRESSURE 14.23
 
-
-void setup()
-{
-  Serial.begin(9600);          //  setup serial
+void setup(void) {
+  Serial.begin(9600);
   handshakeSerial();
 }
 
-void loop()
-{
-  val = analogRead(analogPin);    // read the input pin
-  voltage = (float)val*(5.0/1024.0);
-  psi = ((voltage-0.5)*100)/4.0;  
-  depth = (psi-AIR_PRESSURE)/PSI_PER_FOOT;
-  
-  Serial.println(depth);             // debug value
+void loop(void) {
+    int val;
+    float voltage, psi, depth;
+
+    val = analogRead(READ_PIN);
+    voltage = (float) val * (5.0/1024.0);
+    psi = ((voltage-0.5)*100)/4.0;  
+    depth = (psi-AIR_PRESSURE)/PSI_PER_FOOT;
+    delay(100);
+    
+    Serial.println(depth);
 }
 
-
-
-
-
-
-//Handshake option
-int handshakeSerial()
-{
+int handshakeSerial(void) {
     int incomingByte;
-    int i = 0;
     char incomingString[64];
+    int i = 0;
 
     /* Wait for established message */
-    while(1){
+    while(1) {
         incomingByte = Serial.read();
         if(incomingByte == -1 || (incomingByte != '{' && i == 0)) {
             Serial.println("{ID|PressureSensor}");
@@ -56,13 +46,14 @@ int handshakeSerial()
     }
     
     Serial.println(incomingString);
-
+    
+    /* Sanity check */
     if(strcmp(incomingString, "{ESTABLISHED|NULL}") != 0) {
         Serial.println("Invalid message from client!");
         return 0;
-     }
-
-    /* Wait for READY message */
+    }
+    
+    /* Wait for {READY|NULL} message */
     while(1) {
         incomingByte = Serial.read();
         if(incomingByte == -1) {
@@ -71,7 +62,6 @@ int handshakeSerial()
             break;
         }
     }
-
+    
     return 1;
 }
-
