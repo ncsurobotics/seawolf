@@ -55,4 +55,7 @@ struct mission_output {
 void mission_gate_init(IplImage* frame);
 struct mission_output mission_gate_step(struct mission_output);
 
+void mission_bouy_init(IplImage* frame);
+struct mission_output mission_bouy_step(struct mission_output);
+
 #endif

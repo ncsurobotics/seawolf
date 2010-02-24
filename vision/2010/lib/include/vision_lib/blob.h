@@ -17,5 +17,6 @@ int blob(IplImage* Img, BLOB** blobs, int tracking_number, int minimum_blob_area
 BLOB* findPrimary(IplImage* Img, int target_number, int minimum_blob_area, int *blobs_found);
 int checkPixel(IplImage* Img, int x, int y, unsigned int** pixlog, BLOB* blob, int depth); 
 void blob_copy(BLOB* dest, BLOB* src);
+void blob_free(BLOB* blobs, int blobs_found);
 
 #endif

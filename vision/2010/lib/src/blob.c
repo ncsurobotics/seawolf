@@ -131,6 +131,7 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
   if(tracking_number == 0){
     return blobs;
   }
+  blob_free(blobs,*blobnumber);
 
   //free the target pixels we don't need
   for(i=blobs_found;i<tracking_number;i++){
@@ -215,4 +216,13 @@ void blob_copy(BLOB* dest, BLOB* src){
     dest->cent_y= src->cent_y;
     dest->mid   = src->mid;
     memcpy(dest->pixels,src->pixels,MAX_BLOB_AREA*sizeof(CvPoint));
+}
+
+void blob_free(BLOB* blobs, int blobs_found){
+
+    int i;
+    for(i=0;i<blobs_found;i++){
+        cvFree(&blobs[i].pixels);
+    }
+    free(blobs);
 }
