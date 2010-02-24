@@ -216,3 +216,12 @@ void blob_copy(BLOB* dest, BLOB* src){
     dest->mid   = src->mid;
     memcpy(dest->pixels,src->pixels,MAX_BLOB_AREA*sizeof(CvPoint));
 }
+
+void blob_free(BLOB* blobs, int blobs_found){
+
+    int i;
+    for(i=0;i<blobs_found;i++){
+        cvFree(&blobs[i].pixels);
+    }
+    free(blobs);
+}
