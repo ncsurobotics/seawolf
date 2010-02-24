@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     if(argc == 2) {
         Hub_DB_setFile(argv[1]);
     } else {
-        Hub_DB_setFile("seawolf.db");
+        Hub_DB_setFile("../db/seawolf.db");
     }
 
     /* Initialize subcomponents */

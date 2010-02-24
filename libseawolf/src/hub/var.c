@@ -13,7 +13,6 @@ static void Hub_Var_initPersistentValues(void) {
     
     for(int i = 0; i < count; i++) {
         variable_name = List_get(variable_names, i);
-        Hub_Logging_log(DEBUG, Util_format("Found variable, '%s'", variable_name));
         var = Dictionary_get(var_cache, variable_name);
         if(var->persistent) {
             result = Hub_DB_exec(Util_format("SELECT value FROM variables WHERE name='%s'", variable_name));
