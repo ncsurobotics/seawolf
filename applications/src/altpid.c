@@ -19,27 +19,27 @@ int main(void) {
     Notify_filter(FILTER_MATCH, "UPDATED AltitudeHeading");
     Notify_filter(FILTER_MATCH, "UPDATED Altitude");
 
-    pid = PID_new(SeaSQL_getAltitudeHeading(),
-                  SeaSQL_getAltitudePID_p(),
-                  SeaSQL_getAltitudePID_i(),
-                  SeaSQL_getAltitudePID_d());
+    pid = PID_new(Var_get("AltitudeHeading"),
+                  Var_get("AltitudePID.p"),
+                  Var_get("AltitudePID.i"),
+                  Var_get("AltitudePID.d"));
 
-    mv = PID_start(pid, SeaSQL_getAltitude());
+    mv = PID_start(pid, Var_get("Altitude"));
     dataOut(mv);
     while(true) {
         Notify_get(action, data);
 
         if(strcmp(data, "AltitudePID") == 0) {
             PID_setCoefficients(pid,
-                                SeaSQL_getAltitudePID_p(),
-                                SeaSQL_getAltitudePID_i(),
-                                SeaSQL_getAltitudePID_d());
+                                Var_get("AltitudePID.p"),
+                                Var_get("AltitudePID.i"),
+                                Var_get("AltitudePID.d"));
             PID_resetIntegral(pid);
         } else if(strcmp(data, "AltitudeHeading") == 0) {
-            PID_setSetPoint(pid, SeaSQL_getAltitudeHeading());
-            mv = PID_start(pid, SeaSQL_getAltitude());
+            PID_setSetPoint(pid, Var_get("AltitudeHeading"));
+            mv = PID_start(pid, Var_get("Altitude"));
         } else {
-            mv = PID_update(pid, SeaSQL_getAltitude());
+            mv = PID_update(pid, Var_get("Altitude"));
         }
         
         dataOut(mv);

@@ -18,9 +18,9 @@ int main(void) {
     Notify_filter(FILTER_MATCH, "UPDATED PitchPID");
     Notify_filter(FILTER_MATCH, "UPDATED IMU");
 
-    pid = PID_new(0.0, SeaSQL_getPitchPID_p(),
-                       SeaSQL_getPitchPID_i(),
-                       SeaSQL_getPitchPID_d());
+    pid = PID_new(0.0, Var_get("PitchPID.p"),
+                       Var_get("PitchPID.i"),
+                       Var_get("PitchPID.d"));
 
     mv = PID_start(pid, 0.0);
     dataOut(mv);
@@ -29,12 +29,12 @@ int main(void) {
 
         if(strcmp(data, "PitchPID") == 0) {
             PID_setCoefficients(pid,
-                                SeaSQL_getPitchPID_p(),
-                                SeaSQL_getPitchPID_i(),
-                                SeaSQL_getPitchPID_d());
+                                Var_get("PitchPID.p"),
+                                Var_get("PitchPID.i"),
+                                Var_get("PitchPID.d"));
             PID_resetIntegral(pid);
         } else {
-            mv = PID_update(pid, SeaSQL_getSEA_Pitch());
+            mv = PID_update(pid, Var_get("SEA.Pitch"));
         }
         
         dataOut(mv);

@@ -78,22 +78,22 @@ int main(int argc, char** argv) {
 
         if(mission) {
             while(true) {
-                SeaSQL_setTrackerDoDepth(0);
-                SeaSQL_setDepthHeading(0);
-                SeaSQL_setPIDDoYaw(0);
-                SeaSQL_setSetPoint_Theta(0);
-                SeaSQL_setSetPoint_Phi(0);
-                SeaSQL_setSetPoint_Rho(0);
-                SeaSQL_setSetPointVision_Theta(0);
-                SeaSQL_setSetPointVision_Phi(0);
-                SeaSQL_setSetPointVision_Rho(0);
-                SeaSQL_setSetPointSource(SETPOINT_SOURCE_VISION);
+                Var_set("TrackerDoDepth", 0);
+                Var_set("DepthHeading", 0);
+                Var_set("PIDDoYaw", 0);
+                Var_set("SetPoint.Theta", 0);
+                Var_set("SetPoint.Phi", 0);
+                Var_set("SetPoint.Rho", 0);
+                Var_set("SetPointVision.Theta", 0);
+                Var_set("SetPointVision.Phi", 0);
+                Var_set("SetPointVision.Rho", 0);
+                Var_set("SetPointSource", SETPOINT_SOURCE_VISION);
 
-                SeaSQL_setPortX(0);
-                SeaSQL_setStarX(0);
-                SeaSQL_setPortY(0);
-                SeaSQL_setStarY(0);
-                SeaSQL_setAft(0);
+                Var_set("PortX", 0);
+                Var_set("StarX", 0);
+                Var_set("PortY", 0);
+                Var_set("StarY", 0);
+                Var_set("Aft", 0);
 
                 chdir("../vision/seavision/");
                 pid[0] = spawn_vision("./mission", argv[2], argv[3], argv[4]);

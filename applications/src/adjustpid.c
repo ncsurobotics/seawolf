@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
     }
 
     Seawolf_loadConfig("../conf/seawolf.conf");
-    SeaSQL_setAutoNotify(false);
+    Var_set("AutoNotify", false);
     Seawolf_init("PID Adjuster");
 
     char* sensor = argv[1];
@@ -28,105 +28,105 @@ int main(int argc, char** argv) {
     if(strcmp(sensor, "depth") == 0) {
         if(var == 'p') {
             if(action == SET) {
-                SeaSQL_setDepthPID_p(value);
+                Var_set("DepthPID.p", value);
             } else {
-                printf("%.2f\n", SeaSQL_getDepthPID_p());
+                printf("%.2f\n", Var_get("DepthPID.p"));
             }
         } else if(var == 'i') {
             if(action == SET) {
-                SeaSQL_setDepthPID_i(value);
+                Var_set("DepthPID.i", value);
             } else {
-                printf("%.2f\n", SeaSQL_getDepthPID_i());
+                printf("%.2f\n", Var_get("DepthPID.i"));
             }
         } else if(var == 'd') {
             if(action == SET) {
-                SeaSQL_setDepthPID_d(value);
+                Var_set("DepthPID.d", value);
             } else {
-                printf("%.2f\n", SeaSQL_getDepthPID_d());
+                printf("%.2f\n", Var_get("DepthPID.d"));
             }
         }
         Notify_send("UPDATED", "DepthPID");
     } else if(strcmp(sensor, "alt") == 0) {
         if(var == 'p') {
             if(action == SET) {
-                SeaSQL_setAltitudePID_p(value);
+                Var_set("AltitudePID.p", value);
             } else {
-                printf("%.2f\n", SeaSQL_getAltitudePID_p());
+                printf("%.2f\n", Var_get("AltitudePID.p"));
             }
         } else if(var == 'i') {
             if(action == SET) {
-                SeaSQL_setAltitudePID_i(value);
+                Var_set("AltitudePID.i", value);
             } else {
-                printf("%.2f\n", SeaSQL_getAltitudePID_i());
+                printf("%.2f\n", Var_get("AltitudePID.i"));
             }
         } else if(var == 'd') {
             if(action == SET) {
-                SeaSQL_setAltitudePID_d(value);
+                Var_set("AltitudePID.d", value);
             } else {
-                printf("%.2f\n", SeaSQL_getAltitudePID_d());
+                printf("%.2f\n", Var_get("AltitudePID.d"));
             }
         }
         Notify_send("UPDATED", "AltitudePID");
     } else if(strcmp(sensor, "yaw") == 0) {
         if(var == 'p') {
             if(action == SET) {
-                SeaSQL_setYawPID_p(value);
+                Var_set("YawPID.p", value);
             } else {
-                printf("%.2f\n", SeaSQL_getYawPID_p());
+                printf("%.2f\n", Var_get("YawPID.p"));
             }
         } else if(var == 'i') {
             if(action == SET) {
-                SeaSQL_setYawPID_i(value);
+                Var_set("YawPID.i", value);
             } else {
-                printf("%.2f\n", SeaSQL_getYawPID_i());
+                printf("%.2f\n", Var_get("YawPID.i"));
             }
         } else if(var == 'd') {
             if(action == SET) {
-                SeaSQL_setYawPID_d(value);
+                Var_set("YawPID.d", value);
             } else {
-                printf("%.2f\n", SeaSQL_getYawPID_d());
+                printf("%.2f\n", Var_get("YawPID.d"));
             }
         }
         Notify_send("UPDATED", "YawPID");
     } else if(strcmp(sensor, "roll") == 0) {
         if(var == 'p') {
             if(action == SET) {
-                SeaSQL_setRollPID_p(value);
+                Var_set("RollPID.p", value);
             } else {
-                printf("%.2f\n", SeaSQL_getRollPID_p());
+                printf("%.2f\n", Var_get("RollPID.p"));
             }
         } else if(var == 'i') {
             if(action == SET) {
-                SeaSQL_setRollPID_i(value);
+                Var_set("RollPID.i", value);
             } else {
-                printf("%.2f\n", SeaSQL_getRollPID_i());
+                printf("%.2f\n", Var_get("RollPID.i"));
             }
         } else if(var == 'd') {
             if(action == SET) {
-                SeaSQL_setRollPID_d(value);
+                Var_set("RollPID.d", value);
             } else {
-                printf("%.2f\n", SeaSQL_getRollPID_d());
+                printf("%.2f\n", Var_get("RollPID.d"));
             }
         }
         Notify_send("UPDATED", "RollPID");
      } else if(strcmp(sensor, "pitch") == 0) {
         if(var == 'p') {
             if(action == SET) {
-                SeaSQL_setPitchPID_p(value);
+                Var_set("PitchPID.p", value);
             } else {
-                printf("%.2f\n", SeaSQL_getPitchPID_p());
+                printf("%.2f\n", Var_get("PitchPID.p"));
             }
         } else if(var == 'i') {
             if(action == SET) {
-                SeaSQL_setPitchPID_i(value);
+                Var_set("PitchPID.i", value);
             } else {
-                printf("%.2f\n", SeaSQL_getPitchPID_i());
+                printf("%.2f\n", Var_get("PitchPID.i"));
             }
         } else if(var == 'd') {
             if(action == SET) {
-                SeaSQL_setPitchPID_d(value);
+                Var_set("PitchPID.d", value);
             } else {
-                printf("%.2f\n", SeaSQL_getPitchPID_d());
+                printf("%.2f\n", Var_get("PitchPID.d"));
             }
         }
         Notify_send("UPDATED", "PitchPID");

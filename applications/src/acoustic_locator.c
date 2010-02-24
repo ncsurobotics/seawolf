@@ -31,8 +31,8 @@ int main(){
     PID* pid;
     
     pid = PID_new(0,
-                  SeaSQL_getAcousticsPID_p(),
-                  SeaSQL_getAcousticsPID_i(),
+                  Var_get("AcousticsPID.p"),
+                  Var_get("AcousticsPID.i"),
                   SeaSQL_AcousticsPID_d());		
     
     while(1){

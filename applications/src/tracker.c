@@ -46,7 +46,7 @@ static void dataOut(double mv[3], bool do_depth, bool do_yaw) {
     Notify_send("THRUSTER_REQUEST", Util_format("Forward %d %d", (int) port_x, (int) star_x));
 
     if(do_depth) {
-        SeaSQL_setDepthHeading(SeaSQL_getDepth() + mv[PHI]);
+        Var_set("DepthHeading", Var_get("Depth") + mv[PHI]);
     }
 }
 
@@ -73,7 +73,7 @@ int main(void) {
     double pv[3], mv[3];
 
     /* Tracker controls depth */
-    bool do_depth = (SeaSQL_getTrackerDoDepth() == 1.0);
+    bool do_depth = (Var_get("TrackerDoDepth") == 1.0);
     bool do_yaw = true;
 
     /* Notify buffers */
@@ -87,7 +87,7 @@ int main(void) {
     while(true) {
         Notify_get(action, data);
         if(strcmp(data, "TrackerDoDepth") == 0) {
-            do_depth = (SeaSQL_getTrackerDoDepth() == 1.0);
+            do_depth = (Var_get("TrackerDoDepth") == 1.0);
             continue;
         }
 
@@ -95,17 +95,17 @@ int main(void) {
         delta_t = Timer_getDelta(timer);
 
         /* Get process variable */
-        pv[THETA] = SeaSQL_getSetPoint_Theta();
-        pv[PHI] = SeaSQL_getSetPoint_Phi();
-        pv[RHO] = SeaSQL_getSetPoint_Rho();
+        pv[THETA] = Var_get("SetPoint.Theta");
+        pv[PHI] = Var_get("SetPoint.Phi");
+        pv[RHO] = Var_get("SetPoint.Rho");
 
         if(pv[THETA] == 0 && do_yaw) {
-            SeaSQL_setPIDDoYaw(1.0);
+            Var_set("PIDDoYaw", 1.0);
             do_yaw = 0.0;
-            SeaSQL_setYawHeading(SeaSQL_getSEA_Yaw());
+            Var_set("YawHeading", Var_get("SEA.Yaw"));
             Logging_log(DEBUG, "Switch to straight path");
         } else if(pv[THETA] != 0 && !do_yaw) {
-            SeaSQL_setPIDDoYaw(0.0);
+            Var_set("PIDDoYaw", 0.0);
             do_yaw = 1.0;
             Logging_log(DEBUG, "Switch to tracking path");
         }

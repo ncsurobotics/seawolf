@@ -17,8 +17,8 @@ static struct {
 } state;
 
 static int doGate(void) {
-    SeaSQL_setVisionTarget(VISIONTARGET_GATE);
-    SeaSQL_setSetPointSource(SETPOINT_SOURCE_VISION);
+    Var_set("VisionTarget", VISIONTARGET_GATE);
+    Var_set("SetPointSource", SETPOINT_SOURCE_VISION);
     Notify_send("GO", "Gate");
     Notify_get(NULL, NULL);
     return 0;
@@ -102,10 +102,10 @@ int main(void) {
     TaskQueue_run(mission);
 
     /* Stop */
-    SeaSQL_setSetPointSource(SETPOINT_SOURCE_OVERRIDE);
-    SeaSQL_setSetPointOverride_Theta(0.0);
-    SeaSQL_setSetPointOverride_Phi(0.0);
-    SeaSQL_setSetPointOverride_Rho(0.0);
+    Var_set("SetPointSource", SETPOINT_SOURCE_OVERRIDE);
+    Var_set("SetPointOverride.Theta", 0.0);
+    Var_set("SetPointOverride.Phi", 0.0);
+    Var_set("SetPointOverride.Rho", 0.0);
 
     Seawolf_close();
     return 0;

@@ -3,7 +3,7 @@
 
 int main(int argc, char** argv) {
     Seawolf_loadConfig("../conf/seawolf.conf");
-    SeaSQL_setAutoNotify(false);
+    Var_set("AutoNotify", false);
     Seawolf_init("Set Tracker Set Point");
 
     if(argc != 3) {
@@ -14,10 +14,10 @@ int main(int argc, char** argv) {
     t = atoi(argv[1]);
     p = atoi(argv[2]);
 
-    SeaSQL_setSetPointSource(1);
-    SeaSQL_setSetPointVision_Theta(t);
-    SeaSQL_setSetPointVision_Phi(p);
-    SeaSQL_setSetPointVision_Rho(5);
+    Var_set("SetPointSource", 1);
+    Var_set("SetPointVision.Theta", t);
+    Var_set("SetPointVision.Phi", p);
+    Var_set("SetPointVision.Rho", 5);
     Notify_send("UPDATED", "SetPointVision");
 
     Seawolf_close();

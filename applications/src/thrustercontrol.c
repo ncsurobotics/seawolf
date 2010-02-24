@@ -38,11 +38,11 @@ int main(void) {
     int addsub = 1;
         
     /* Turn off drivers */
-    SeaSQL_setPortX(0);
-    SeaSQL_setPortY(0);
-    SeaSQL_setStarX(0);
-    SeaSQL_setStarY(0);
-    SeaSQL_setAft(0);
+    Var_set("PortX", 0);
+    Var_set("PortY", 0);
+    Var_set("StarX", 0);
+    Var_set("StarY", 0);
+    Var_set("Aft", 0);
 
     while(1) {
         printw(display, porty, stary, portx, starx, aft);
@@ -59,23 +59,23 @@ int main(void) {
         switch(c) {
         case 'u':
             porty = ADJUST(porty + (addsub * STEP));
-            SeaSQL_setPortY(porty);
+            Var_set("PortY", porty);
             break;
         case 'j':
             portx = ADJUST(portx + (addsub * STEP));
-            SeaSQL_setPortX(portx);
+            Var_set("PortX", portx);
             break;
         case 'o':
             stary = ADJUST(stary + (addsub * STEP));
-            SeaSQL_setStarY(stary);
+            Var_set("StarY", stary);
             break;
         case 'l':
             starx = ADJUST(starx + (addsub * STEP));
-            SeaSQL_setStarX(starx);
+            Var_set("StarX", starx);
             break;
         case 'k':
             aft = ADJUST(aft + (addsub * STEP));
-            SeaSQL_setAft(aft);
+            Var_set("Aft", aft);
             break;
         }
 
@@ -85,11 +85,11 @@ int main(void) {
     }
 
     /* Turn off drivers */
-    SeaSQL_setPortX(0);
-    SeaSQL_setPortY(0);
-    SeaSQL_setStarX(0);
-    SeaSQL_setStarY(0);
-    SeaSQL_setAft(0);
+    Var_set("PortX", 0);
+    Var_set("PortY", 0);
+    Var_set("StarX", 0);
+    Var_set("StarY", 0);
+    Var_set("Aft", 0);
 
     Seawolf_close();
     endwin();

@@ -69,17 +69,17 @@ static void* notify_monitor(void* _n) {
         Notify_get(action, data);
 
         if(strcmp(data, "Aft") == 0) {
-            aft = (int) SeaSQL_getAft();
+            aft = (int) Var_get("Aft");
         } else if(strcmp(data, "PortY") == 0) {
-            porty = (int) SeaSQL_getPortY();
+            porty = (int) Var_get("PortY");
         } else if(strcmp(data, "StarY") == 0) {
-            stary = (int) SeaSQL_getStarY();
+            stary = (int) Var_get("StarY");
         } else if(strcmp(data, "PortX") == 0) {
-            portx = (int) SeaSQL_getPortX();
+            portx = (int) Var_get("PortX");
         } else if(strcmp(data, "StarX") == 0) {
-            starx = (int) SeaSQL_getStarX();
+            starx = (int) Var_get("StarX");
         } else if(strcmp(data, "Depth") == 0) {
-            depth = SeaSQL_getDepth();
+            depth = Var_get("Depth");
         }
     }
 
@@ -131,7 +131,7 @@ int main(void) {
     pthread_create(&display_thread, NULL, notify_monitor, NULL);
 
     updateThrusters(0, 0);
-    SeaSQL_setDepthHeading(depth_heading);
+    Var_set("DepthHeading", depth_heading);
 
     while(running) {
         /* Copy key and clear. There is a race condition here but I don't care */
@@ -171,12 +171,12 @@ int main(void) {
         } else if(c == 'u') {
             /* Depth up (towards surface) */
             depth_heading = Util_inRange(SURFACE, depth_heading + DEPTH_STEP, MAX_DEPTH);
-            SeaSQL_setDepthHeading(depth_heading);
+            Var_set("DepthHeading", depth_heading);
 
         } else if(c == 'j') {
             /* Depth down (towards bottom) */
             depth_heading = Util_inRange(SURFACE, depth_heading - DEPTH_STEP, MAX_DEPTH);
-            SeaSQL_setDepthHeading(depth_heading);
+            Var_set("DepthHeading", depth_heading);
 
         } else if(c == 'q') {
             running = false;
@@ -185,7 +185,7 @@ int main(void) {
     }
 
     updateThrusters(0, 0);
-    SeaSQL_setDepthHeading(SURFACE);
+    Var_set("DepthHeading", SURFACE);
 
     endwin();
     Seawolf_close();

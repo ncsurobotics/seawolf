@@ -49,12 +49,12 @@ static void mix(short req_roll[2], short req_pitch[3], short req_depth[3], short
 
 static void setThrusters(short out[5]) {
     /* Set all thurster values */
-    SeaSQL_setPortY(out[PORTY]);
-    SeaSQL_setStarY(out[STARY]);
-    SeaSQL_setAft(out[AFT]);
+    Var_set("PortY", out[PORTY]);
+    Var_set("StarY", out[STARY]);
+    Var_set("Aft", out[AFT]);
 
-    SeaSQL_setPortX(out[PORTX]);
-    SeaSQL_setStarX(out[STARX]);
+    Var_set("PortX", out[PORTX]);
+    Var_set("StarX", out[STARX]);
 }
 
 static int rate(void) {
@@ -74,8 +74,8 @@ int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("PID Mixer");
 
-    SeaSQL_setDepthHeading(0.5);
-    SeaSQL_setYawHeading(SeaSQL_getSEA_Yaw());
+    Var_set("DepthHeading", 0.5);
+    Var_set("YawHeading", Var_get("SEA.Yaw"));
 
     /* Thruster values */
     short out[] = {0, 0, 0, 0, 0};

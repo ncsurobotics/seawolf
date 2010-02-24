@@ -20,7 +20,7 @@ static bool quit = false;
 static void* control_heading(void* _n) {
     int c;
     WINDOW* w = newwin(1, 1, 0, 0);
-    SeaSQL_setDepthHeading(depth_heading);
+    Var_set("DepthHeading", depth_heading);
     while(true) {
         c = wgetch(w);
         if(c == 'q') {
@@ -32,11 +32,11 @@ static void* control_heading(void* _n) {
         } else {
             continue;
         }
-        SeaSQL_setDepthHeading(depth_heading);
+        Var_set("DepthHeading", depth_heading);
     }
 
     quit = true;
-    SeaSQL_setDepthHeading(0);
+    Var_set("DepthHeading", 0);
     
     return NULL;
 }
@@ -92,20 +92,20 @@ int main(void) {
         Notify_get(action, data);
 
         if(strcmp(data, "Aft") == 0) {
-            aft = (int) SeaSQL_getAft();
+            aft = (int) Var_get("Aft");
         } else if(strcmp(data, "PortY") == 0) {
-            porty = (int) SeaSQL_getPortY();
+            porty = (int) Var_get("PortY");
         } else if(strcmp(data, "StarY") == 0) {
-            stary = (int) SeaSQL_getStarY();
+            stary = (int) Var_get("StarY");
         } else if(strcmp(data, "PortX") == 0) {
-            portx = (int) SeaSQL_getPortX();
+            portx = (int) Var_get("PortX");
         } else if(strcmp(data, "StarX") == 0) {
-            starx = (int) SeaSQL_getStarX();
+            starx = (int) Var_get("StarX");
         } else if(strcmp(data, "Depth") == 0) {
-            depth = SeaSQL_getDepth();
+            depth = Var_get("Depth");
         } else if(strcmp(data, "IMU") == 0) {
-            seapitch = SeaSQL_getSEA_Pitch();
-            searoll = SeaSQL_getSEA_Roll();
+            seapitch = Var_get("SEA.Pitch");
+            searoll = Var_get("SEA.Roll");
         }
     }
 

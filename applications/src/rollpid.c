@@ -17,9 +17,9 @@ int main(void) {
     Notify_filter(FILTER_MATCH, "UPDATED RollPID");
     Notify_filter(FILTER_MATCH, "UPDATED IMU");
 
-    pid = PID_new(0.0, SeaSQL_getRollPID_p(),
-                       SeaSQL_getRollPID_i(),
-                       SeaSQL_getRollPID_d());
+    pid = PID_new(0.0, Var_get("RollPID.p"),
+                       Var_get("RollPID.i"),
+                       Var_get("RollPID.d"));
 
     mv = PID_start(pid, 0.0);
     dataOut(mv);
@@ -28,12 +28,12 @@ int main(void) {
 
         if(strcmp(data, "RollPID") == 0) {
             PID_setCoefficients(pid,
-                                SeaSQL_getRollPID_p(),
-                                SeaSQL_getRollPID_i(),
-                                SeaSQL_getRollPID_d());
+                                Var_get("RollPID.p"),
+                                Var_get("RollPID.i"),
+                                Var_get("RollPID.d"));
             PID_resetIntegral(pid);
         } else {
-            mv = PID_update(pid, SeaSQL_getSEA_Roll());
+            mv = PID_update(pid, Var_get("SEA.Roll"));
         }
         
         dataOut(mv);

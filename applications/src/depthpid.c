@@ -19,27 +19,27 @@ int main(void) {
     Notify_filter(FILTER_MATCH, "UPDATED DepthHeading");
     Notify_filter(FILTER_MATCH, "UPDATED Depth");
 
-    pid = PID_new(SeaSQL_getDepthHeading(),
-                  SeaSQL_getDepthPID_p(),
-                  SeaSQL_getDepthPID_i(),
-                  SeaSQL_getDepthPID_d());
+    pid = PID_new(Var_get("DepthHeading"),
+                  Var_get("DepthPID.p"),
+                  Var_get("DepthPID.i"),
+                  Var_get("DepthPID.d"));
 
-    mv = PID_start(pid, SeaSQL_getDepth());
+    mv = PID_start(pid, Var_get("Depth"));
     dataOut(mv);
     while(true) {
         Notify_get(action, data);
 
         if(strcmp(data, "DepthPID") == 0) {
             PID_setCoefficients(pid,
-                                SeaSQL_getDepthPID_p(),
-                                SeaSQL_getDepthPID_i(),
-                                SeaSQL_getDepthPID_d());
+                                Var_get("DepthPID.p"),
+                                Var_get("DepthPID.i"),
+                                Var_get("DepthPID.d"));
             PID_resetIntegral(pid);
         } else if(strcmp(data, "DepthHeading") == 0) {
-            PID_setSetPoint(pid, SeaSQL_getDepthHeading());
-            mv = PID_start(pid, SeaSQL_getDepth());
+            PID_setSetPoint(pid, Var_get("DepthHeading"));
+            mv = PID_start(pid, Var_get("Depth"));
         } else {
-            mv = PID_update(pid, SeaSQL_getDepth());
+            mv = PID_update(pid, Var_get("Depth"));
         }
         
         dataOut(mv);
