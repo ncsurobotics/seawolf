@@ -10,7 +10,7 @@
 #include <ctype.h>
 #include <sys/time.h>
 
-#define FORMAT_BUFF_SIZE 256
+#define FORMAT_BUFF_SIZE 1024
 
 struct Buffer {
     pthread_t id;

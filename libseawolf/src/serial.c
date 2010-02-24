@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <time.h>
 
+static bool initialized = false;
 static SerialPort* devices = NULL;
 static int open_devices = 0;
 static struct termios* default_conf = NULL;
@@ -18,20 +19,22 @@ static struct termios* default_conf = NULL;
  * Initialize the Serial component of libseawolf 
  */
 void Serial_init(void) {
-    // -
+    initialized = true;
 }
 
 /**
  * Close the Serial component of libseawolf
  */
 void Serial_close(void) {
-    /* Close each port that is still open */
-    for(int i = 0; i < open_devices; i++) {
-        Serial_closePort(devices[i]);
+    if(initialized) {
+        /* Close each port that is still open */
+        for(int i = 0; i < open_devices; i++) {
+            Serial_closePort(devices[i]);
+        }
+        
+        /* Free the list of devices */
+        free(devices);
     }
-    
-    /* Free the list of devices */
-    free(devices);
 }
 
 /**

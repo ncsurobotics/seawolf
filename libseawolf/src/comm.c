@@ -9,8 +9,10 @@ static uint16_t comm_port = 31427;
 static char* auth_password = NULL;
 static int comm_socket;
 
+static Task_Handle receive_thread;
 static Queue* queue_out = NULL;
 static Dictionary* response_set = NULL;
+static bool running = false;
 
 static void Comm_authenticate(void);
 static Comm_PackedMessage* Comm_receivePackedMessage(void);
@@ -41,7 +43,8 @@ void Comm_init(void) {
     }
     
     /* Run receive thread */
-    Task_background(&Comm_receiveThread);
+    running = true;
+    receive_thread = Task_background(&Comm_receiveThread);
 
     /* Authenticate */
     Comm_authenticate();
@@ -52,11 +55,9 @@ static void Comm_authenticate(void) {
     static char* command = "AUTH";
 
     if(auth_password) {
-        Comm_Message* auth_message = Comm_Message_new();
+        Comm_Message* auth_message = Comm_Message_new(3);
         Comm_Message* response;
 
-        auth_message->count = 3;
-        auth_message->components = malloc(sizeof(char*) * 3);
         auth_message->components[0] = namespace;
         auth_message->components[1] = command;
         auth_message->components[2] = auth_password;
@@ -66,29 +67,37 @@ static void Comm_authenticate(void) {
 
         if(strcmp(response->components[1], "SUCCESS") == 0) {
             Comm_Message_destroy(auth_message);
-            free(response->components[0]);
-            Comm_Message_destroy(response);
+            Comm_Message_destroyUnpacked(response);
             return;
         } else {
-            Logging_log(CRITICAL, "Unable to authenticate with comm server");
+            Logging_log(CRITICAL, Util_format("Unable to authenticate with comm server: %s", response->components[1]));
         }
+    } else {
+        Logging_log(CRITICAL, "No Comm_password set. Unable to connect to Comm server");
     }
-    
-    Logging_log(CRITICAL, "No Comm_password set. Unable to connect to Comm server");
     Seawolf_exitError();
 }
 
 static Comm_PackedMessage* Comm_receivePackedMessage(void) {
-    Comm_PackedMessage* packed_message = Comm_PackedMessage_new();
+    Comm_PackedMessage* packed_message;
     uint16_t total_data_size;
+    int n;
 
-    recv(comm_socket, &total_data_size, sizeof(uint16_t), MSG_WAITALL|MSG_PEEK);
+    n = recv(comm_socket, &total_data_size, sizeof(uint16_t), MSG_WAITALL|MSG_PEEK);
+    if(n != sizeof(uint16_t)) {
+        return NULL;
+    }
 
     total_data_size = ntohs(total_data_size);
+    packed_message = Comm_PackedMessage_new();
     packed_message->length = total_data_size + COMM_MESSAGE_PREFIX_LEN;
     packed_message->data = malloc(packed_message->length);
 
-    recv(comm_socket, packed_message->data, packed_message->length, MSG_WAITALL);
+    n = recv(comm_socket, packed_message->data, packed_message->length, MSG_WAITALL);
+    if(n != packed_message->length) {
+        Comm_PackedMessage_destroy(packed_message);
+        return NULL;
+    }
 
     return packed_message;
 }
@@ -97,15 +106,26 @@ static int Comm_receiveThread(void) {
     Comm_PackedMessage* packed_message;
     Comm_Message* message;
 
-    while(true) {
+    while(running) {
         packed_message = Comm_receivePackedMessage();
+        if(packed_message == NULL) {
+            continue;
+        }
         message = Comm_unpackMessage(packed_message);
         Comm_PackedMessage_destroy(packed_message);
         
         if(message->request_id != 0) {
             Dictionary_setInt(response_set, message->request_id, message);
+        } else if(strcmp(message->components[0], "NOTIFY") == 0) {
+            /* Inbound notification */
+            Notify_inputMessage(message);
+        } else {
+            /* Unknown, unsolicited message */
+            Comm_Message_destroyUnpacked(message);
         }
     }
+    
+    return 0;
 }
 
 Comm_Message* Comm_sendMessage(Comm_Message* message) {
@@ -155,7 +175,7 @@ Comm_PackedMessage* Comm_packMessage(Comm_Message* message) {
     }
 
     /* Store message information */
-    packed_message->length = sizeof(total_data_length) + COMM_MESSAGE_PREFIX_LEN;
+    packed_message->length = total_data_length + COMM_MESSAGE_PREFIX_LEN;
     packed_message->data = malloc(packed_message->length);
 
     /* Build packed message header */
@@ -176,12 +196,14 @@ Comm_PackedMessage* Comm_packMessage(Comm_Message* message) {
 }
 
 Comm_Message* Comm_unpackMessage(Comm_PackedMessage* packed_message) {
-    Comm_Message* message = Comm_Message_new();
+    Comm_Message* message = Comm_Message_new(0);
     size_t data_length = ntohs(((uint16_t*)packed_message->data)[0]);
 
     /* Build message meta information */
     message->request_id = ntohs(((uint16_t*)packed_message->data)[1]);
     message->count = ntohs(((uint16_t*)packed_message->data)[2]);
+    assert(message->count != 0);
+
     message->components = malloc(sizeof(char*) * message->count);
 
     /* Extract components -- we allocate all the space to the first and use the
@@ -197,12 +219,16 @@ Comm_Message* Comm_unpackMessage(Comm_PackedMessage* packed_message) {
     return message;
 }
 
-Comm_Message* Comm_Message_new(void) {
+Comm_Message* Comm_Message_new(unsigned int component_count) {
     Comm_Message* message = malloc(sizeof(Comm_Message));
     
     message->request_id = 0;
+    message->count = component_count;
     message->components = NULL;
-    message->count = 0;
+
+    if(component_count) {
+        message->components = malloc(sizeof(char*) * component_count);
+    }
 
     return message;
 }
@@ -217,8 +243,15 @@ Comm_PackedMessage* Comm_PackedMessage_new(void) {
 }
 
 void Comm_Message_destroy(Comm_Message* message) {
-    free(message->components);
+    if(message->components) {
+        free(message->components);
+    }
     free(message);
+}
+
+void Comm_Message_destroyUnpacked(Comm_Message* message) {
+    free(message->components[0]);
+    Comm_Message_destroy(message);
 }
 
 void Comm_PackedMessage_destroy(Comm_PackedMessage* packed_message) {
@@ -239,9 +272,16 @@ void Comm_setPort(uint16_t port) {
 }
 
 void Comm_close(void) {
+    running = false;
+    shutdown(comm_socket, SHUT_RDWR);
+    Task_wait(receive_thread);
+
     Dictionary_destroy(response_set);
     Queue_destroy(queue_out);
     if(comm_server != NULL) {
         free(comm_server);
+    }
+    if(auth_password != NULL) {
+        free(auth_password);
     }
 }

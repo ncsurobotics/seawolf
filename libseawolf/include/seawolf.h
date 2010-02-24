@@ -6,6 +6,7 @@
 #define _XOPEN_SOURCE 500
 
 /* Make sure some standard includes are available */
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,13 +17,12 @@
 /* Include all Seawolf III development headers */
 #include "seawolf/seawolf_config.h"
 
-#include "seawolf/seasql.h"
+#include "seawolf/comm.h"
 #include "seawolf/logging.h"
-#include "seawolf/notify.h"
 #include "seawolf/serial.h"
 #include "seawolf/ardcomm.h"
-#include "seawolf/comm.h"
 #include "seawolf/var.h"
+#include "seawolf/notify.h"
 
 #include "seawolf/util.h"
 #include "seawolf/timer.h"

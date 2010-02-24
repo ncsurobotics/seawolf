@@ -63,9 +63,9 @@ void Seawolf_close(void) {
     
     Serial_close();
     Var_close();
-    Notify_close();
     Logging_close();
     Comm_close();
+    Notify_close();
     Util_close();
 }
 
@@ -74,7 +74,6 @@ void Seawolf_close(void) {
  */
 void Seawolf_exitError(void) {
     Logging_log(INFO, "Terminating application due to error condition");
-    Seawolf_close();
     exit(1);
 }
 

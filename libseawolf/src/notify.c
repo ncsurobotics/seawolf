@@ -16,81 +16,34 @@
 
 #define FILTER_INCREMENT 5
 
-/* IO Mode. Default to net */
-static int io_mode = NOTIFY_NET;
-//static int io_mode = NOTIFY_STDIO;
-
-/* Server name. localhost by default */
-static char server_hostname[256] = "localhost";
-
 /* Filter lists */
+static bool initialized = false;
 static char** filters = NULL;
 static int filters_n = 0;
+static Queue* notification_queue;
 
-/* Raw send messages */
-static void Notify_real_send_net(char* data);
-static void Notify_real_send_stdio(char* data);
-static void Notify_real_get_net(char* data);
-static void Notify_real_get_stdio(char* data);
 static bool Notify_check_filter(char* msg);
-
-/* Server connection */
-static int connection = -1;
-
-/* Message lock */
-static pthread_mutex_t* send_lock = NULL;
-static pthread_mutex_t* recv_lock = NULL;
 
 /**
  * Initialize notify component
  */
 void Notify_init() {
-    struct hostent* host;
-    struct sockaddr_in host_sockaddr;
-    char* ipaddr_s;
-
-    /* Initialize send and receive locks */
-    send_lock = malloc(sizeof(pthread_mutex_t));
-    recv_lock = malloc(sizeof(pthread_mutex_t));    pthread_mutexattr_t attr;
-    pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutex_init(send_lock, &attr);
-    pthread_mutex_init(recv_lock, &attr);
-    pthread_mutexattr_destroy(&attr);
-
     /* Initialize filter list */
     filters = malloc(FILTER_INCREMENT * sizeof(char*));
-
-    /* Connect to the notify "hub" server if net mode is enabled */
-    if(io_mode == NOTIFY_NET) {
-        /* New socket */
-        connection = socket(AF_INET, SOCK_STREAM, 0);
-        if(connection == -1) {
-            Logging_log(CRITICAL, Util_format("Error creating socket: %s", strerror(errno)));
-            Seawolf_exitError();
-        }
-        
-        /* Get IP address of host */
-        host = gethostbyname(server_hostname);
-        ipaddr_s = host->h_addr_list[0];
-
-        /* Build sockaddr structure */
-        host_sockaddr.sin_family = AF_INET;
-        host_sockaddr.sin_addr.s_addr = *(int*)ipaddr_s;
-        host_sockaddr.sin_port = htons(NET_PORT);
-
-        /* Connect */
-        if(connect(connection, (struct sockaddr*) &host_sockaddr, sizeof(host_sockaddr)) == -1) {
-            Logging_log(CRITICAL, Util_format("Could not connect to notify server: %s", strerror(errno)));
-            Seawolf_exitError();
-        }
-    }
+    notification_queue = Queue_new();
+    initialized = true;
 } 
 
 /**
  * Close initialize component
  */
 void Notify_close() {
+    if(!initialized) {
+        return;
+    }
+
+    char* msg;
+
     /* Free each filter string */
     for(int i = 0; i < filters_n; i++) {
         free(filters[i]);
@@ -99,68 +52,37 @@ void Notify_close() {
     /* Free the filters arrays */
     free(filters);
 
-    if(io_mode == NOTIFY_NET) {
-        /* Close connection */
-        shutdown(connection, SHUT_RDWR);
-        connection = -1;
+    /* Free remaining messages */
+    while((msg = Queue_pop(notification_queue, false)) != NULL) {
+        free(msg);
+    }
+    Queue_destroy(notification_queue);
+}
+
+/**
+ * New message into the queue
+ */
+void Notify_inputMessage(Comm_Message* message) {
+    char* msg = message->components[2];
+
+    if(Notify_check_filter(msg)) {
+        Queue_append(notification_queue, strdup(msg));
     }
 
-    /* Free locks */
-    pthread_mutex_destroy(send_lock);
-    pthread_mutex_destroy(recv_lock);
-    free(send_lock);
-    free(recv_lock);
-}
-
-/**
- * Set IO mode. Should *not* be called after initialization
- */
-void Notify_setMode(int mode) {
-    io_mode = mode;
-}
-
-/**
- * Set server address of notify "hub" server. Should *not* be called after
- * initialization
- */
-void Notify_setServer(char* hostname) {
-    /* Copy server name */
-    strcpy(server_hostname, hostname);
-}
-
-/**
- * Get a raw message
- */
-void Notify_getRaw(char* message) {
-    /* Received messages from the correct IO methods until a valid messages is
-       found */
-    switch(io_mode) {
-     case NOTIFY_NET:
-        do {
-            Notify_real_get_net(message);
-        } while(! Notify_check_filter(message));
-        break;
-
-     case NOTIFY_STDIO:
-        do {
-            Notify_real_get_stdio(message);
-        } while(! Notify_check_filter(message));
-        break;
-
-     default:
-        break;
-    }
+    Comm_Message_destroyUnpacked(message);
 }
 
 /**
  * Get a message
  */
 void Notify_get(char* action, char* param) {
-    char msg[MAX_MESSAGE_LENGTH];
+    char* msg;
     char* tmp;
 
     /* Read message */
-    Notify_getRaw(msg);
+    do {
+        msg = Queue_pop(notification_queue, true);
+    } while(!Notify_check_filter(msg));
 
     /* Split message */
     tmp = msg;
@@ -176,100 +98,26 @@ void Notify_get(char* action, char* param) {
     if(param != NULL) {
         strcpy(param, tmp + 1);
     }
-}
 
-/**
- * Send a raw message
- */
-void Notify_sendRaw(char* message) {
-    switch(io_mode) {
-     case NOTIFY_NET:
-        Notify_real_send_net(message);
-        break;
-
-     case NOTIFY_STDIO:
-        Notify_real_send_stdio(message);
-        break;
-
-     default:
-        break;
-    }
+    free(msg);
 }
 
 /**
  * Send a message
  */
 void Notify_send(char* action, char* param) {
-    char buffer[MAX_MESSAGE_LENGTH];
-    sprintf(buffer, "%s %s", action, param);
-    Notify_sendRaw(buffer);
-}
+    static char* namespace = "NOTIFY";
+    static char* command = "OUT";
+    Comm_Message* notify_msg = Comm_Message_new(3);
 
-/**
- * Send a message over the network
- */
-static void Notify_real_send_net(char* data) {
-    pthread_mutex_lock(send_lock);
-    int size = strlen(data) + 1;
-    int sent;
-    
-    /* Send until all the input is sent */
-    while(size) {
-        sent = send(connection, data, size, 0);
-        if(sent == -1) {
-            /* Error condition */
-            Logging_log(ERROR, Util_format("Error sending message, giving up: %s", strerror(errno)));
-            return;
-        }
-        size -= sent;
-        data += sent;
-    }
-    pthread_mutex_unlock(send_lock);
-}
+    notify_msg->components[0] = namespace;
+    notify_msg->components[1] = command;
+    notify_msg->components[2] = strdup(Util_format("%s %s", action, param));
 
-/**
- * Send a message out over standard output
- */
-static void Notify_real_send_stdio(char* data) {
-    pthread_mutex_lock(send_lock);
-    printf("%s\n", data);
-    pthread_mutex_unlock(send_lock);
-}
+    Comm_sendMessage(notify_msg);
 
-/**
- * Get a message from the network
- */
-static void Notify_real_get_net(char* data) {
-    pthread_mutex_lock(recv_lock);
-    /* Read one character at a time until a null terminator */
-    while(true) {
-        if(recv(connection, data, sizeof(char), 0) == -1) {
-            Logging_log(ERROR, Util_format("Error receiving message, giving up: %s", strerror(errno)));
-            return;
-        }
-        if(*data == '\0') {
-            return;
-        }
-        data++;
-    }
-    pthread_mutex_unlock(recv_lock);
-}
-
-/**
- * Get a message from the standard input
- */
-static void Notify_real_get_stdio(char* data) {
-    pthread_mutex_lock(recv_lock);
-    /* Read characters until a new line */
-    while(true) {
-        *data = getchar();
-        if(*data == '\n') {
-            break;
-        }
-        data++;
-    }
-    *data = '\0';
-    pthread_mutex_unlock(recv_lock);
+    free(notify_msg->components[2]);
+    Comm_Message_destroy(notify_msg);
 }
 
 /**

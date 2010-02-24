@@ -2,7 +2,7 @@
 #ifndef __SEAWOLF_ARDCOMM_INCLUDE_H
 #define __SEAWOLF_ARDCOMM_INCLUDE_H
 
-#include "seawolf/serial.h"
+#include "seawolf.h"
 
 /* Message types
 

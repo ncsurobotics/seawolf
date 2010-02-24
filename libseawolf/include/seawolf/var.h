@@ -4,6 +4,7 @@
 
 void Var_init(void);
 float Var_get(char* name);
+void Var_setAutoNotify(bool autonotify);
 void Var_set(char* name, float value);
 void Var_close(void);
 

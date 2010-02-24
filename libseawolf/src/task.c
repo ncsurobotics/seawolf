@@ -62,7 +62,7 @@ int Task_watchdog(double timeout, int (*func)(void)) {
     return func_args.return_value;
 }
 
-void Task_background(int (*func)(void)) {
+Task_Handle Task_background(int (*func)(void)) {
     pthread_t func_th;
     struct WrapperArgs* func_args = malloc(sizeof(struct WrapperArgs));
 
@@ -71,6 +71,16 @@ void Task_background(int (*func)(void)) {
     func_args->free = true;
 
     pthread_create(&func_th, NULL, Task_callWrapper, func_args);
+    return func_th;
+}
+
+void Task_kill(Task_Handle task) {
+    pthread_cancel(task);
+    pthread_join(task, NULL);
+}
+
+void Task_wait(Task_Handle task) {
+    pthread_join(task, NULL);
 }
 
 Task* Task_new(int (*func)(void)) {

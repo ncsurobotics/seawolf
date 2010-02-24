@@ -102,28 +102,7 @@ void Seawolf_loadConfig(const char* filename) {
         Util_strip(value);
 
         /* Check against configuration option */
-        if(strcmp(option, "SeaSQL_hostname") == 0) {
-            SeaSQL_setServer(value);
-        } else if(strcmp(option, "SeaSQL_username") == 0) {
-            SeaSQL_setUsername(value);
-        } else if(strcmp(option, "SeaSQL_password") == 0) {
-            SeaSQL_setPassword(value);
-        } else if(strcmp(option, "SeaSQL_database") == 0) {
-            SeaSQL_setDatabase(value);
-        } else if(strcmp(option, "SeaSQL_port") == 0) {
-            SeaSQL_setPort(atoi(value));
-        } else if(strcmp(option, "Notify_method") == 0) {
-            strlower(value);
-            if(strcmp(value, "stdio") == 0) {
-                Notify_setMode(NOTIFY_STDIO);
-            } else if(strcmp(value, "net") == 0) {
-                Notify_setMode(NOTIFY_NET);
-            } else {
-                fprintf(stderr, "Invalid value to option Notify_method\n");
-            }
-        } else if(strcmp(option, "Notify_server") == 0) {
-            Notify_setServer(value);
-        } else if(strcmp(option, "Comm_password") == 0) {
+        if(strcmp(option, "Comm_password") == 0) {
             Comm_setPassword(value);
         } else if(strcmp(option, "Comm_server") == 0) {
             Comm_setServer(value);
