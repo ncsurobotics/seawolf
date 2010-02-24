@@ -31,6 +31,7 @@ void mission_bouy_init(IplImage* frame)
 struct mission_output mission_bouy_step(struct mission_output result)
 {
         IplImage* frame = multicam_get_frame(FORWARD_CAM);
+	result.frame = frame;
 	int frame_width = frame->width;
 	int frame_height = frame->height;
         RGBPixel color = {0xff, 0x00, 0x00};
@@ -40,7 +41,8 @@ struct mission_output mission_bouy_step(struct mission_output result)
 
 	//scan image for color
 	IplImage* ipl_out;
-        int num_pixels = FindTargetColor(frame, ipl_out, &color, 80,220);
+	ipl_out = cvCreateImage(cvGetSize(frame),8,3);
+        int num_pixels = FindTargetColor(frame, ipl_out, &color, 80,256);
 
         //find blobs
 	BLOB* blobs;

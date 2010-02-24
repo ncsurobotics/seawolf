@@ -48,7 +48,7 @@ int main(int argc, char** argv)
     {
         
         // State machine
-        results = mission_gate_step(results);
+        results = mission_bouy_step(results);
         //TODO
 
         printf("Theta, Phi, Rho: %f, %f, %f\n", results.theta, results.phi, results.rho);
@@ -71,7 +71,6 @@ int main(int argc, char** argv)
             //CvPoint pt2 = cvPoint(results.frame->width/2, 1);
             //cvLine(results.frame, pt1, pt2, CV_RGB(255,0,0), 1, CV_AA, 0 );
             cvCircle(results.frame, cvPoint(results.frame->width/2, results.frame->height/2), 5, cvScalar(0,255,255,0),1,8,0);
-            printf("HIIII\n");
             cvShowImage("Heading", results.frame);
         #endif
 
