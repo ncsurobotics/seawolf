@@ -191,7 +191,7 @@ void SeaSQL_init(void) {
 
     /* Unable to connect, display an error message and then exit */
     fprintf(stderr, "Error connecting to MySQL database: %s\nExiting\n", mysql_error(mysql_conn));
-    exit(1);
+    Seawolf_exitError();
 }
 
 /**

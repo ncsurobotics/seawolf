@@ -66,8 +66,8 @@ void Notify_init() {
         /* New socket */
         connection = socket(AF_INET, SOCK_STREAM, 0);
         if(connection == -1) {
-            fprintf(stderr, "Error creating socket: %s\nExiting\n", strerror(errno));
-            exit(1);
+            Logging_log(CRITICAL, Util_format("Error creating socket: %s", strerror(errno)));
+            Seawolf_exitError();
         }
         
         /* Get IP address of host */
@@ -81,8 +81,8 @@ void Notify_init() {
 
         /* Connect */
         if(connect(connection, (struct sockaddr*) &host_sockaddr, sizeof(host_sockaddr)) == -1) {
-            fprintf(stderr, "Could not connect to hub/repeater server: %s\nExiting\n", strerror(errno));
-            exit(1);
+            Logging_log(CRITICAL, Util_format("Could not connect to notify server: %s", strerror(errno)));
+            Seawolf_exitError();
         }
     }
 } 
@@ -218,7 +218,7 @@ static void Notify_real_send_net(char* data) {
         sent = send(connection, data, size, 0);
         if(sent == -1) {
             /* Error condition */
-            perror("Error sending message, giving up");
+            Logging_log(ERROR, Util_format("Error sending message, giving up: %s", strerror(errno)));
             return;
         }
         size -= sent;
@@ -244,7 +244,7 @@ static void Notify_real_get_net(char* data) {
     /* Read one character at a time until a null terminator */
     while(true) {
         if(recv(connection, data, sizeof(char), 0) == -1) {
-            perror("Error receiving message, giving up");
+            Logging_log(ERROR, Util_format("Error receiving message, giving up: %s", strerror(errno)));
             return;
         }
         if(*data == '\0') {

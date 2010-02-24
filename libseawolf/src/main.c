@@ -19,9 +19,10 @@ void Seawolf_init(const char* name) {
 
     /* Call all initialization methods. Order here *is* important. Logging
        relies on the database being up for instance */
-    Notify_init();
-    SeaSQL_init();
+    Comm_init();
     Logging_init();
+    Notify_init();
+    Var_init();
     Serial_init();
 
     /* Catch siginals and insure proper shutdown */
@@ -41,9 +42,8 @@ void Seawolf_init(const char* name) {
  */
 static void Seawolf_catchSignal(int sig) {
     /* Caught signal, exit and properly shut down */
-    printf("\nSignal caught! Shutting down...\n");
-    Seawolf_close();
-    exit(0);
+    Logging_log(CRITICAL, "Signal caught! Shutting down...");
+    Seawolf_exitError();
 }
 
 /**
@@ -62,10 +62,20 @@ void Seawolf_close(void) {
     Logging_log(INFO, "Closing");
     
     Serial_close();
-    Logging_close();
-    SeaSQL_close();
+    Var_close();
     Notify_close();
+    Logging_close();
+    Comm_close();
     Util_close();
+}
+
+/**
+ * Exit seawolf application because of an error
+ */
+void Seawolf_exitError(void) {
+    Logging_log(INFO, "Terminating application due to error condition");
+    Seawolf_close();
+    exit(1);
 }
 
 /**

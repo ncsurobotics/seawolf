@@ -6,23 +6,34 @@
 #define _XOPEN_SOURCE 500
 
 /* Make sure some standard includes are available */
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdint.h>
 
 /* Include all Seawolf III development headers */
-#include "seawolf/seasql.h"
 #include "seawolf/seawolf_config.h"
+
+#include "seawolf/seasql.h"
 #include "seawolf/logging.h"
 #include "seawolf/notify.h"
 #include "seawolf/serial.h"
 #include "seawolf/ardcomm.h"
+#include "seawolf/comm.h"
+#include "seawolf/var.h"
+
 #include "seawolf/util.h"
 #include "seawolf/timer.h"
-#include "seawolf/stack.h"
 #include "seawolf/task.h"
 #include "seawolf/pid.h"
+
+#include "seawolf/stack.h"
+#include "seawolf/list.h"
+#include "seawolf/queue.h"
+#include "seawolf/dictionary.h"
+
 
 /* Definitions */
 #define SETPOINT_SOURCE_VISION 1
@@ -51,6 +62,7 @@
 /* Initialize and close */
 void Seawolf_init(const char* name);
 void Seawolf_close(void);
+void Seawolf_exitError(void);
 char* Seawolf_getName(void);
 
 #endif // #ifndef __SEAWOLF_ROOT_INCLUDE_H

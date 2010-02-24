@@ -123,6 +123,12 @@ void Seawolf_loadConfig(const char* filename) {
             }
         } else if(strcmp(option, "Notify_server") == 0) {
             Notify_setServer(value);
+        } else if(strcmp(option, "Comm_password") == 0) {
+            Comm_setPassword(value);
+        } else if(strcmp(option, "Comm_server") == 0) {
+            Comm_setServer(value);
+        } else if(strcmp(option, "Comm_port") == 0) {
+            Comm_setPort(atoi(value));
         } else if(strcmp(option, "Logging_replicateStdio") == 0) {
             if(trueValue(value)) {
                 Logging_replicateStdio(true);
