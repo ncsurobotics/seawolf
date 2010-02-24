@@ -24,7 +24,7 @@ void manage(SerialPort sp) {
     /* Main loop */
     while(true) {
         Notify_get(action, varname);
-        read_value = SeaSQL_getAft();
+        read_value = Var_get("Aft");
         if(fabs(read_value) > DEAD_BAND) {
             param = (unsigned char) read_value;
             param = SIGNBIT(param);

@@ -15,7 +15,7 @@
 
 int main(int argc, char** argv) {
     Seawolf_loadConfig("../conf/seawolf.conf");
-    SeaSQL_setAutoNotify(false);
+    Var_set("AutoNotify", false);
     Seawolf_init("Serial : IMU");
 
     char* device_real = argv[1];
@@ -104,9 +104,9 @@ int main(int argc, char** argv) {
         sum_yaw += val_yaw[i];
 
         /* Send data out */
-        SeaSQL_setSEA_Roll((float)sum_roll/SUM_SIZE);
-        SeaSQL_setSEA_Pitch((float)sum_pitch/SUM_SIZE);
-        SeaSQL_setSEA_Yaw((float)sum_yaw/SUM_SIZE);
+        Var_set("SEA.Roll", (float)sum_roll/SUM_SIZE);
+        Var_set("SEA.Pitch", (float)sum_pitch/SUM_SIZE);
+        Var_set("SEA.Yaw", (float)sum_yaw/SUM_SIZE);
         Notify_send("UPDATED", "IMU");
 
         i = (i+1) % SUM_SIZE;

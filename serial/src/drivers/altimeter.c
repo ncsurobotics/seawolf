@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 
         /* Valid value, store it */
         last_alt = alt;
-        SeaSQL_setAltitude(alt);
+        Var_set("Altitude", alt);
     }
 
     Serial_closePort(sp);

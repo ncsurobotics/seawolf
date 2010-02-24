@@ -2,7 +2,7 @@
 export CC= gcc
 export CFLAGS= --std=c99 -Wall -Werror -pedantic -Wmissing-prototypes -I$(PWD)/../libseawolf/include/ -O2
 #export CFLAGS+= -g
-export LDFLAGS= -L$(PWD)/../libseawolf/ -lseawolf -lrt
+export LDFLAGS= -L$(PWD)/../libseawolf/ -lseawolf -lm
 export BIN_DIR= $(PWD)/bin
 
 all: $(BIN_DIR)

@@ -18,7 +18,7 @@
 
 int main(int argc, char** argv) {
     Seawolf_loadConfig("../conf/seawolf.conf");
-    SeaSQL_setAutoNotify(false);
+    Var_set("AutoNotify", false);
     Seawolf_init("Serial : IMU");
 
     char* device_real = argv[1];
@@ -81,8 +81,8 @@ int main(int argc, char** argv) {
         sum_pitch += val_pitch[i];
 
         /* Send data out */
-        SeaSQL_setSEA_Roll((float)sum_roll/SUM_SIZE);
-        SeaSQL_setSEA_Pitch((float)sum_pitch/SUM_SIZE);
+        Var_set("SEA.Roll", (float)sum_roll/SUM_SIZE);
+        Var_set("SEA.Pitch", (float)sum_pitch/SUM_SIZE);
 
         sum_yaw[0] = 0;
         sum_yaw[1] = 0;
@@ -100,28 +100,28 @@ int main(int argc, char** argv) {
 
 	if(sum_yaw[0]>=0 && sum_yaw[1]>=0)
 	{
-		SeaSQL_setSEA_Yaw(-(180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0]));
+		Var_set("SEA.Yaw", -(180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0]));
 		#ifdef debug
 		printf("\t%+4.2f",-(float)(180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0]));
 		#endif	
 	}
 	else if(sum_yaw[0]>=0 && sum_yaw[1]<0)
 	{
-		SeaSQL_setSEA_Yaw(-(180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0]));
+		Var_set("SEA.Yaw", -(180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0]));
 		#ifdef debug
 		printf("\t%+4.2f",-(float)(180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0]));
 		#endif
 	}
 	else if(sum_yaw[0]<0 && sum_yaw[1]<0)
 	{
-		SeaSQL_setSEA_Yaw(180.0-((180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0])));
+		Var_set("SEA.Yaw", 180.0-((180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0])));
 		#ifdef debug
 		printf("\t%+4.2f",(float)(180.0-(180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0])));
 		#endif
 	}
 	else if(sum_yaw[0]<0 && sum_yaw[1]>=0)
 	{
-		SeaSQL_setSEA_Yaw( -((180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0])+180.0)  );
+		Var_set("SEA.Yaw",  -((180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0])+180.0)  );
 		#ifdef debug
 		printf("\t%+4.2f", -((float)(180.0 / M_PI) * atan((float)sum_yaw[1] / (float)sum_yaw[0])+180.0)  );
 		#endif
@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
 
 
 	#ifdef debug
-	printf("\t%4.2f",SeaSQL_getSEA_Yaw());
+	printf("\t%4.2f",Var_get("SEA.Yaw"));
         #endif
 	Notify_send("UPDATED", "IMU");
 

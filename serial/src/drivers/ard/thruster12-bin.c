@@ -29,7 +29,7 @@ void manage(SerialPort sp) {
         Notify_get(action, varname);
         if(strcmp(varname, "PortY") == 0) {
             /* thruster PortY */
-            read_value = SeaSQL_getPortY();
+            read_value = Var_get("PortY");
             if(fabs(read_value) > DEAD_BAND) {
                 param = (unsigned char) read_value;
                 param = SIGNBIT(param);
@@ -39,7 +39,7 @@ void manage(SerialPort sp) {
             }
         } else {
             /* thruster StarY */
-            read_value = SeaSQL_getStarY();
+            read_value = Var_get("StarY");
             if(fabs(read_value) > DEAD_BAND) {
                 param = (unsigned char) read_value;
                 param = SIGNBIT(param);

@@ -18,6 +18,6 @@ void manage(SerialPort sp) {
     while(true) {
         Serial_getLine(sp, buffer);
         depth = atof(buffer);
-        SeaSQL_setDepth(depth);
+        Var_set("Depth", depth);
     }
 }
