@@ -131,6 +131,7 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
   if(tracking_number == 0){
     return blobs;
   }
+  blob_free(blobs,*blobnumber);
 
   //free the target pixels we don't need
   for(i=blobs_found;i<tracking_number;i++){

@@ -118,4 +118,6 @@ struct mission_output mission_bouy_step(struct mission_output result)
         cvReleaseImage(&ipl_out);
 
     return result;
-}
+}                #ifdef debug_tuna
+                    cvShowImage("out2", ipl_out);
+                #endif 
