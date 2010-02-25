@@ -26,7 +26,7 @@ static int Hub_Process_comm(Comm_Message* message, Comm_Message** response, bool
         (*response)->components[1] = strdup("SUCCESS");
         *authenticated = true;
     } else {
-        Hub_Logging_log(INFO, Util_format("Password: '%s'", actual_password));
+        Hub_Logging_log(INFO, __Util_format("Password: '%s'", actual_password));
         (*response)->components[1] = strdup("FAILURE");
     }
 
@@ -63,7 +63,7 @@ static int Hub_Process_var(Comm_Message* message, Comm_Message** response) {
         (*response)->request_id = message->request_id;
         (*response)->components[0] = strdup("VAR");
         (*response)->components[1] = strdup("VALUE");
-        (*response)->components[2] = strdup(Util_format("%f", Hub_Var_get(message->components[2])));
+        (*response)->components[2] = strdup(__Util_format("%f", Hub_Var_get(message->components[2])));
         return RESPOND_TO_SENDER;
     } else if(message->count == 4 && strcmp(message->components[1], "SET") == 0) {
         Hub_Var_set(message->components[2], atof(message->components[3]));

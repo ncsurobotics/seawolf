@@ -132,7 +132,7 @@ int Serial_closePort(SerialPort sp) {
 
     /* Error */
     if(return_value == -1) {
-        Logging_log(ERROR, Util_format("Error closing serial port: %s", strerror(errno)));
+        Logging_log(ERROR, __Util_format("Error closing serial port: %s", strerror(errno)));
     }
 
     return return_value;
@@ -196,7 +196,7 @@ void Serial_setBaud(SerialPort sp, int baud) {
         real_baud = B38400;
         break;
     default:
-        Logging_log(ERROR, Util_format("Invalid baud rate %d", baud));
+        Logging_log(ERROR, __Util_format("Invalid baud rate %d", baud));
         return;
     }
 
@@ -258,7 +258,7 @@ bool Serial_isReady(SerialPort sp) {
     if(n == 0) {
         Logging_log(DEBUG, "Probe failed...");
     } else {
-        Logging_log(DEBUG, Util_format("Probe returned %d bytes", n));
+        Logging_log(DEBUG, __Util_format("Probe returned %d bytes", n));
     }
 #endif
 

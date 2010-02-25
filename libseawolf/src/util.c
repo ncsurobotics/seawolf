@@ -14,14 +14,30 @@
 
 struct Buffer {
     pthread_t id;
-    char buff[FORMAT_BUFF_SIZE];
+    char* buff;
+    size_t size;
 };
 
 static struct Buffer* format_buffers = NULL;
 static int buffer_count = 0;
 
+static struct Buffer* format_buffers_internal = NULL;
+static int buffer_count_internal = 0;
+
 void Util_close(void) {
+    for(int i = 0; i < buffer_count; i++) {
+        if(format_buffers[i].buff) {
+            free(format_buffers[i].buff);
+        }
+    }
     free(format_buffers);
+
+    for(int i = 0; i < buffer_count_internal; i++) {
+        if(format_buffers_internal[i].buff) {
+            free(format_buffers_internal[i].buff);
+        }
+    }
+    free(format_buffers_internal);
 }
 
 /**
@@ -32,6 +48,7 @@ char* Util_format(char* format, ...) {
     va_start(ap, format);
     pthread_t pid = pthread_self();
     bool found = false;
+    size_t length;
     int i;
     
     for(i = 0; i < buffer_count; i++) {
@@ -45,14 +62,68 @@ char* Util_format(char* format, ...) {
         buffer_count++;
         format_buffers = realloc(format_buffers, buffer_count * sizeof(struct Buffer));
         format_buffers[buffer_count - 1].id = pid;
+        format_buffers[buffer_count - 1].size = 0;
+        format_buffers[buffer_count - 1].buff = NULL;
     }
 
     /* Do the formatting */
-    vsnprintf(format_buffers[i].buff, FORMAT_BUFF_SIZE, format, ap);
+    length = vsnprintf(format_buffers[i].buff, format_buffers[i].size, format, ap);
+    if(length >= format_buffers[i].size) {
+        /* Buffer wasn't large enough, resize */
+        format_buffers[i].size = length + 1;
+        format_buffers[i].buff = realloc(format_buffers[i].buff, sizeof(char) * format_buffers[i].size);
+
+        /* Reformat */
+        va_start(ap, format);
+        vsnprintf(format_buffers[i].buff, format_buffers[i].size, format, ap);
+    }
     va_end(ap);
 
     /* Return the formatted result */
     return format_buffers[i].buff;
+}
+
+/**
+ * Return a formatted string (for interal use)
+ */
+char* __Util_format(char* format, ...) {
+    va_list ap;
+    va_start(ap, format);
+    pthread_t pid = pthread_self();
+    bool found = false;
+    size_t length;
+    int i;
+    
+    for(i = 0; i < buffer_count_internal; i++) {
+        if(format_buffers_internal[i].id == pid) {
+            found = true;
+            break;
+        }
+    }
+
+    if(!found) {
+        buffer_count_internal++;
+        format_buffers_internal = realloc(format_buffers_internal, buffer_count_internal * sizeof(struct Buffer));
+        format_buffers_internal[buffer_count_internal - 1].id = pid;
+        format_buffers_internal[buffer_count_internal - 1].size = 0;
+        format_buffers_internal[buffer_count_internal - 1].buff = NULL;
+    }
+
+    /* Do the formatting */
+    length = vsnprintf(format_buffers_internal[i].buff, format_buffers_internal[i].size, format, ap);
+    if(length >= format_buffers_internal[i].size) {
+        /* Buffer wasn't large enough, resize */
+        format_buffers_internal[i].size = length + 1;
+        format_buffers_internal[i].buff = realloc(format_buffers_internal[i].buff, sizeof(char) * format_buffers_internal[i].size);
+
+        /* Reformat */
+        va_start(ap, format);
+        vsnprintf(format_buffers_internal[i].buff, format_buffers_internal[i].size, format, ap);
+    }
+    va_end(ap);
+
+    /* Return the formatted result */
+    return format_buffers_internal[i].buff;
 }
 
 /**

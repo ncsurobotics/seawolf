@@ -112,7 +112,7 @@ void Notify_send(char* action, char* param) {
 
     notify_msg->components[0] = namespace;
     notify_msg->components[1] = command;
-    notify_msg->components[2] = strdup(Util_format("%s %s", action, param));
+    notify_msg->components[2] = strdup(__Util_format("%s %s", action, param));
 
     Comm_sendMessage(notify_msg);
 

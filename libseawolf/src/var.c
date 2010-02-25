@@ -38,7 +38,7 @@ void Var_set(char* name, float value) {
     variable_set->components[0] = namespace;
     variable_set->components[1] = command;
     variable_set->components[2] = name;
-    variable_set->components[3] = strdup(Util_format("%.4f", value));
+    variable_set->components[3] = strdup(__Util_format("%.4f", value));
 
     Comm_sendMessage(variable_set);
 

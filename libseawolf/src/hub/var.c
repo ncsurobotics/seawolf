@@ -15,12 +15,12 @@ static void Hub_Var_initPersistentValues(void) {
         variable_name = List_get(variable_names, i);
         var = Dictionary_get(var_cache, variable_name);
         if(var->persistent) {
-            result = Hub_DB_exec(Util_format("SELECT value FROM variables WHERE name='%s'", variable_name));
+            result = Hub_DB_exec(__Util_format("SELECT value FROM variables WHERE name='%s'", variable_name));
             if(result) {
                 var->value = Hub_DB_getDouble(result, 0);
                 Hub_DB_freeResult(result);
             } else {
-                Hub_DB_exec(Util_format("INSERT INTO variables (name, value) VALUES('%s', %f);", variable_name, var->default_value));
+                Hub_DB_exec(__Util_format("INSERT INTO variables (name, value) VALUES('%s', %f);", variable_name, var->default_value));
             }
         }
     }
@@ -58,7 +58,7 @@ void Hub_Var_init(void) {
 float Hub_Var_get(const char* name) {
     Hub_Var* var = Dictionary_get(var_cache, name);
     if(var == NULL) {
-        Hub_Logging_log(ERROR, Util_format("Invalid variable read for '%s'", name));
+        Hub_Logging_log(ERROR, __Util_format("Invalid variable read for '%s'", name));
         return -1.0;
     }
 
@@ -68,19 +68,19 @@ float Hub_Var_get(const char* name) {
 void Hub_Var_set(const char* name, double value) {
     Hub_Var* var = Dictionary_get(var_cache, name);
     if(var == NULL) {
-        Hub_Logging_log(ERROR, Util_format("Invalid variable write attempt for '%s'", name));
+        Hub_Logging_log(ERROR, __Util_format("Invalid variable write attempt for '%s'", name));
         return;
     }
 
     if(var->readonly) {
-        Hub_Logging_log(ERROR, Util_format("Attempt to write to readonly variable '%s'", name));
+        Hub_Logging_log(ERROR, __Util_format("Attempt to write to readonly variable '%s'", name));
         return;
     }
 
     var->value = value;
     if(var->persistent) {
         /* Variable is persistent, flush it to the database */
-        Hub_DB_exec(Util_format("UPDATE variables SET value=%f WHERE name='%s'", value, name));
+        Hub_DB_exec(__Util_format("UPDATE variables SET value=%f WHERE name='%s'", value, name));
     }
 }
 

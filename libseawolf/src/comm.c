@@ -32,13 +32,13 @@ void Comm_init(void) {
     /* Create socket */
     comm_socket = socket(AF_INET, SOCK_STREAM, 0);
     if(comm_socket == -1) {
-        Logging_log(CRITICAL, Util_format("Unable to create socket: %s", strerror(errno)));
+        Logging_log(CRITICAL, __Util_format("Unable to create socket: %s", strerror(errno)));
         Seawolf_exitError();
     }
 
     /* Connect socket */
     if(connect(comm_socket, (struct sockaddr*) &addr, sizeof(addr))) {
-        Logging_log(CRITICAL, Util_format("Unable to connect to Comm server: %s", strerror(errno)));
+        Logging_log(CRITICAL, __Util_format("Unable to connect to Comm server: %s", strerror(errno)));
         Seawolf_exitError();
     }
     
@@ -70,7 +70,7 @@ static void Comm_authenticate(void) {
             Comm_Message_destroyUnpacked(response);
             return;
         } else {
-            Logging_log(CRITICAL, Util_format("Unable to authenticate with comm server: %s", response->components[1]));
+            Logging_log(CRITICAL, __Util_format("Unable to authenticate with comm server: %s", response->components[1]));
         }
     } else {
         Logging_log(CRITICAL, "No Comm_password set. Unable to connect to Comm server");

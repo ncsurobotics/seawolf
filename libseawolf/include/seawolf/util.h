@@ -7,8 +7,9 @@ void Util_close(void);
 /* Sleep for s seconds */
 void Util_usleep(double s);
 
-/* Return a formatted string */
+/* Return a formatted string, seperate version for use internal to libseawolf */
 char* Util_format(char* format, ...);
+char* __Util_format(char* format, ...);
 
 /* Strip spaces from a string */
 void Util_strip(char* buffer);

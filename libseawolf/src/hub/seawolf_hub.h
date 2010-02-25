@@ -28,7 +28,7 @@ typedef sqlite3_stmt Hub_DB_Result;
 void Hub_exitError(void);
 void Hub_Net_mainLoop(void);
 int Hub_Process_process(Comm_Message* message, Comm_Message** response, bool* authenticated);
-const char* Hub_Config_getOption(const char* config_key);
+char* Hub_Config_getOption(const char* config_key);
 
 void Hub_DB_init(void);
 void Hub_DB_setFile(const char* file);

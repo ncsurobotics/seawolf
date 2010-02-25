@@ -73,7 +73,7 @@ void Logging_log(short log_level, char* msg) {
 
             log_message->components[0] = namespace;
             log_message->components[1] = Seawolf_getName();
-            log_message->components[2] = strdup(Util_format("%d", log_level));
+            log_message->components[2] = strdup(__Util_format("%d", log_level));
             log_message->components[3] = msg;
 
             Comm_sendMessage(log_message);

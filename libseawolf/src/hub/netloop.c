@@ -32,7 +32,7 @@ static Comm_Message* Hub_Net_receiveMessage(int comm_socket) {
     packed_message->data = malloc(packed_message->length);
 
     if((n = recv(comm_socket, packed_message->data, packed_message->length, MSG_WAITALL)) != packed_message->length) {
-        Hub_Logging_log(WARNING, Util_format("Received invalid message: %d %d", packed_message->length, n));
+        Hub_Logging_log(WARNING, __Util_format("Received invalid message: %d %d", packed_message->length, n));
         Comm_PackedMessage_destroy(packed_message);
         return NULL;
     }
@@ -105,7 +105,7 @@ void Hub_Net_mainLoop(void) {
     /* Create the socket */
     svr_sock = socket(AF_INET, SOCK_STREAM, 0);
     if(svr_sock == -1) {
-        Hub_Logging_log(CRITICAL, Util_format("Error creating socket: %s", strerror(errno)));
+        Hub_Logging_log(CRITICAL, __Util_format("Error creating socket: %s", strerror(errno)));
         Hub_exitError();
     }
 
@@ -115,7 +115,7 @@ void Hub_Net_mainLoop(void) {
 
     /* Bind the socket to the server port/address */
     if(bind(svr_sock, (struct sockaddr*) &svr_addr, sizeof(svr_addr)) == -1) {
-        Hub_Logging_log(CRITICAL, Util_format("Error binding socket: %s", strerror(errno)));
+        Hub_Logging_log(CRITICAL, __Util_format("Error binding socket: %s", strerror(errno)));
         Hub_exitError();
     }
 
@@ -144,7 +144,7 @@ void Hub_Net_mainLoop(void) {
            results */
         n = select(FD_SETSIZE, &fdset_mask_r, NULL, NULL, NULL);
         if(n < 0) {
-            Hub_Logging_log(ERROR, Util_format("Error selecting from descriptors, attempting to continue: %s", strerror(errno)));
+            Hub_Logging_log(ERROR, __Util_format("Error selecting from descriptors, attempting to continue: %s", strerror(errno)));
             continue;
         } else if(n == 0) {
             /* Select returned no active sockets. Ignore it and try again */
@@ -173,7 +173,7 @@ void Hub_Net_mainLoop(void) {
                 if(client_message == NULL) {
                     client_errors[i]++;
                     if(client_errors[i] > MAX_ERRORS) {
-                        Hub_Logging_log(ERROR, "Excess read errors, dropping client");
+                        Hub_Logging_log(DEBUG, "Excess read errors, dropping client");
                         Hub_Net_removeClient(i);
                     }
                     continue;
@@ -186,7 +186,7 @@ void Hub_Net_mainLoop(void) {
                     n = Hub_Net_sendMessage(client_socks[i], response);
                     if(!n) {
                         /* Failed to send, shutdown client */
-                        Hub_Logging_log(ERROR, "Client disconnected, shutting down client");
+                        Hub_Logging_log(DEBUG, "Client disconnected, shutting down client");
                         Hub_Net_removeClient(i);
                     }
                 } else if(respond_to == RESPOND_TO_ALL) {
@@ -196,7 +196,7 @@ void Hub_Net_mainLoop(void) {
                             n = Hub_Net_sendPackedMessage(client_socks[j], packed_response);
                             if(!n) {
                                 /* Failed to send, shutdown client */
-                                Hub_Logging_log(ERROR, "Client disconnected, shutting down client");
+                                Hub_Logging_log(DEBUG, "Client disconnected, shutting down client");
                                 Hub_Net_removeClient(j);
                             }
                         }
