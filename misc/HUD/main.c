@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 	plot = (DATA_POINT**)calloc( MAX_PLOTS, sizeof(DATA_POINT*));
 
 	#ifdef seawolf 
-	Seawolf_loadConfig("./seawolf.conf");
+	Seawolf_loadConfig("../../conf/seawolf.conf");
 	Seawolf_init("HUD");
 	#endif
 	channel = (signed short**)calloc(4, sizeof(signed short*));
@@ -227,11 +227,11 @@ int main(int argc, char *argv[])
 	{
 
 		#ifdef seawolf
-		currentDepth=(SeaSQL_getDepth());
-		currentRoll = (SeaSQL_getSEA_Roll());     
-		currentPitch = (SeaSQL_getSEA_Pitch());
+		currentDepth=(Var_get("Depth"));
+		currentRoll = (Var_get("SEA.Roll"));     
+		currentPitch = (Var_get("SEA.Pitch"));
 		
-		desiredDepth = (SeaSQL_getDepthHeading());		
+		desiredDepth = (Var_get("DepthHeading"));		
 		
 		#else
 
