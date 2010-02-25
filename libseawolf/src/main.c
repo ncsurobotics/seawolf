@@ -17,13 +17,6 @@ void Seawolf_init(const char* name) {
     /* Copy name */
     strcpy(app_name, name);
 
-    /* Call all initialization methods. Order here *is* important. Logging
-       relies on the database being up for instance */
-    Comm_init();
-    Logging_init();
-    Notify_init();
-    Var_init();
-    Serial_init();
 
     /* Catch siginals and insure proper shutdown */
     signal(SIGINT, Seawolf_catchSignal);
@@ -32,6 +25,14 @@ void Seawolf_init(const char* name) {
 
     /* Ensure shutdown during normal exit */
     atexit(Seawolf_close);
+
+    /* Call all initialization methods. Order here *is* important. Logging
+       relies on the database being up for instance */
+    Comm_init();
+    Logging_init();
+    Notify_init();
+    Var_init();
+    Serial_init();
 
     /* Log message announcing application launch */
     Logging_log(INFO, "Initialized");

@@ -4,6 +4,10 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
+/* If we hit an error condition 5 times in a row while trying to retreive a
+   packet then give up and exit */
+#define MAX_RECEIVE_ERROR 5
+
 static char* comm_server = NULL;
 static uint16_t comm_port = 31427;
 static char* auth_password = NULL;
@@ -105,12 +109,24 @@ static Comm_PackedMessage* Comm_receivePackedMessage(void) {
 static int Comm_receiveThread(void) {
     Comm_PackedMessage* packed_message;
     Comm_Message* message;
+    unsigned short error_count = 0;
 
     while(running) {
         packed_message = Comm_receivePackedMessage();
         if(packed_message == NULL) {
+            error_count++;
+            if(error_count > MAX_RECEIVE_ERROR) {
+                Logging_log(CRITICAL, "Lost connection to hub, terminating!");
+                Seawolf_exitError();
+            }
+
             continue;
         }
+
+        /* Received good packet, reset error count */
+        error_count = 0;
+
+        /* Unpack message */
         message = Comm_unpackMessage(packed_message);
         Comm_PackedMessage_destroy(packed_message);
         
@@ -272,9 +288,12 @@ void Comm_setPort(uint16_t port) {
 }
 
 void Comm_close(void) {
-    running = false;
-    shutdown(comm_socket, SHUT_RDWR);
-    Task_wait(receive_thread);
+    /* This check is necessary if an error condition is reached in Comm_init */
+    if(running) {
+        running = false;
+        shutdown(comm_socket, SHUT_RDWR);
+        Task_wait(receive_thread);
+    }
 
     Dictionary_destroy(response_set);
     Queue_destroy(queue_out);
