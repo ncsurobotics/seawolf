@@ -1,6 +1,7 @@
 
 export CC= gcc
 #export CFLAGS= --std=c99 -Wall -Werror -pedantic -Wmissing-prototypes -I$(PWD)/include -O2 -fPIC
+#export CFLAGS= --std=c99 -Wall -Werror -pedantic -Wmissing-prototypes -I$(PWD)/include -Os -fPIC
 export CFLAGS= --std=c99 -Wall -Werror -pedantic -Wmissing-prototypes -I$(PWD)/include -g -fPIC
 export LIB_PATH=$(PWD)
 export LIB_NAME=$(LIB_PATH)/libseawolf.so
