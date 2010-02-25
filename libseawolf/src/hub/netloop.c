@@ -44,13 +44,10 @@ static Comm_Message* Hub_Net_receiveMessage(int comm_socket) {
 }
 
 static bool Hub_Net_sendPackedMessage(int comm_socket, Comm_PackedMessage* packed_message) {
-    static pthread_mutex_t send_lock = PTHREAD_MUTEX_INITIALIZER;
     int n;
 
     /* Send data */
-    pthread_mutex_lock(&send_lock);
     n = send(comm_socket, packed_message->data, packed_message->length, 0);
-    pthread_mutex_unlock(&send_lock);
 
     return (n != -1);
 }
