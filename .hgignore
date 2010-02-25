@@ -1,0 +1,11 @@
+syntax: glob
+*.o
+*.so
+*.db
+*.log
+*~
+
+syntax: regexp
+^libseawolf/hub$
+^serial/bin/
+^applications/bin/
