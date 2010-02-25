@@ -8,7 +8,7 @@
 
 /* Minimum log level and replicate to stdio */
 static bool initialized = false;
-static short min_log_level = DEBUG;
+static short min_log_level = NORMAL;
 static bool log_stdio = true;
 
 /* Log string names */
@@ -23,8 +23,18 @@ static char* level_names[] = {"DEBUG",
  * Initialize logging 
  */
 void Logging_init(void) {
-    /* Logging can be used before a connection to the comm server, but only
-       locally */
+    /* Attempt to get the default logging level, this can be overridden with a
+       call to Logging_setThreshold(...) */
+    min_log_level = (int) Var_get("LogLevel");
+    if(min_log_level == -1) {
+        min_log_level = NORMAL;
+    }
+
+    /* Should log messages be replicated to the standard output? This can be
+       overridden after initialization with a call to
+       Logging_replicateStdio(...) */
+    log_stdio = (Var_get("LogReplicateStdout") == 1.0);
+
     initialized = true;
 }
 
