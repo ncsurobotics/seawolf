@@ -6,12 +6,22 @@
 #include <highgui.h>
 #include <opencv/cv.h>
 
+// Misc Constants
+#define MAX_THETA 100
+#define MAX_PHI   20
+#define MAX_RHO   50
+
+/**
+ * mission_output
+ * This structure is passed into and also returned from every
+ * mission.  
+ */
 struct mission_output {
 
     // Cylindrical Coordinates
-    float theta;
-    float phi;
-    float rho;
+    float theta;  // Angle
+    float phi;    //
+    float rho;    // Speed
 
     // Depth
     //TODO
@@ -22,36 +32,59 @@ struct mission_output {
 
 };
 
-//TODO: Define missions for this year
-#define WAIT 0
-//EACH REAL MISSION INCLUDES FINDING THE NEXT APPROPRIATE MARKER (SINCE THAT IS SPECIFIC TO EACH MISSION) THEN ALLIGN_PATH ALLIGNS US WITH THAT MARKER
-#define GATE 1 
-#define GATE_PATH 11
-#define BOUEY 3
-#define BOUEY_PATH 33
-#define BARBED_WIRE 4
-#define BARBED_WIRE_ALLIGN 42
-#define BARBED_WIRE_PATH 44
-#define TORPEDO 5
-#define TORPEDO_PATH 55
-#define BOMBING_RUN 6
-#define BOMBING_RUN_PATH 66
-#define BOMBING_RUN_2 61
-#define BOMBING_RUN_2_PATH 661
-#define BRIEFCASE 7
-#define BRIEFCASE_GRAB 77
-#define OCTOGON 8
-#define ALLIGN_PATH 9 //CALLED AFTER FINDING THE CORRECT PATH AFTER EACH MISSION, ONCE COMPLETED, RETURN RETURN TASK COMPLETE
-#define IDENTIFY_SILHOUET 10
-#define TUNA_BLOB 12
-#define MOTION 13
+/********* Mission Definitions **********/
+// Mission Constants
+#define MISSION_WAIT 0
+#define MISSION_GATE 1 
+#define MISSION_GATE_PATH 11
+#define MISSION_BOUEY 3
+#define MISSION_BOUEY_PATH 33
+#define MISSION_HEDGE 4
+#define MISSION_HEDGE_PATH 44
+#define MISSION_WINDOW 5
+#define MISSION_WINDOW_PATH 55
+#define MISSION_WEAPONS_RUN 6
+#define MISSION_WEAPONS_RUN_PATH 66
+#define MISSION_MACHETE 7
+#define MISSION_BRIEFCASE_GRAB 77
+#define MISSION_OCTOGON 8
 
+static const char* mission_strings[] = {
+    [MISSION_WAIT] = "WAIT",
+    [MISSION_GATE] = "GATE",
+    [MISSION_GATE_PATH] = "GATE_PATH",
+    [MISSION_BOUEY] = "BOUEY",
+    [MISSION_BOUEY_PATH] = "BOUEY_PATH",
+    [MISSION_HEDGE] = "HEDGE",
+    [MISSION_HEDGE_PATH] = "HEDGE_PATH",
+    [MISSION_WINDOW] = "WINDOW",
+    [MISSION_WINDOW_PATH] = "WINDOW_PATH",
+    [MISSION_WEAPONS_RUN] = "WEAPONS_RUN",
+    [MISSION_WEAPONS_RUN_PATH] = "WEAPONS_RUN_PATH",
+    [MISSION_MACHETE] = "MACHETE",
+    [MISSION_BRIEFCASE_GRAB] = "BRIEFCASE_GRAB",
+    [MISSION_OCTOGON] = "OCTOGON",
+};
 
-#define MAX_THETA 100
-#define MAX_PHI   20
-#define MAX_RHO   50
+// Gives the order which the missions are executed
+static const int mission_order[] = {
+    MISSION_GATE,
+    MISSION_GATE_PATH,
+    MISSION_BOUEY,
+    MISSION_BOUEY_PATH,
+    MISSION_HEDGE,
+    MISSION_HEDGE_PATH,
+    MISSION_WINDOW,
+    MISSION_WINDOW_PATH,
+    MISSION_WEAPONS_RUN,
+    MISSION_WEAPONS_RUN_PATH,
+    MISSION_MACHETE,
+    MISSION_BRIEFCASE_GRAB,
+    MISSION_OCTOGON,
+    MISSION_WAIT,
+};
 
-//PROTOTYPES OF MISSION FUNCTIONS
+/*********** Mission Prototypes **************/
 void mission_gate_init(IplImage* frame);
 struct mission_output mission_gate_step(struct mission_output);
 

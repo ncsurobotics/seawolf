@@ -138,8 +138,10 @@ struct mission_output mission_gate_step(struct mission_output result)
         result.rho = 15; // High rho
 
     // Debugs:
-    hough_draw_lines(result.frame, lines);
-    cvCircle(result.frame, cvPoint(result.theta, frame->height/2), 5, cvScalar(0,0,0,255),1,8,0);
+    #ifdef VISION_SHOW_HEADING
+        hough_draw_lines(result.frame, lines);
+        cvCircle(result.frame, cvPoint(result.theta, frame->height/2), 5, cvScalar(0,0,0,255),1,8,0);
+    #endif
 
     // Scale output 
     result.theta -= frame->width/2;

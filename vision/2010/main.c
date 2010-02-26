@@ -37,19 +37,84 @@ int main(int argc, char** argv)
     // Set filter for seasql notify messages
     Notify_filter(FILTER_ACTION, "GO");
 
-    struct mission_output results = {0,0,0,0,NULL,false};
+    struct mission_output results;
+    results.theta = 0;
+    results.phi = 0;
+    results.rho = 0;
+    results.depth = 0;
+    results.mission_done = false;
     struct mission_output previous_results = results;
 
     #ifdef VISION_SHOW_HEADING
        cvNamedWindow("Heading", CV_WINDOW_AUTOSIZE);
     #endif
 
+    int mission_index = 0;
     for (unsigned int frame_num=0; true; frame_num++)
     {
         
         // State machine
-        results = mission_bouy_step(results);
-        //TODO
+        int current_mission = mission_order[mission_index];
+        results.frame = NULL;
+        switch (current_mission) {
+            case MISSION_GATE:
+                results = mission_gate_step(results);
+            break;
+            case MISSION_GATE_PATH:
+                //TODO
+            break;
+
+            case MISSION_BOUEY:
+                results = mission_bouy_step(results);
+            break;
+            
+            case MISSION_BOUEY_PATH:
+                //TODO
+            break;
+
+            case MISSION_HEDGE:
+                //TODO
+            break;
+
+            case MISSION_HEDGE_PATH:
+                //TODO
+            break;
+
+            case MISSION_WINDOW:
+                //TODO
+            break;
+
+            case MISSION_WINDOW_PATH:
+                //TODO
+            break;
+
+            case MISSION_WEAPONS_RUN:
+                //TODO
+            break;
+
+            case MISSION_WEAPONS_RUN_PATH:
+                //TODO
+            break;
+
+            case MISSION_MACHETE:
+                //TODO
+            break;
+
+            case MISSION_BRIEFCASE_GRAB:
+                //TODO
+            break;
+
+            case MISSION_OCTOGON:
+                //TODO
+            break;
+            case MISSION_WAIT:
+
+            break;
+            default:
+                printf("Error: Invalid mission \"%d\"", current_mission);
+                exit(1);
+            break;
+        }
 
         printf("Theta, Phi, Rho: %f, %f, %f\n", results.theta, results.phi, results.rho);
 
@@ -61,17 +126,27 @@ int main(int argc, char** argv)
             //TODO: Depth
             Notify_send("UPDATED", "SetPointVision");
             previous_results = results;
+
+            if (results.mission_done) {
+                // Switch missions
+                results.mission_done = false;
+                printf("Finished mission: ");
+                printf("%s\n", mission_strings[current_mission]);
+                mission_index++;
+            }
+
         }
+
         #ifdef VISION_SHOW_HEADING
-            CvPoint heading = {results.theta + results.frame->width/2,
-                               results.phi + results.frame->height/2};
-            cvCircle(results.frame, heading, 5, cvScalar(0,255,0,0),1,8,0);
-            //cvLine(results.frame, cvPoint(results.frame->width/2, 0), cvPoint(results.frame->width/2, 1), cvScalar(0,0,255,0), 1, 8, 0);
-            //CvPoint pt1 = cvPoint(results.frame->width/2, 0);
-            //CvPoint pt2 = cvPoint(results.frame->width/2, 1);
-            //cvLine(results.frame, pt1, pt2, CV_RGB(255,0,0), 1, CV_AA, 0 );
-            cvCircle(results.frame, cvPoint(results.frame->width/2, results.frame->height/2), 5, cvScalar(0,255,255,0),1,8,0);
-            cvShowImage("Heading", results.frame);
+            // Heading Circle
+            if (results.frame != NULL) {
+                CvPoint heading = {results.theta + results.frame->width/2,
+                                   results.phi + results.frame->height/2};
+                cvCircle(results.frame, heading, 5, cvScalar(0,255,0,0),1,8,0);
+                // Middle Circle
+                cvCircle(results.frame, cvPoint(results.frame->width/2, results.frame->height/2), 5, cvScalar(0,255,255,0),1,8,0);
+                cvShowImage("Heading", results.frame);
+            }
         #endif
 
         int key = cvWaitKey(DELAY);
