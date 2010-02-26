@@ -64,11 +64,11 @@ int main(int argc, char** argv)
                 //TODO
             break;
 
-            case MISSION_BOUEY:
+            case MISSION_BOUY:
                 results = mission_bouy_step(results);
             break;
             
-            case MISSION_BOUEY_PATH:
+            case MISSION_BOUY_PATH:
                 //TODO
             break;
 
@@ -120,9 +120,9 @@ int main(int argc, char** argv)
 
         // Give mission control its heading
         if (memcmp(&results, &previous_results, sizeof(struct mission_output))) {
-            SeaSQL_setSetPointVision_Theta(results.theta);
-            SeaSQL_setSetPointVision_Phi(results.phi);
-            SeaSQL_setSetPointVision_Rho(results.rho);
+            Var_set("SetPointVision.Theta", results.theta);
+            Var_set("SetPointVision.Phi", results.phi);
+            Var_set("SetPointVision.Rho", results.rho);
             //TODO: Depth
             Notify_send("UPDATED", "SetPointVision");
             previous_results = results;
@@ -133,6 +133,8 @@ int main(int argc, char** argv)
                 printf("Finished mission: ");
                 printf("%s\n", mission_strings[current_mission]);
                 mission_index++;
+                printf("Starting mission: ");
+                printf("%s\n", mission_strings[mission_order[mission_index]]);
             }
 
         }

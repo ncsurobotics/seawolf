@@ -37,8 +37,8 @@ struct mission_output {
 #define MISSION_WAIT 0
 #define MISSION_GATE 1 
 #define MISSION_GATE_PATH 11
-#define MISSION_BOUEY 3
-#define MISSION_BOUEY_PATH 33
+#define MISSION_BOUY 3
+#define MISSION_BOUY_PATH 33
 #define MISSION_HEDGE 4
 #define MISSION_HEDGE_PATH 44
 #define MISSION_WINDOW 5
@@ -53,8 +53,8 @@ static const char* mission_strings[] = {
     [MISSION_WAIT] = "WAIT",
     [MISSION_GATE] = "GATE",
     [MISSION_GATE_PATH] = "GATE_PATH",
-    [MISSION_BOUEY] = "BOUEY",
-    [MISSION_BOUEY_PATH] = "BOUEY_PATH",
+    [MISSION_BOUY] = "BOUY",
+    [MISSION_BOUY_PATH] = "BOUY_PATH",
     [MISSION_HEDGE] = "HEDGE",
     [MISSION_HEDGE_PATH] = "HEDGE_PATH",
     [MISSION_WINDOW] = "WINDOW",
@@ -69,15 +69,15 @@ static const char* mission_strings[] = {
 // Gives the order which the missions are executed
 static const int mission_order[] = {
     MISSION_GATE,
-    MISSION_GATE_PATH,
-    MISSION_BOUEY,
-    MISSION_BOUEY_PATH,
+    //MISSION_GATE_PATH,
+    MISSION_BOUY,
+    //MISSION_BOUY_PATH,
     MISSION_HEDGE,
-    MISSION_HEDGE_PATH,
+    //MISSION_HEDGE_PATH,
     MISSION_WINDOW,
-    MISSION_WINDOW_PATH,
+    //MISSION_WINDOW_PATH,
     MISSION_WEAPONS_RUN,
-    MISSION_WEAPONS_RUN_PATH,
+    //MISSION_WEAPONS_RUN_PATH,
     MISSION_MACHETE,
     MISSION_BRIEFCASE_GRAB,
     MISSION_OCTOGON,
