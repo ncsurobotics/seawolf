@@ -56,10 +56,13 @@ int main(int argc, char** argv)
         // State machine
         int current_mission = mission_order[mission_index];
         results.frame = NULL;
+        results.mission_done = false;
         switch (current_mission) {
+            
             case MISSION_GATE:
                 results = mission_gate_step(results);
             break;
+
             case MISSION_GATE_PATH:
                 //TODO
             break;
@@ -108,7 +111,7 @@ int main(int argc, char** argv)
                 //TODO
             break;
             case MISSION_WAIT:
-
+                //TODO
             break;
             default:
                 printf("Error: Invalid mission \"%d\"", current_mission);
@@ -135,6 +138,70 @@ int main(int argc, char** argv)
                 mission_index++;
                 printf("Starting mission: ");
                 printf("%s\n", mission_strings[mission_order[mission_index]]);
+
+                // Init Mission
+                switch (current_mission) {
+
+                    case MISSION_GATE:
+                        results = mission_gate_step(results);
+                    break;
+
+                    case MISSION_GATE_PATH:
+                        //TODO
+                    break;
+
+                    case MISSION_BOUY:
+                        results = mission_bouy_step(results);
+                    break;
+                    
+                    case MISSION_BOUY_PATH:
+                        //TODO
+                    break;
+
+                    case MISSION_HEDGE:
+                        //TODO
+                    break;
+
+                    case MISSION_HEDGE_PATH:
+                        //TODO
+                    break;
+
+                    case MISSION_WINDOW:
+                        //TODO
+                    break;
+
+                    case MISSION_WINDOW_PATH:
+                        //TODO
+                    break;
+
+                    case MISSION_WEAPONS_RUN:
+                        //TODO
+                    break;
+
+                    case MISSION_WEAPONS_RUN_PATH:
+                        //TODO
+                    break;
+
+                    case MISSION_MACHETE:
+                        //TODO
+                    break;
+
+                    case MISSION_BRIEFCASE_GRAB:
+                        //TODO
+                    break;
+
+                    case MISSION_OCTOGON:
+                        //TODO
+                    break;
+                    case MISSION_WAIT:
+
+                    break;
+                    default:
+                        printf("Error: Invalid mission \"%d\"", current_mission);
+                        exit(1);
+                    break;
+                }
+
             }
 
         }
