@@ -55,6 +55,7 @@ int main(void) {
                          \n\
   %10.2f/%.2f            \n\
   %10.2f %.2f Pitch/Roll \n\
+     %10.2f Yaw          \n\
                          \n\
                          \n\
         %-6d %4d         \n\
@@ -68,7 +69,7 @@ int main(void) {
 ";
 
     int aft = 0, portx = 0, porty = 0, starx = 0, stary = 0;
-    float depth=0, seapitch = 0, searoll = 0;
+    float depth=0, seapitch = 0, searoll = 0, seayaw = 0;
     char action[64], data[64];
 
     pthread_t control_thread;
@@ -86,7 +87,7 @@ int main(void) {
 
     while(! quit) {
         clear();
-        printw(display, depth_heading, depth, seapitch, searoll, porty, stary, portx, starx, aft);
+        printw(display, depth_heading, depth, seapitch, searoll, seayaw, porty, stary, portx, starx, aft);
         refresh();
 
         Notify_get(action, data);
@@ -106,6 +107,7 @@ int main(void) {
         } else if(strcmp(data, "IMU") == 0) {
             seapitch = Var_get("SEA.Pitch");
             searoll = Var_get("SEA.Roll");
+            seayaw = Var_get("SEA.Yaw");
         }
     }
 
