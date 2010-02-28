@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     /* Running sum variables */
     double val_roll[SUM_SIZE], val_pitch[SUM_SIZE], val_yaw[SUM_SIZE];
     double sum_roll = 0, sum_pitch = 0;
-    double sum_yaw[] = {0.0, 0.0};
+    double avg_yaw[] = {0.0, 0.0};
 
     /* Yaw values */
     double shift;
