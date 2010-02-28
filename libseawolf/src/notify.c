@@ -65,7 +65,7 @@ void Notify_close() {
 void Notify_inputMessage(Comm_Message* message) {
     char* msg = message->components[2];
 
-    if(Notify_check_filter(msg)) {
+    if(initialized && Notify_check_filter(msg)) {
         Queue_append(notification_queue, strdup(msg));
     }
 
