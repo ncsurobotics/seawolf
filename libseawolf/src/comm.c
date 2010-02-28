@@ -169,11 +169,11 @@ Comm_Message* Comm_sendMessage(Comm_Message* message) {
 
 void Comm_assignRequestID(Comm_Message* message) {
     static pthread_mutex_t request_id_lock = PTHREAD_MUTEX_INITIALIZER;
-    static uint32_t last_id = 1;
+    static uint32_t last_id = 0;
 
     pthread_mutex_lock(&request_id_lock);
-    message->request_id = last_id;
-    last_id = (last_id + 1) % (1 << 16);
+    message->request_id = last_id + 1;
+    last_id = (last_id + 1) % ((1 << 16) - 1);
     pthread_mutex_unlock(&request_id_lock);
 }
 
