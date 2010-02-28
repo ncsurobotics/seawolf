@@ -24,10 +24,10 @@ void Serial_flush(SerialPort sp);
 
 /* IO commands */
 int Serial_getByte(SerialPort sp);
-void Serial_get(SerialPort sp, void* buffer, size_t count);
 void Serial_getLine(SerialPort sp, char* buffer);
+int Serial_get(SerialPort sp, void* buffer, size_t count);
 
-void Serial_sendByte(SerialPort sp, unsigned char b);
-void Serial_send(SerialPort sp, void* buffer, size_t count);
+int Serial_sendByte(SerialPort sp, unsigned char b);
+int Serial_send(SerialPort sp, void* buffer, size_t count);
 
 #endif // #ifndef __SEAWOLF_SERIAL_INCLUDE_H

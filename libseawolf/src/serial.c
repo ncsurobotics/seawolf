@@ -1,14 +1,9 @@
 
 #include "seawolf.h"
 
-#include <errno.h>
 #include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
-#include <stdio.h>
-#include <time.h>
 
 static bool initialized = false;
 static SerialPort* devices = NULL;
@@ -40,31 +35,43 @@ void Serial_close(void) {
 /**
  * Set all standard options on the serial port 
  */
-static void Serial_setParams(SerialPort sp) {
+static int Serial_setParams(SerialPort sp) {
     struct termios term_conf;
 
     /* Load attributes */
     tcgetattr(sp, &term_conf);
 
     /* Set options */
-    term_conf.c_iflag &= IGNBRK | IGNCR | IGNPAR | IXANY | ~(IXOFF | IXON | INPCK);
-    term_conf.c_oflag &= ~(OPOST);
-    term_conf.c_cflag  = CLOCAL;
-    term_conf.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
+    term_conf.c_cflag &= ~PARENB;
+    term_conf.c_cflag &= ~CSTOPB;
+    term_conf.c_cflag &= ~CSIZE;
+    term_conf.c_cflag |= CS8 | CLOCAL | CREAD;
+
+    term_conf.c_iflag = IGNPAR;
+    term_conf.c_oflag = 0;
+    term_conf.c_lflag = 0;
 
     /* Set speeds */
     cfsetispeed(&term_conf, B9600);
     cfsetospeed(&term_conf, B9600);
     
+    Serial_flush(sp);
+
     /* Push to device immediately */
-    tcsetattr(sp, TCSANOW, &term_conf);
+    if(tcsetattr(sp, TCSANOW, &term_conf) != 0) {
+        return -1;
+    }
+
+    /* Flush once more for good measure */
+    Serial_flush(sp);
+    return 0;
 }
 
 /**
  * Open a new "virtual" terminal device
  */
 SerialPort Serial_openVTY(void) {
-    SerialPort sp = open("/dev/ptmx", O_RDWR | O_NOCTTY | O_NONBLOCK);
+    SerialPort sp = open("/dev/ptmx", O_RDWR | O_NOCTTY);
     Serial_setParams(sp);
     unlockpt(sp);
     grantpt(sp);
@@ -84,7 +91,7 @@ SerialPort Serial_open(const char* device_path) {
     SerialPort sp = open(device_path, O_RDWR | O_NOCTTY | O_NONBLOCK);
     if(sp == -1) {
         /* Error opening port */
-        return 0;
+        return -1;
     }
 
     /* Store default attribute set */
@@ -94,7 +101,9 @@ SerialPort Serial_open(const char* device_path) {
     }
 
     /* Set standard serial port options */
-    Serial_setParams(sp);
+    if(Serial_setParams(sp) == -1) {
+        return -1;
+    }
 
     /* Store device reference in the local device list */
     open_devices++;
@@ -205,14 +214,14 @@ void Serial_setBaud(SerialPort sp, int baud) {
     cfsetospeed(&term_conf, real_baud);
     
     /* Push settings changes to device immediately */
+    Serial_flush(sp);
     tcsetattr(sp, TCSANOW, &term_conf);
 
+    /* Is this necessary? */
     Serial_flush(sp);
-    Util_usleep(0.5);
 }
 
 void Serial_flush(SerialPort sp) {
-    tcdrain(sp); /* Wait for output to be drained */
     tcflush(sp, TCIOFLUSH); /* Zero input buffers */
 }
 
@@ -297,28 +306,46 @@ void Serial_getLine(SerialPort sp, char* buffer) {
 /**
  * Store count bytes of data from the serial port into the buffer
  */
-void Serial_get(SerialPort sp, void* buffer, size_t count) {
+int Serial_get(SerialPort sp, void* buffer, size_t count) {
     unsigned char* buffer_c = (unsigned char*) buffer;
-    while(count--) {
-        *buffer_c = Serial_getByte(sp);
-        buffer_c++;
+    size_t n; 
+
+    while(count) {
+        n = read(sp, buffer_c, count);
+        if(n == -1) {
+            return -1;
+        }
+
+        count -= n;
+        buffer_c += n;
     }
+    
+    return 1;
 }
 
 /**
  * Send a single byte out of the serial port
  */
-void Serial_sendByte(SerialPort sp, unsigned char b) {
-    Serial_send(sp, &b, 1);
+int Serial_sendByte(SerialPort sp, unsigned char b) {
+    return Serial_send(sp, &b, 1);
 }
 
 /**
  * Send size bytes of data from the buffer to the serial port 
  */
-void Serial_send(SerialPort sp, void* buffer, size_t count) {
-    int sent = 0;
+int Serial_send(SerialPort sp, void* buffer, size_t count) {
     unsigned char* buffer_c = (unsigned char*) buffer;
-    while(sent < count) {
-        sent += write(sp, buffer_c + sent, count - sent);
-    }        
+    size_t n;
+
+    while(count) {
+        n = write(sp, buffer_c, count);
+        if(n == -1) {
+            return -1;
+        }
+
+        count -= n;
+        buffer_c += n;
+    }
+
+    return 1;
 }
