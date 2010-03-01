@@ -44,24 +44,20 @@ static void cycleDTR(SerialPort sp) {
     copy |= TIOCM_DTR;
     ioctl(sp, TIOCMSET, &copy);
 
-    /* Sleep between */
-    Util_usleep(0.25);
-
     /* Unassert DTR */
     copy = base;
     copy &= ~TIOCM_DTR;
     ioctl(sp, TIOCMSET, &copy);
-    
-    /* Sleep after */
-    Util_usleep(0.25);
+
+    /* Sleep */
+    Util_usleep(0.5);
 }
 
 static int getPeripheralType(SerialPort sp) {
-    char id[32];
-    const unsigned char command = 0xF0;
-    char* c;
-    int tmp;
     char buffer[64];
+    char id[32];
+    char* c;
+    int n;
 
     /* Set to IMU's baud rate */
     Serial_setBaud(sp, 38400);
@@ -70,42 +66,45 @@ static int getPeripheralType(SerialPort sp) {
     Serial_sendByte(sp, 0x10);
     Serial_sendByte(sp, 0x00);
     Serial_sendByte(sp, 0x00);
-    Util_usleep(0.25);
-
+    Util_usleep(0.5);
     Serial_flush(sp);
-    Util_usleep(0.25);
 
     /* Probe IMU by sending version number command */
-    tmp = write(sp, &command, 1);
-    Util_usleep(0.25);
-
-    if(tmp == -1) {
-        /* Writing failed so device is definitely not ready */
-        Logging_log(ERROR, "Attempted to fingerprint unready device");
+    n = Serial_sendByte(sp, 0xF0);
+    if(n == -1) {
+        Logging_log(ERROR, "Unable to send data");
         return -1;
     }
-
-    if(read(sp, &tmp, 1) == -1) {
-        /* Read error, skip */
-    } else {
-        if(tmp == 0xF0) {
+    
+    for(int i = 0; i < 3; i++) {
+        n = Serial_getByte(sp);
+        if(n == 0xf0) {
             /* Received IMU response */
             Logging_log(DEBUG, "IMU Found");
+            Serial_flush(sp);
             return PT_IMU;
+        } else if(n != -1) {
+            Logging_log(DEBUG, "Received invalid response from IMU");
         }
-    }
 
+        Serial_flush(sp);
+        Util_usleep(0.5);
+    }
+    
     /* Attempt altimeter */
     Serial_setBaud(sp, 4800);
-    tmp = read(sp, buffer, 63);
-    buffer[tmp] = 0;
-
-    if(tmp > 0 && ((c = strchr(buffer, '$')) != NULL) && (c[1] == 'S' || c[1] == 'Y')) {
-        return PT_ALTIMETER;
+    n = Serial_get(sp, buffer, 63);
+    
+    if(n > 0) {
+        buffer[n] = 0;
+        if(((c = strchr(buffer, '$')) != NULL) && (c[1] == 'S' || c[1] == 'Y')) {
+            return PT_ALTIMETER;
+        }
     }
-
+    
     /* Fallback to Arduino, get ID */
     Serial_setBaud(sp, 9600);
+    cycleDTR(sp);
     if(ArdComm_getId(sp, id) != -1) {
         if(strcmp(id, "PressureSensor") == 0) {
             return PT_DEPTH;
@@ -123,7 +122,7 @@ static int getPeripheralType(SerialPort sp) {
     }
 
     /* Fingerprinting failed - cycle DTR and return error code */
-    cycleDTR(sp);
+    Logging_log(DEBUG, "Could not ID");
     return -1;
 }
 
@@ -166,7 +165,7 @@ int main(void) {
     for(i = 0; i < device_count; i++) {
         /* Open serial device */
         device_pool[i].sp = Serial_open(device_pool[i].device);
-        if(device_pool[i].sp) {
+        if(device_pool[i].sp != -1) {
             cycleDTR(device_pool[i].sp);
             Logging_log(DEBUG, Util_format("Opening %s", device_pool[i].device));
         } else {
@@ -177,10 +176,10 @@ int main(void) {
 
     i = 0;
     while(apps_waiting > 0 && unassigned_ports > 0) {
-        if(device_pool[i].peripheral_type == PT_UNMANAGED && device_pool[i].sp != 0) {
+        if(device_pool[i].peripheral_type == PT_UNMANAGED && device_pool[i].sp != -1) {
             /* Serial port is now open, attempt to fingerprint */
             Logging_log(DEBUG, Util_format("Fingerprinting %s", device_pool[i].device));
-            if(device_pool[i].sp && (pt = getPeripheralType(device_pool[i].sp)) != -1) {
+            if(device_pool[i].sp != -1 && (pt = getPeripheralType(device_pool[i].sp)) != -1) {
                 Logging_log(DEBUG, Util_format("Serial port ready %s", device_pool[i].device));
                 
                 /* Close port and copy device */
