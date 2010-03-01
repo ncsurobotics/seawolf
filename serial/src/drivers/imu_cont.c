@@ -15,7 +15,7 @@
 
 int main(int argc, char** argv) {
     Seawolf_loadConfig("../conf/seawolf.conf");
-    Var_set("AutoNotify", false);
+    Var_setAutoNotify(false);
     Seawolf_init("Serial : IMU");
 
     char* device_real = argv[1];

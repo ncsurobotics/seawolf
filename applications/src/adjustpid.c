@@ -8,7 +8,7 @@ int main(int argc, char** argv) {
     }
 
     Seawolf_loadConfig("../conf/seawolf.conf");
-    Var_set("AutoNotify", false);
+    Var_setAutoNotify(false);
     Seawolf_init("PID Adjuster");
 
     char* sensor = argv[1];
