@@ -21,6 +21,7 @@ static bool initialized = false;
 static char** filters = NULL;
 static int filters_n = 0;
 static Queue* notification_queue;
+static bool default_policy = NOTIFY_POLICY_DROP;
 
 static bool Notify_check_filter(char* msg);
 
@@ -57,6 +58,14 @@ void Notify_close() {
         free(msg);
     }
     Queue_destroy(notification_queue);
+}
+
+/**
+ * Set policy for accepting messages when not filters exist. By default, all
+ * messages are dropped.
+ */
+void Notify_setPolicy(bool policy) {
+    default_policy = policy;
 }
 
 /**
@@ -125,12 +134,17 @@ void Notify_send(char* action, char* param) {
  */
 static bool Notify_check_filter(char* msg) {
     bool match;
-    int msg_len = strlen(msg);
-    
+    int msg_len;
     char type;
     char* filter;
     int filter_len;
 
+    /* No filters, return policy (default false) */
+    if(filters_n == 0) {
+        return default_policy;
+    }
+
+    msg_len = strlen(msg);
     for(int i = 0; i < filters_n; i++) {
         /* Extract the filter type from the first index of the current filter */
         type = filters[i][0];
@@ -183,8 +197,8 @@ static bool Notify_check_filter(char* msg) {
         }
     }
 
-    /* No matches or no filters; return true if no filters */
-    return (filters_n == 0);
+    /* No matches */
+    return false;
 }
 
 /**

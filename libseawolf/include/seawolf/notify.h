@@ -12,9 +12,16 @@
 #define FILTER_ACTION 0x02
 #define FILTER_PREFIX 0x03
 
+/* Policy */
+#define NOTIFY_POLICY_ACCEPT true
+#define NOTIFY_POLICY_DROP false
+
 /* System control methods */
 void Notify_init(void);
 void Notify_close(void);
+void Notify_setPolicy(bool policy);
+
+/* Called to insert a new message into the input queue */
 void Notify_inputMessage(Comm_Message* message);
 
 /* Public access methods */
