@@ -119,9 +119,6 @@ int main(int argc, char** argv) {
         val_pitch[i] = ((float)val_pitch[i]*360) / 65535;
         val_yaw[i] = ((float)val_yaw[i]*2*M_PI) / 65535;
 
-        //printf("[%d] %6.2f %6.2f %6.2f (roll, pitch, yaw)\n", i, val_roll[i], val_pitch[i], val_yaw[i]);
-        printf("[%d] %6.2f %6.2f %6.2f (roll, pitch, yaw)\n", i, sum_roll, sum_pitch, val_yaw[i]);
-
         /* Invert sign. This reorrientates the yaw axis so that positive yaw is
            west of north and negative yaw is east of north, which while not
            intuitive, this means that yaw values increase counter clockwise, as
