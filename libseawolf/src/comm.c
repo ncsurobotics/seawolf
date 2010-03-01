@@ -3,10 +3,15 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#include <pthread.h>
 
 /* If we hit an error condition 5 times in a row while trying to retreive a
    packet then give up and exit */
 #define MAX_RECEIVE_ERROR 5
+
+/* Amount to grow response set by each time more space is needed */
+#define RESPONSE_SET_GROW 8
+#define MAX_REQUEST_ID ((uint32_t)0xffff)
 
 static char* comm_server = NULL;
 static uint16_t comm_port = 31427;
@@ -14,9 +19,13 @@ static char* auth_password = NULL;
 static int comm_socket;
 
 static Task_Handle receive_thread;
-static Queue* queue_out = NULL;
-static Dictionary* response_set = NULL;
 static bool running = false;
+
+static size_t response_set_size = RESPONSE_SET_GROW;
+static Comm_Message** response_set = NULL;
+static bool* response_pending = NULL;
+static pthread_mutex_t response_set_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t new_response = PTHREAD_COND_INITIALIZER;
 
 static void Comm_authenticate(void);
 static Comm_PackedMessage* Comm_receivePackedMessage(void);
@@ -25,8 +34,9 @@ static int Comm_receiveThread(void);
 void Comm_init(void) {
     struct sockaddr_in addr;
 
-    queue_out = Queue_new();
-    response_set = Dictionary_new();
+    /* Prepare response set */
+    response_set = calloc(response_set_size, sizeof(Comm_Message*));
+    response_pending = calloc(response_set_size, sizeof(bool));
 
     /* Build connection address */
     addr.sin_family = AF_INET;
@@ -131,7 +141,10 @@ static int Comm_receiveThread(void) {
         Comm_PackedMessage_destroy(packed_message);
         
         if(message->request_id != 0) {
-            Dictionary_setInt(response_set, message->request_id, message);
+            pthread_mutex_lock(&response_set_lock);
+            response_set[message->request_id] = message;
+            pthread_cond_broadcast(&new_response);
+            pthread_mutex_unlock(&response_set_lock);
         } else if(strcmp(message->components[0], "NOTIFY") == 0) {
             /* Inbound notification */
             Notify_inputMessage(message);
@@ -159,22 +172,50 @@ Comm_Message* Comm_sendMessage(Comm_Message* message) {
 
     /* Expect a response and wait for it */
     if(message->request_id != 0) {
-        Dictionary_waitForInt(response_set, message->request_id);
-        response = Dictionary_getInt(response_set, message->request_id);
-        Dictionary_removeInt(response_set, message->request_id);
+        pthread_mutex_lock(&response_set_lock);
+        while(response_set[message->request_id] == NULL) {
+            pthread_cond_wait(&new_response, &response_set_lock);
+        }
+
+        response = response_set[message->request_id];
+        response_pending[message->request_id] = false;
+        response_set[message->request_id] = NULL;
+
+        pthread_mutex_unlock(&response_set_lock);
     }
     
     return response;
 }
 
 void Comm_assignRequestID(Comm_Message* message) {
-    static pthread_mutex_t request_id_lock = PTHREAD_MUTEX_INITIALIZER;
-    static uint32_t last_id = 0;
+    static uint32_t last_id = 1;
 
-    pthread_mutex_lock(&request_id_lock);
-    message->request_id = last_id + 1;
-    last_id = (last_id + 1) % ((1 << 16) - 1);
-    pthread_mutex_unlock(&request_id_lock);
+    pthread_mutex_lock(&response_set_lock);
+
+    message->request_id = last_id;
+    while(response_pending[message->request_id] == true) {
+        message->request_id = (message->request_id % (response_set_size - 1)) + 1;
+
+        /* Every available ID is taken, make space for more and make the
+           response ID the next available one */
+        if(message->request_id == last_id && response_set_size + RESPONSE_SET_GROW < MAX_REQUEST_ID) {
+            last_id = response_set_size;
+            message->request_id = last_id;
+
+            response_set = realloc(response_set, sizeof(Comm_Message*) * (response_set_size + RESPONSE_SET_GROW));
+            response_pending = realloc(response_pending, sizeof(bool) * (response_set_size + RESPONSE_SET_GROW));
+
+            memset(response_set + response_set_size, 0, RESPONSE_SET_GROW * sizeof(Comm_Message*));
+            memset(response_pending + response_set_size, 0, RESPONSE_SET_GROW * sizeof(bool));
+
+            response_set_size += RESPONSE_SET_GROW;
+        }
+    }
+
+    response_set[message->request_id] = NULL;
+    response_pending[message->request_id] = true;
+
+    pthread_mutex_unlock(&response_set_lock);
 }
 
 Comm_PackedMessage* Comm_packMessage(Comm_Message* message) {
@@ -293,10 +334,11 @@ void Comm_close(void) {
         running = false;
         shutdown(comm_socket, SHUT_RDWR);
         Task_wait(receive_thread);
+
+        free(response_set);
+        free(response_pending);
     }
 
-    Dictionary_destroy(response_set);
-    Queue_destroy(queue_out);
     if(comm_server != NULL) {
         free(comm_server);
     }
