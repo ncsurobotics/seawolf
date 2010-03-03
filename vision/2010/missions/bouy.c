@@ -36,29 +36,28 @@ struct mission_output mission_bouy_step (struct mission_output result)
     int frame_height = frame->height;
     RGBPixel color = { 0xff, 0x00, 0x00 };
 
-    //set craft speed
+    // Set craft speed
     result.rho = 10;
 
-    //scan image for color
+    // Sscan image for color
     IplImage* ipl_out;
     ipl_out = cvCreateImage(cvGetSize (frame), 8, 3);
     int num_pixels = FindTargetColor(frame, ipl_out, &color, 80, 256);
 
-    //find blobs
+    // Find blobs
     BLOB *blobs;
     int blobs_found = blob(ipl_out, &blobs, 4, 100);
 
-    //determine course
+    // Determine course
     CvPoint heading;
-    if (blobs_found == 0 || blobs_found > 3
-            || blobs[0].area < (num_pixels * 3 / 4 >
-                100 ? num_pixels * 3 / 4 : 100))
+    if (blobs_found == 0 || blobs_found > 3 ||
+         blobs[0].area < (num_pixels * 3 / 4 > 100 ? num_pixels * 3 / 4 : 100))
     {
-        //we don't think what we see is a blob
-        //we havn't gotten to it yet, so try to follow the blob off the screen for a short time
+        // We don't think what we see is a blob
+        // We havn't gotten to it yet, so try to follow the blob off the screen for a short time
         if (tracking_counter > 100)
         {
-            //we have seen the blob for long enough, we may have hit it
+            // We have seen the blob for long enough, we may have hit it
             if (++hit_blob > 8)
             {
                 //we have probably hit the blob, so let's look for a marker
@@ -130,10 +129,6 @@ struct mission_output mission_bouy_step (struct mission_output result)
             printf ("WE ARE AT THE BLOB ^_^ !!!!\n");
             result.mission_done = true;
         }
-    }
-    else
-    {
-        old_heading = heading;
     }
 
     //RELEASE THINGS 

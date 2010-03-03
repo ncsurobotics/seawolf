@@ -49,7 +49,12 @@ int main(int argc, char** argv)
        cvNamedWindow("Heading", CV_WINDOW_AUTOSIZE);
     #endif
 
-    int mission_index = 0;
+    int mission_index;
+    #ifdef VISION_INITIAL_MISSION
+        mission_index = VISION_INITIAL_MISSION;
+    #else
+        mission_index = 0;
+    #endif
     for (unsigned int frame_num=0; true; frame_num++)
     {
         
@@ -110,9 +115,11 @@ int main(int argc, char** argv)
             case MISSION_OCTOGON:
                 //TODO
             break;
+
             case MISSION_WAIT:
                 //TODO
             break;
+
             default:
                 printf("Error: Invalid mission \"%d\"", current_mission);
                 exit(1);
@@ -193,9 +200,11 @@ int main(int argc, char** argv)
                     case MISSION_OCTOGON:
                         //TODO
                     break;
-                    case MISSION_WAIT:
 
+                    case MISSION_WAIT:
+                        //TODO
                     break;
+
                     default:
                         printf("Error: Invalid mission \"%d\"", current_mission);
                         exit(1);
