@@ -43,9 +43,9 @@ struct mission_output mission_gate_step(struct mission_output result)
     int num_pixels;
     
     // Set the depth
-    //TODO: Depth
-    //SeaSQL_setTrackerDoDepth(2.0);
+    result.depth_control = DEPTH_ABSOLUTE;
     result.depth = 4.0;
+
     // Find lines, white or black
     if (WHITE_GATE_FLAG) { // LOOK FOR WHITE LINES
         grey = cvCreateImage(cvSize(frame->width,frame->height), 8, 1);

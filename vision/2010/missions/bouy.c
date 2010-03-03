@@ -63,7 +63,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
                 //we have probably hit the blob, so let's look for a marker
                 printf
                     ("We've missed the blob for a while; assuming we hit it.\n");
-                //mission = ALLIGN_PATH; CHANGE MISSION HERE!!!!!!!!!!!!
+                result.mission_done = true;
             }
         }
         else if (tracking_counter > 5)
@@ -127,7 +127,6 @@ struct mission_output mission_bouy_step (struct mission_output result)
             result.phi = 0;
             result.rho = 0;
             printf ("WE ARE AT THE BLOB ^_^ !!!!\n");
-            result.mission_done = true;
         }
     }
 

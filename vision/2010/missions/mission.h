@@ -11,23 +11,35 @@
 #define MAX_PHI   20
 #define MAX_RHO   50
 
+#define DEPTH_RELATIVE 1.0
+#define DEPTH_ABSOLUTE 0.0
+
 /**
  * mission_output
- * This structure is passed into and also returned from every
- * mission.  
+ * This structure is passed into and also returned from every mission.  
  */
 struct mission_output {
 
     // Cylindrical Coordinates
     float theta;  // Angle
-    float phi;    //
     float rho;    // Speed
 
     // Depth
-    //TODO
-    float depth;
+    // Control for depth is either absolute or relative.  If "depth_control" is
+    // DEPTH_ABSOLUTE then the "depth" variable is used.  If "depth_control" is
+    // DEPTH_RELATIVE then the "phi" variable is used.
+    float depth_control;
+    float depth;  // Absolute Depth
+    float phi;    // Relative Depth
 
+    // Missions should set this to the frame they recieved from the camera, so
+    // main.c can use it for debugging.  Missions may also write debug
+    // information on this image and it will be displayed.  
     IplImage* frame;
+
+    // This flag is set to true inside a mission when the mission is completed.
+    // main.c notices when this is set to true and switches to the next
+    // mission.
     bool mission_done;
 
 };
@@ -66,7 +78,8 @@ static const char* mission_strings[] = {
     [MISSION_OCTOGON] = "OCTOGON",
 };
 
-// Gives the order which the missions are executed
+// Gives the order which the missions are executed.  The initial mission
+// defaults to 0, but can be changed in debug.mk
 static const int mission_order[] = {
     MISSION_GATE,
     //MISSION_GATE_PATH,
@@ -85,9 +98,11 @@ static const int mission_order[] = {
 };
 
 /*********** Mission Prototypes **************/
+// Gate
 void mission_gate_init(IplImage* frame);
 struct mission_output mission_gate_step(struct mission_output);
 
+// Bouy
 void mission_bouy_init(IplImage* frame);
 struct mission_output mission_bouy_step(struct mission_output);
 

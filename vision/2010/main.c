@@ -37,10 +37,12 @@ int main(int argc, char** argv)
     // Set filter for seasql notify messages
     Notify_filter(FILTER_ACTION, "GO");
 
+    // Setup Initial results struct
     struct mission_output results;
     results.theta = 0;
     results.phi = 0;
     results.rho = 0;
+    results.depth_control = 0;
     results.depth = 0;
     results.mission_done = false;
     struct mission_output previous_results = results;
@@ -49,12 +51,16 @@ int main(int argc, char** argv)
        cvNamedWindow("Heading", CV_WINDOW_AUTOSIZE);
     #endif
 
+    // Determino mission_index
     int mission_index;
     #ifdef VISION_INITIAL_MISSION
         mission_index = VISION_INITIAL_MISSION;
     #else
         mission_index = 0;
     #endif
+    printf("Starting Mission: %s\n",
+            mission_strings[mission_order[mission_index]]);
+    
     for (unsigned int frame_num=0; true; frame_num++)
     {
         
@@ -130,15 +136,18 @@ int main(int argc, char** argv)
 
         // Give mission control its heading
         if (memcmp(&results, &previous_results, sizeof(struct mission_output))) {
+
+            // Update Variables
             Var_set("SetPointVision.Theta", results.theta);
             Var_set("SetPointVision.Phi", results.phi);
             Var_set("SetPointVision.Rho", results.rho);
-            //TODO: Depth
+            Var_set("DepthHeading", results.depth);
+            Var_set("TrackerDoDepth", results.depth_control);
             Notify_send("UPDATED", "SetPointVision");
             previous_results = results;
 
+            // Switch missions
             if (results.mission_done) {
-                // Switch missions
                 results.mission_done = false;
                 printf("Finished mission: ");
                 printf("%s\n", mission_strings[current_mission]);
@@ -146,7 +155,7 @@ int main(int argc, char** argv)
                 printf("Starting mission: ");
                 printf("%s\n", mission_strings[mission_order[mission_index]]);
 
-                // Init Mission
+                // Init Next Mission
                 switch (current_mission) {
 
                     case MISSION_GATE:
@@ -227,6 +236,7 @@ int main(int argc, char** argv)
             }
         #endif
 
+        // Handle Keys
         int key = cvWaitKey(DELAY);
         if ( (char) key == 27) { // Esc to exit
             break;
