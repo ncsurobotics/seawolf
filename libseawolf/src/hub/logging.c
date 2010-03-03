@@ -19,7 +19,7 @@ void Hub_Logging_init(void) {
     char* path = Hub_Config_getOption("log_file");
 
     if(path) {
-        log_file_fd = open(path, O_RDWR|O_SYNC|O_CREAT|O_APPEND, 0);
+        log_file_fd = open(path, O_RDWR|O_SYNC|O_CREAT|O_APPEND, S_IRUSR|S_IWUSR);
         if(log_file_fd == -1) {
             Hub_Logging_log(ERROR, __Util_format("Could not open log file: %s", strerror(errno)));
             log_file_fd = STDOUT_FILENO;
