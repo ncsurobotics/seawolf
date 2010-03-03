@@ -21,10 +21,10 @@ Stack* Stack_new(void) {
 }
 
 void Stack_push(Stack* stack, void* v) {
-    // Insert record
+    /* Insert record */
     stack->base[stack->index++] = v;
 
-    // Possibly resize
+    /* Possibly resize */
     if(stack->index % _STACK_BLOCK_SIZE == 0) {
         stack->base = (void**) realloc(stack->base, sizeof(void*) * (stack->index + _STACK_BLOCK_SIZE));
     }
@@ -35,10 +35,10 @@ void* Stack_pop(Stack* stack) {
         return NULL;
     }
 
-    // Obtain record
+    /* Obtain record */
     void* v = stack->base[--stack->index];
 
-    // Possibly resize
+    /* Possibly resize */
     if((stack->index + 1) % _STACK_BLOCK_SIZE == 0) {
         stack->base = (void**) realloc(stack->base, sizeof(void*) * (stack->index + 1));
     }
