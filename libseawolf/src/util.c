@@ -1,16 +1,11 @@
 
-#define __SEAWOLF_UTIL__
 #include "seawolf.h"
 
 #include <pthread.h>
 #include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
 #include <ctype.h>
+#include <time.h>
 #include <sys/time.h>
-
-#define FORMAT_BUFF_SIZE 1024
 
 struct Buffer {
     pthread_t id;
