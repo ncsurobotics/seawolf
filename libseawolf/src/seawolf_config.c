@@ -1,13 +1,16 @@
+/**
+ * \file
+ * \brief Configuration file loading
+ */
 
 #include "seawolf.h"
 
-#include <stdio.h>
-#include <stdbool.h>
 #include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
 
 #define MAX_LINE 512
+
+static char* strlower(char* s);
+static bool trueValue(const char* v);
 
 static char* strlower(char* s) {
     for(int i = 0; s[i] != '\0'; i++) {

@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief Queue
+ */
 
 #include "seawolf.h"
 

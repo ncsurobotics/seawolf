@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief Task scheduling and backgrounding
+ */
 
 #include "seawolf.h"
 
@@ -8,21 +12,58 @@
 #define TASK_RETRY   1
 #define TASK_GIVEUP  2
 
-/*
- * Function call watchdog 
- */ 
-
+/**
+ * Arguments passed to Task_callWrapper()
+ */
 struct WrapperArgs {
+    /**
+     * The function to be called
+     */
     int (*func)(void);
+    
+    /**
+     * Return value of func() stored here
+     */
     int return_value;
-    bool free; /* Free this structure at the end of Task_callWrapper */
+    
+    
+    /**
+     * Should Task_callWrapper free this structure
+     */
+    bool free;
 };
 
+/**
+ * Arguments passed to Task_watcher()
+ */
 struct WatcherArgs {
+    /**
+     * Thread to watch
+     */
     pthread_t* dependant;
+
+    /**
+     * How long to wait
+     */
     double timeout;
 };
 
+static void* Task_callWrapper(void* _args);
+static void* Task_watcher(void* _args);
+static TaskQueueNode* TaskQueueNode_new(Task* task);
+static void TaskQueueNode_destroy(TaskQueueNode* node);
+static void TaskQueue_insertAfter(TaskQueue* tq, TaskQueueNode* base, TaskQueueNode* node);
+static TaskQueueNode* TaskQueue_remove(TaskQueue* tq, TaskQueueNode* node);
+
+/**
+ * \brief Call wrapper for task calls
+ *
+ * Given a WrapperArgs, call WrapperArgs->func, store the return value in
+ * WrapperArgs->return_value and possible free the WrapperArgs
+ *
+ * \param _args A WrapperArgs pointer cast to void*
+ * \return NULL
+ */
 static void* Task_callWrapper(void* _args) {
     struct WrapperArgs* args = (struct WrapperArgs*) _args;
     args->return_value = args->func();
@@ -33,6 +74,16 @@ static void* Task_callWrapper(void* _args) {
     return NULL;
 }
 
+/**
+ * \brief Call wrapper for watchdog
+ *
+ * _args is cast to a WatcherArgs pointer (args). This function sleeps, and if
+ * it is not canceled before returning from the sleep call, cancels the thread
+ * given by args->dependant
+ *
+ * \param _args A WatcherArgs pointer cast to void*
+ * \return NULL
+ */
 static void* Task_watcher(void* _args) {
     struct WatcherArgs* args = (struct WatcherArgs*)_args;
     Util_usleep(args->timeout);
@@ -121,6 +172,16 @@ void Task_wait(Task_Handle task) {
     pthread_join(task, NULL);
 }
 
+/**
+ * \brief Create a new task
+ *
+ * Create a new task associated with the given function that can be added to a
+ * TaskQueue
+ *
+ * \param func A function to associated with task with. When the task is called,
+ * this function will be called
+ * \return A new Task object
+ */
 Task* Task_new(int (*func)(void)) {
     Task* task = malloc(sizeof(Task));
     if(task == NULL) {
@@ -137,10 +198,25 @@ Task* Task_new(int (*func)(void)) {
     return task;
 }
 
+/**
+ * \brief Destroy a Task object
+ *
+ * Free the memory allocated to the given Task object
+ *
+ * \param task The Task object to destroy
+ */
 void Task_destroy(Task* task) {
     free(task);
 }
 
+/**
+ * \brief Run a Task
+ *
+ * Run the function associated with the given Task object
+ *
+ * \param task The task to run
+ * \return Success status of the task
+ */
 int Task_run(Task* task) {
     task->running = true;
     task->runs++;
@@ -163,6 +239,13 @@ int Task_run(Task* task) {
     }
 }
 
+/**
+ * \brief Create a new TaskQueue
+ *
+ * Create a new TaskQueue object
+ *
+ * \return A new TaskQueue
+ */
 TaskQueue* TaskQueue_new(void) {
     TaskQueue* tq = malloc(sizeof(TaskQueue));
     if(tq == NULL) {
@@ -176,6 +259,13 @@ TaskQueue* TaskQueue_new(void) {
     return tq;
 }
 
+/**
+ * \brief Destroy a TaskQueue
+ *
+ * Destroy the given TaskQueue
+ *
+ * \param tq The TaskQueue to free
+ */
 void TaskQueue_destroy(TaskQueue* tq) {
     free(tq);
 }
@@ -243,11 +333,27 @@ static TaskQueueNode* TaskQueue_remove(TaskQueue* tq, TaskQueueNode* node) {
     return node;
 }
 
+/**
+ * \brief Append a task to a TaskQueue
+ *
+ * Append the given Task to the TaskQueue
+ *
+ * \param tq The TaskQueue to append to
+ * \param task The Task to append
+ */
 void TaskQueue_addTask(TaskQueue* tq, Task* task) {
     /* Insert new task at the end of the queue */
     TaskQueue_insertAfter(tq, tq->last, TaskQueueNode_new(task));
 }
 
+/**
+ * \brief Run a TaskQueue
+ *
+ * Run a TaskQueue. This involves running all Task sequentially and requeueing
+ * failed tasks if TASK_RETRY is set until the TaskQueue is emptied.
+ *
+ * \param tq The TaskQueue to run
+ */
 void TaskQueue_run(TaskQueue* tq) {
     TaskQueueNode* node;
     int return_value;

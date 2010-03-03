@@ -1,15 +1,26 @@
+/**
+ * \file
+ */
 
 #ifndef __SEAWOLF_STACK_INCLUDE_H
 #define __SEAWOLF_STACK_INCLUDE_H
 
-#define _STACK_BLOCK_SIZE 16
-
-struct Stack_s {
+/**
+ * Stack
+ */
+typedef struct {
+    /**
+     * Base data address
+     * \private
+     */
     void** base;
-    int index;
-};
 
-typedef struct Stack_s Stack;
+    /**
+     * Top of stack
+     * \private
+     */
+    int index;
+} Stack;
 
 Stack* Stack_new(void);
 void Stack_push(Stack* stack, void* v);

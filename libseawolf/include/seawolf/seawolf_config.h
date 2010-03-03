@@ -1,3 +1,6 @@
+/**
+ * \file
+ */
 
 #ifndef __SEAWOLF_SEAWOLFCONFIG_INCLUDE_H
 #define __SEAWOLF_SEAWOLFCONFIG_INCLUDE_H

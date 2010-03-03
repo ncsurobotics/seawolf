@@ -1,10 +1,11 @@
+/**
+ * \file
+ * \brief Core functions
+ */
 
 #include "seawolf.h"
 
 #include <signal.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
 
 static char app_name[256];
 static void Seawolf_catchSignal(int sig);

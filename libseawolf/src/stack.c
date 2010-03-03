@@ -1,7 +1,11 @@
+/**
+ * \file
+ * \brief Stack
+ */
 
 #include "seawolf.h"
 
-#include <stdlib.h>
+#define STACK_BLOCK_SIZE 16
 
 /**
  * \defgroup Stack Stack
@@ -25,7 +29,7 @@ Stack* Stack_new(void) {
         return NULL;
     }
     
-    stack->base = (void**) malloc(sizeof(void*) * _STACK_BLOCK_SIZE);
+    stack->base = (void**) malloc(sizeof(void*) * STACK_BLOCK_SIZE);
     if(stack->base == NULL) {
         free(stack);
         return NULL;
@@ -48,8 +52,8 @@ void Stack_push(Stack* stack, void* v) {
     stack->base[stack->index++] = v;
 
     /* Possibly resize */
-    if(stack->index % _STACK_BLOCK_SIZE == 0) {
-        stack->base = (void**) realloc(stack->base, sizeof(void*) * (stack->index + _STACK_BLOCK_SIZE));
+    if(stack->index % STACK_BLOCK_SIZE == 0) {
+        stack->base = (void**) realloc(stack->base, sizeof(void*) * (stack->index + STACK_BLOCK_SIZE));
     }
 }
 
@@ -70,7 +74,7 @@ void* Stack_pop(Stack* stack) {
     void* v = stack->base[--stack->index];
 
     /* Possibly resize */
-    if((stack->index + 1) % _STACK_BLOCK_SIZE == 0) {
+    if((stack->index + 1) % STACK_BLOCK_SIZE == 0) {
         stack->base = (void**) realloc(stack->base, sizeof(void*) * (stack->index + 1));
     }
 

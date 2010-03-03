@@ -1,16 +1,32 @@
+/**
+ * \file
+ */
  
 #ifndef __SEAWOLF_LIST_INCLUDE_H
 #define __SEAWOLF_LIST_INCLUDE_H
 
-#define _LIST_BLOCK_SIZE 16
-
-struct List_s {
+/**
+ * List
+ */
+typedef struct {
+    /**
+     * List space base address
+     * \private
+     */
     void** base;
-    int items;
-    int space;
-};
 
-typedef struct List_s List;
+    /**
+     * Number of items
+     * \private
+     */
+    int items;
+
+    /**
+     * Ammount of space
+     * \private
+     */
+    int space;
+} List;
 
 List* List_new(void);
 void List_insert(List* stack, void* v, int n);

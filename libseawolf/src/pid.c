@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief PID controller
+ */
 
 #include "seawolf.h"
 

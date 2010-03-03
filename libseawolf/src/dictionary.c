@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief Dictionary/hash map
+ */
 
 #include "seawolf.h"
 
@@ -500,7 +504,6 @@ static Dictionary_Node* Dictionary_Node_new(Dictionary_NodeType nodetype) {
     
     dn->nodetype = nodetype;
     dn->active_branches = List_new();
-    dn->t = 5;
 
     for(int i = 0; i < _DICTIONARY_NODE_SIZE; i++) {
         dn->branches[i] = NULL;

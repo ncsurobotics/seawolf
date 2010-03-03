@@ -1,10 +1,9 @@
+/**
+ * \file
+ * \brief Message logging
+ */
 
 #include "seawolf.h"
-
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 /* Minimum log level and replicate to stdio */
 static bool initialized = false;

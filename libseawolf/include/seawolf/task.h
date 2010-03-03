@@ -1,3 +1,6 @@
+/**
+ * \file
+ */
 
 #ifndef __SEAWOLF_TASK_INCLUDE_H
 #define __SEAWOLF_TASK_INCLUDE_H
@@ -5,33 +8,104 @@
 #include <stdbool.h>
 #include <pthread.h>
 
+/**
+ * Allow the function to run to completion (no watchdog)
+ */
 #define NO_TIMEOUT (-1.0)
+
+/**
+ * Returned in the case of a watchdog timeout
+ */
 #define WATCHDOG_TIMEOUT 255
 
-struct Task_s {
+/**
+ * Task
+ */
+typedef struct {
+    /**
+     * Function to call
+     * \private
+     */
     int (*func)(void);
+
+    /**
+     * Function watchdog timeout
+     */
     double timeout;
+
+    /**
+     * Retry function in case of failure
+     */
     bool retry;
+
+    /**
+     * Number of times run
+     * \private
+     */
     int runs;
+
+    /**
+     * Currently running
+     * \private
+     */
     bool running;
+
+    /**
+     * Return value of the function called
+     */
     int return_value;
-};
+} Task;
 
-struct TaskQueueNode_s {
-    struct Task_s* task;
+/**
+ * TaskQueueNode
+ * \private
+ */
+typedef struct TaskQueueNode_s {
+    /**
+     * Task for this node
+     * \private
+     */
+    Task* task;
+
+    /**
+     * Next node
+     * \private
+     */
     struct TaskQueueNode_s* next;
+
+    /**
+     * Previous node
+     * \private
+     */
     struct TaskQueueNode_s* prev;
-};
+} TaskQueueNode;
 
-struct TaskQueue_s {
-    struct TaskQueueNode_s* first;
-    struct TaskQueueNode_s* last;
+/**
+ * TaskQueue
+ */
+typedef struct {
+    /**
+     * Head
+     * \private
+     */
+    TaskQueueNode* first;
+
+    /**
+     * Tail
+     * \private
+     */
+    TaskQueueNode* last;
+    
+    /**
+     * Task count
+     * \private
+     */
     int count;
-};
+} TaskQueue;
 
-typedef struct Task_s Task;
-typedef struct TaskQueue_s TaskQueue;
-typedef struct TaskQueueNode_s TaskQueueNode;
+/**
+ * Task handle used to refer to background tasks
+ */
 typedef pthread_t Task_Handle;
 
 Task* Task_new(int (*func)(void));

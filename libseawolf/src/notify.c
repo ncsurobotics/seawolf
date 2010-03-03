@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief Notification support
+ */
 
 #include "seawolf.h"
 
@@ -14,6 +18,10 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 
+/**
+ * Amount by which to increment the filter space
+ * \private
+ */
 #define FILTER_INCREMENT 5
 
 /* Filter lists */

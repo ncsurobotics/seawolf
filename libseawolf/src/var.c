@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief Shared variable support
+ */
 
 #include "seawolf.h"
 

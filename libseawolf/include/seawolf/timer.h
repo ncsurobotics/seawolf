@@ -1,16 +1,30 @@
+/**
+ * \file
+ */
 
 #ifndef __SEAWOLF_TIMER_INCLUDE_H
 #define __SEAWOLF_TIMER_INCLUDE_H
 
+/** \private */
 #define _POSIX_C_SOURCE 199309L
 #include <time.h>
 
-struct Timer_s {
+/**
+ * Timer
+ */
+typedef struct {
+    /**
+     * Starting time
+     * \private
+     */
     struct timespec base;
-    struct timespec last;
-};
 
-typedef struct Timer_s Timer;
+    /**
+     * Time at last delta
+     * \private
+     */
+    struct timespec last;
+} Timer;
 
 Timer* Timer_new(void);
 double Timer_getDelta(Timer* tm);

@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief Serial port access
+ */
 
 #include "seawolf.h"
 

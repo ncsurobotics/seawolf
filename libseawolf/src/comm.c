@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief Low-level communication
+ */
 
 #include "seawolf.h"
 

@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief Arduion communication
+ */
 
 #include "seawolf.h"
 
@@ -8,8 +12,22 @@
 #include <termios.h>
 #include <unistd.h>
 
+/**
+ * Starts a mesage
+ * \private
+ */
 #define START_FRAME  '{'
+
+/**
+ * Splits a message
+ * \private
+ */
 #define TYPE_DIVIDER '|'
+
+/**
+ * Ends a mesage
+ * \private
+ */
 #define END_FRAME    '}'
 
 /**

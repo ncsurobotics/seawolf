@@ -1,3 +1,6 @@
+/**
+ * \file
+ */
  
 #ifndef __SEAWOLF_COMM_INCLUDE_H
 #define __SEAWOLF_COMM_INCLUDE_H
@@ -8,7 +11,7 @@
  * The unpacked representation of a message. A message is associated with a
  * number of components consisting of ASCII text and request ID.
  */
-struct Comm_Message_s {
+typedef struct {
     /**
      * A request ID for the message. A hub always returns responses to requests
      * using the same ID as given in the request. In this way responses can be
@@ -26,7 +29,7 @@ struct Comm_Message_s {
      * The number of components in the message
      */
     unsigned short count;
-};
+} Comm_Message;
 
 /**
  * \brief The packed representation of a message
@@ -47,7 +50,7 @@ struct Comm_Message_s {
  * The length, request ID, and component count constitute a 6 byte binary
  * header, and the rest of the message is null separated ASCII strings
  */
-struct Comm_PackedMessage_s {
+typedef struct {
     /**
      * Total length of the message including the 6 byte prefix
      */
@@ -57,12 +60,12 @@ struct Comm_PackedMessage_s {
      * The packed message data
      */
     char* data;
-};
+} Comm_PackedMessage;
 
-typedef struct Comm_Message_s Comm_Message;
-typedef struct Comm_PackedMessage_s Comm_PackedMessage;
-
-/* length, request id, component count */
+/**
+ * Length of the binary header in all packed messages
+ * \private
+ */
 #define COMM_MESSAGE_PREFIX_LEN (sizeof(uint16_t) * 3)
 
 void Comm_init(void);

@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief Timer
+ */
 
 #include "seawolf.h"
 

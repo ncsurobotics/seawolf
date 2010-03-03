@@ -1,3 +1,6 @@
+/**
+ * \file
+ */
 
 #ifndef __SEAWOLF_LOGGING_INCLUDE_H
 #define __SEAWOLF_LOGGING_INCLUDE_H
@@ -9,11 +12,34 @@
  * \{
  */
 
+/**
+ * Debug log-level
+ */
 #define DEBUG     0x00
+
+/**
+ * Info log-level
+ */
 #define INFO      0x01
+
+/**
+ * Normal log-level
+ */
 #define NORMAL    0x02
+
+/**
+ * Warning log-level
+ */
 #define WARNING   0x03
+
+/**
+ * Error log-level
+ */
 #define ERROR     0x04
+
+/**
+ * Critical log-level
+ */
 #define CRITICAL  0x05
 
 /** \} */

@@ -1,9 +1,15 @@
+/**
+ * \file
+ */
 
 #ifndef __SEAWOLF_SERIAL_INCLUDE_H
 #define __SEAWOLF_SERIAL_INCLUDE_H
 
 #include <stdbool.h>
 
+/**
+ * Serial port handler
+ */
 typedef int SerialPort;
 
 /* Initialization/shutdown */

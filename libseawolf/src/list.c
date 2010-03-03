@@ -1,8 +1,15 @@
+/**
+ * \file
+ * \brief List
+ */
 
 #include "seawolf.h"
 
-#include <assert.h>
-#include <stdlib.h>
+/**
+ * Amount by which to grow/shrink the list space
+ * \private
+ */
+#define LIST_BLOCK_SIZE 16
 
 /**
  * \defgroup List List
@@ -25,13 +32,13 @@ List* List_new(void) {
         return NULL;
     }
     
-    list->base = (void**) malloc(sizeof(void*) * _LIST_BLOCK_SIZE);
+    list->base = (void**) malloc(sizeof(void*) * LIST_BLOCK_SIZE);
     if(list->base == NULL) {
         free(list);
         return NULL;
     }
 
-    list->space = _LIST_BLOCK_SIZE;
+    list->space = LIST_BLOCK_SIZE;
     list->items = 0;
     return list;
 }
@@ -48,7 +55,7 @@ List* List_new(void) {
 void List_insert(List* list, void* v, int n) {
     /* Allocation is full so we must expand it */
     if(list->items == list->space) {
-        list->space += _LIST_BLOCK_SIZE;
+        list->space += LIST_BLOCK_SIZE;
         list->base = realloc(list->base, sizeof(void*) * list->space);
     }
 
@@ -131,8 +138,8 @@ void* List_remove(List* list, int n) {
     }
 
     /* Shrink the allocation */
-    if(list->space - list->items > _LIST_BLOCK_SIZE) {
-        list->space -= _LIST_BLOCK_SIZE;
+    if(list->space - list->items > LIST_BLOCK_SIZE) {
+        list->space -= LIST_BLOCK_SIZE;
         list->base = realloc(list->base, sizeof(void*) * list->space);
     }
 

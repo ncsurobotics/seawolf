@@ -1,8 +1,19 @@
+/**
+ * \file
+ * \brief Top level libseawolf include
+ */
 
 #ifndef __SEAWOLF_ROOT_INCLUDE_H
 #define __SEAWOLF_ROOT_INCLUDE_H
 
+/**
+ * Make available POSIX functions
+ */
 #define _POSIX_C_SOURCE 199309L
+
+/**
+ * Make more functions available
+ */
 #define _XOPEN_SOURCE 500
 
 /* Make sure some standard includes are available */
@@ -34,6 +45,7 @@
 #include "seawolf/queue.h"
 #include "seawolf/dictionary.h"
 
+#if 0
 
 /* Definitions */
 #define SETPOINT_SOURCE_VISION 1
@@ -58,6 +70,8 @@
 
 /* Max thrust */
 #define THRUSTER_MAX 63
+
+#endif
 
 /* Initialize and close */
 void Seawolf_init(const char* name);

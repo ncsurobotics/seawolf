@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief Misc utilities
+ */
 
 #include "seawolf.h"
 
