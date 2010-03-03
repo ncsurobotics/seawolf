@@ -7,5 +7,6 @@ syntax: glob
 
 syntax: regexp
 ^libseawolf/hub$
+^libseawolf/doc/
 ^serial/bin/
 ^applications/bin/
