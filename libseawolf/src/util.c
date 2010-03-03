@@ -11,16 +11,36 @@
 #include <time.h>
 #include <sys/time.h>
 
+/**
+ * A format buffer for a particular thread
+ */
 struct Buffer {
+    /**
+     * Thread ID of the owner of this buffer
+     */
     pthread_t id;
+
+    /**
+     * The format buffer
+     */
     char* buff;
+
+    /**
+     * The format buffer size
+     */
     size_t size;
 };
 
+/** Format buffers for client */
 static struct Buffer* format_buffers = NULL;
+
+/** Number of format buffers for client */
 static int buffer_count = 0;
 
+/** Format buffers for internal libseawolf use */
 static struct Buffer* format_buffers_internal = NULL;
+
+/** Number of format buffers for libseawolf */
 static int buffer_count_internal = 0;
 
 /**

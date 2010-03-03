@@ -5,12 +5,16 @@
 
 #include "seawolf.h"
 
-/* Minimum log level and replicate to stdio */
+/** True if the logging component has be initialized */
 static bool initialized = false;
+
+/** Minimum level at which to log messages */
 static short min_log_level = NORMAL;
+
+/** Should log messages be duplicated to standard output */
 static bool log_stdio = true;
 
-/* Log string names */
+/** String names for log levels */
 static char* level_names[] = {"DEBUG",
                               "INFO",
                               "NORMAL",

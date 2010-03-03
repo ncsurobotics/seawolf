@@ -9,9 +9,17 @@
 #include <unistd.h>
 #include <termios.h>
 
+/** True if the serial component has been initialized */
 static bool initialized = false;
+
+/** List of open devices */
 static SerialPort* devices = NULL;
+
+/** Number of open devices */
 static int open_devices = 0;
+
+/** A copy of the default parameters on a port so that they may be returned on
+    exit */
 static struct termios* default_conf = NULL;
 
 /**
@@ -30,7 +38,14 @@ void Serial_init(void) {
 }
 
 /**
- * Set all standard options on the serial port 
+ * \brief Set all standard options on the serial port 
+ *
+ * Called by Serial_open* to initialize a serial port and set all default
+ * options on it. The port is placed into a mode equivalent to 8 data bits, one
+ * stop bit, no parity bits, and 9600 baud
+ *
+ * \param sp Handler for the serial port to set defaults on
+ * \return 0 if successful, -1 in case of error
  */
 static int Serial_setParams(SerialPort sp) {
     struct termios term_conf;

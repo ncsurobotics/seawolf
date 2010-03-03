@@ -5,11 +5,6 @@
 
 #include "seawolf.h"
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-
 static void Dictionary_destroyHelper(Dictionary_Node* dn);
 static List* Dictionary_getBucket(Dictionary* dict, hash_t hash, bool create);
 static int Dictionary_findInBucket(List* bucket, const void* k, size_t k_size);
@@ -71,32 +66,20 @@ Dictionary* Dictionary_new(void) {
     return dict;
 }
 
-static void Dictionary_destroyHelper(Dictionary_Node* dn) {
-    Dictionary_Node* dn_next = NULL;
-    int active_branch_count = 0;
-
-    List* bucket = NULL;
-    int bucket_size = 0;
-
-    active_branch_count = List_getSize(dn->active_branches);
-
-    for(int i = 0; i < active_branch_count; i++) {
-        if(dn->nodetype == INTERIOR) {
-            dn_next = List_get(dn->active_branches, i);
-            Dictionary_destroyHelper(dn_next);
-        } else {
-            bucket = List_get(dn->active_branches, i);
-            bucket_size = List_getSize(bucket);
-            for(int j = 0; j < bucket_size; j++) {
-                Dictionary_Item_destroy(List_get(bucket, j));
-            }
-            List_destroy(bucket);
-        }
-    }
-
-    Dictionary_Node_destroy(dn);
-}
-
+/**
+ * \brief Retrieve the bucket for a hash
+ *
+ * Each hash code resolves to a bucket at the edge of the tree. This function
+ * finds, possibly creates, and returns a reference to this bucket
+ *
+ * \param dict The dictionary to search in
+ * \param has The hash to use for the lookup
+ * \param create If true, the bucket will be created if it doesn't exist as well
+ * as any intermediate nodes needed. If false, NULL will be returned if the
+ * bucket is not found
+ * \return The bucket, or NULL if \a create if false and the bucket could not be
+ * found
+ */
 static List* Dictionary_getBucket(Dictionary* dict, hash_t hash, bool create) {
     Dictionary_Node* dn = dict->root;
     hash_t hash_part;
@@ -197,6 +180,17 @@ void Dictionary_set(Dictionary* dict, const char* k, void* v) {
     Dictionary_setData(dict, k, strlen(k) + 1, v);
 }
 
+/**
+ * \brief Locate a key in a bucket
+ *
+ * Each hash code maps to a particular bucket in the tree. This function locates
+ * a actual key within this bucket
+ *
+ * \param list The bucket to search
+ * \param k The key to search for
+ * \param k_size The size/length of the key
+ * \return The index of the item in the bucket, or -1 if the item is not found
+ */
 static int Dictionary_findInBucket(List* bucket, const void* k, size_t k_size) {
     Dictionary_Item* di;
     size_t bucket_size;
@@ -214,6 +208,17 @@ static int Dictionary_findInBucket(List* bucket, const void* k, size_t k_size) {
     return -1;
 }
 
+/**
+ * \brief Retrieve an item object from a dictionary
+ *
+ * Get the item associated with the given key
+ *
+ * \param dict The dictionary to retrieve from
+ * \param k The key to locate
+ * \param k_size The size/length of the key
+ * \return The Dictionary_Item associated with the key, or NULL if the key was
+ * not found
+ */
 static Dictionary_Item* Dictionary_getItem(Dictionary* dict, const void* k, size_t k_size) {
     hash_t hash = Dictionary_hash(k, k_size);
     List* bucket;
@@ -432,6 +437,14 @@ int Dictionary_remove(Dictionary* dict, const char* k) {
     return Dictionary_removeData(dict, k, strlen(k) + 1);
 }
 
+/**
+ * \brief Helper for Dictionary_getKeys()
+ *
+ * Recrusively retrieve all keys from the dictionary
+ *
+ * \param dn The root dictionary node
+ * \return A list of the dictionary's keys
+ */
 static List* Dictionary_getKeysHelper(Dictionary_Node* dn) {
     Dictionary_Node* dn_temp;
     int active_branch_count = List_getSize(dn->active_branches);
@@ -475,6 +488,16 @@ List* Dictionary_getKeys(Dictionary* dict) {
     return Dictionary_getKeysHelper(dict->root);
 }
 
+/**
+ * \brief Create a new dictionary item
+ *
+ * Create a new dictionary item
+ *
+ * \param k The item key
+ * \param k_size The size/length of the item key
+ * \param v The value to store in the item
+ * \return A new item object
+ */
 static Dictionary_Item* Dictionary_Item_new(const void* k, size_t k_size, void* v) {
     Dictionary_Item* di = malloc(sizeof(Dictionary_Item));
 
@@ -491,11 +514,26 @@ static Dictionary_Item* Dictionary_Item_new(const void* k, size_t k_size, void* 
     return di;
 }
 
+/**
+ * \brief Destroy a dictionary item object
+ *
+ * Destroy a dictionary item object
+ *
+ * \param di The item to destroy
+ */
 static void Dictionary_Item_destroy(Dictionary_Item* di) {
     free(di->k);
     free(di);
 }
 
+/**
+ * \brief Create a new node
+ *
+ * Create a new node
+ *
+ * \param nodetype The type of the node
+ * \return A new node
+ */
 static Dictionary_Node* Dictionary_Node_new(Dictionary_NodeType nodetype) {
     Dictionary_Node* dn = malloc(sizeof(Dictionary_Node));
     if(dn == NULL) {
@@ -512,9 +550,49 @@ static Dictionary_Node* Dictionary_Node_new(Dictionary_NodeType nodetype) {
     return dn;
 }
 
+/**
+ * \brief Destroy a dictionary node
+ *
+ * Destroy a dictionary node
+ *
+ * \param dn The node to destroy
+ */
 static void Dictionary_Node_destroy(Dictionary_Node* dn) {
     List_destroy(dn->active_branches);
     free(dn);
+}
+
+/**
+ * \brief Helper for Dictionary_destroy()
+ *
+ * Recursively destroys the dictionary tree, freeing all memory allocated to it
+ *
+ * \param dn Root dictionary node
+ */
+static void Dictionary_destroyHelper(Dictionary_Node* dn) {
+    Dictionary_Node* dn_next = NULL;
+    int active_branch_count = 0;
+
+    List* bucket = NULL;
+    int bucket_size = 0;
+
+    active_branch_count = List_getSize(dn->active_branches);
+
+    for(int i = 0; i < active_branch_count; i++) {
+        if(dn->nodetype == INTERIOR) {
+            dn_next = List_get(dn->active_branches, i);
+            Dictionary_destroyHelper(dn_next);
+        } else {
+            bucket = List_get(dn->active_branches, i);
+            bucket_size = List_getSize(bucket);
+            for(int j = 0; j < bucket_size; j++) {
+                Dictionary_Item_destroy(List_get(bucket, j));
+            }
+            List_destroy(bucket);
+        }
+    }
+
+    Dictionary_Node_destroy(dn);
 }
 
 /**

@@ -38,18 +38,39 @@
  */
 #define MAX_REQUEST_ID ((uint32_t)0xffff)
 
+/** IP address of server to connect to */
 static char* comm_server = NULL;
+
+/** Port of server to connect to */
 static uint16_t comm_port = 31427;
+
+/** Password to authenticate using */
 static char* auth_password = NULL;
+
+/** The actual socket file descriptor */
 static int comm_socket;
 
+/** Task handle for thread that recieves incoming messages */
 static Task_Handle receive_thread;
+
+/** Current running state. Incoming message thread will terminate when this is
+    false */
 static bool running = false;
 
+/** Current size of the response set table */
 static size_t response_set_size = RESPONSE_SET_GROW;
+
+/** The response set table itself */
 static Comm_Message** response_set = NULL;
+
+/** Specifies whether a response is already pending for a given ID so as to not
+    reissue that ID before a response is returned */
 static bool* response_pending = NULL;
+
+/** Response set mutex lock */
 static pthread_mutex_t response_set_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/** New response available conditional */
 static pthread_cond_t new_response = PTHREAD_COND_INITIALIZER;
 
 static void Comm_authenticate(void);

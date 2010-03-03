@@ -283,6 +283,14 @@ void TaskQueue_destroy(TaskQueue* tq) {
     free(tq);
 }
 
+/**
+ * \brief Create a new TaskQueueNode
+ * 
+ * Create a new TaskQueueNode
+ *
+ * \param task The task to store into the TaskQueueNode
+ * \return A new TaskQueueNode
+ */
 static TaskQueueNode* TaskQueueNode_new(Task* task) {
     TaskQueueNode* node = malloc(sizeof(TaskQueueNode));
     if(node == NULL) {
@@ -293,10 +301,26 @@ static TaskQueueNode* TaskQueueNode_new(Task* task) {
     return node;
 }
 
+/**
+ * \brief Destoy a TaskQueueNode
+ * 
+ * Destoy a TaskQueueNode
+ *
+ * \param node The TaskQueueNode to destroy
+ */
 static void TaskQueueNode_destroy(TaskQueueNode* node) {
     free(node);
 }
 
+/**
+ * \brief Insert a TaskQueueNode
+ *
+ * Insert a TaskQueueNode into a TaskQueue
+ *
+ * \param tq The TaskQueue to insert into
+ * \param base The TaskQueueNode to insert after
+ * \param node The TaskQueueNode to insert
+ */
 static void TaskQueue_insertAfter(TaskQueue* tq, TaskQueueNode* base, TaskQueueNode* node) {
     if(tq->count == 0) {
         /* Insert into empty */
@@ -324,6 +348,15 @@ static void TaskQueue_insertAfter(TaskQueue* tq, TaskQueueNode* base, TaskQueueN
     tq->count++;
 }
 
+/**
+ * \brief Remove a TaskQueueNode
+ *
+ * Remove a TaskQueueNode from a TaskQueue
+ *
+ * \param tq TaskQueue to remove from
+ * \param node The TaskQueueNode to remove
+ * \return The node that was removed
+ */
 static TaskQueueNode* TaskQueue_remove(TaskQueue* tq, TaskQueueNode* node) {
     if(tq->count == 1) {
         /* Remove last element */

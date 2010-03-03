@@ -15,6 +15,14 @@
 static char* strlower(char* s);
 static bool trueValue(const char* v);
 
+/**
+ * \brief Convert a string to lower case
+ *
+ * Convert all the characters in a string to lower case. This is done in place
+ *
+ * \param s The string to lowercase
+ * \return \a s
+ */
 static char* strlower(char* s) {
     for(int i = 0; s[i] != '\0'; i++) {
         if(isupper(s[i])) {
@@ -24,6 +32,15 @@ static char* strlower(char* s) {
     return s;
 }
 
+/**
+ * \brief Check a string for a true value
+ *
+ * Determines if a string should map to a true value. Strings which are
+ * considered true are "true", "t", "1", "yes", and "y"
+ *
+ * \param v The string to check
+ * \return The truth value of the string
+ */
 static bool trueValue(const char* v) {
     char* copy = strlower(strdup(v));
     bool r = false;

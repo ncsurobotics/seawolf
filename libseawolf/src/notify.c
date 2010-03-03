@@ -5,30 +5,25 @@
 
 #include "seawolf.h"
 
-#include <errno.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pthread.h>
-
-/* Networking includes */
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-
 /**
  * Amount by which to increment the filter space
  * \private
  */
 #define FILTER_INCREMENT 5
 
-/* Filter lists */
+/** True if the notify component has been initialized */
 static bool initialized = false;
+
+/** List of fitlers */
 static char** filters = NULL;
+
+/** Number of registered filters */
 static int filters_n = 0;
+
+/** Queue of buffered, incoming messages */
 static Queue* notification_queue;
+
+/** Default policy for messages when no filters are in place */
 static bool default_policy = NOTIFY_POLICY_DROP;
 
 static bool Notify_check_filter(char* msg);
@@ -140,7 +135,12 @@ void Notify_send(char* action, char* param) {
 }
 
 /**
+ * \brief Filter a message
+ *
  * Check a message to determine if it passes through the stored filters 
+ *
+ * \param msg The message to check
+ * \return True if the message matches a filter, false otherwise
  */
 static bool Notify_check_filter(char* msg) {
     bool match;

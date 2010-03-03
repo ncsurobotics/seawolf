@@ -15,6 +15,7 @@
  * \defgroup List List
  * \ingroup DataStructures
  * \brief A simple list implementation which automatically grows
+ * \sa http://en.wikipedia.org/wiki/List_%28data_structure%29
  * \{
  */
 

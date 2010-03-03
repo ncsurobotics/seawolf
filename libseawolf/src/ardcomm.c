@@ -6,9 +6,6 @@
 #include "seawolf.h"
 
 #include <ctype.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <termios.h>
 #include <unistd.h>
 

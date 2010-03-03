@@ -7,7 +7,9 @@
 
 #include <signal.h>
 
+/** Registered application name */
 static char app_name[256];
+
 static void Seawolf_catchSignal(int sig);
 
 /**
@@ -60,7 +62,6 @@ void Seawolf_init(const char* name) {
     Comm_init();
     Logging_init();
     Notify_init();
-    Var_init();
     Serial_init();
 
     /* Log message announcing application launch */
@@ -68,7 +69,11 @@ void Seawolf_init(const char* name) {
 }
 
 /**
+ * \brief Catch spurious signals
+ *
  * Catches signals and shuts down libseawolf properly before exiting
+ *
+ * \param sig Signal that was caught
  */
 static void Seawolf_catchSignal(int sig) {
     /* Caught signal, exit and properly shut down */
@@ -94,7 +99,6 @@ void Seawolf_close(void) {
     Logging_log(INFO, "Closing");
     
     Serial_close();
-    Var_close();
     Logging_close();
     Comm_close();
     Notify_close();

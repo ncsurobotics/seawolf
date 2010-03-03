@@ -11,6 +11,7 @@
  * \defgroup Queue Queue
  * \ingroup DataStructures
  * \brief A thread safe queue implemenation
+ * \sa http://en.wikipedia.org/wiki/Queue_%28data_structure%29
  * \{
  */
 
