@@ -13,7 +13,22 @@
 #define END_FRAME    '}'
 
 /**
+ * \defgroup Ard Arduino
+ * \ingroup Hardware
+ * \brief Provides standardized message passing to Arduino microcontrollers
+ * \{
+ */
+
+/**
+ * \brief Get a raw message
+ * \deprecated Raw serial access should be used instead to keep speed acceptible
+ *
  * Get a raw message from an Arduino
+ *
+ * \param sp The serial port to read from
+ * \param[out] msgtype Buffer to store the message type into
+ * \param[out] buffer Buffer to store the message data into
+ * \return Success status, -1 is failure, 1 is success
  */
 int ArdComm_getMessage(SerialPort sp, char* msgtype, char* buffer) {
     /* Clear lengths */
@@ -54,7 +69,14 @@ int ArdComm_getMessage(SerialPort sp, char* msgtype, char* buffer) {
 }
 
 /**
+ * \brief Send a message
+ * \deprecated Raw serial access should be used instead to keep speed acceptible
+ *
  * Send a raw message to an Arduino
+ *
+ * \param sp The serial port to send to
+ * \param msgtype The message type
+ * \param buffer The message data
  */
 void ArdComm_sendMessage(SerialPort sp, char* msgtype, char* buffer) {
     /* Send message in standard format */
@@ -69,7 +91,11 @@ void ArdComm_sendMessage(SerialPort sp, char* msgtype, char* buffer) {
 }
 
 /**
- * Perform a handshake with an Arduino
+ * \brief Perform a handshake routine
+ *
+ * Establish a connection with an Arduino through a handshake process
+ *
+ * \param sp Serial port arduino is communicted through
  */
 void ArdComm_handshake(SerialPort sp) {
     /* Send established connection message */
@@ -80,7 +106,13 @@ void ArdComm_handshake(SerialPort sp) {
 }
 
 /**
- * Get the identifier from an Arduino
+ * \brief Get the Arduino ID
+ *
+ * Get the identifier from an Arduino before handshaking is performed
+ *
+ * \param sp Serial port to communicate on
+ * \param[out] id Buffer to store identifier into
+ * \return Success status; -1 if failure, 1 is success
  */
 int ArdComm_getId(SerialPort sp, char* id) {
     char type[16] = {[0] = '\0'};
@@ -100,3 +132,4 @@ int ArdComm_getId(SerialPort sp, char* id) {
     return 0;
 }
 
+/* \} */

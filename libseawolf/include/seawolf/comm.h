@@ -2,31 +2,60 @@
 #ifndef __SEAWOLF_COMM_INCLUDE_H
 #define __SEAWOLF_COMM_INCLUDE_H
 
-/* A message has a request id (or zero for no request expected) and a number of
-   components ASCII encoded */
+/**
+ * \brief An unpacked message
+ *
+ * The unpacked representation of a message. A message is associated with a
+ * number of components consisting of ASCII text and request ID.
+ */
 struct Comm_Message_s {
+    /**
+     * A request ID for the message. A hub always returns responses to requests
+     * using the same ID as given in the request. In this way responses can be
+     * paired with requests. The ID 0 is reserved for messages not expecting
+     * responses 
+     */
     uint16_t request_id;
+
+    /**
+     * The components of the message. Each component is an ASCII string
+     */
     char** components;
+
+    /**
+     * The number of components in the message
+     */
     unsigned short count;
 };
 
-/* The packed message format is quite simple,
-
-   length           [0:15]
-   request id       [16:31]
-   component count  [32:47]
-   data             [48:48 + length]
-     component 1 \0
-     component 2 \0
-     ...
-
-   Binary prefix and the data is assumed to be ASCII encoded data with
-   components separated by null characters
-*/
+/**
+ * \brief The packed representation of a message
+ *
+ * A messaged packed into a byte stream ready to be sent to the hub
+ *
+ * The packed message format is quite simple,<br>
+ * <pre>
+ *  length           [0:15]
+ *  request id       [16:31]
+ *  component count  [32:47]
+ *  data             [48:48 + length]
+ *    component 1 \\0
+ *    component 2 \\0
+ *    ...
+ * </pre>
+ *
+ * The length, request ID, and component count constitute a 6 byte binary
+ * header, and the rest of the message is null separated ASCII strings
+ */
 struct Comm_PackedMessage_s {
-    uint16_t length; /* Total length, including prefix. This differs from
-                        the length embedded in the packed message which
-                        only includes the data length */
+    /**
+     * Total length of the message including the 6 byte prefix
+     */
+    uint16_t length;
+
+    /**
+     * The packed message data
+     */
     char* data;
 };
 

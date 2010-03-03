@@ -26,7 +26,15 @@ static bool default_policy = NOTIFY_POLICY_DROP;
 static bool Notify_check_filter(char* msg);
 
 /**
- * Initialize notify component
+ * \defgroup Notify Notify routines
+ * \ingroup Communications
+ * \brief Notify related routines
+ * \{
+ */
+
+/**
+ * \brief Initialize notify component
+ * \private
  */
 void Notify_init() {
     /* Initialize filter list */
@@ -36,40 +44,24 @@ void Notify_init() {
 } 
 
 /**
- * Close initialize component
- */
-void Notify_close() {
-    if(!initialized) {
-        return;
-    }
-
-    char* msg;
-
-    /* Free each filter string */
-    for(int i = 0; i < filters_n; i++) {
-        free(filters[i]);
-    }
-
-    /* Free the filters arrays */
-    free(filters);
-
-    /* Free remaining messages */
-    while((msg = Queue_pop(notification_queue, false)) != NULL) {
-        free(msg);
-    }
-    Queue_destroy(notification_queue);
-}
-
-/**
+ * \brief Set accept policy
+ *
  * Set policy for accepting messages when not filters exist. By default, all
  * messages are dropped.
+ *
+ * \param policy Accept by default if true, deny by default if false
  */
 void Notify_setPolicy(bool policy) {
     default_policy = policy;
 }
 
 /**
- * New message into the queue
+ * \brief Input a new message
+ * \internal
+ *
+ * Provide a new message for the incoming notification queue
+ * 
+ * \param message New message
  */
 void Notify_inputMessage(Comm_Message* message) {
     char* msg = message->components[2];
@@ -82,7 +74,12 @@ void Notify_inputMessage(Comm_Message* message) {
 }
 
 /**
- * Get a message
+ * \brief Get next message
+ *
+ * Get the next notification message available
+ *
+ * \param[out] action Pointer into which to store the notification action
+ * \param[out] param Pointer into which to store the notification parameter
  */
 void Notify_get(char* action, char* param) {
     char* msg;
@@ -112,7 +109,12 @@ void Notify_get(char* action, char* param) {
 }
 
 /**
- * Send a message
+ * \brief Send a notification
+ *
+ * Send out a notification
+ *
+ * \param action Action component of notification
+ * \param param Parameter component of notification
  */
 void Notify_send(char* action, char* param) {
     static char* namespace = "NOTIFY";
@@ -202,7 +204,23 @@ static bool Notify_check_filter(char* msg) {
 }
 
 /**
- * Add a new filter. Give a null value to clear filter list
+ * \brief Register a new filter
+ * 
+ * Register a new filter with the notification system. Incoming messages must
+ * match a filter in order to be returned by Notify_get(). If no filters are
+ * active then messages are accepted or denied based on the accept policy (see
+ * Notify_setPolicy()).
+ *
+ * There are three kinds of filters,
+ *  - FILTER_MATCH requires the entire message to match
+ *  - FILTER_ACTION requires the action of the message to match
+ *  - FILTER_PREFIX requires some sequences of characters at the beginning of the message to match
+ *
+ * All existing filters can be removed by specifying NULL for the filter
+ * argument
+ *
+ * \param filter_type One of FILTER_MATCH, FILTER_ACTION, or FILTER_PREFIX.
+ * \param filter The filter text, applied as described by the filter_type
  */
 void Notify_filter(int filter_type, char* filter) {
     if(filter == NULL) {
@@ -236,3 +254,31 @@ void Notify_filter(int filter_type, char* filter) {
     /* Increment filter count */
     filters_n++;
 }
+
+/**
+ * \brief Close initialize component
+ * \private
+ */
+void Notify_close() {
+    if(!initialized) {
+        return;
+    }
+
+    char* msg;
+
+    /* Free each filter string */
+    for(int i = 0; i < filters_n; i++) {
+        free(filters[i]);
+    }
+
+    /* Free the filters arrays */
+    free(filters);
+
+    /* Free remaining messages */
+    while((msg = Queue_pop(notification_queue, false)) != NULL) {
+        free(msg);
+    }
+    Queue_destroy(notification_queue);
+}
+
+/* \} */

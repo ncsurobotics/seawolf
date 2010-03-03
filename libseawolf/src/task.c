@@ -41,7 +41,22 @@ static void* Task_watcher(void* _args) {
 }
 
 /**
+ * \defgroup Task Task scheduling and management
+ * \ingroup Utilities
+ * \brief Utilities for scheduling tasks and performing simple multitasking
+ * \{
+ */
+
+/**
+ * \brief Run a function with a timeout
+ *
  * Watchdog on a function call. Returns WATCHDOG_TIMEOUT on timeout
+ *
+ * \param timeout Number of seconds before returning WATCHDOG_TIMEOUT if the
+ * function does not return sooner
+ * \param func Function to call under the watchdog.
+ * \return Returns the return value of the function or WATCHDOG_TIMEOUT in the
+ * case of timeout
  */
 int Task_watchdog(double timeout, int (*func)(void)) {
     pthread_t func_th;
@@ -62,6 +77,15 @@ int Task_watchdog(double timeout, int (*func)(void)) {
     return func_args.return_value;
 }
 
+/**
+ * \brief Spawn a function in a new thread
+ *
+ * Run a new thread to run the given function in and return without waiting for
+ * completion
+ * 
+ * \param func The function to spawn
+ * \return A Task handle object
+ */
 Task_Handle Task_background(int (*func)(void)) {
     pthread_t func_th;
     struct WrapperArgs* func_args = malloc(sizeof(struct WrapperArgs));
@@ -74,11 +98,25 @@ Task_Handle Task_background(int (*func)(void)) {
     return func_th;
 }
 
+/**
+ * \brief Kill a running task
+ *
+ * Kill a task previously spawned by Task_background()
+ *
+ * \param task The Task handle associated with the task to kill
+ */
 void Task_kill(Task_Handle task) {
     pthread_cancel(task);
     pthread_join(task, NULL);
 }
 
+/**
+ * \brief Wait for a task to terminate
+ *
+ * Wait for a task to terminate
+ *
+ * \param task The task handle associated with the task to wait for
+ */
 void Task_wait(Task_Handle task) {
     pthread_join(task, NULL);
 }
@@ -124,11 +162,6 @@ int Task_run(Task* task) {
         return TASK_GIVEUP;
     }
 }
-
-
-/**
- * Task queue methods
- **/ 
 
 TaskQueue* TaskQueue_new(void) {
     TaskQueue* tq = malloc(sizeof(TaskQueue));
@@ -230,3 +263,5 @@ void TaskQueue_run(TaskQueue* tq) {
         }
     }
 }
+
+/** \} */

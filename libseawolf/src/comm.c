@@ -5,12 +5,33 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-/* If we hit an error condition 5 times in a row while trying to retreive a
-   packet then give up and exit */
+/**
+ * \defgroup Comm Low level communication routines
+ * \ingroup Communications
+ * \brief Provides support for sending and receiving messages directly to and from the hub
+ * \{
+ */
+
+/**
+ * \cond Comm_Private
+ * \internal
+ */
+
+/**
+ * Maximum number of consective errors allowed while attempting to receive data
+ * from the hub before the application is terminated
+ */
 #define MAX_RECEIVE_ERROR 5
 
-/* Amount to grow response set by each time more space is needed */
+/**
+ * The response set starts out with this many space and will grow by this ammount any time more room is needed
+ */
 #define RESPONSE_SET_GROW 8
+
+/**
+ * Maximum request ID that can be embedded in a message. 16-bits in the packed
+ * message are reserved for the request ID allowing values up to this
+ */
 #define MAX_REQUEST_ID ((uint32_t)0xffff)
 
 static char* comm_server = NULL;
@@ -31,6 +52,18 @@ static void Comm_authenticate(void);
 static Comm_PackedMessage* Comm_receivePackedMessage(void);
 static int Comm_receiveThread(void);
 
+/**
+ * \endcond Comm_Private
+ */
+
+/**
+ * \brief Initialize the Comm component
+ *
+ * Initialize the Comm component by connecting a hub server at the configured
+ * server and port and attempt to authenticate
+ *
+ * \private
+ */
 void Comm_init(void) {
     struct sockaddr_in addr;
 
@@ -64,6 +97,12 @@ void Comm_init(void) {
     Comm_authenticate();
 }
 
+/**
+ * \brief Perform authentication with the hub
+ *
+ * Authenticate with the hub server using the password specified by a call to
+ * Comm_setPassword()
+ */
 static void Comm_authenticate(void) {
     static char* namespace = "COMM";
     static char* command = "AUTH";
@@ -92,6 +131,14 @@ static void Comm_authenticate(void) {
     Seawolf_exitError();
 }
 
+/**
+ * \brief Receive a packed message from the hub socket
+ *
+ * Receive a message from the hub and return at Comm_PackedMessage object
+ * representing this received object
+ *
+ * \return A new Comm_PackedMessage object
+ */
 static Comm_PackedMessage* Comm_receivePackedMessage(void) {
     Comm_PackedMessage* packed_message;
     uint16_t total_data_size;
@@ -116,6 +163,13 @@ static Comm_PackedMessage* Comm_receivePackedMessage(void) {
     return packed_message;
 }
 
+/**
+ * \brief Message receive loop
+ *
+ * Spawned by Comm_init() to receive incoming messages and process/queue them
+ *
+ * \return Returns 0 when shutting down (after a call to Comm_close())
+ */
 static int Comm_receiveThread(void) {
     Comm_PackedMessage* packed_message;
     Comm_Message* message;
@@ -157,6 +211,18 @@ static int Comm_receiveThread(void) {
     return 0;
 }
 
+/**
+ * \brief Send a message to the hub
+ *
+ * Send a message given as a \ref Comm_Message to the connected hub after
+ * packing. If a response is expected, block until the response is received and
+ * return it.
+ *
+ * \param message A pointer to a #Comm_Message representing the message to be
+ * sent
+ * \return If a response is expected, block until the response is available and
+ * return the unpacked response. Otherwise, return NULL
+ */
 Comm_Message* Comm_sendMessage(Comm_Message* message) {
     static pthread_mutex_t send_lock = PTHREAD_MUTEX_INITIALIZER;
     Comm_PackedMessage* packed_message = Comm_packMessage(message);
@@ -187,6 +253,14 @@ Comm_Message* Comm_sendMessage(Comm_Message* message) {
     return response;
 }
 
+/**
+ * \brief Assign a ID for a request message
+ *
+ * If a message is to be sent and requires a responses than a request ID must be
+ * assigned to the message
+ *
+ * \param message The message to assign an ID to
+ */
 void Comm_assignRequestID(Comm_Message* message) {
     static uint32_t last_id = 1;
 
@@ -218,6 +292,14 @@ void Comm_assignRequestID(Comm_Message* message) {
     pthread_mutex_unlock(&response_set_lock);
 }
 
+/**
+ * \brief Pack a message
+ *
+ * Return a packed message constructed from the given message
+ *
+ * \param message The message to packe
+ * \return The packed equivalent of message
+ */
 Comm_PackedMessage* Comm_packMessage(Comm_Message* message) {
     Comm_PackedMessage* packed_message = Comm_PackedMessage_new();
     size_t total_data_length = 0;
@@ -252,6 +334,15 @@ Comm_PackedMessage* Comm_packMessage(Comm_Message* message) {
     return packed_message;
 }
 
+/**
+ * \brief Unpack a message
+ *
+ * Unpack and return the given packed message. The returned message can be freed
+ * with a call to Comm_Message_destroyUnpacked()
+ *
+ * \param packed_message A packed message to unpack
+ * \return The unpacked message
+ */
 Comm_Message* Comm_unpackMessage(Comm_PackedMessage* packed_message) {
     Comm_Message* message = Comm_Message_new(0);
     size_t data_length = ntohs(((uint16_t*)packed_message->data)[0]);
@@ -276,6 +367,17 @@ Comm_Message* Comm_unpackMessage(Comm_PackedMessage* packed_message) {
     return message;
 }
 
+/**
+ * \brief Create a new message
+ *
+ * Create a new message with space for the given number of components. Space is
+ * only allocated for the char pointers to the componenets, not to the
+ * components themselves. Space for the components should be allocated and freed
+ * separately.
+ *
+ * \param component_count The number of components to make space for. If component_count is 0, no allocation is done
+ * \return A new message
+ */
 Comm_Message* Comm_Message_new(unsigned int component_count) {
     Comm_Message* message = malloc(sizeof(Comm_Message));
     
@@ -290,6 +392,14 @@ Comm_Message* Comm_Message_new(unsigned int component_count) {
     return message;
 }
 
+/**
+ * \brief Create a new packed message object
+ *
+ * Return a new, emtpy packed message. No space is allocated to store data and
+ * this should be allocated separately.
+ *
+ * \return A new packed message object
+ */
 Comm_PackedMessage* Comm_PackedMessage_new(void) {
     Comm_PackedMessage* packed_message = malloc(sizeof(Comm_PackedMessage));
 
@@ -299,6 +409,16 @@ Comm_PackedMessage* Comm_PackedMessage_new(void) {
     return packed_message;
 }
 
+/**
+ * \brief Destroy a message object
+ *
+ * Free memory allocated to the given message, but not memory that may have been
+ * allocated to store the components themselves. If the memory allocated to
+ * components needs to be freed, this should be done either before or after a
+ * call to Comm_Message_destroy()
+ *
+ * \param message The object to free
+ */
 void Comm_Message_destroy(Comm_Message* message) {
     if(message->components) {
         free(message->components);
@@ -306,28 +426,70 @@ void Comm_Message_destroy(Comm_Message* message) {
     free(message);
 }
 
+/**
+ * \brief Destroy an unpacked message
+ *
+ * Free all memory allocated to a message returned by Comm_unpackMessage()
+ *
+ * \param message The message object to free
+ */
 void Comm_Message_destroyUnpacked(Comm_Message* message) {
     free(message->components[0]);
     Comm_Message_destroy(message);
 }
 
+/**
+ * \brief Destroy a packed message
+ *
+ * Free all memory associated with a packed message including the message data
+ *
+ * \param packed_message The packed message object to free
+ */
 void Comm_PackedMessage_destroy(Comm_PackedMessage* packed_message) {
     free(packed_message->data);
     free(packed_message);
 }
 
+/**
+ * \brief Set the hub password
+ * 
+ * Set the password to use when authenticating with the hub
+ *
+ * \param password The password to authenticate with
+ */
 void Comm_setPassword(const char* password) {
     auth_password = strdup(password);
 }
 
+/**
+ * \brief Set the server to connect to
+ *
+ * Specify the server to connect to as an IP address given as a string
+ *
+ * \param server The IP address of the server to connect to given as a string
+ */
 void Comm_setServer(const char* server) {
     comm_server = strdup(server);
 }
 
+/**
+ * \brief Set the hub server port
+ *
+ * Specify the port to connect to when connceting to the hub
+ *
+ * \param port The port number to connect to
+ */
 void Comm_setPort(uint16_t port) {
     comm_port = port;
 }
 
+/**
+ * \brief Close the Comm component
+ *
+ * Close the Comm component; close all connections, free memory, etc.
+ *
+ * \private
+ */
 void Comm_close(void) {
     /* This check is necessary if an error condition is reached in Comm_init */
     if(running) {
@@ -346,3 +508,5 @@ void Comm_close(void) {
         free(auth_password);
     }
 }
+
+/* \} */

@@ -3,10 +3,29 @@
 
 static bool notify = true;
 
+/**
+ * \defgroup Var Shared variable
+ * \ingroup Communications
+ * \brief Provides functions for setting and retrieving shared variables
+ * \{
+ */
+
+/**
+ * \brief Initialize Var component
+ * \private
+ */
 void Var_init(void) {
     // --
 }
 
+/**
+ * \brief Get a variable
+ *
+ * Get the value of a variable
+ *
+ * \param name The variable to retrieve
+ * \return The variable value
+ */
 float Var_get(char* name) {
     static char* namespace = "VAR";
     static char* command = "GET";
@@ -29,6 +48,14 @@ float Var_get(char* name) {
     return value;
 }
 
+/**
+ * \brief Set a variable
+ *
+ * Set a variable to a given value
+ *
+ * \param name Variable to set
+ * \param value Value to set the variable to
+ */
 void Var_set(char* name, float value) {
     static char* namespace = "VAR";
     static char* command = "SET";
@@ -50,10 +77,26 @@ void Var_set(char* name, float value) {
     Comm_Message_destroy(variable_set);
 }
 
+/**
+ * \brief Control auto-notifications
+ *
+ * If set to true then notifications in the form Notify_send("UPDATED", name)
+ * will be sent every time a Var_set() call is made. If false then no such
+ * notifications will be automatically set.
+ *
+ * \param autonotify If true, notifications are sent whenever Var_set is
+ * called. If false, no notifications are sent
+ */
 void Var_setAutoNotify(bool autonotify) {
     notify = autonotify;
 }
 
+/**
+ * \brief Close Var component
+ * \private
+ */
 void Var_close(void) {
     // --
 }
+
+/* \} */

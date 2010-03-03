@@ -4,6 +4,20 @@
 #include <assert.h>
 #include <stdlib.h>
 
+/**
+ * \defgroup List List
+ * \ingroup DataStructures
+ * \brief A simple list implementation which automatically grows
+ * \{
+ */
+
+/**
+ * \brief Create a new List object
+ *
+ * Return a new, empty List object
+ *
+ * \return The new list
+ */
 List* List_new(void) {
     List* list = malloc(sizeof(List));
     
@@ -22,6 +36,15 @@ List* List_new(void) {
     return list;
 }
 
+/**
+ * \brief Insert an item
+ *
+ * Insert a new item into a list at the given index
+ *
+ * \param list The list to insert into
+ * \param v The item to insert
+ * \param n The index to insert v at
+ */
 void List_insert(List* list, void* v, int n) {
     /* Allocation is full so we must expand it */
     if(list->items == list->space) {
@@ -38,17 +61,44 @@ void List_insert(List* list, void* v, int n) {
     list->items++;
 }
 
+/**
+ * \brief Append an item to the list
+ *
+ * Insert an item at the end of the list
+ *
+ * \param list The list to append to
+ * \param v The item to append
+ * \return The index of the appended item
+ */
 int List_append(List* list, void* v) {
     List_insert(list, v, list->items);
     return list->items - 1;
 }
 
+/**
+ * \brief Set an item at an index
+ *
+ * Set the value of the item at a given index
+ *
+ * \param list The list to set the item for
+ * \param v The new item
+ * \param n The index of the list to update
+ */
 void List_set(List* list, void* v, int n) {
     if(n < list->items) {
         list->base[n] = v;
     }
 }
 
+/**
+ * \brief Get an item from a list
+ *
+ * Return the item from list at the given index
+ *
+ * \param list The list to retrieve from
+ * \param n The index in the list to return from
+ * \return The item at the given index or NULL if the index is out of bounds
+ */
 void* List_get(List* list, int n) {
     if(n < list->items) {
         return list->base[n];
@@ -57,6 +107,15 @@ void* List_get(List* list, int n) {
     }
 }
 
+/**
+ * \brief Remove an item from a list
+ *
+ * Remove the item at the given index from the list
+ *
+ * \param list The list to remove from
+ * \param n The index of the item to remove
+ * \return The removed item or NULL in the case of n being out of bounds
+ */
 void* List_remove(List* list, int n) {
     void* v = List_get(list, n);
 
@@ -80,6 +139,15 @@ void* List_remove(List* list, int n) {
     return v;
 }
 
+/**
+ * \brief Find an item in the list
+ *
+ * Find the index of the given item in the list
+ *
+ * \param list The list to search
+ * \param v The item to search for
+ * \return The index of the item in the list or -1 otherwise (not found)
+ */
 int List_indexOf(List* list, void* v) {
     for(int i = 0; i < list->items; i++) {
         if(List_get(list, i) == v) {
@@ -90,10 +158,27 @@ int List_indexOf(List* list, void* v) {
     return -1;
 }
 
+/**
+ * \brief Get the size of the list
+ *
+ * Return the number of items in the list
+ *
+ * \param list The list to return the size of
+ * \return The number of items in the list
+ */
 int List_getSize(List* list) {
     return list->items;
 }
 
+/**
+ * \brief Copy a list
+ *
+ * Return a new list with the same items as the given list. Note that the items
+ * themselves are not duplicated
+ *
+ * \param list The list to copy
+ * \return A new list, identical to the given list
+ */
 List* List_copy(List* list) {
     List* new_list = malloc(sizeof(List));
 
@@ -115,18 +200,52 @@ List* List_copy(List* list) {
     return new_list;
 }
 
+/**
+ * \brief String comparitor
+ * 
+ * A string comparitor
+ * \sa List_sort
+ *
+ * \param _s1 The first string
+ * \param _s2 The second string
+ * \return The order of _s1 and _s2
+ */
 int List_compareString(void* _s1, void* _s2) {
     char* s1 = _s1;
     char* s2 = _s2;
     return strcmp(s1, s2);
 }
 
+/**
+ * \brief Integer comparitor
+ * 
+ * An integer comparitor
+ * \sa List_sort
+ *
+ * \param _n1 A pointer to the first integer
+ * \param _n2 A pointer to the second integer
+ * \return The order of _n1 and _n2
+ */
 int List_compareInt(void* _n1, void* _n2) {
     int *n1 = _n1;
     int *n2 = _n2;
     return (*n1) - (*n2);
 }
 
+/**
+ * \brief Sort a list
+ *
+ * Sort a list inplace using the given function as a comparator
+ *
+ * \sa List_compareString
+ * \sa List_compareInt
+ *
+ * \param list The list to sort
+ * \param cmp A function taking two void* and return an int. This function is
+ * used to determine the sorting order of the list. cmp(a, b) should return -1
+ * if a < b, 1 if a > b and 0 if a = b
+ * \return your mom
+ */
 void List_sort(List* list, int (*cmp)(void*, void*)) {
     if(List_getSize(list) < 2) {
         return;
@@ -168,7 +287,16 @@ void List_sort(List* list, int (*cmp)(void*, void*)) {
     List_destroy(more);
 }
 
+/**
+ * \brief Destroy the list
+ *
+ * Free the list without freeing any memory associated with the elements of the list
+ *
+ * \param list The list to free
+ */
 void List_destroy(List* list) {
     free(list->base);
     free(list);
 }
+
+/* \} */

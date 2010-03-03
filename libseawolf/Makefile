@@ -12,8 +12,12 @@ all:
 
 clean:
 	$(MAKE) -C src clean
+	rm -rf doc
+
+doc:
+	doxygen Doxyfile
 
 %:
 	$(MAKE) -C src $(PWD)/$@
 
-.PHONY: all clean
+.PHONY: all clean doc

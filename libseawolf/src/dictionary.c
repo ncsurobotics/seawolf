@@ -15,6 +15,23 @@ static void Dictionary_Item_destroy(Dictionary_Item* di);
 static Dictionary_Node* Dictionary_Node_new(Dictionary_NodeType nodetype);
 static void Dictionary_Node_destroy(Dictionary_Node* dn);
 
+/**
+ * \defgroup Dictionary Dictionary
+ * \ingroup DataStructures
+ * \brief Provides a hash map data structure, often known as a dictionary
+ * \sa http://en.wikipedia.org/wiki/Hash_map
+ * \{
+ */
+
+/**
+ * \brief Hash a block of memory
+ *
+ * Return a hash code of the give memory space
+ *
+ * \param s Pointer to the beginning of the memory space
+ * \param n Bytes to include in the hash
+ * \return The hash of the given space
+ */
 hash_t Dictionary_hash(const void* s, size_t n) {
     hash_t hash = 5381;
 
@@ -25,6 +42,13 @@ hash_t Dictionary_hash(const void* s, size_t n) {
     return hash;
 }
 
+/**
+ * \brief Create a new dictionary
+ *
+ * Return a new, empty dictionary
+ *
+ * \return New dictionary
+ */
 Dictionary* Dictionary_new(void) {
     Dictionary* dict = malloc(sizeof(Dictionary));
     if(dict == NULL) {
@@ -69,11 +93,6 @@ static void Dictionary_destroyHelper(Dictionary_Node* dn) {
     Dictionary_Node_destroy(dn);
 }
 
-void Dictionary_destroy(Dictionary* dict) {
-    Dictionary_destroyHelper(dict->root);
-    free(dict);
-}
-
 static List* Dictionary_getBucket(Dictionary* dict, hash_t hash, bool create) {
     Dictionary_Node* dn = dict->root;
     hash_t hash_part;
@@ -110,6 +129,16 @@ static List* Dictionary_getBucket(Dictionary* dict, hash_t hash, bool create) {
     return bucket;
 }
 
+/**
+ * \brief Set an element
+ *
+ * Set an element in the dictionary
+ *
+ * \param dict The dictionary to set for
+ * \param k The generic key
+ * \param k_size The generic key size
+ * \param v The value to set
+ */
 void Dictionary_setData(Dictionary* dict, const void* k, size_t k_size, void* v) {
     Dictionary_Item* di_new;
     Dictionary_Item* di_temp;
@@ -138,10 +167,28 @@ void Dictionary_setData(Dictionary* dict, const void* k, size_t k_size, void* v)
     pthread_mutex_unlock(&dict->lock);
 }
 
+/**
+ * \brief Set an element
+ *
+ * Set an element in the dictionary
+ *
+ * \param dict The dictionary to set for
+ * \param i The integer key
+ * \param v The value to set
+ */
 void Dictionary_setInt(Dictionary* dict, int i, void* v) {
     Dictionary_setData(dict, &i, sizeof(int), v);
 }
 
+/**
+ * \brief Set an element
+ *
+ * Set an element in the dictionary
+ *
+ * \param dict The dictionary to set for
+ * \param k The string key
+ * \param v The value to set
+ */
 void Dictionary_set(Dictionary* dict, const char* k, void* v) {
     Dictionary_setData(dict, k, strlen(k) + 1, v);
 }
@@ -180,6 +227,16 @@ static Dictionary_Item* Dictionary_getItem(Dictionary* dict, const void* k, size
     return v;
 }
 
+/**
+ * \brief Retrieve an element
+ *
+ * Retrieve an element from the dictionary
+ *
+ * \param dict The dictionary to retrieve from
+ * \param k The generic key
+ * \param k_size The generic key size
+ * \return The value associated with the key or NULL if the key is not found
+ */
 void* Dictionary_getData(Dictionary* dict, const void* k, size_t k_size) {
     Dictionary_Item* di;
 
@@ -195,14 +252,41 @@ void* Dictionary_getData(Dictionary* dict, const void* k, size_t k_size) {
     return di->v;
 }
 
+/**
+ * \brief Retrieve an element
+ *
+ * Retrieve an element from the dictionary
+ *
+ * \param dict The dictionary to retrieve from
+ * \param k The integer key
+ * \return The value associated with the key or NULL if the key is not found
+ */
 void* Dictionary_getInt(Dictionary* dict, int k) {
     return Dictionary_getData(dict, &k, sizeof(int));
 }
 
+/**
+ * \brief Retrieve an element
+ *
+ * Retrieve an element from the dictionary
+ *
+ * \param dict The dictionary to retrieve from
+ * \param k The string key
+ * \return The value associated with the key or NULL if the key is not found
+ */
 void* Dictionary_get(Dictionary* dict, const char* k) {
     return Dictionary_getData(dict, k, strlen(k) + 1);
 }
 
+/**
+ * \brief Wait for a key to enter the dictionary
+ *
+ * Wait for a generic key to be in the dictionary
+ *
+ * \param dict The dictionary to wait on
+ * \param k The generic key to wait on
+ * \param k_size The generic key size
+ */
 void Dictionary_waitForData(Dictionary* dict, const void* k, size_t k_size) {
     pthread_mutex_lock(&dict->lock);
     while(Dictionary_getItem(dict, k, k_size) == NULL) {
@@ -211,14 +295,40 @@ void Dictionary_waitForData(Dictionary* dict, const void* k, size_t k_size) {
     pthread_mutex_unlock(&dict->lock);
 }
 
+/**
+ * \brief Wait for a key to enter the dictionary
+ *
+ * Wait for an integer key to be in the dictionary
+ *
+ * \param dict The dictionary to wait on
+ * \param k The integer key to wait on
+ */
 void Dictionary_waitForInt(Dictionary* dict, int k) {
     Dictionary_waitForData(dict, &k, sizeof(int));
 }
 
+/**
+ * \brief Wait for a key to enter the dictionary
+ *
+ * Wait for a string key to be in the dictionary
+ *
+ * \param dict The dictionary to wait on
+ * \param k The string key to wait on
+ */
 void Dictionary_waitFor(Dictionary* dict, const char* k) {
     Dictionary_waitForData(dict, k, strlen(k) + 1);
 }
 
+/**
+ * \brief Check if a key is in the dictionary
+ *
+ * Check if the generic key exists in the dictionary
+ *
+ * \param dict The dictionary to check
+ * \param k The generic key
+ * \param k_size The generic key length
+ * \return true if the key exists, false otherwise
+ */
 bool Dictionary_existsData(Dictionary* dict, const void* k, size_t k_size) {
     /* If a Dictionary_Item does not exist for the key then return false */
     Dictionary_Item* di;
@@ -235,14 +345,42 @@ bool Dictionary_existsData(Dictionary* dict, const void* k, size_t k_size) {
     return true;
 }
 
+/**
+ * \brief Check if a key is in the dictionary
+ *
+ * Check if the integer key exists in the dictionary
+ *
+ * \param dict The dictionary to check
+ * \param k The integer key
+ * \return true if the key exists, false otherwise
+ */
 bool Dictionary_existsInt(Dictionary* dict, int k) {
     return Dictionary_existsData(dict, &k, sizeof(k));
 }
 
+/**
+ * \brief Check if a key is in the dictionary
+ *
+ * Check if the string key exists in the dictionary
+ *
+ * \param dict The dictionary to check
+ * \param k The string key
+ * \return true if the key exists, false otherwise
+ */
 bool Dictionary_exists(Dictionary* dict, const char* k) {
     return Dictionary_existsData(dict, k, strlen(k) + 1);
 }
 
+/**
+ * \brief Remove a dictionary element
+ *
+ * Remove an element from the dictionary associated with the generic key
+ *
+ * \param dict The dictionary to remove from
+ * \param k The generic key
+ * \param k_size Length of the key
+ * \return -1 in the remove failed. 0 if successful
+ */
 int Dictionary_removeData(Dictionary* dict, const void* k, size_t k_size) {
     hash_t hash = Dictionary_hash(k, k_size);
     List* bucket;
@@ -264,10 +402,28 @@ int Dictionary_removeData(Dictionary* dict, const void* k, size_t k_size) {
     return ret;
 }
 
+/**
+ * \brief Remove a dictionary element
+ *
+ * Remove an element from the dictionary associated with the integer key
+ *
+ * \param dict The dictionary to remove from
+ * \param k The integer key
+ * \return -1 in the remove failed. 0 if successful
+ */
 int Dictionary_removeInt(Dictionary* dict, int k) {
     return Dictionary_removeData(dict, &k, sizeof(int));
 }
 
+/**
+ * \brief Remove a dictionary element
+ *
+ * Remove an element from the dictionary associated with the string key
+ *
+ * \param dict The dictionary to remove from
+ * \param k The string key
+ * \return -1 in the remove failed. 0 if successful
+ */
 int Dictionary_remove(Dictionary* dict, const char* k) {
     return Dictionary_removeData(dict, k, strlen(k) + 1);
 }
@@ -303,6 +459,14 @@ static List* Dictionary_getKeysHelper(Dictionary_Node* dn) {
     return keys;
 }
 
+/**
+ * \brief Get the list of keys
+ *
+ * Return pointers to all the keys in the dictionary. The keys should not be freed
+ *
+ * \param dict The list to retrieve keys for
+ * \return List of the keys
+ */
 List* Dictionary_getKeys(Dictionary* dict) {
     return Dictionary_getKeysHelper(dict->root);
 }
@@ -349,3 +513,17 @@ static void Dictionary_Node_destroy(Dictionary_Node* dn) {
     List_destroy(dn->active_branches);
     free(dn);
 }
+
+/**
+ * \brief Destroy a dictionary
+ *
+ * Free a dictionary
+ *
+ * \param dict The dictionary to free
+ */
+void Dictionary_destroy(Dictionary* dict) {
+    Dictionary_destroyHelper(dict->root);
+    free(dict);
+}
+
+/* \} */

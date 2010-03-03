@@ -10,8 +10,36 @@ static char app_name[256];
 static void Seawolf_catchSignal(int sig);
 
 /**
- * Initialize Seawolf and all its components and register the given name with
- * this initialize
+ * \mainpage
+ *
+ * \section intro Introduction
+ *
+ * See the "Modules" tab for API documentation. Architecture and general use
+ * documentation should be available soon.
+ */
+
+/**
+ * \defgroup Core Core Routines
+ * \defgroup Communications Communications
+ * \defgroup DataStructures Data Structures
+ * \defgroup Hardware Hardware Access
+ * \defgroup Utilities Utilities
+ */
+
+/**
+ * \defgroup Main Core libseawolf
+ * \ingroup Core
+ * \brief Core routines for libseawolf initialization and management
+ * \{
+ */
+
+/**
+ * \brief Initialize the library
+ *
+ * Perform all initialization to ready the library for use. Care must be taken
+ * when making any calls before this is called
+ *
+ * \param name Name of the program. This is used in debugging and logging
  */
 void Seawolf_init(const char* name) {
     /* Copy name */
@@ -48,7 +76,9 @@ static void Seawolf_catchSignal(int sig) {
 }
 
 /**
- * Close libseawolf
+ * \brief Close the library
+ *
+ * Close the library and free any resources claimed by it
  */
 void Seawolf_close(void) {
     static bool closed = false;
@@ -71,7 +101,9 @@ void Seawolf_close(void) {
 }
 
 /**
- * Exit seawolf application because of an error
+ * \brief Terminate application due to error
+ *
+ * Terminate application because of an error condition
  */
 void Seawolf_exitError(void) {
     Logging_log(INFO, "Terminating application due to error condition");
@@ -79,8 +111,14 @@ void Seawolf_exitError(void) {
 }
 
 /**
- * Return the name associated with the initialization of this component
+ * \brief Get the application name
+ *
+ * Return the name registered with the library with a call to Seawolf_init()
+ *
+ * \return The registered application name
  */
 char* Seawolf_getName(void) {
     return app_name;
 }
+
+/* \} */

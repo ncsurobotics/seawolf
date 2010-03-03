@@ -11,25 +11,18 @@ static int open_devices = 0;
 static struct termios* default_conf = NULL;
 
 /**
- * Initialize the Serial component of libseawolf 
+ * \defgroup Serial Serial access
+ * \ingroup Hardware
+ * \brief Functions for accessing and using serial ports
+ * \{
+ */
+
+/**
+ * \brief Initialize the Serial component of libseawolf 
+ * \private
  */
 void Serial_init(void) {
     initialized = true;
-}
-
-/**
- * Close the Serial component of libseawolf
- */
-void Serial_close(void) {
-    if(initialized) {
-        /* Close each port that is still open */
-        for(int i = 0; i < open_devices; i++) {
-            Serial_closePort(devices[i]);
-        }
-        
-        /* Free the list of devices */
-        free(devices);
-    }
 }
 
 /**
@@ -68,7 +61,12 @@ static int Serial_setParams(SerialPort sp) {
 }
 
 /**
- * Open a new "virtual" terminal device
+ * \brief Open a virtual terminal device
+ * \deprecated The use of virtual terminal devices is unsupported and has limited functionality
+ *
+ * Open a new virtual terminal (VTY) device
+ *
+ * \return A handler for the opened device
  */
 SerialPort Serial_openVTY(void) {
     SerialPort sp = open("/dev/ptmx", O_RDWR | O_NOCTTY);
@@ -85,7 +83,12 @@ SerialPort Serial_openVTY(void) {
 }
 
 /**
- * Open a real serial device
+ * \brief Open a serial port
+ *
+ * Open and return a handler for the given serial device
+ *
+ * \param device_path The device path
+ * \return The serial port handler or -1 in the case of failure to open
  */
 SerialPort Serial_open(const char* device_path) {
     SerialPort sp = open(device_path, O_RDWR | O_NOCTTY | O_NONBLOCK);
@@ -114,7 +117,12 @@ SerialPort Serial_open(const char* device_path) {
 }
 
 /**
- * Close an open device
+ * \brief Close a serial device
+ *
+ * Close a previously open serial device
+ *
+ * \param sp The handler for the serial port to close
+ * \return -1 on failure
  */
 int Serial_closePort(SerialPort sp) {
     int return_value; 
@@ -148,7 +156,12 @@ int Serial_closePort(SerialPort sp) {
 }
 
 /**
- * Set the baud rate for a serial device. Initially this is set to 9600 baud.
+ * \brief Set the baud rate
+ * 
+ * Set the baud rate for a serial device. Default is 9600 baud
+ *
+ * \param sp A handler for the serial port to set the buad rate for
+ * \param baud The baud rate to set
  */
 void Serial_setBaud(SerialPort sp, int baud) {
     struct termios term_conf;
@@ -221,12 +234,23 @@ void Serial_setBaud(SerialPort sp, int baud) {
     Serial_flush(sp);
 }
 
+/**
+ * \brief Flush input buffers
+ *
+ * Flush the input buffers for the given port
+ *
+ * \param sp A handler for a serial port to flush
+ */
 void Serial_flush(SerialPort sp) {
     tcflush(sp, TCIOFLUSH); /* Zero input buffers */
 }
 
 /**
- * Set the device to be blocking 
+ * \brief Set blocking
+ *
+ * Set the given port to be blocking
+ *
+ * \param sp A handler for a serial port
  */
 void Serial_setBlocking(SerialPort sp) {
     /* Unset non-blocking */
@@ -234,7 +258,11 @@ void Serial_setBlocking(SerialPort sp) {
 }
 
 /**
- * Set the device to be non-blocking
+ * \brief Set non-blocking
+ *
+ * Set the given port to be non-blocking
+ *
+ * \param sp A handler for a serial port
  */
 void Serial_setNonBlocking(SerialPort sp) {
     /* Unset non-blocking */
@@ -242,9 +270,16 @@ void Serial_setNonBlocking(SerialPort sp) {
 }
 
 /**
- * Check if a serial port is "ready". A serial port is considered "ready" if any
- * data is available within a quarter of a second to read from the port. This is
- * not a very effective test and should not be used in most cases.
+ * \brief Check if a serial port is "ready"
+ * \deprecated This function is completely useless and ineffective. It should
+ * not be used; determining if a serial port is "ready" is high application
+ * particular
+ * 
+ * Determine if a serial port is "ready" by probing it and attempting to receive
+ * data.
+ *
+ * \param sp Handler for a serial port to test
+ * \return true if the port is ready, false otherwise
  */
 bool Serial_isReady(SerialPort sp) {
     int a, n;
@@ -276,7 +311,12 @@ bool Serial_isReady(SerialPort sp) {
 }
 
 /**
+ * \brief Get a byte
+ *
  * Read a single byte from the serial device
+ *
+ * \param sp Handler for device to read from
+ * \return -1 in case of failure, otherwise the byte read
  */
 int Serial_getByte(SerialPort sp) {
     int n = 0;
@@ -293,7 +333,12 @@ int Serial_getByte(SerialPort sp) {
 }
 
 /**
- * Store a "line" of data from the serial port, terminated by a newline (\n) into the buffer
+ * \brief Read a line from a serial device
+ *
+ * Return a newline terminated line from the given serial device
+ *
+ * \param sp Handler for the device to read from
+ * \param[out] buffer The buffer to write the line into
  */
 void Serial_getLine(SerialPort sp, char* buffer) {
     while((*buffer = Serial_getByte(sp)) == '\n');
@@ -304,7 +349,14 @@ void Serial_getLine(SerialPort sp, char* buffer) {
 }
 
 /**
+ * \brief Read data from a serial device
+ *
  * Store count bytes of data from the serial port into the buffer
+ *
+ * \param sp Handler for the device to read from
+ * \param[out] buffer The buffer to read into
+ * \param count The number of bytes to read
+ * \return -1 if an error occurs, 0 otherwise
  */
 int Serial_get(SerialPort sp, void* buffer, size_t count) {
     unsigned char* buffer_c = (unsigned char*) buffer;
@@ -324,14 +376,27 @@ int Serial_get(SerialPort sp, void* buffer, size_t count) {
 }
 
 /**
+ * \brief Send a byte
+ *
  * Send a single byte out of the serial port
+ *
+ * \param sp Handler for the port to write to
+ * \param b The byte to write
+ * \return -1 if a write errors occurs, 1 otherwise
  */
 int Serial_sendByte(SerialPort sp, unsigned char b) {
     return Serial_send(sp, &b, 1);
 }
 
 /**
- * Send size bytes of data from the buffer to the serial port 
+ * \brief Send data
+ *
+ * Send multiple bytes via the given serial device
+ *
+ * \param sp Handler for the device to send data on
+ * \param buffer The buffer to read from
+ * \param count Number of bytes to write
+ * \return -1 if a write error occurs, 1 otherwise
  */
 int Serial_send(SerialPort sp, void* buffer, size_t count) {
     unsigned char* buffer_c = (unsigned char*) buffer;
@@ -349,3 +414,21 @@ int Serial_send(SerialPort sp, void* buffer, size_t count) {
 
     return 1;
 }
+
+/**
+ * \brief Close the Serial component of libseawolf
+ * \private
+ */
+void Serial_close(void) {
+    if(initialized) {
+        /* Close each port that is still open */
+        for(int i = 0; i < open_devices; i++) {
+            Serial_closePort(devices[i]);
+        }
+        
+        /* Free the list of devices */
+        free(devices);
+    }
+}
+
+/* \} */

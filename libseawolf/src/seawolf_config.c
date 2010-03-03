@@ -34,7 +34,30 @@ static bool trueValue(const char* v) {
 }
 
 /**
- * Load a configuration stored in a file
+ * \defgroup Config Configuration
+ * \ingroup Core
+ * \brief Functions for loading configuration values
+ *
+ * Configuration options may be loaded from a file to specify values for
+ * libseawolf to use. Whitespace is ignored, and lines start with a '#' are
+ * comments. All other lines have the form 
+ *
+ * &lt;option&gt; = &lt;value&gt;
+ *
+ * The valid options are,
+ *  - Comm_server - This options specifies the IP address of hub server (default is 127.0.0.1)
+ *  - Comm_port - The port of the hub server (default is 31427)
+ *  - Comm_password - The password to authenticate with the hub server (default is empty)
+ *
+ * \{
+ */
+
+/**
+ * \brief Load a configuration file
+ *
+ * Load the options in the given configuration file
+ *
+ * \param filename File to load configuration from
  */
 void Seawolf_loadConfig(const char* filename) {
     FILE* config_file = fopen(filename, "r");
@@ -136,3 +159,5 @@ void Seawolf_loadConfig(const char* filename) {
         }
     }
 }
+
+/* \} */

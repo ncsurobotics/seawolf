@@ -19,24 +19,24 @@ static int buffer_count = 0;
 static struct Buffer* format_buffers_internal = NULL;
 static int buffer_count_internal = 0;
 
-void Util_close(void) {
-    for(int i = 0; i < buffer_count; i++) {
-        if(format_buffers[i].buff) {
-            free(format_buffers[i].buff);
-        }
-    }
-    free(format_buffers);
-
-    for(int i = 0; i < buffer_count_internal; i++) {
-        if(format_buffers_internal[i].buff) {
-            free(format_buffers_internal[i].buff);
-        }
-    }
-    free(format_buffers_internal);
-}
+/**
+ * \defgroup Util Misc
+ * \ingroup Utilities
+ * \brief Utility functions
+ * \{
+ */
 
 /**
- * Return a formatted string
+ * \brief Format a string
+ *
+ * Format a string as sprintf, but return the buffer rather than needing one
+ * provided. The returned value should *not* be passed to free and the space
+ * will be reused on the next call to Util_format(). This function is thread
+ * safe however, and every thread has its own buffer.
+ *
+ * \param format Format string as in sprintf
+ * \param ... Arguments to the format string
+ * \return The formatted string
  */
 char* Util_format(char* format, ...) {
     va_list ap;
@@ -79,7 +79,8 @@ char* Util_format(char* format, ...) {
 }
 
 /**
- * Return a formatted string (for interal use)
+ * \internal
+ * \sa Util_format
  */
 char* __Util_format(char* format, ...) {
     va_list ap;
@@ -122,7 +123,11 @@ char* __Util_format(char* format, ...) {
 }
 
 /**
- * Sleep for s seconds 
+ * \brief Sleep
+ *
+ * Pause for s seconds
+ *
+ * \param s Seconds to sleep
  */
 void Util_usleep(double s) {
     /* Construct a timespec object with the length of time taken from s */
@@ -135,7 +140,11 @@ void Util_usleep(double s) {
 }
 
 /**
- * Strip leading and trailing whitespace from a string. Strip is done in place
+ * \brief Strip a string of whitespace
+ *
+ * Strip leading and trailing whitespace from a string. This operation is done in place
+ *
+ * \param[in,out] buffer String buffer to perform operation on in place
  */
 void Util_strip(char* buffer) {
     int i, start;
@@ -164,8 +173,16 @@ void Util_strip(char* buffer) {
 }
 
 /**
+ * \brief Split a string
+ *
  * Split the string buffer at the first occurence of the character split and
  * store the two parts in p1 and p2
+ *
+ * \param buffer String the split
+ * \param split Character to split by
+ * \param[out] p1 Buffer to write the part before the split
+ * \param[out] p2 Buffer to write the part after the split
+ * \return 0 if successful, 1 if the split character is unfound
  */
 int Util_split(const char* buffer, char split, char* p1, char* p2) {
     int i, j;
@@ -191,3 +208,25 @@ int Util_split(const char* buffer, char split, char* p1, char* p2) {
 
     return 0;
 }
+
+/**
+ * \brief Close the Util component
+ * \private
+ */
+void Util_close(void) {
+    for(int i = 0; i < buffer_count; i++) {
+        if(format_buffers[i].buff) {
+            free(format_buffers[i].buff);
+        }
+    }
+    free(format_buffers);
+
+    for(int i = 0; i < buffer_count_internal; i++) {
+        if(format_buffers_internal[i].buff) {
+            free(format_buffers_internal[i].buff);
+        }
+    }
+    free(format_buffers_internal);
+}
+
+/* \} */
