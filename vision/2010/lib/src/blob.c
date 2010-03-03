@@ -27,6 +27,53 @@ int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_a
         (*targets)[i].mid.y = ((*targets)[i].top + (*targets)[i].bottom)/2;
     }
 
+    #ifdef VISION_LIB_BLOB
+        IplImage* blob_pic = cvCreateImage(cvGetSize(Img),8,3);
+        cvCopy(Img, blob_pic, 0);
+        cvNamedWindow("Blob", CV_WINDOW_AUTOSIZE);
+        int x,y;
+
+        //bind the blobs
+        for(i=0; i<(blobnumber<tracking_number?blobnumber:tracking_number);i++){
+            //draw the top of the binding box
+            uchar* ptr = (uchar*) (blob_pic->imageData + (*targets)[i].top * blob_pic->widthStep);
+            for(x=(*targets)[i].left; x<=(*targets)[i].right;x++){
+                ptr[3*x+0] = 0;
+                ptr[3*x+1] = 254;
+                ptr[3*x+2] = 0;
+            }
+            //draw the bottom of the binding box
+            ptr = (uchar*) (blob_pic->imageData + (*targets)[i].bottom * blob_pic->widthStep);
+            for(x=(*targets)[i].left; x<=(*targets)[i].right;x++){
+                ptr[3*x+0] = 0;
+                ptr[3*x+1] = 254;
+                ptr[3*x+2] = 0;
+            }
+            //draw the left of the box
+            for(y = (*targets)[i].top; y>= (*targets)[i].bottom; y--){
+                ptr = (uchar*) (blob_pic->imageData + y * blob_pic->widthStep);
+                x = (*targets)[i].left;
+                ptr[3*x+0] = 0;
+                ptr[3*x+1] = 254;
+                ptr[3*x+2] = 0;
+            }
+
+            //draw the left of the box
+            for(y = (*targets)[i].top; y>= (*targets)[i].bottom; y--){
+                ptr = (uchar*) (blob_pic->imageData + y * blob_pic->widthStep);
+                x = (*targets)[i].right;
+                ptr[3*x+0] = 0;
+                ptr[3*x+1] = 254;
+                ptr[3*x+2] = 0;
+            }
+        }
+        //Show the image
+        cvShowImage("Blob",blob_pic);
+
+        //release image
+        cvReleaseImage(&blob_pic);
+    #endif
+
     //return the number of blobs we found
     return blobnumber;
 }
@@ -40,13 +87,13 @@ int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_a
 
 BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int *blobnumber){
 
-    //usefull variables 
+    //usefull variables
     int height = Img->height;
-    int width = Img->width;  
+    int width = Img->width;
     int i,x,y;
-    int blobs_found=0; 
+    int blobs_found=0;
 
-    //initialize an array of blobs 
+    //initialize an array of blobs
     BLOB* blobs;
     *blobnumber = 0; //how many blobs we've found so far
 
@@ -54,7 +101,7 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
     blobs = (BLOB*)calloc(30000,sizeof(BLOB)); //30,000 is estimated max number of blobs
 
     //create a list of our target blobs, which we will combine into a single blob
-    BLOB* targets; 
+    BLOB* targets;
     targets = (BLOB*)calloc(tracking_number,sizeof(BLOB));
 
     //create a list of targets if nto all blobs were requested
@@ -80,7 +127,7 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
             //if the pixel hasn't been blacked out as the wrong color AND has not yet been checked
             if((ptr[3*x+0]||ptr[3*x+1]||ptr[3*x+2])&& pixlog[x][y]==0){
                 //we've found a new blob, so let's initialize it's values
-                blobs[*blobnumber].area = 0; 
+                blobs[*blobnumber].area = 0;
                 blobs[*blobnumber].top = 0;
                 blobs[*blobnumber].bottom = height;
                 blobs[*blobnumber].right = 0;
@@ -124,7 +171,7 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
 
     //free the pixle log
     for(i=0; i<width; i++)
-        free(pixlog[i]); 
+        free(pixlog[i]);
     free(pixlog);
 
     //if we want all the blobs, just return blobs and be done
@@ -146,10 +193,10 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
 
 //--------------------------------------------------------------------------------------------
 // Function: checkPixel
-// Examines an object pixel-by-pixel, checking each pixel to see if it 
+// Examines an object pixel-by-pixel, checking each pixel to see if it
 //   is the top bottom left or rightmost of the object. Then recursively calls
-//   itself on all surrounding pixels that are part of the object. assignes total 
-//   number of pixels in the object to the object's area 
+//   itself on all surrounding pixels that are part of the object. assignes total
+//   number of pixels in the object to the object's area
 
 int checkPixel(IplImage* Img, int x, int y, unsigned int** pixlog, BLOB* blob, int depth){
 
@@ -159,13 +206,13 @@ int checkPixel(IplImage* Img, int x, int y, unsigned int** pixlog, BLOB* blob, i
 
     if(pixlog[x][y] != 0)
         return 1; //we've checked this pixel, so shouldn't do it again
-    //now mark this pixel as having been checked 
+    //now mark this pixel as having been checked
     pixlog[x][y] = 1;
 
     //check too see if the pixel is part of the blob
     uchar* ptr = (uchar*) (Img->imageData + y * Img->widthStep);
     if((ptr[3*x+0] || ptr[3*x+1] || ptr[3*x+2]) == 0){
-        return 2; //the pixel has been blacked out and shouldn't be used 
+        return 2; //the pixel has been blacked out and shouldn't be used
     }
 
     int height = Img->height;
@@ -178,12 +225,12 @@ int checkPixel(IplImage* Img, int x, int y, unsigned int** pixlog, BLOB* blob, i
 
     //quick saftey check. If the blob is ever this big the program no longer works, but at least this line keeps it from crashing
     if(blob->area >= MAX_BLOB_AREA)
-        return 3; 
+        return 3;
 
     //now catagorize this pixel
-    if(y > blob->top) blob->top = y; 
-    if(y < blob->bottom) blob->bottom = y; 
-    if(x < blob->left) blob->left = x;       
+    if(y > blob->top) blob->top = y;
+    if(y < blob->bottom) blob->bottom = y;
+    if(x < blob->left) blob->left = x;
     if(x > blob->right) blob->right = x;
 
     //add this pixel to the list for this blob
@@ -192,25 +239,25 @@ int checkPixel(IplImage* Img, int x, int y, unsigned int** pixlog, BLOB* blob, i
     //printf("pixels[%ld] being assigned {%d,%d}\n",blob->area-1,blob->pixels[(blob->area-1)].x,blob->pixels[(blob->area-1)].y);
     //fflush(NULL);
 
-    int w,z; 
+    int w,z;
     //now check all surrounding pixels
     for(w = x-1; w <= x+1; w++){
         for(z = y-1; z <= y+1; z++){
             //save from overfow
-            if((w > 1)&&(z > 1)&&(w < width -1)&&(z < height-1)) 
+            if((w > 1)&&(z > 1)&&(w < width -1)&&(z < height-1))
                 //now that we know we are on the image, check this pixel
                 checkPixel(Img,w,z,pixlog, blob, depth);
         }
     }
     return 0;
-}  
+}
 
 void blob_copy(BLOB* dest, BLOB* src){
     //copy src to destination
     dest->top   = src->top;
     dest->left  = src->left;
     dest->right = src->right;
-    dest->bottom= src->bottom; 
+    dest->bottom= src->bottom;
     dest->area  = src->area;
     dest->cent_x= src->cent_x;
     dest->cent_y= src->cent_y;
@@ -218,8 +265,8 @@ void blob_copy(BLOB* dest, BLOB* src){
     memcpy(dest->pixels,src->pixels,MAX_BLOB_AREA*sizeof(CvPoint));
 }
 
-void blob_free(BLOB* blobs, int blobs_found){
-
+void blob_free(BLOB* blobs, int blobs_found)
+{
     int i;
     for(i=0;i<blobs_found;i++){
         cvFree(&blobs[i].pixels);

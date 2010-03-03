@@ -30,3 +30,4 @@ DEBUG_FLAGS += -DVISION_LIB_IMAGE_TYPECHECK
 
 # These debugs show what a filter or transform is doing each frame it's called
 #DEBUG_FLAGS += -DVISION_LIB_HOUGH_LINES
+#DEBUG_FLAGS += -DVISION_LIB_BLOB
