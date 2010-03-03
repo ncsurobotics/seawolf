@@ -13,23 +13,6 @@ static char app_name[256];
 static void Seawolf_catchSignal(int sig);
 
 /**
- * \mainpage
- *
- * \section intro Introduction
- *
- * See the "Modules" tab for API documentation. Architecture and general use
- * documentation should be available soon.
- */
-
-/**
- * \defgroup Core Core Routines
- * \defgroup Communications Communications
- * \defgroup DataStructures Data Structures
- * \defgroup Hardware Hardware Access
- * \defgroup Utilities Utilities
- */
-
-/**
  * \defgroup Main Core libseawolf
  * \ingroup Core
  * \brief Core routines for libseawolf initialization and management
