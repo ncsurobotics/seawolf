@@ -83,8 +83,12 @@ char* Util_format(char* format, ...) {
 }
 
 /**
- * \internal
+ * \private
  * \sa Util_format
+ *
+ * \param format Format string as in sprintf
+ * \param ... Arguments to the format string
+ * \return The formatted string
  */
 char* __Util_format(char* format, ...) {
     va_list ap;
@@ -233,4 +237,4 @@ void Util_close(void) {
     free(format_buffers_internal);
 }
 
-/* \} */
+/** \} */

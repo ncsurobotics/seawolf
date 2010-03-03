@@ -289,4 +289,4 @@ void Notify_close() {
     Queue_destroy(notification_queue);
 }
 
-/* \} */
+/** \} */

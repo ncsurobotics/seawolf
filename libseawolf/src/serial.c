@@ -435,4 +435,4 @@ void Serial_close(void) {
     }
 }
 
-/* \} */
+/** \} */

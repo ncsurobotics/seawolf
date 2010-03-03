@@ -529,4 +529,4 @@ void Dictionary_destroy(Dictionary* dict) {
     free(dict);
 }
 
-/* \} */
+/** \} */

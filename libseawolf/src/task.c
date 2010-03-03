@@ -6,10 +6,23 @@
 #include "seawolf.h"
 
 #include <pthread.h>
-#include <stdbool.h>
 
+/**
+ * Task completed successfully
+ * \private
+ */
 #define TASK_SUCCESS 0
+
+/**
+ * Task is to be retried
+ * \private
+ */
 #define TASK_RETRY   1
+
+/**
+ * Task failed to run successfully
+ * \private
+ */
 #define TASK_GIVEUP  2
 
 /**
@@ -56,6 +69,13 @@ static void TaskQueue_insertAfter(TaskQueue* tq, TaskQueueNode* base, TaskQueueN
 static TaskQueueNode* TaskQueue_remove(TaskQueue* tq, TaskQueueNode* node);
 
 /**
+ * \defgroup Task Task scheduling and management
+ * \ingroup Utilities
+ * \brief Utilities for scheduling tasks and performing simple multitasking
+ * \{
+ */
+
+/**
  * \brief Call wrapper for task calls
  *
  * Given a WrapperArgs, call WrapperArgs->func, store the return value in
@@ -90,13 +110,6 @@ static void* Task_watcher(void* _args) {
     pthread_cancel(*args->dependant);
     return NULL;
 }
-
-/**
- * \defgroup Task Task scheduling and management
- * \ingroup Utilities
- * \brief Utilities for scheduling tasks and performing simple multitasking
- * \{
- */
 
 /**
  * \brief Run a function with a timeout

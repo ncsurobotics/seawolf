@@ -5,6 +5,10 @@
 
 #include "seawolf.h"
 
+/**
+ * Amount to grow stack by when more space is needed
+ * \private
+ */
 #define STACK_BLOCK_SIZE 16
 
 /**
@@ -117,4 +121,4 @@ void Stack_destroy(Stack* stack) {
     free(stack);
 }
 
-/* \} */
+/** \} */

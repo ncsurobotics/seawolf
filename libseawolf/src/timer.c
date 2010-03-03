@@ -5,9 +5,16 @@
 
 #include "seawolf.h"
 
-#include <stdlib.h>
 #include <time.h>
 
+/**
+ * Compute the time difference in seconds between two timespec structures
+ *
+ * \private
+ * \param t Base time
+ * \param s New time
+ * \return Timer difference in seconds
+ */
 #define _TIMESPEC_DIFF(/* struct timespec */ t, /* struct timespec */ s) \
     ((double)((s).tv_sec - (t).tv_sec) + (((double)(s).tv_nsec - (t).tv_nsec) / 1e9))
 
@@ -100,4 +107,4 @@ void Timer_destroy(Timer* tm) {
     free(tm);
 }
 
-/* \} */
+/** \} */

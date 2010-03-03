@@ -95,4 +95,4 @@ void Queue_destroy(Queue* queue) {
     free(queue);
 }
 
-/* \} */
+/** \} */

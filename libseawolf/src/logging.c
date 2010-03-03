@@ -132,4 +132,4 @@ void Logging_close(void) {
     /* nothing to do */
 }
 
-/* \} */
+/** \} */

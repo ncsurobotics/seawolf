@@ -7,6 +7,9 @@
 
 #include <ctype.h>
 
+/**
+ * Maximum length of a line in the configuration file
+ */
 #define MAX_LINE 512
 
 static char* strlower(char* s);
@@ -85,7 +88,7 @@ void Seawolf_loadConfig(const char* filename) {
             comment = false;
 
             /* Read line */
-            while(i < 255) {
+            while(i < MAX_LINE - 1) {
                 tmp = fgetc(config_file);
 
                 /* End of input/line */
@@ -163,4 +166,4 @@ void Seawolf_loadConfig(const char* filename) {
     }
 }
 
-/* \} */
+/** \} */

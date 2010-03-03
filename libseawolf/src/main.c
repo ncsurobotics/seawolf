@@ -122,4 +122,4 @@ char* Seawolf_getName(void) {
     return app_name;
 }
 
-/* \} */
+/** \} */

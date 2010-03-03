@@ -306,4 +306,4 @@ void List_destroy(List* list) {
     free(list);
 }
 
-/* \} */
+/** \} */

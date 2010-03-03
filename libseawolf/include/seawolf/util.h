@@ -21,6 +21,11 @@ void Util_strip(char* buffer);
 int Util_split(const char* buffer, char split, char* p1, char* p2);
 
 /**
+ * \addtogroup Util
+ * \{
+ */
+
+/**
  * Return the max of a and b
  *
  * \param a first value
@@ -47,5 +52,7 @@ int Util_split(const char* buffer, char split, char* p1, char* p2);
  * \return x if a <= x <= b, a if x < a, and b if x > b
  */
 #define Util_inRange(a, x, b) (((x) < (a)) ? (a) : (((x) > (b)) ? (b) : (x)))
+
+/** \} */
 
 #endif // #ifndef __SEAWOLF_UTIL_INCLUDE_H

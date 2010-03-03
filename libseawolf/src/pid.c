@@ -154,4 +154,4 @@ void PID_destroy(PID* pid) {
     free(pid);
 }
 
-/* \} */
+/** \} */

@@ -150,4 +150,4 @@ int ArdComm_getId(SerialPort sp, char* id) {
     return 0;
 }
 
-/* \} */
+/** \} */

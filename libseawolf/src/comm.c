@@ -513,4 +513,4 @@ void Comm_close(void) {
     }
 }
 
-/* \} */
+/** \} */
