@@ -32,11 +32,17 @@
  *
  * \dot
  *  graph {
- *    node [shape=record, style="filled, rounded", fillcolor="#aaddff"];
- *    application_1:lib -- hub;
- *    application_2:lib -- hub;
- *    application_3:lib -- hub;
- *    application_4:lib -- hub;
+ *    node [shape=Mrecord, style="filled", fillcolor="#aaddff", fontname="Sans"];
+ *    edge [dir=both, arrowsize=0.9, color="#101020"];
+ *    fontname="Sans";
+ *    nodesep = 0.6;
+ *    pad = 0.5;
+ *
+ *    application_1:lib:s -- hub;
+ *    application_2:lib:s -- hub;
+ *    application_3:lib:s -- hub;
+ *    application_4:lib:s -- hub;
+ *
  *    subgraph cluster_applications {
  *      application_4 [label="{Application 1|<lib> libseawolf}"];
  *      application_3 [label="{Application 2|<lib> libseawolf}"];
@@ -46,7 +52,7 @@
  *      style = "filled, rounded";
  *      color = "#eeeeee";
  *    }
- *    hub [shape=record, label="{Hub server|{libseawolf | sqlite}}", fillcolor="#aaaaff"];
+ *    hub [label="{Hub server|{libseawolf | sqlite}}", fillcolor="#aaaaff"];
  *  }
  * \enddot
  *
@@ -220,6 +226,12 @@
 #include "seawolf/dictionary.h"
 
 #if 0
+
+/**
+ * \todo These constants need to moved out of the library and into the hub as
+ * read-only variables. Library side caching of read-only values will make this
+ * 'efficient enough' 
+ */
 
 /* Definitions */
 #define SETPOINT_SOURCE_VISION 1
