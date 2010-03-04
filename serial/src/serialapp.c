@@ -44,6 +44,9 @@ static void cycleDTR(SerialPort sp) {
     copy |= TIOCM_DTR;
     ioctl(sp, TIOCMSET, &copy);
 
+    /* Sleep */
+    Util_usleep(0.5);
+
     /* Unassert DTR */
     copy = base;
     copy &= ~TIOCM_DTR;
@@ -84,7 +87,7 @@ static int getPeripheralType(SerialPort sp) {
             Serial_flush(sp);
             return PT_IMU;
         } else if(n != -1) {
-            Logging_log(DEBUG, "Received invalid response from IMU");
+            break;
         }
 
         Serial_flush(sp);
@@ -121,7 +124,7 @@ static int getPeripheralType(SerialPort sp) {
         }
     }
 
-    /* Fingerprinting failed - cycle DTR and return error code */
+    /* Fingerprinting failed */
     Logging_log(DEBUG, "Could not ID");
     return -1;
 }
@@ -166,10 +169,9 @@ int main(void) {
         /* Open serial device */
         device_pool[i].sp = Serial_open(device_pool[i].device);
         if(device_pool[i].sp != -1) {
-            cycleDTR(device_pool[i].sp);
             Logging_log(DEBUG, Util_format("Opening %s", device_pool[i].device));
         } else {
-            Logging_log(DEBUG, Util_format("Could not open %s - ignoring", device_pool[i].device));
+            //Logging_log(DEBUG, Util_format("Could not open %s - ignoring", device_pool[i].device));
             unassigned_ports--;
         }
     }
