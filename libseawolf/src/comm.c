@@ -10,7 +10,7 @@
 #include <pthread.h>
 
 /**
- * \defgroup Comm Low level communication routines
+ * \defgroup Comm Low-level communication
  * \ingroup Communications
  * \brief Provides support for sending and receiving messages directly to and from the hub
  * \{

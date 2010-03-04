@@ -13,7 +13,7 @@ static char app_name[256];
 static void Seawolf_catchSignal(int sig);
 
 /**
- * \defgroup Main Core libseawolf
+ * \defgroup Main Library control
  * \ingroup Core
  * \brief Core routines for libseawolf initialization and management
  * \{

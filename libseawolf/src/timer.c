@@ -19,7 +19,7 @@
     ((double)((s).tv_sec - (t).tv_sec) + (((double)(s).tv_nsec - (t).tv_nsec) / 1e9))
 
 /**
- * \defgroup Timer Timing
+ * \defgroup Timer Timer
  * \ingroup Utilities
  * \brief Timers for calculating total time and time delays
  * \{

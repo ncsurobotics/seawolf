@@ -23,7 +23,7 @@ static char* level_names[] = {"DEBUG",
                               "CRITICAL"};
 
 /**
- * \defgroup Logging Logging facilities
+ * \defgroup Logging Logging
  * \ingroup Communications
  * \brief Provide functions for performing logging for informational and debugging purposes
  * \{

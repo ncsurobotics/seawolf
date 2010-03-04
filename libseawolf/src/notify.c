@@ -29,7 +29,7 @@ static bool default_policy = NOTIFY_POLICY_DROP;
 static bool Notify_check_filter(char* msg);
 
 /**
- * \defgroup Notify Notify routines
+ * \defgroup Notify Notifications (broadcast messages)
  * \ingroup Communications
  * \brief Notify related routines
  * \{
