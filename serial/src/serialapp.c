@@ -51,9 +51,6 @@ static void cycleDTR(SerialPort sp) {
     copy = base;
     copy &= ~TIOCM_DTR;
     ioctl(sp, TIOCMSET, &copy);
-
-    /* Sleep */
-    Util_usleep(0.5);
 }
 
 static int getPeripheralType(SerialPort sp) {
@@ -108,19 +105,25 @@ static int getPeripheralType(SerialPort sp) {
     /* Fallback to Arduino, get ID */
     Serial_setBaud(sp, 9600);
     cycleDTR(sp);
-    if(ArdComm_getId(sp, id) != -1) {
-        if(strcmp(id, "PressureSensor") == 0) {
-            return PT_DEPTH;
-        } else if(strcmp(id, "Thruster12") == 0) {
-            return PT_THRUSTER12;
-        } else if(strcmp(id, "Thruster3") == 0) {
-            return PT_THRUSTER3;
-        } else if(strcmp(id, "Thruster45") == 0) {
-            return PT_THRUSTER45;
-        } else if(strcmp(id, "MissionStatus") == 0) {
-            return PT_MISSIONSTATUS;
+
+    for(int i = 0; i < 3; i++) {
+        if(ArdComm_getId(sp, id) != -1) {
+            if(strcmp(id, "PressureSensor") == 0) {
+                return PT_DEPTH;
+            } else if(strcmp(id, "Thruster12") == 0) {
+                return PT_THRUSTER12;
+            } else if(strcmp(id, "Thruster3") == 0) {
+                return PT_THRUSTER3;
+            } else if(strcmp(id, "Thruster45") == 0) {
+                return PT_THRUSTER45;
+            } else if(strcmp(id, "MissionStatus") == 0) {
+                return PT_MISSIONSTATUS;
+            } else {
+                Logging_log(ERROR, Util_format("Received unknown ID '%s'", id));
+            }
+            break;
         } else {
-            Logging_log(ERROR, Util_format("Received unknown ID '%s'", id));
+            Util_usleep(0.5);
         }
     }
 
