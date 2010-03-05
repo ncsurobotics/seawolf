@@ -15,6 +15,9 @@ int main(int argc, char** argv)
     Seawolf_loadConfig("../../conf/seawolf.conf");
     Seawolf_init("Vision Mission Control");
 
+    // Set point source is vision
+    Var_set("SetPointSource", 1.0);
+
     // Setup Cameras
     if (argc == 4) {
         multicam_set_camera(DOWN_CAM, argv[1]);
@@ -150,8 +153,13 @@ int main(int argc, char** argv)
             Var_set("SetPointVision.Theta", results.theta);
             Var_set("SetPointVision.Phi", results.phi);
             Var_set("SetPointVision.Rho", results.rho);
-            Var_set("DepthHeading", results.depth);
+
+            // Set depth if tracker does not
+            if(!results.depth_control) {
+                Var_set("DepthHeading", results.depth);
+            }
             Var_set("TrackerDoDepth", results.depth_control);
+
             Notify_send("UPDATED", "SetPointVision");
             previous_results = results;
 
