@@ -34,14 +34,13 @@ int main(int argc, char** argv) {
     /* Set baud rate */
     Serial_setBaud(sp, 9600);
 
-    /* Set port to block */
-    Serial_setBlocking(sp);
-
     /* Error checking done */
     Logging_log(INFO, Util_format("%s running successfully with device %s", argv[0], device));
 
     /* Complete handshake */
-    ArdComm_handshake(sp);
+    while(ArdComm_handshake(sp) == -1) {
+        Util_usleep(0.5);
+    }
 
     /* Start app specific code */
     manage(sp);

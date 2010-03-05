@@ -111,13 +111,21 @@ void ArdComm_sendMessage(SerialPort sp, char* msgtype, char* buffer) {
  * Establish a connection with an Arduino through a handshake process
  *
  * \param sp Serial port arduino is communicted through
+ * \return -1 on failure, 0 on success
  */
-void ArdComm_handshake(SerialPort sp) {
+int ArdComm_handshake(SerialPort sp) {
     /* Send established connection message */
+    char name[64];
+
+    if(ArdComm_getId(sp, name) == -1) {
+        return -1;
+    }
+
     ArdComm_sendMessage(sp, "ESTABLISHED", "NULL");
-    tcdrain(sp); /* Wait for output to be drained */
-    tcflush(sp, TCIFLUSH); /* Zero input buffers */
     ArdComm_sendMessage(sp, "READY", "NULL");
+    Serial_flush(sp);
+
+    return 0;
 }
 
 /**

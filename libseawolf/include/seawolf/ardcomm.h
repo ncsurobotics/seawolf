@@ -43,7 +43,7 @@ void ArdComm_sendMessage(SerialPort sp, char* msgtype, char* buffer);
 int ArdComm_getMessage(SerialPort sp, char* msgtype, char* buffer);
 
 /* Connection initialization */
-void ArdComm_handshake(SerialPort sp);
+int ArdComm_handshake(SerialPort sp);
 int ArdComm_getId(SerialPort sp, char* id);
 
 #endif // #ifndef __SEAWOLF_ARDCOMM_INCLUDE_H
