@@ -360,11 +360,19 @@ int Serial_getByte(SerialPort sp) {
  * \param[out] buffer The buffer to write the line into
  */
 void Serial_getLine(SerialPort sp, char* buffer) {
-    while((*buffer = Serial_getByte(sp)) == '\n');
-    while(*(buffer++) != '\n') {
-        *buffer = Serial_getByte(sp);
+    int n = 0;
+    int i = 0;
+
+    while(n == 0 || n == -1 || n == '\n') {
+        n = Serial_getByte(sp);
     }
-    *(buffer-1) = 0;
+
+    buffer[0] = n;
+    do {
+        while((n = Serial_getByte(sp)) == -1);
+        buffer[++i] = n;
+    } while(n != '\n');
+    buffer[i] = '\0';
 }
 
 /**
