@@ -128,6 +128,11 @@ int main(int argc, char** argv)
 
             case MISSION_STOP:
                 Util_usleep(1);
+                results.theta=0;
+                results.phi=0;
+                results.rho=0;
+                results.depth_control=DEPTH_ABSOLUTE;
+                results.depth=0;
             break;
 
             default:

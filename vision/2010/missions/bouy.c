@@ -36,8 +36,9 @@ struct mission_output mission_bouy_step (struct mission_output result)
     int frame_height = frame->height;
     RGBPixel color = { 0xff, 0x00, 0x00 };
 
-    // Set craft speed
+    // Set some headings
     result.rho = 10;
+    result.depth_control = DEPTH_RELATIVE;
 
     // Sscan image for color
     IplImage* ipl_out;
