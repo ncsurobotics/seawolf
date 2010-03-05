@@ -1,0 +1,495 @@
+
+#!/bin/sh
+
+DATABASE_PATH=seawolf.db
+DATABASE_INIT_SOURCE=seawolf_db_init.sql
+
+exec_sql () {
+    sqlite3 $DATABASE_PATH "$@"
+}
+
+usage () {
+    echo "Usage: $0 <command> [args]"
+    echo 
+    echo "Commands:"
+    echo "  config  Change a conifguration option"
+    echo "  var     Add/change/update a variable definition"
+    echo "  init    Initialize the database"
+    echo "  help    Display this help information"
+    echo
+    echo "Execute '$0 <command> help' for individual command help"
+    echo
+}
+
+config_usage () {
+    echo "Usage: $0 config <subcommand> <config option> [args...]"
+    echo
+    echo "Subcommands:"
+    echo "  set     Set the value for a configuration option"
+    echo "  get     Get the current value of a configuration option"
+    echo "  del     Remove a configuration option"
+    echo "  clear   Clear the value for a given configuration option"
+    echo "  help    Display this help information"
+    echo
+}
+
+config_option_exists () {
+    value=$(exec_sql "SELECT option FROM config WHERE option='$1'")
+    test -n "$value"
+}
+
+config_get () {
+    option=$1
+    if [ -n "$option" ]; then
+        if config_option_exists $option; then
+            value=$(exec_sql "SELECT value FROM config WHERE option = '$option'")
+            if [ -n "$value" ]; then
+                echo "'$value'"
+            else
+                echo "''"
+            fi
+        else
+            echo "No such configuration option set"
+        fi
+    else
+        echo "Configuration option not given!"
+        echo
+        config_usage
+    fi
+}
+
+config_set () {
+    option=$1
+    if [ -n "$option" ]; then
+        _value=$2
+
+        # No value given as argument, prompt (good for passwords!)
+        if [ -z "$_value" ]; then
+            echo -n "New value: "
+            read _value
+        fi
+
+        if [ -n "$_value" ]; then
+            if config_option_exists $option; then
+                exec_sql "UPDATE config SET value='$_value' WHERE option='$option'"
+            else
+                exec_sql "INSERT INTO config (option, value) VALUES('$option', '$_value')"
+            fi
+        else
+            echo "Error"
+        fi
+    else
+        echo "Configuration option not given!"
+        echo
+        config_usage
+    fi
+}
+
+config_remove () {
+    option=$1
+    if [ -n "$option" ]; then
+        if config_option_exists $option; then
+            echo -n "Really remove option? [y/n] "
+            read _v
+            if [ "$_v" = "y" ]; then
+                exec_sql "DELETE FROM config WHERE option='$option'"
+            else
+                echo "Exiting"
+            fi
+        else
+            echo "Option not existant/not set"
+        fi
+    else
+        echo "Configuration option not given!"
+        echo
+        config_usage
+    fi
+}
+
+config_clear () {
+    option=$1
+    if [ -n "$option" ]; then
+        if config_option_exists $option; then
+            exec_sql "UPDATE config SET value='' WHERE option='$option'"
+        else
+            echo "Option not present"
+        fi
+    else
+        echo "Configuration option not given!"
+        echo
+        config_usage
+    fi
+}
+
+config () {
+    subcommand=$1
+
+    case $subcommand in
+        "set")
+            shift
+            config_set $@
+            ;;
+        "get")
+            shift
+            config_get $@
+            ;;
+        "del")
+            shift
+            config_remove $@
+            ;;
+        "clear")
+            shift
+            config_clear $@
+            ;;
+        "help")
+            config_usage
+            ;;
+        *)
+            config_usage
+            ;;
+    esac
+}
+
+var_help () {
+    echo "Usage: $0 var command varname [args...]"
+    echo
+    echo "Commands:"
+    echo "  add     Add a new variable definition"
+    echo "  mod     Modify a variable definition"
+    echo "  del     Remove a variable definition"
+    echo "  help    This help information"
+    echo
+    echo "Execute '$0 <command> help' for subcommand help"
+    echo
+}
+
+var_add_help () {
+    echo "Usage: $0 var add <varname> [default <value>] [[not] persistent] [[not] readonly]"
+}
+
+var_mod_help () {
+    echo "Usage: $0 var mod <varname> [default <value>] [[not] persistent] [[not] readonly]"
+}
+
+var_del_help () {
+    echo "Usage: $0 var del <varname> [-y]"
+}
+
+var_get_help () {
+    echo "Usage: $0 var gel <varname>"
+}
+
+var_def_exists () {
+    value=$(exec_sql "SELECT name FROM variable_definitions WHERE name='$1'")
+    test -n "$value"
+}
+
+var_def_get_default () {
+    exec_sql "SELECT default_value FROM variable_definitions WHERE name='$1'"
+}
+
+var_def_get_readonly () {
+    exec_sql "SELECT readonly FROM variable_definitions WHERE name='$1'"
+}
+
+var_def_get_persistent () {
+    exec_sql "SELECT persistent FROM variable_definitions WHERE name='$1'"
+}
+
+var_add () {
+    varname=$1
+    if [ -z "$varname" -o "$varname" = "help" ]; then
+        var_add_help
+    else
+        persistent="0"
+        readonly="0"
+        default="0"
+
+        if var_def_exists $varname; then
+            echo "Variable definition already exists for '$varname'"
+            exit 1
+        fi
+
+        shift
+        while [ -n "$1" ]; do
+            case $1 in
+                "default")
+                    shift
+                    if [ -z "$1" ]; then
+                        echo "No value following 'default' keyword!"
+                        exit 1
+                    fi
+                    default="$1"
+                    ;;
+                "persistent")
+                    persistent="1"
+                    ;;
+                "readonly")
+                    readonly="1"
+                    ;;
+                "not")
+                    shift
+                    if [ -z "$1" ]; then
+                        echo "Expected option following 'not' keyword"
+                        exit 1
+                    fi
+                    case "$1" in
+                        "persistent")
+                            persistent="0"
+                            ;;
+                        "readonly")
+                            readonly="0"
+                            ;;
+                        *)
+                            echo "Invalid keyword following 'not'"
+                            exit 1
+                            ;;
+                    esac
+                    ;;
+                *)
+                    echo "Invalid argument '$1'"
+                    exit 1
+                    ;;
+            esac
+            shift
+        done
+
+        if exec_sql "INSERT INTO variable_definitions (name, default_value, persistent, readonly) VALUES('$varname', $default, $persistent, $readonly)"; then
+            echo "Success!"
+        else
+            echo "Failed to insert definition!"
+        fi
+    fi
+}
+
+var_mod () {
+    varname=$1
+    if [ -z "$varname" -o "$varname" = "help" ]; then
+        var_mod_help
+    else
+        if ! var_def_exists $varname; then
+            echo "No definition in database for variable '$varname'"
+            exit 1
+        fi
+
+        if [ -z "$2" ]; then
+            echo "No options specified"
+            exit 0
+        fi
+
+        persistent=$(var_def_get_persistent $varname)
+        readonly=$(var_def_get_readonly $varname)
+        default=$(var_def_get_default $varname)
+
+        shift
+        while [ -n "$1" ]; do
+            case $1 in
+                "default")
+                    shift
+                    if [ -z "$1" ]; then
+                        echo "No value following 'default' keyword!"
+                        exit 1
+                    fi
+                    default="$1"
+                    ;;
+                "persistent")
+                    persistent="1"
+                    ;;
+                "readonly")
+                    readonly="1"
+                    ;;
+                "not")
+                    shift
+                    if [ -z "$1" ]; then
+                        echo "Expected option following 'not' keyword"
+                        exit 1
+                    fi
+                    case "$1" in
+                        "persistent")
+                            persistent="0"
+                            ;;
+                        "readonly")
+                            readonly="0"
+                            ;;
+                        *)
+                            echo "Invalid keyword following 'not'"
+                            exit 1
+                    esac
+                    ;;
+                *)
+                    echo "Invalid argument '$1'"
+                    exit 1
+                    ;;
+            esac
+            shift
+        done
+
+        if exec_sql "UPDATE variable_definitions SET default_value='$default', persistent='$persistent', readonly='$readonly' WHERE name='$varname'"; then
+            echo "Success!"
+        else
+            echo "Failed to update definition!"
+        fi
+    fi
+}
+
+var_del () {
+    varname=$1
+    if [ -z "$varname" -o "$varname" = "help" ]; then
+        var_del_help
+    else
+        if ! var_def_exists $varname; then
+            echo "No definition in database for variable '$varname'"
+            exit 1
+        fi
+
+        confirm="$2"
+        if [ "$confirm" != "-y" ]; then
+            echo -n "Are you sure you want to remove the variable definition? [y/n] "
+            read confirm
+        else
+            confirm="y"
+        fi
+
+        if [ "$confirm" = "y" ]; then
+            if exec_sql "DELETE FROM variable_definitions WHERE name='$varname'"; then
+                echo "Success!"
+            else
+                echo "Failed to delete record!"
+            fi
+        else
+            echo "Exiting"
+        fi
+    fi
+}
+
+var_get () {
+    varname=$1
+    if [ -z "$varname" -o "$varname" = "help" ]; then
+        var_get_help
+    else
+        if ! var_def_exists $varname; then
+            echo "No definition in database for variable '$varname'"
+            exit 1
+        fi
+
+        persistent=$(var_def_get_persistent $varname)
+        readonly=$(var_def_get_readonly $varname)
+        default=$(var_def_get_default $varname)
+
+        if [ "$persistent" = "0" ]; then
+            persistent="not persistent"
+        else
+            persistent="persistent"
+        fi
+
+        if [ "$readonly" = "0" ]; then
+            readonly="read/write"
+        else
+            readonly="readonly"
+        fi
+        
+        echo "${varname}"
+        echo " default=$default"
+        echo " $persistent"
+        echo " $readonly"
+    fi
+}
+
+var () {
+    subcommand=$1
+
+    case $subcommand in
+        "add")
+            shift
+            var_add $@
+            ;;
+        "del")
+            shift
+            var_del $@
+            ;;
+        "get")
+            shift
+            var_get $@
+            ;;
+        "mod")
+            shift
+            var_mod $@
+            ;;
+        "help")
+            var_help
+            ;;
+        *)
+            var_help
+            ;;
+    esac
+}
+
+init () {
+    if [ -f $DATABASE_PATH ]; then
+        echo "Database already exists at '$DATABASE_PATH', cowardly refusing to initalize!"
+        exit 1
+    fi
+
+    if [ ! -f $DATABASE_INIT_SOURCE ]; then
+        echo "Could not locate dump file '$DATABASE_INIT_SOURCE' to initialize database from"
+        exit 1
+    fi
+
+    if sqlite3 $DATABASE_PATH < $DATABASE_INIT_SOURCE; then
+        echo "Successfully initialized $DATABASE_PATH"
+    else
+        echo "Error initializing database"
+    fi
+}
+
+check_depends () {
+    if ! sqlite3 -version > /dev/null 2>&1; then
+        echo "Please install the sqlite3 package before running this utility!"
+        if [ -f /etc/debian_version ]; then
+            echo
+            echo "Execute, 'aptitude install sqlite3' to install the necessary tools"
+        fi
+        exit 1
+    fi
+}
+
+check_db () {
+    if [ ! -f $DATABASE_PATH ]; then
+        echo "Could not locate database at '$DATABASE_PATH'. Give a -f <database path> to specify a different database"
+        exit 1
+    fi
+}
+
+# Ensure that sqlite is installed
+check_depends
+
+# Allow different database to be specified
+if [ "$1" = "-f" -a -n "$2" ]; then
+    DATABASE_PATH="$2"
+    shift
+    shift
+fi
+
+command=$1
+case $command in
+    "config" | "conf")
+        check_db
+        shift
+        config $@
+        ;;
+    "var")
+        check_db
+        shift
+        var $@
+        ;;
+    "init")
+        shift
+        init $@
+        ;;
+    "help")
+        usage
+        ;;
+    *)
+        usage
+        ;;
+esac
