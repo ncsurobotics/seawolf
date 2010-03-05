@@ -56,8 +56,8 @@
  *  }
  * \enddot
  *
- * As can be seen, each application is built on top of libseawolf and when
- * running all applications in the pool connect to a single hub
+ * As can be seen, each application is built on top of libseawolf, and, when
+ * running, all applications in the pool connect to a single hub
  * server. libseawolf handles all of the difficult work of communicating with
  * the hub server and provides an easy to use API for application developers
  * providing shared variables, interprocess notifications, and centralized
@@ -83,7 +83,7 @@
  * }
  * \endcode
  *
- * For most applications this is all the "boilerplate" code that is
+ * For most applications this is all the boilerplate code that is
  * neccessary. The first two lines in main() are responsible for loading a
  * configuration file and initializing the library. The configuration file
  * specifies the address and port of the hub server to connect to, as well as
