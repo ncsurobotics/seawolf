@@ -2,7 +2,6 @@
 #!/bin/sh
 
 DATABASE_PATH=seawolf.db
-DATABASE_INIT_SOURCE=seawolf_db_init.sql
 
 exec_sql () {
     sqlite3 $DATABASE_PATH "$@"
@@ -12,10 +11,11 @@ usage () {
     echo "Usage: $0 <command> [args]"
     echo 
     echo "Commands:"
-    echo "  config  Change a conifguration option"
-    echo "  var     Add/change/update a variable definition"
-    echo "  init    Initialize the database"
-    echo "  help    Display this help information"
+    echo "  config   Change a conifguration option"
+    echo "  var      Add/change/update a variable definition"
+    echo "  restore  Initialize the database from a dump"
+    echo "  dump     Dump database contents"
+    echo "  help     Display this help information"
     echo
     echo "Execute '$0 <command> help' for individual command help"
     echo
@@ -25,12 +25,53 @@ config_usage () {
     echo "Usage: $0 config <subcommand> <config option> [args...]"
     echo
     echo "Subcommands:"
-    echo "  set     Set the value for a configuration option"
-    echo "  get     Get the current value of a configuration option"
-    echo "  del     Remove a configuration option"
-    echo "  clear   Clear the value for a given configuration option"
-    echo "  help    Display this help information"
+    echo "  set      Set the value for a configuration option"
+    echo "  get      Get the current value of a configuration option"
+    echo "  del      Remove a configuration option"
+    echo "  clear    Clear the value for a given configuration option"
+    echo "  help     Display this help information"
     echo
+}
+
+dump_usage () {
+    echo "Usage: $0 dump <subcommand> [dumpfile]"
+    echo
+    echo "Subcommands:"
+    echo "  full     Perform a full dump of the database"
+    echo "  partial  Dump only variable defitions and config"
+    echo "  vardefs  Dump only variable definitions"
+    echo "  config   Dump only hub config"
+    echo "  help     Display this help information"
+    echo
+}
+
+var_help () {
+    echo "Usage: $0 var <subcommand> <varname> [args...]"
+    echo
+    echo "Subcommands:"
+    echo "  add      Add a new variable definition"
+    echo "  mod      Modify a variable definition"
+    echo "  del      Remove a variable definition"
+    echo "  help     This help information"
+    echo
+    echo "Execute '$0 var <subcommand> help' for subcommand help"
+    echo
+}
+
+var_add_help () {
+    echo "Usage: $0 var add <varname> [default <value>] [[not] persistent] [[not] readonly]"
+}
+
+var_mod_help () {
+    echo "Usage: $0 var mod <varname> [default <value>] [[not] persistent] [[not] readonly]"
+}
+
+var_del_help () {
+    echo "Usage: $0 var del <varname> [-y]"
+}
+
+var_get_help () {
+    echo "Usage: $0 var get <varname>"
 }
 
 config_option_exists () {
@@ -150,34 +191,6 @@ config () {
     esac
 }
 
-var_help () {
-    echo "Usage: $0 var command varname [args...]"
-    echo
-    echo "Commands:"
-    echo "  add     Add a new variable definition"
-    echo "  mod     Modify a variable definition"
-    echo "  del     Remove a variable definition"
-    echo "  help    This help information"
-    echo
-    echo "Execute '$0 <command> help' for subcommand help"
-    echo
-}
-
-var_add_help () {
-    echo "Usage: $0 var add <varname> [default <value>] [[not] persistent] [[not] readonly]"
-}
-
-var_mod_help () {
-    echo "Usage: $0 var mod <varname> [default <value>] [[not] persistent] [[not] readonly]"
-}
-
-var_del_help () {
-    echo "Usage: $0 var del <varname> [-y]"
-}
-
-var_get_help () {
-    echo "Usage: $0 var gel <varname>"
-}
 
 var_def_exists () {
     value=$(exec_sql "SELECT name FROM variable_definitions WHERE name='$1'")
@@ -425,20 +438,76 @@ var () {
 }
 
 init () {
-    if [ -f $DATABASE_PATH ]; then
-        echo "Database already exists at '$DATABASE_PATH', cowardly refusing to initalize!"
-        exit 1
-    fi
-
-    if [ ! -f $DATABASE_INIT_SOURCE ]; then
-        echo "Could not locate dump file '$DATABASE_INIT_SOURCE' to initialize database from"
-        exit 1
-    fi
-
-    if sqlite3 $DATABASE_PATH < $DATABASE_INIT_SOURCE; then
-        echo "Successfully initialized $DATABASE_PATH"
+    source=$1
+    if [ -z "$source" ]; then
+        echo "Usage: $0 restore <dump file>"
     else
-        echo "Error initializing database"
+        if [ ! -f $source ]; then
+            echo "Dump file '$source' does not exist"
+            exit 1
+        fi
+        
+        if [ -f $DATABASE_PATH ]; then
+            echo "Database already exists!"
+            echo -n "Continue anyway? [y/n] "
+            read _v
+            if [ "$_v" != "y" ]; then
+                echo "Exiting"
+                exit 1
+            fi
+            
+        fi
+        
+        if sqlite3 $DATABASE_PATH < $source; then
+            echo "Successfully restored $DATABASE_PATH"
+        else
+            echo "Error initializing database"
+        fi
+    fi
+}
+
+dump () {
+    subcommand=$1
+    dumpfile=$2
+
+    if [ -z "$dumpfile" ]; then
+        case $subcommand in
+            "full")
+                exec_sql ".dump"
+                ;;
+            "partial")
+                exec_sql ".dump config"
+                exec_sql ".dump variable_definitions"
+                ;;
+            "config")
+                exec_sql ".dump config"
+                ;;
+            "vardefs")
+                exec_sql ".dump variable_definitions"
+                ;;
+            *)
+                dump_usage
+                ;;
+        esac
+    else
+        case $subcommand in
+            "full")
+                exec_sql ".dump" > $dumpfile
+                ;;
+            "partial")
+                (exec_sql ".dump config"
+                 exec_sql ".dump variable_definitions") > $dumpfile
+                ;;
+            "config")
+                exec_sql ".dump config" > $dumpfile
+                ;;
+            "vardefs")
+                exec_sql ".dump variable_definitions" > $dumpfile
+                ;;
+            *)
+                dump_usage
+                ;;
+        esac
     fi
 }
 
@@ -482,9 +551,14 @@ case $command in
         shift
         var $@
         ;;
-    "init")
+    "init"|"restore")
         shift
         init $@
+        ;;
+    "dump")
+        check_db
+        shift
+        dump $@
         ;;
     "help")
         usage
