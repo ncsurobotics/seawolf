@@ -60,6 +60,7 @@ struct mission_output {
 #define MISSION_MACHETE 7
 #define MISSION_BRIEFCASE_GRAB 77
 #define MISSION_OCTOGON 8
+#define MISSION_STOP 100
 
 static const char* mission_strings[] = {
     [MISSION_WAIT] = "WAIT",
@@ -76,6 +77,7 @@ static const char* mission_strings[] = {
     [MISSION_MACHETE] = "MACHETE",
     [MISSION_BRIEFCASE_GRAB] = "BRIEFCASE_GRAB",
     [MISSION_OCTOGON] = "OCTOGON",
+    [MISSION_STOP] = "STOP",
 };
 
 // Gives the order which the missions are executed.  The initial mission
@@ -84,17 +86,18 @@ static const int mission_order[] = {
     MISSION_GATE,
     //MISSION_GATE_PATH,
     MISSION_BOUY,
+    MISSION_STOP,
     //MISSION_BOUY_PATH,
-    MISSION_HEDGE,
+    //MISSION_HEDGE,
     //MISSION_HEDGE_PATH,
-    MISSION_WINDOW,
+    //MISSION_WINDOW,
     //MISSION_WINDOW_PATH,
-    MISSION_WEAPONS_RUN,
+    //MISSION_WEAPONS_RUN,
     //MISSION_WEAPONS_RUN_PATH,
-    MISSION_MACHETE,
-    MISSION_BRIEFCASE_GRAB,
-    MISSION_OCTOGON,
-    MISSION_WAIT,
+    //MISSION_MACHETE,
+    //MISSION_BRIEFCASE_GRAB,
+    //MISSION_OCTOGON,
+    //MISSION_WAIT,
 };
 
 /*********** Mission Prototypes **************/

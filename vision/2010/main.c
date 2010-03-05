@@ -51,7 +51,7 @@ int main(int argc, char** argv)
        cvNamedWindow("Heading", CV_WINDOW_AUTOSIZE);
     #endif
 
-    // Determino mission_index
+    // Determine mission_index
     int mission_index;
     #ifdef VISION_INITIAL_MISSION
         mission_index = VISION_INITIAL_MISSION;
@@ -124,6 +124,10 @@ int main(int argc, char** argv)
 
             case MISSION_WAIT:
                 //TODO
+            break;
+
+            case MISSION_STOP:
+                Util_usleep(1);
             break;
 
             default:

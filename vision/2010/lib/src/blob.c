@@ -5,7 +5,7 @@
 #include <cv.h>
 #include <highgui.h>
 
-#define MAX_BLOB_AREA 5000
+#define MAX_BLOB_AREA 50000
 
 /**
  * blob()
