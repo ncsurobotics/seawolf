@@ -10,7 +10,7 @@
 
 int main(int argc, char** argv)
 {
-    
+
     // Seawolf Init
     Seawolf_loadConfig("../../conf/seawolf.conf");
     Seawolf_init("Vision Mission Control");
@@ -63,16 +63,16 @@ int main(int argc, char** argv)
     #endif
     printf("Starting Mission: %s\n",
             mission_strings[mission_order[mission_index]]);
-    
+
     for (unsigned int frame_num=0; true; frame_num++)
     {
-        
+
         // State machine
         int current_mission = mission_order[mission_index];
         results.frame = NULL;
         results.mission_done = false;
         switch (current_mission) {
-            
+
             case MISSION_GATE:
                 results = mission_gate_step(results);
             break;
@@ -162,7 +162,7 @@ int main(int argc, char** argv)
                     case MISSION_GATE:
                         results = mission_gate_step(results);
                     break;
-                    
+
                     case MISSION_ALIGN_PATH:
                         results = mission_align_path_step(results);
                     break;
@@ -170,7 +170,7 @@ int main(int argc, char** argv)
                     case MISSION_BOUY:
                         results = mission_bouy_step(results);
                     break;
-                    
+
                     case MISSION_HEDGE:
                         //TODO
                     break;
