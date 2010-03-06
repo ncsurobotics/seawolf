@@ -77,23 +77,15 @@ int main(int argc, char** argv)
                 results = mission_gate_step(results);
             break;
 
-            case MISSION_GATE_PATH:
-                //TODO
+            case MISSION_ALIGN_PATH:
+                results = mission_align_path_step(results);
             break;
 
             case MISSION_BOUY:
                 results = mission_bouy_step(results);
             break;
-            
-            case MISSION_BOUY_PATH:
-                //TODO
-            break;
 
             case MISSION_HEDGE:
-                //TODO
-            break;
-
-            case MISSION_HEDGE_PATH:
                 //TODO
             break;
 
@@ -101,15 +93,7 @@ int main(int argc, char** argv)
                 //TODO
             break;
 
-            case MISSION_WINDOW_PATH:
-                //TODO
-            break;
-
             case MISSION_WEAPONS_RUN:
-                //TODO
-            break;
-
-            case MISSION_WEAPONS_RUN_PATH:
                 //TODO
             break;
 
@@ -178,24 +162,16 @@ int main(int argc, char** argv)
                     case MISSION_GATE:
                         results = mission_gate_step(results);
                     break;
-
-                    case MISSION_GATE_PATH:
-                        //TODO
+                    
+                    case MISSION_ALIGN_PATH:
+                        results = mission_align_path_step(results);
                     break;
 
                     case MISSION_BOUY:
                         results = mission_bouy_step(results);
                     break;
                     
-                    case MISSION_BOUY_PATH:
-                        //TODO
-                    break;
-
                     case MISSION_HEDGE:
-                        //TODO
-                    break;
-
-                    case MISSION_HEDGE_PATH:
                         //TODO
                     break;
 
@@ -203,15 +179,7 @@ int main(int argc, char** argv)
                         //TODO
                     break;
 
-                    case MISSION_WINDOW_PATH:
-                        //TODO
-                    break;
-
                     case MISSION_WEAPONS_RUN:
-                        //TODO
-                    break;
-
-                    case MISSION_WEAPONS_RUN_PATH:
                         //TODO
                     break;
 

@@ -48,52 +48,40 @@ struct mission_output {
 // Mission Constants
 #define MISSION_WAIT 0
 #define MISSION_GATE 1 
-#define MISSION_GATE_PATH 11
 #define MISSION_BOUY 3
-#define MISSION_BOUY_PATH 33
 #define MISSION_HEDGE 4
-#define MISSION_HEDGE_PATH 44
 #define MISSION_WINDOW 5
-#define MISSION_WINDOW_PATH 55
 #define MISSION_WEAPONS_RUN 6
-#define MISSION_WEAPONS_RUN_PATH 66
 #define MISSION_MACHETE 7
 #define MISSION_BRIEFCASE_GRAB 77
 #define MISSION_OCTOGON 8
+#define MISSION_ALIGN_PATH 9
 #define MISSION_STOP 100
 
 static const char* mission_strings[] = {
     [MISSION_WAIT] = "WAIT",
     [MISSION_GATE] = "GATE",
-    [MISSION_GATE_PATH] = "GATE_PATH",
     [MISSION_BOUY] = "BOUY",
-    [MISSION_BOUY_PATH] = "BOUY_PATH",
     [MISSION_HEDGE] = "HEDGE",
-    [MISSION_HEDGE_PATH] = "HEDGE_PATH",
     [MISSION_WINDOW] = "WINDOW",
-    [MISSION_WINDOW_PATH] = "WINDOW_PATH",
     [MISSION_WEAPONS_RUN] = "WEAPONS_RUN",
-    [MISSION_WEAPONS_RUN_PATH] = "WEAPONS_RUN_PATH",
     [MISSION_MACHETE] = "MACHETE",
     [MISSION_BRIEFCASE_GRAB] = "BRIEFCASE_GRAB",
     [MISSION_OCTOGON] = "OCTOGON",
     [MISSION_STOP] = "STOP",
+    [MISSION_ALIGN_PATH] = "ALIGN_PATH"
 };
 
 // Gives the order which the missions are executed.  The initial mission
 // defaults to 0, but can be changed in debug.mk
 static const int mission_order[] = {
     MISSION_GATE,
-    //MISSION_GATE_PATH,
     MISSION_BOUY,
+    MISSION_ALIGN_PATH,
     MISSION_STOP,
-    //MISSION_BOUY_PATH,
     //MISSION_HEDGE,
-    //MISSION_HEDGE_PATH,
     //MISSION_WINDOW,
-    //MISSION_WINDOW_PATH,
     //MISSION_WEAPONS_RUN,
-    //MISSION_WEAPONS_RUN_PATH,
     //MISSION_MACHETE,
     //MISSION_BRIEFCASE_GRAB,
     //MISSION_OCTOGON,
@@ -108,5 +96,9 @@ struct mission_output mission_gate_step(struct mission_output);
 // Bouy
 void mission_bouy_init(IplImage* frame);
 struct mission_output mission_bouy_step(struct mission_output);
+
+// Path
+void mission_align_path_init(IplImage* frame);
+struct mission_output mission_align_path_step(struct mission_output);
 
 #endif
