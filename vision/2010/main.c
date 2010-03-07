@@ -9,6 +9,7 @@
 #define MAX_RHO   50
 
 // Prototypes
+void mission_init(int current_mission, IplImage* frame);
 struct mission_output* mission_step(struct mission_output* results, int mission);
 
 int main(int argc, char** argv)
@@ -64,8 +65,8 @@ int main(int argc, char** argv)
     #else
         mission_index = 0;
     #endif
-    printf("Starting Mission: %s\n",
-            mission_strings[mission_order[mission_index]]);
+    results.frame = multicam_get_frame(FORWARD_CAM);
+    mission_init(mission_order[mission_index], results.frame);
 
     for (unsigned int frame_num=0; true; frame_num++)
     {
@@ -90,67 +91,16 @@ int main(int argc, char** argv)
                 Var_set("DepthHeading", results.depth);
             }
             Var_set("TrackerDoDepth", results.depth_control);
-
             Notify_send("UPDATED", "SetPointVision");
             previous_results = results;
 
             // Switch missions
             if (results.mission_done) {
                 results.mission_done = false;
-                printf("Finished mission: ");
-                printf("%s\n", mission_strings[current_mission]);
+                printf("Finished mission: %s\n",
+                        mission_strings[current_mission]);
                 mission_index++;
-                printf("Starting mission: ");
-                printf("%s\n", mission_strings[mission_order[mission_index]]);
-
-                // Init Next Mission
-                switch (current_mission) {
-
-                    case MISSION_GATE:
-                        results = mission_gate_step(results);
-                    break;
-
-                    case MISSION_ALIGN_PATH:
-                        results = mission_align_path_step(results);
-                    break;
-
-                    case MISSION_BOUY:
-                        results = mission_bouy_step(results);
-                    break;
-
-                    case MISSION_HEDGE:
-                        //TODO
-                    break;
-
-                    case MISSION_WINDOW:
-                        //TODO
-                    break;
-
-                    case MISSION_WEAPONS_RUN:
-                        //TODO
-                    break;
-
-                    case MISSION_MACHETE:
-                        //TODO
-                    break;
-
-                    case MISSION_BRIEFCASE_GRAB:
-                        //TODO
-                    break;
-
-                    case MISSION_OCTOGON:
-                        //TODO
-                    break;
-
-                    case MISSION_WAIT:
-                        //TODO
-                    break;
-
-                    default:
-                        printf("Error: Invalid mission \"%d\"", current_mission);
-                        exit(1);
-                    break;
-                }
+                mission_init(current_mission, results.frame);
 
             }
 
@@ -190,6 +140,59 @@ int main(int argc, char** argv)
 
     }
 
+}
+
+void mission_init(int current_mission, IplImage* frame)
+{
+    printf("Starting Mission: %s\n", mission_strings[current_mission]);
+    switch (current_mission) {
+
+        case MISSION_GATE:
+            mission_gate_init(frame);
+        break;
+
+        case MISSION_ALIGN_PATH:
+            mission_align_path_init(frame);
+        break;
+
+        case MISSION_BOUY:
+            mission_bouy_init(frame);
+        break;
+
+        case MISSION_HEDGE:
+            //TODO
+        break;
+
+        case MISSION_WINDOW:
+            //TODO
+        break;
+
+        case MISSION_WEAPONS_RUN:
+            //TODO
+        break;
+
+        case MISSION_MACHETE:
+            //TODO
+        break;
+
+        case MISSION_BRIEFCASE_GRAB:
+            //TODO
+        break;
+
+        case MISSION_OCTOGON:
+            //TODO
+        break;
+
+        case MISSION_WAIT:
+            //TODO
+        break;
+
+        default:
+            printf("Error: Invalid mission \"%d\"", current_mission);
+            exit(1);
+        break;
+
+    }
 }
 
 struct mission_output* mission_step(struct mission_output* results, int mission)

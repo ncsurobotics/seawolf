@@ -38,7 +38,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
     IplImage* ipl_out = NULL;
     RGBPixel color = {0xff, 0x00, 0x00};
     CvSeq* lines;
-    IplImage* frame = multicam_get_frame(FORWARD_CAM);
+    IplImage* frame = multicam_get_frame(DOWN_CAM);
     ipl_out = cvCreateImage(cvGetSize(frame),8,3);
     result.frame = frame;
 
