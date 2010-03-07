@@ -8,6 +8,9 @@
 #define MAX_PHI   20
 #define MAX_RHO   50
 
+// Prototypes
+struct mission_output* mission_step(struct mission_output* results, int mission);
+
 int main(int argc, char** argv)
 {
 
@@ -67,67 +70,11 @@ int main(int argc, char** argv)
     for (unsigned int frame_num=0; true; frame_num++)
     {
 
-        // State machine
+        // Run mission_step
         int current_mission = mission_order[mission_index];
         results.frame = NULL;
         results.mission_done = false;
-        switch (current_mission) {
-
-            case MISSION_GATE:
-                results = mission_gate_step(results);
-            break;
-
-            case MISSION_ALIGN_PATH:
-                results = mission_align_path_step(results);
-            break;
-
-            case MISSION_BOUY:
-                results = mission_bouy_step(results);
-            break;
-
-            case MISSION_HEDGE:
-                //TODO
-            break;
-
-            case MISSION_WINDOW:
-                //TODO
-            break;
-
-            case MISSION_WEAPONS_RUN:
-                //TODO
-            break;
-
-            case MISSION_MACHETE:
-                //TODO
-            break;
-
-            case MISSION_BRIEFCASE_GRAB:
-                //TODO
-            break;
-
-            case MISSION_OCTOGON:
-                //TODO
-            break;
-
-            case MISSION_WAIT:
-                //TODO
-            break;
-
-            case MISSION_STOP:
-                Util_usleep(1);
-                results.theta=0;
-                results.phi=0;
-                results.rho=0;
-                results.depth_control=DEPTH_ABSOLUTE;
-                results.depth=0;
-            break;
-
-            default:
-                printf("Error: Invalid mission \"%d\"", current_mission);
-                exit(1);
-            break;
-        }
-
+        results = *mission_step(&results, current_mission);
         printf("Theta, Phi, Rho: %f, %f, %f\n", results.theta, results.phi, results.rho);
 
         // Give mission control its heading
@@ -232,4 +179,66 @@ int main(int argc, char** argv)
 
     }
 
+}
+
+struct mission_output* mission_step(struct mission_output* results, int mission)
+{
+    switch (mission) {
+
+        case MISSION_GATE:
+            *results = mission_gate_step(*results);
+        break;
+
+        case MISSION_ALIGN_PATH:
+            *results = mission_align_path_step(*results);
+        break;
+
+        case MISSION_BOUY:
+            *results = mission_bouy_step(*results);
+        break;
+
+        case MISSION_HEDGE:
+            //TODO
+        break;
+
+        case MISSION_WINDOW:
+            //TODO
+        break;
+
+        case MISSION_WEAPONS_RUN:
+            //TODO
+        break;
+
+        case MISSION_MACHETE:
+            //TODO
+        break;
+
+        case MISSION_BRIEFCASE_GRAB:
+            //TODO
+        break;
+
+        case MISSION_OCTOGON:
+            //TODO
+        break;
+
+        case MISSION_WAIT:
+            //TODO
+        break;
+
+        case MISSION_STOP:
+            Util_usleep(1);
+            results->theta = 0;
+            results->phi = 0;
+            results->rho = 0;
+            results->depth_control = DEPTH_ABSOLUTE;
+            results->depth = 0;
+        break;
+
+        default:
+            printf("Error: Invalid mission \"%d\"", mission);
+            exit(1);
+        break;
+    }
+
+    return results;
 }
