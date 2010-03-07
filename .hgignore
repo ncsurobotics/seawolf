@@ -4,9 +4,18 @@ syntax: glob
 *.db
 *.log
 *~
+*.swp
 
 syntax: regexp
 ^libseawolf/hub$
 ^libseawolf/doc/
 ^serial/bin/
+^serial/serialapp
 ^applications/bin/
+
+# Vision
+syntax: regexp
+^vision/.*\.jpe?g$
+^vision/2010/main$
+^vision/2010/debug.mk$
+^vision/2010/lib/doc/
