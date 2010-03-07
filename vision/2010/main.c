@@ -175,6 +175,17 @@ int main(int argc, char** argv)
         }
         switch ( (char) key) {
             // Keyboard Commands
+
+            // Pause
+            case ' ':
+                printf("Paused.  Press space bar to unpause.\n");
+                while (true) {
+                    key = cvWaitKey(100);
+                    if (key == 27) exit(0);
+                    if (key == ' ') break;
+                }
+            break;
+
         }
 
     }
