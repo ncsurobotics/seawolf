@@ -60,7 +60,7 @@ struct mission_output mission_gate_step(struct mission_output result)
         color.b=0x00;
         grey = cvCreateImage(cvGetSize(frame), 8, 1);
         ipl_out = cvCreateImage(cvGetSize(frame),8,3);
-        num_pixels = FindTargetColor(frame, ipl_out, &color, 80, 256);
+        num_pixels = FindTargetColor(frame, ipl_out, &color, 80, 256,2);
         cvCvtColor(ipl_out, grey, CV_BGR2GRAY); 
         edge = edge_opencv(grey, 40, 60, 3);
         edge = remove_edges(frame, edge, 0,0,0,0,0,0); // For now this isn't neccessary, leavin in for debugging

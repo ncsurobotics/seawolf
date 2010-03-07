@@ -12,7 +12,7 @@ struct RGBPixel_s {
 typedef struct RGBPixel_s RGBPixel;
 
 //Functions: 
-int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsize, int dev_threshold);
+int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsize, int dev_threshold, double precision_threshold);
 
 float Pixel_stddev(RGBPixel* px_1, RGBPixel* px_2);
 

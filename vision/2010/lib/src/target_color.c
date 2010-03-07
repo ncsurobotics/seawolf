@@ -11,7 +11,7 @@
 #include <cv.h>
 #include <highgui.h>  
 
-int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsize, int dev_threshold){ //should find the set of colors closest to the target color
+int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsize, int dev_threshold, double precision_threshold){ //should find the set of colors closest to the target color
     int i,j,s;
     int* sigmas; //holds the accumulation for all possible standard deviations in the image
     int blobsize = 0; //current number of pixels found in color "blob" (not necceserily a single blob)
@@ -51,7 +51,7 @@ int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsi
 
     averagestddev= Pixel_stddev(color,&imgAverage); 
 
-    for(i=0; (blobsize < min_blobsize || i < smallest_stddev + (averagestddev-smallest_stddev)/2)  && i<dev_threshold;i++){ //analyze data to determine sigma
+    for(i=0; (blobsize < min_blobsize || i < smallest_stddev + (averagestddev-smallest_stddev)/precision_threshold)  && i<dev_threshold;i++){ //analyze data to determine sigma
         if(sigmas[i] != 0 && smallest_stddev < 0 )
         smallest_stddev = i;
     blobsize += sigmas[i]; 

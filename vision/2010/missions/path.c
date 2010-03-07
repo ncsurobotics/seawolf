@@ -48,7 +48,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
     int rho=result.rho;
 
     // Run a color filter on the frame to select the path's color
-    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 250);
+    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 250,3);
 
     // Run hough transform to look for line
     grey = cvCreateImage(cvGetSize(frame), 8, 1);
@@ -181,7 +181,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
                 int seen_blob = 0;
                 int lost_path = 0;
                 float last_theta = -999; // Used to keep track of the correct end of the marker
-                //mission = mission_done(); MOVE ON TO THE NEXT MISSION
+                result.mission_done = true;
             }
             // Now set the rho (we do still want to try to stay centered, and y
             // is the easy direction

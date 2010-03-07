@@ -43,7 +43,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
     // Sscan image for color
     IplImage* ipl_out;
     ipl_out = cvCreateImage(cvGetSize (frame), 8, 3);
-    int num_pixels = FindTargetColor(frame, ipl_out, &color, 80, 256);
+    int num_pixels = FindTargetColor(frame, ipl_out, &color, 80, 256, 2);
 
     // Find blobs
     BLOB *blobs;
