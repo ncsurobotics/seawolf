@@ -56,7 +56,7 @@ struct mission_output {
 #define MISSION_BRIEFCASE_GRAB 77
 #define MISSION_OCTOGON 8
 #define MISSION_ALIGN_PATH 9
-#define MISSION_STOP 100
+#define MISSION_STOP 10
 
 static const char* mission_strings[] = {
     [MISSION_WAIT] = "WAIT",
@@ -78,6 +78,7 @@ static const int mission_order[] = {
     MISSION_GATE,
     MISSION_BOUY,
     MISSION_ALIGN_PATH,
+    MISSION_HEDGE,
     MISSION_STOP,
     //MISSION_HEDGE,
     //MISSION_WINDOW,
@@ -90,7 +91,7 @@ static const int mission_order[] = {
 
 /*********** Mission Prototypes **************/
 // Gate
-void mission_gate_init(IplImage* frame);
+void mission_gate_init(IplImage* frame, double depth);
 struct mission_output mission_gate_step(struct mission_output);
 
 // Bouy

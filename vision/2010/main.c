@@ -100,6 +100,7 @@ int main(int argc, char** argv)
                 printf("Finished mission: %s\n",
                         mission_strings[current_mission]);
                 mission_index++;
+                current_mission = mission_order[mission_index];
                 mission_init(current_mission, results.frame);
 
             }
@@ -148,7 +149,7 @@ void mission_init(int current_mission, IplImage* frame)
     switch (current_mission) {
 
         case MISSION_GATE:
-            mission_gate_init(frame);
+            mission_gate_init(frame, 2.0);
         break;
 
         case MISSION_ALIGN_PATH:
@@ -160,7 +161,7 @@ void mission_init(int current_mission, IplImage* frame)
         break;
 
         case MISSION_HEDGE:
-            //TODO
+            mission_gate_init(frame, 2.0);
         break;
 
         case MISSION_WINDOW:
@@ -185,6 +186,9 @@ void mission_init(int current_mission, IplImage* frame)
 
         case MISSION_WAIT:
             //TODO
+        break;
+
+        case MISSION_STOP:
         break;
 
         default:
@@ -212,7 +216,7 @@ struct mission_output* mission_step(struct mission_output* results, int mission)
         break;
 
         case MISSION_HEDGE:
-            //TODO
+            *results = mission_gate_step(*results);
         break;
 
         case MISSION_WINDOW:

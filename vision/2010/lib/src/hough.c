@@ -9,6 +9,9 @@
 #include <highgui.h>
 #include <math.h>
 
+/**
+ * Defines polar coordinates
+ */
 typedef struct CvLinePolar
 {
     float rho;
@@ -16,11 +19,13 @@ typedef struct CvLinePolar
 } CvLinePolar;
 
 /**
+ * \brief Hough Transform!!!!
  * hough
  * Runs a hough transform on the given image and returns a sequence of lines
  * found.
  * ARGUMENTS: targetAngle: desired angle ranging from 0-180 degrees
  *           angleThreshold: allowable error in degrees
+ * \return Sequence
  */
 CvSeq* hough(IplImage* img, IplImage* original, int threshold, int linesMax,int targetAngle, int angleThreshold, int clusterSize, int clusterWidth, int clusterHeight)
 {

@@ -13,14 +13,15 @@
 // State variables for GATE (static limits scope to file)
 static int WHITE_GATE_FLAG =0; // Set to zero to look for black gate
 static int close_to_gate =0; // Number of consecutive frames we've seen something we think is a gate
-static int gate_width =0; // The width of the last gate we saw 
+static int gate_width =0; // The width of the last gate we saw
 static int frames_since_seen_gate = 0; // Frames since we've seen the gate
 static int seen_gate = 0;
 static int left_pole = 0;
 static int right_pole = 0;
 static int seen_both_poles = 0; // Increments every time we see both poles
+static double desired_depth = 2.0;
 
-void mission_gate_init(IplImage* frame)
+void mission_gate_init(IplImage* frame, double depth)
 {
     close_to_gate = 0;
     gate_width = 0;
@@ -29,6 +30,7 @@ void mission_gate_init(IplImage* frame)
     left_pole = 0;
     right_pole = frame->width;
     seen_both_poles = 0;
+    desired_depth = depth;
 }
 
 struct mission_output mission_gate_step(struct mission_output result)
@@ -41,10 +43,10 @@ struct mission_output mission_gate_step(struct mission_output result)
     IplImage* frame = multicam_get_frame(FORWARD_CAM);
     result.frame = frame;
     int num_pixels;
-    
+
     // Set the depth
     result.depth_control = DEPTH_ABSOLUTE;
-    result.depth = 4.0;
+    result.depth = desired_depth;
 
     // Find lines, white or black
     if (WHITE_GATE_FLAG) { // LOOK FOR WHITE LINES
@@ -61,7 +63,7 @@ struct mission_output mission_gate_step(struct mission_output result)
         grey = cvCreateImage(cvGetSize(frame), 8, 1);
         ipl_out = cvCreateImage(cvGetSize(frame),8,3);
         num_pixels = FindTargetColor(frame, ipl_out, &color, 80, 256,2);
-        cvCvtColor(ipl_out, grey, CV_BGR2GRAY); 
+        cvCvtColor(ipl_out, grey, CV_BGR2GRAY);
         edge = edge_opencv(grey, 40, 60, 3);
         edge = remove_edges(frame, edge, 0,0,0,0,0,0); // For now this isn't neccessary, leavin in for debugging
         lines = hough(edge, frame, 20, 2, 90,20, 10, 150, 150);
@@ -93,7 +95,7 @@ struct mission_output mission_gate_step(struct mission_output result)
         if(abs(frame->width - gate_width) < frame->width / 4)
             close_to_gate++;   // We are close to the gate
         else if(abs(frame->width-gate_width) > frame->width/5)
-            close_to_gate = 0; // We arn't close to the gate 
+            close_to_gate = 0; // We arn't close to the gate
 
         // Assign values to the left and right poles
         left_pole = pt_gate[0]<pt_gate[1]?pt_gate[0]:pt_gate[1];
@@ -143,7 +145,7 @@ struct mission_output mission_gate_step(struct mission_output result)
         cvCircle(result.frame, cvPoint(result.theta, frame->height/2), 5, cvScalar(0,0,0,255),1,8,0);
     #endif
 
-    // Scale output 
+    // Scale output
     result.theta -= frame->width/2;
     result.theta = (result.theta*MAX_THETA / (frame->width/2))/6;
     result.phi = 0;
