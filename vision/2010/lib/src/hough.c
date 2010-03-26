@@ -243,6 +243,7 @@ CvSeq* hough(IplImage* img, IplImage* original, int threshold, int linesMax,int 
         cvConvertImage(img, debug_image, CV_GRAY2BGR);
         hough_draw_lines(debug_image, lines);
         cvShowImage("Hough Lines", debug_image);
+        cvReleaseImage(&debug_image);
     #endif
 
     return lines;
