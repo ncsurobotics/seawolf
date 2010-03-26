@@ -53,9 +53,11 @@ static int comm_socket;
 /** Task handle for thread that recieves incoming messages */
 static Task_Handle receive_thread;
 
-/** Current running state. Incoming message thread will terminate when this is
-    false */
-static bool running = false;
+/** Component initialization status */
+static bool initialized = false;
+
+/** Signals that the current application has been disconnected from the hub */
+static bool hub_shutdown = false;
 
 /** Current size of the response set table */
 static size_t response_set_size = RESPONSE_SET_GROW;
@@ -92,10 +94,6 @@ static int Comm_receiveThread(void);
 void Comm_init(void) {
     struct sockaddr_in addr;
 
-    /* Prepare response set */
-    response_set = calloc(response_set_size, sizeof(Comm_Message*));
-    response_pending = calloc(response_set_size, sizeof(bool));
-
     /* Build connection address */
     addr.sin_family = AF_INET;
     addr.sin_addr.s_addr = inet_addr(comm_server);
@@ -114,8 +112,12 @@ void Comm_init(void) {
         Seawolf_exitError();
     }
     
+    /* Prepare response set */
+    response_set = calloc(response_set_size, sizeof(Comm_Message*));
+    response_pending = calloc(response_set_size, sizeof(bool));
+
     /* Run receive thread */
-    running = true;
+    initialized = true;
     receive_thread = Task_background(&Comm_receiveThread);
 
     /* Authenticate */
@@ -200,9 +202,15 @@ static int Comm_receiveThread(void) {
     Comm_Message* message;
     unsigned short error_count = 0;
 
-    while(running) {
+    while(initialized) {
         packed_message = Comm_receivePackedMessage();
         if(packed_message == NULL) {
+            if(Seawolf_closing()) {
+                /* Library is closing and we've already been disconnected from
+                   the hub. Exit the main loop */
+                break;
+            }
+
             error_count++;
             if(error_count > MAX_RECEIVE_ERROR) {
                 Logging_log(CRITICAL, "Lost connection to hub, terminating!");
@@ -227,6 +235,12 @@ static int Comm_receiveThread(void) {
         } else if(strcmp(message->components[0], "NOTIFY") == 0) {
             /* Inbound notification */
             Notify_inputMessage(message);
+        } else if(strcmp(message->components[0], "COMM") == 0) {
+            if(strcmp(message->components[1], "SHUTDOWN") == 0) {
+                hub_shutdown = true;
+                Seawolf_exit();
+            }
+            Comm_Message_destroyUnpacked(message);
         } else {
             /* Unknown, unsolicited message */
             Comm_Message_destroyUnpacked(message);
@@ -250,16 +264,28 @@ static int Comm_receiveThread(void) {
  */
 Comm_Message* Comm_sendMessage(Comm_Message* message) {
     static pthread_mutex_t send_lock = PTHREAD_MUTEX_INITIALIZER;
-    Comm_PackedMessage* packed_message = Comm_packMessage(message);
+    Comm_PackedMessage* packed_message;
     Comm_Message* response = NULL;
+    int n;
+
+    if(hub_shutdown) {
+        return NULL;
+    }
+
+    /* Pack message */
+    packed_message = Comm_packMessage(message);
 
     /* Send data */
     pthread_mutex_lock(&send_lock);
-    send(comm_socket, packed_message->data, packed_message->length, 0);
+    n = send(comm_socket, packed_message->data, packed_message->length, 0);
     pthread_mutex_unlock(&send_lock);
 
     /* Destroy sent message */
     Comm_PackedMessage_destroy(packed_message);
+
+    if(n == -1) {
+        Seawolf_exitError();
+    }
 
     /* Expect a response and wait for it */
     if(message->request_id != 0) {
@@ -516,20 +542,39 @@ void Comm_setPort(uint16_t port) {
  * \private
  */
 void Comm_close(void) {
+    Comm_Message* message;
+    Comm_Message* response;
+
     /* This check is necessary if an error condition is reached in Comm_init */
-    if(running) {
-        running = false;
+    if(initialized) {
+        if(!hub_shutdown) {
+            message = Comm_Message_new(2);
+            message->components[0] = strdup("COMM");
+            message->components[1] = strdup("SHUTDOWN");
+            Comm_assignRequestID(message);
+
+            response = Comm_sendMessage(message);
+
+            free(message->components[0]);
+            free(message->components[1]);
+            Comm_Message_destroy(message);
+            Comm_Message_destroyUnpacked(response);
+        }
+            
         shutdown(comm_socket, SHUT_RDWR);
         Task_wait(receive_thread);
 
         free(response_set);
         free(response_pending);
+
+        initialized = false;
     }
 
-    if(comm_server != NULL) {
+    if(comm_server) {
         free(comm_server);
     }
-    if(auth_password != NULL) {
+    
+    if(auth_password) {
         free(auth_password);
     }
 }

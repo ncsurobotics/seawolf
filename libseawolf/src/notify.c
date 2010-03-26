@@ -268,25 +268,25 @@ void Notify_filter(int filter_type, char* filter) {
  * \private
  */
 void Notify_close() {
-    if(!initialized) {
-        return;
-    }
-
     char* msg;
 
-    /* Free each filter string */
-    for(int i = 0; i < filters_n; i++) {
-        free(filters[i]);
-    }
+    if(initialized) {
+        /* Free each filter string */
+        for(int i = 0; i < filters_n; i++) {
+            free(filters[i]);
+        }
+        
+        /* Free the filters arrays */
+        free(filters);
+        
+        /* Free remaining messages */
+        while((msg = Queue_pop(notification_queue, false)) != NULL) {
+            free(msg);
+        }
+        Queue_destroy(notification_queue);
 
-    /* Free the filters arrays */
-    free(filters);
-
-    /* Free remaining messages */
-    while((msg = Queue_pop(notification_queue, false)) != NULL) {
-        free(msg);
+        initialized = false;
     }
-    Queue_destroy(notification_queue);
 }
 
 /** \} */

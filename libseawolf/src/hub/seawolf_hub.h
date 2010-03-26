@@ -11,6 +11,7 @@
 #define RESPOND_TO_NONE 0
 #define RESPOND_TO_SENDER 1
 #define RESPOND_TO_ALL 2
+#define SHUTDOWN_SENDER 3
 
 struct Hub_Var_s {
     char* name;
@@ -41,8 +42,8 @@ const char* Hub_DB_getString(Hub_DB_Result* result, int col);
 void Hub_DB_close(void);
 
 void Hub_Var_init(void);
-float Hub_Var_get(const char* name);
-void Hub_Var_set(const char* name, double value);
+Hub_Var* Hub_Var_get(const char* name);
+int Hub_Var_set(const char* name, double value);
 void Hub_Var_close(void);
 
 void Hub_Logging_init(void);

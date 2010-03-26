@@ -28,7 +28,7 @@ int main(void) {
                         \n\
                         \n\
     %-7d     %7d        \n\
-                        \n\
+n                        \n\
                         \n\
                         \n\
     %10d                \n\
@@ -84,6 +84,8 @@ int main(void) {
         }
     }
 
+    endwin();
+
     /* Turn off drivers */
     Var_set("PortX", 0);
     Var_set("PortY", 0);
@@ -92,6 +94,5 @@ int main(void) {
     Var_set("Aft", 0);
 
     Seawolf_close();
-    endwin();
     return 0;
 }

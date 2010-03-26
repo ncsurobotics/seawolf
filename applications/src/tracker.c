@@ -26,11 +26,13 @@
 #define RHO_Ki 0
 #define RHO_Kd 0
 
+static int thruster_max;
+
 static void dataOut(double mv[3], bool do_depth, bool do_yaw) {
     /* Base value for horizontal thrusters */
     float port_x, star_x;
-    port_x = Util_inRange(-THRUSTER_MAX, mv[RHO], THRUSTER_MAX);
-    star_x = Util_inRange(-THRUSTER_MAX, mv[RHO], THRUSTER_MAX);
+    port_x = Util_inRange(-thruster_max, mv[RHO], thruster_max);
+    star_x = Util_inRange(-thruster_max, mv[RHO], thruster_max);
     
     /* Offset for yaw */
     if(do_yaw) {
@@ -38,8 +40,8 @@ static void dataOut(double mv[3], bool do_depth, bool do_yaw) {
         star_x -= mv[THETA];
 
         /* Bounds check again */
-        port_x = Util_inRange(-THRUSTER_MAX, port_x, THRUSTER_MAX);
-        star_x = Util_inRange(-THRUSTER_MAX, star_x, THRUSTER_MAX);
+        port_x = Util_inRange(-thruster_max, port_x, thruster_max);
+        star_x = Util_inRange(-thruster_max, star_x, thruster_max);
     }
 
     /* Send out to thrusters */    
@@ -78,6 +80,8 @@ int main(void) {
 
     /* Notify buffers */
     char action[16], data[16];
+
+    thruster_max = Var_get("ThrusterMax");
 
     /* Only receive SetPoint updates */
     Notify_filter(FILTER_MATCH, "UPDATED SetPoint");

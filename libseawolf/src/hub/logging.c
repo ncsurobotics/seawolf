@@ -17,11 +17,24 @@ static bool replicate_stdout = false;
 
 void Hub_Logging_init(void) {
     char* path = Hub_Config_getOption("log_file");
+    Hub_Var* var;
 
+    /* Retrieve log level */
+    var = Hub_Var_get("LogLevel");
+    if(var) {
+        min_log_level = var->value;
+    }
+
+    /* Replicate messages to standard output */
+    var = Hub_Var_get("LogReplicateStdout");
+    if(var) {
+        replicate_stdout = (var->value == 1.0);
+    }
+    
     if(path) {
         log_file_fd = open(path, O_RDWR|O_SYNC|O_CREAT|O_APPEND, S_IRUSR|S_IWUSR);
         if(log_file_fd == -1) {
-            Hub_Logging_log(ERROR, __Util_format("Could not open log file: %s", strerror(errno)));
+            Hub_Logging_log(ERROR, Util_format("Could not open log file: %s", strerror(errno)));
             log_file_fd = STDOUT_FILENO;
         }
         free(path);
@@ -31,15 +44,8 @@ void Hub_Logging_init(void) {
 
     log_file = fdopen(log_file_fd, "a");
     if(log_file == NULL) {
-        Hub_Logging_log(ERROR, __Util_format("Unable to associated log file descriptor with file handle: %s", strerror(errno)));
+        Hub_Logging_log(ERROR, Util_format("Unable to associated log file descriptor with file handle: %s", strerror(errno)));
     }
-
-    min_log_level = Hub_Var_get("LogLevel");
-    if(min_log_level == -1) {
-        min_log_level = NORMAL;
-    }
-
-    replicate_stdout = (Hub_Var_get("LogReplicateStdout") == 1);
 
     initialized = true;
 }
@@ -53,14 +59,14 @@ void Hub_Logging_log(short log_level, char* msg) {
 void Hub_Logging_logWithName(char* app_name, short log_level, char* msg) {
     time_t t;
 
-    if(!initialized || replicate_stdout) {
-        printf("[%s][%s] %s\n", app_name, Logging_getLevelName(log_level), msg);
+    time(&t);
+    strftime(time_buffer, TIME_BUFFER_SIZE, "%H:%M:%S", localtime(&t));
+
+    if(!initialized || (replicate_stdout && log_file_fd != STDOUT_FILENO)) {
+        printf("[%s][%s][%s] %s\n", time_buffer, app_name, Logging_getLevelName(log_level), msg);
     }
 
     if(initialized) {
-        time(&t);
-        strftime(time_buffer, TIME_BUFFER_SIZE, "%H:%M:%S", localtime(&t));
-
         fprintf(log_file, "[%s][%s][%s] %s\n", time_buffer, app_name, Logging_getLevelName(log_level), msg);
         fflush(log_file);
     }

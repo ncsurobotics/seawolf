@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
                 Var_set("SetPointVision.Theta", 0);
                 Var_set("SetPointVision.Phi", 0);
                 Var_set("SetPointVision.Rho", 0);
-                Var_set("SetPointSource", SETPOINT_SOURCE_VISION);
+                Var_set("SetPointSource", Var_get("SetPointSource:Vision"));
 
                 Var_set("PortX", 0);
                 Var_set("StarX", 0);

@@ -98,19 +98,20 @@ char* Logging_getLevelName(short log_level) {
  */
 void Logging_log(short log_level, char* msg) {
     static char* namespace = "LOG";
+    char log_level_str[4];
 
     /* Only log messages with a log level at least as high as min_debug_level */
     if(log_level >= min_log_level) {
         if(initialized) {
             Comm_Message* log_message = Comm_Message_new(4);
 
+            snprintf(log_level_str, 4, "%d", log_level);
             log_message->components[0] = namespace;
             log_message->components[1] = Seawolf_getName();
-            log_message->components[2] = strdup(__Util_format("%d", log_level));
+            log_message->components[2] = log_level_str;
             log_message->components[3] = msg;
 
             Comm_sendMessage(log_message);
-            free(log_message->components[2]);
             Comm_Message_destroy(log_message);
         }
 
@@ -129,11 +130,7 @@ void Logging_log(short log_level, char* msg) {
  * \private
  */
 void Logging_close(void) {
-    if(!initialized) {
-        return;
-    }
-
-    /* nothing to do */
+    initialized = false;
 }
 
 /** \} */

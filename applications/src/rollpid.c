@@ -1,8 +1,10 @@
 
 #include "seawolf.h"
 
+static int thruster_max;
+
 static void dataOut(double mv) {
-    int out = Util_inRange(-THRUSTER_MAX, (int) mv, THRUSTER_MAX);
+    int out = Util_inRange(-thruster_max, (int) mv, thruster_max);
     Notify_send("THRUSTER_REQUEST", Util_format("Roll %d %d", out, -out));
 }
 
@@ -13,6 +15,8 @@ int main(void) {
     PID* pid;
     char action[64], data[64];
     double mv;
+
+    thruster_max = Var_get("ThrusterMax");
 
     Notify_filter(FILTER_MATCH, "UPDATED RollPID");
     Notify_filter(FILTER_MATCH, "UPDATED IMU");

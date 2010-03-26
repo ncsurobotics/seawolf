@@ -263,6 +263,8 @@
 void Seawolf_init(const char* name);
 void Seawolf_close(void);
 void Seawolf_exitError(void);
+void Seawolf_exit(void);
+bool Seawolf_closing(void);
 char* Seawolf_getName(void);
 
 #endif // #ifndef __SEAWOLF_ROOT_INCLUDE_H

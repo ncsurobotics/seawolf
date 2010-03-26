@@ -5,7 +5,7 @@ OUTPUT=$(SRCS:%.c=$(BIN_DIR)/%)
 all: $(OUTPUT)
 
 $(BIN_DIR)/%: %.c
-	$(CC) $(CFLAGS) $(LDFLAGS) $(shell cat $(<:%.c=%.flags)) -o $@ $<
+	$(CC) $(CFLAGS) $(LDFLAGS) $(shell cat $(<:%.c=%.flags) 2>/dev/null) -o $@ $<
 
 clean:
 	@for _f in $(OUTPUT); do \

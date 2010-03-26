@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
         }
         printf("\n");
 
-        Util_usleep(0.01);
+        Util_usleep(0.25);
     }
 
     free(lengths);

@@ -32,7 +32,7 @@ static Comm_Message* Hub_Net_receiveMessage(int comm_socket) {
     packed_message->data = malloc(packed_message->length);
 
     if((n = recv(comm_socket, packed_message->data, packed_message->length, MSG_WAITALL)) != packed_message->length) {
-        Hub_Logging_log(WARNING, __Util_format("Received invalid message: %d %d", packed_message->length, n));
+        Hub_Logging_log(WARNING, Util_format("Received invalid message: %d %d", packed_message->length, n));
         Comm_PackedMessage_destroy(packed_message);
         return NULL;
     }
@@ -72,6 +72,13 @@ static void Hub_Net_removeClient(int i) {
     client_errors[i] = 0;
 }
 
+static void Hub_Net_responseDestroy(Comm_Message* response) {
+    for(int i = 0; i < response->count; i++) {
+        free(response->components[i]);
+    }
+    Comm_Message_destroy(response);
+}
+
 void Hub_Net_mainLoop(void) {
     int svr_sock = 0; /* server socket */
     int client_new = 0; /* temp place for incoming connections */
@@ -81,8 +88,8 @@ void Hub_Net_mainLoop(void) {
     Comm_Message* client_message;
     Comm_Message* response;
     Comm_PackedMessage* packed_response;
-    int respond_to;
     int n, i, j; /* misc */
+    int action;
 
     /* Clear all descriptors */
     memset(client_socks, 0, sizeof(int) * MAX_CLIENTS);
@@ -102,7 +109,7 @@ void Hub_Net_mainLoop(void) {
     /* Create the socket */
     svr_sock = socket(AF_INET, SOCK_STREAM, 0);
     if(svr_sock == -1) {
-        Hub_Logging_log(CRITICAL, __Util_format("Error creating socket: %s", strerror(errno)));
+        Hub_Logging_log(CRITICAL, Util_format("Error creating socket: %s", strerror(errno)));
         Hub_exitError();
     }
 
@@ -112,7 +119,7 @@ void Hub_Net_mainLoop(void) {
 
     /* Bind the socket to the server port/address */
     if(bind(svr_sock, (struct sockaddr*) &svr_addr, sizeof(svr_addr)) == -1) {
-        Hub_Logging_log(CRITICAL, __Util_format("Error binding socket: %s", strerror(errno)));
+        Hub_Logging_log(CRITICAL, Util_format("Error binding socket: %s", strerror(errno)));
         Hub_exitError();
     }
 
@@ -141,7 +148,7 @@ void Hub_Net_mainLoop(void) {
            results */
         n = select(FD_SETSIZE, &fdset_mask_r, NULL, NULL, NULL);
         if(n < 0) {
-            Hub_Logging_log(ERROR, __Util_format("Error selecting from descriptors, attempting to continue: %s", strerror(errno)));
+            Hub_Logging_log(ERROR, Util_format("Error selecting from descriptors, attempting to continue: %s", strerror(errno)));
             continue;
         } else if(n == 0) {
             /* Select returned no active sockets. Ignore it and try again */
@@ -177,16 +184,16 @@ void Hub_Net_mainLoop(void) {
                 }
                 
                 /* Process message */
-                respond_to = Hub_Process_process(client_message, &response, &client_authenticated[i]);
-
-                if(respond_to == RESPOND_TO_SENDER) {
+                action = Hub_Process_process(client_message, &response, &client_authenticated[i]);
+                
+                if(action == RESPOND_TO_SENDER || (action == SHUTDOWN_SENDER && response != NULL)) {
                     n = Hub_Net_sendMessage(client_socks[i], response);
                     if(!n) {
                         /* Failed to send, shutdown client */
                         Hub_Logging_log(DEBUG, "Client disconnected, shutting down client");
                         Hub_Net_removeClient(i);
                     }
-                } else if(respond_to == RESPOND_TO_ALL) {
+                } else if(action == RESPOND_TO_ALL) {
                     packed_response = Comm_packMessage(response);
                     for(j = 0; j < MAX_CLIENTS; j++) {
                         if(client_socks[j] && client_authenticated[j]) {
@@ -201,13 +208,26 @@ void Hub_Net_mainLoop(void) {
                     Comm_PackedMessage_destroy(packed_response);
                 }
 
-                if(response) {
-                    for(j = 0; j < response->count; j++) {
-                        free(response->components[j]);
-                    }
-                    Comm_Message_destroy(response);
-                }
+                /* Destroy client message */
                 Comm_Message_destroyUnpacked(client_message);
+
+                /* Destroy response */
+                if(response) {
+                    Hub_Net_responseDestroy(response);
+                }
+
+                /* Now shutdow client if we are to do so */
+                if(action == SHUTDOWN_SENDER) {
+                    Hub_Logging_log(INFO, "Shutting down client");
+
+                    response = Comm_Message_new(2);
+                    response->components[0] = strdup("COMM");
+                    response->components[1] = strdup("SHUTDOWN");
+
+                    n = Hub_Net_sendMessage(client_socks[i], response);
+                    Hub_Net_responseDestroy(response);
+                    Hub_Net_removeClient(i);
+                }
             }
         }
 

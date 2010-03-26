@@ -7,6 +7,12 @@ int main(void) {
 
     char action[16], data[64];
     int source = (int) Var_get("SetPointSource");
+    
+    float sp_vision, sp_acoustics, sp_override;
+    
+    sp_vision = Var_get("SetPointSource:Vision");
+    sp_acoustics = Var_get("SetPointSource:Acoustics");
+    sp_override = Var_get("SetPointSource:Override");
 
     Notify_filter(FILTER_MATCH, "UPDATED SetPointSource");
     Notify_filter(FILTER_MATCH, "UPDATED SetPointVision");
@@ -21,15 +27,15 @@ int main(void) {
             Var_set("SetPoint.Phi", 0.0);
             Var_set("SetPoint.Rho", 0.0);
         } else {
-            if(source == SETPOINT_SOURCE_VISION && strcmp(data, "SetPointVision") == 0) {
+            if(source == sp_vision && strcmp(data, "SetPointVision") == 0) {
                 Var_set("SetPoint.Theta", Var_get("SetPointVision.Theta"));
                 Var_set("SetPoint.Phi", Var_get("SetPointVision.Phi"));
                 Var_set("SetPoint.Rho", Var_get("SetPointVision.Rho"));
-            } else if(source == SETPOINT_SOURCE_ACOUSTICS && strcmp(data, "SetPointAcoustics") == 0) {
+            } else if(source == sp_acoustics && strcmp(data, "SetPointAcoustics") == 0) {
                 Var_set("SetPoint.Theta", Var_get("SetPointAcoustics.Theta"));
                 Var_set("SetPoint.Phi", Var_get("SetPointAcoustics.Phi"));
                 Var_set("SetPoint.Rho", Var_get("SetPointAcoustics.Rho"));
-            } else if(source == SETPOINT_SOURCE_OVERRIDE && strcmp(data, "SetPointOverride") == 0) {
+            } else if(source == sp_override && strcmp(data, "SetPointOverride") == 0) {
                 Var_set("SetPoint.Theta", Var_get("SetPointOverride.Theta"));
                 Var_set("SetPoint.Phi", Var_get("SetPointOverride.Phi"));
                 Var_set("SetPoint.Rho", Var_get("SetPointOverride.Rho"));

@@ -10,6 +10,9 @@
 /** Registered application name */
 static char app_name[256];
 
+/** Library closed/closing */
+static bool closed = false;
+
 static void Seawolf_catchSignal(int sig);
 
 /**
@@ -36,6 +39,7 @@ void Seawolf_init(const char* name) {
     signal(SIGINT, Seawolf_catchSignal);
     signal(SIGHUP, Seawolf_catchSignal);
     signal(SIGTERM, Seawolf_catchSignal);
+    signal(SIGPIPE, SIG_IGN);
 
     /* Ensure shutdown during normal exit */
     atexit(Seawolf_close);
@@ -43,6 +47,7 @@ void Seawolf_init(const char* name) {
     /* Call all initialization methods. Order here *is* important. Logging
        relies on the database being up for instance */
     Comm_init();
+    Var_init();
     Logging_init();
     Notify_init();
     Serial_init();
@@ -70,12 +75,11 @@ static void Seawolf_catchSignal(int sig) {
  * Close the library and free any resources claimed by it
  */
 void Seawolf_close(void) {
-    static bool closed = false;
-
     /* Only close once */
     if(closed) {
         return;
     }
+
     closed = true;
 
     /* Announce closing */
@@ -83,6 +87,7 @@ void Seawolf_close(void) {
     
     Serial_close();
     Logging_close();
+    Var_close();
     Comm_close();
     Notify_close();
     Util_close();
@@ -94,8 +99,36 @@ void Seawolf_close(void) {
  * Terminate application because of an error condition
  */
 void Seawolf_exitError(void) {
+    if(closed) {
+        return;
+    }
     Logging_log(INFO, "Terminating application due to error condition");
     exit(1);
+}
+
+/**
+ * \brief Terminate application due to normal conditions
+ *
+ * Terminate application
+ */
+void Seawolf_exit(void) {
+    if(closed) {
+        return;
+    }
+
+    exit(0);
+}
+
+/**
+ * \brief True if the library is currently closing
+ *
+ * True during the closing of the library. This can be used by multithreaded
+ * applications to control shutdown procedures
+ *
+ * \return True if the library is closing, false otherwise
+ */
+bool Seawolf_closing(void) {
+    return closed;
 }
 
 /**
