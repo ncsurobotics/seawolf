@@ -225,40 +225,6 @@
 #include "seawolf/queue.h"
 #include "seawolf/dictionary.h"
 
-#if 0
-
-/**
- * \todo These constants need to moved out of the library and into the hub as
- * read-only variables. Library side caching of read-only values will make this
- * 'efficient enough' 
- */
-
-/* Definitions */
-#define SETPOINT_SOURCE_VISION 1
-#define SETPOINT_SOURCE_ACOUSTICS 2
-#define SETPOINT_SOURCE_OVERRIDE 3
-
-/* Vision targets */
-#define VISIONTARGET_WAIT 0
-#define VISIONTARGET_GATE 1
-#define VISIONTARGET_BOUEY 2
-#define VISIONTARGET_PATH 3
-#define VISIONTARGET_BRIEFCASE 4
-#define VISIONTARGET_TORPEDO 5
-#define VISIONTARGET_OCTOGON 6
-#define VISIONTARGET_DROPZONE 7
-#define VISIONTARGET_WHITE_GATE 9
-
-/* Status */
-#define STATUS_OFF   ((unsigned char)0)
-#define STATUS_BLINK ((unsigned char)1)
-#define STATUS_ON    ((unsigned char)2)
-
-/* Max thrust */
-#define THRUSTER_MAX 63
-
-#endif
-
 /* Initialize and close */
 void Seawolf_init(const char* name);
 void Seawolf_close(void);
