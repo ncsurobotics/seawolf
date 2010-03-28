@@ -149,7 +149,7 @@ void mission_init(int current_mission, IplImage* frame)
     switch (current_mission) {
 
         case MISSION_GATE:
-            mission_gate_init(frame, 2.0);
+            mission_gate_init(frame, 1.0);
         break;
 
         case MISSION_ALIGN_PATH:

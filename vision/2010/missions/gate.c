@@ -115,14 +115,14 @@ struct mission_output mission_gate_step(struct mission_output result)
             int difference =  pt_gate[1] - left_pole;
             right_pole = right_pole + difference;
             left_pole = pt_gate[1];
-            result.theta = frame->width/2 + 15;
+            result.theta = frame->width/2 + 30;
         } else {
             // We see the right pole
             printf("I see the right pole!");
             int difference =  pt_gate[1] - right_pole;
             left_pole = left_pole + difference;
             right_pole = pt_gate[1];
-            result.theta = frame->width/2 - 15;
+            result.theta = frame->width/2 - 30;
         }
 
     } else { // We don't see anything
@@ -135,9 +135,9 @@ struct mission_output mission_gate_step(struct mission_output result)
 
     // Determine rho
     if(close_to_gate > 3)
-        result.rho= 15; // Low rho
+        result.rho= 10; // Low rho
     else
-        result.rho = 15; // High rho
+        result.rho = 11; // High rho
 
     // Debugs:
     #ifdef VISION_SHOW_HEADING
@@ -147,7 +147,7 @@ struct mission_output mission_gate_step(struct mission_output result)
 
     // Scale output
     result.theta -= frame->width/2;
-    result.theta = (result.theta*MAX_THETA / (frame->width/2))/6;
+    result.theta = (result.theta*MAX_THETA / (frame->width/2))/9;
     result.phi = 0;
 
     if (WHITE_GATE_FLAG) { // Free white gate resources
