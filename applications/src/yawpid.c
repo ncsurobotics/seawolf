@@ -26,6 +26,7 @@ int main(void) {
                   Var_get("YawPID.i"),
                   Var_get("YawPID.d"));
 
+    Var_set("PIDDoYaw", 0);
     mv = PID_start(pid, Var_get("SEA.Yaw"));
     dataOut(mv);
     while(true) {
