@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
         Var_set("SEA.Yaw", -1 * (180.0 / M_PI) * (base_angle - shift));
 
         Notify_send("UPDATED", "IMU");
-        Util_usleep(0.1);
+        Util_usleep(0.03);
     }
 
     Serial_closePort(sp);
