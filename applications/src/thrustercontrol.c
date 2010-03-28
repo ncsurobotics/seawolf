@@ -28,7 +28,7 @@ int main(void) {
                         \n\
                         \n\
     %-7d     %7d        \n\
-n                        \n\
+                        \n\
                         \n\
                         \n\
     %10d                \n\
