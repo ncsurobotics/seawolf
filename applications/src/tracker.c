@@ -28,20 +28,14 @@
 
 static int thruster_max;
 
-static void dataOut(double mv[3], bool do_depth, bool do_yaw) {
+static void dataOut(double mv[3], bool do_depth) {
     /* Base value for horizontal thrusters */
     float port_x, star_x;
     port_x = Util_inRange(-thruster_max, mv[RHO], thruster_max);
     star_x = Util_inRange(-thruster_max, mv[RHO], thruster_max);
     
-    /* Offset for yaw */
-    if(do_yaw) {
-        port_x += mv[THETA];
-        star_x -= mv[THETA];
-
-        /* Bounds check again */
-        port_x = Util_inRange(-thruster_max, port_x, thruster_max);
-        star_x = Util_inRange(-thruster_max, star_x, thruster_max);
+    if(mv[THETA] != 0.0) {
+        Var_set("RotHeading", mv[THETA]);
     }
 
     /* Send out to thrusters */    
@@ -73,10 +67,10 @@ int main(void) {
     /* Set point is always the zero vector */
     const float sp[3] = {0, 0, 0};
     double pv[3], mv[3];
+    double last_theta = (double) (Var_get("RotMode") != Var_get("RotModeStraight"));
 
     /* Tracker controls depth */
     bool do_depth = (Var_get("TrackerDoDepth") == 1.0);
-    bool do_yaw = true;
 
     /* Notify buffers */
     char action[16], data[16];
@@ -103,16 +97,16 @@ int main(void) {
         pv[PHI] = Var_get("SetPoint.Phi");
         pv[RHO] = Var_get("SetPoint.Rho");
 
-        if(pv[THETA] == 0 && do_yaw) {
-            Var_set("PIDDoYaw", 1.0);
-            do_yaw = 0.0;
-            Var_set("YawHeading", Var_get("SEA.Yaw"));
+        if(pv[THETA] == 0.0 && last_theta != 0.0) {
+            Var_set("RotMode", Var_get("RotModeStraight"));
             Logging_log(DEBUG, "Switch to straight path");
-        } else if(pv[THETA] != 0 && !do_yaw) {
-            Var_set("PIDDoYaw", 0.0);
-            do_yaw = 1.0;
+        } else if(pv[THETA] != 0 && last_theta == 0.0) {
+            Var_set("RotMode", Var_get("RotModeRate"));
             Logging_log(DEBUG, "Switch to tracking path");
         }
+
+        /* Save old theta value */
+        last_theta = pv[THETA];
         
         /* Copy old error */
         e_last[THETA] = e[THETA];
@@ -145,7 +139,7 @@ int main(void) {
                   (RHO_Kd * ((e[RHO] - e_last[RHO]) / delta_t));
         
         /* Send data out */
-        dataOut(mv, do_depth, do_yaw);
+        dataOut(mv, do_depth);
     }
 
     Timer_destroy(timer);
