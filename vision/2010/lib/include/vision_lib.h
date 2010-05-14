@@ -1,3 +1,15 @@
+/* \file
+ * Main include file.
+ */
+
+/**
+ * \mainpage
+ *
+ * The seawolf vision library includes many vision processing tools.  The
+ * library is made to be fast and easy to use.
+ *
+ */
+
 #ifndef __SEAWOLF_VISION_LIB_ROOT_INCLUDE_H
 #define __SEAWOLF_VISION_LIB_ROOT_INCLUDE_H
 

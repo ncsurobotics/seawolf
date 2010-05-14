@@ -1,5 +1,5 @@
-/* hough.c
- * This is a modification of opencv's hough implementation, ported to c.  
+/* \file
+ * A modification of opencv's hough implementation, ported to c.  
  */
 
 #include "vision_lib.h"
@@ -11,6 +11,7 @@
 
 /**
  * Defines polar coordinates
+ * \private
  */
 typedef struct CvLinePolar
 {

@@ -21,6 +21,9 @@ $(LIB_NAME): $(LIB_OBJECTS)
 bin/%.o: src/%.c
 	$(CC) $(OPENCV_FLAGS) $(CFLAGS) -Iinclude/ -c src/$*.c -o bin/$*.o
 
+doc: Doxyfile src/* include/* include/*/*
+	doxygen Doxyfile
+
 clean:
 	-rm bin/*.o
 	-rm $(LIB_NAME)

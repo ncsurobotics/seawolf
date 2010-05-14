@@ -1,3 +1,8 @@
+/**
+ * \file
+ * Blob detection
+ */
+
 #include "vision_lib.h"
 
 #include <stdio.h>
@@ -8,7 +13,16 @@
 #define MAX_BLOB_AREA 50000
 
 /**
- * blob()
+ * \defgroup blob Blob Detection
+ * \ingroup blob
+ * Provides a BLOB data structure and tools for detecting blobs.
+ * \{
+ */
+
+
+/**
+ * Finds blobs in an image.
+ *
  * This is takes an image from colorfilter and finds what's left over.
  * arugment: center_type: 0 returns the middle of the bounding box
  * 1 returns the centroid of the blobs
@@ -273,3 +287,5 @@ void blob_free(BLOB* blobs, int blobs_found)
     }
     free(blobs);
 }
+
+/** } */

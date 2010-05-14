@@ -16,7 +16,7 @@
 
 /**
  * mission_output
- * This structure is passed into and also returned from every mission.  
+ * This structure is passed into and also returned from every mission.
  */
 struct mission_output {
 
@@ -34,7 +34,7 @@ struct mission_output {
 
     // Missions should set this to the frame they recieved from the camera, so
     // main.c can use it for debugging.  Missions may also write debug
-    // information on this image and it will be displayed.  
+    // information on this image and it will be displayed.
     IplImage* frame;
 
     // This flag is set to true inside a mission when the mission is completed.
@@ -47,7 +47,7 @@ struct mission_output {
 /********* Mission Definitions **********/
 // Mission Constants
 #define MISSION_WAIT 0
-#define MISSION_GATE 1 
+#define MISSION_GATE 1
 #define MISSION_BOUY 3
 #define MISSION_HEDGE 4
 #define MISSION_WINDOW 5
@@ -80,7 +80,6 @@ static const int mission_order[] = {
     MISSION_ALIGN_PATH,
     MISSION_HEDGE,
     MISSION_STOP,
-    //MISSION_HEDGE,
     //MISSION_WINDOW,
     //MISSION_WEAPONS_RUN,
     //MISSION_MACHETE,
