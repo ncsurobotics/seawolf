@@ -6,7 +6,7 @@
 
 /* Uncomment for stabilized euler angles */
 //#define STABILIZED_EULER
-#define SUM_SIZE 2
+#define SUM_SIZE 10
 
 #define BFIELD(buff, i)        (((uint8_t*)(buff))[(i)-1])
 #define SFIELD(buff, i)        ((int16_t)((((int16_t)BFIELD(buff, i)) << 8) | ((int16_t)BFIELD(buff, i+1))))
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
         if(n == -1) {
             Logging_log(ERROR, "Error encountered while receive response from IMU! Retrying in 1 second.");
             Serial_flush(sp);
-            Util_usleep(1.0);
+            Util_usleep(0.1);
             continue;
         }
 

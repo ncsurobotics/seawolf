@@ -9,15 +9,20 @@ static void dataOut(double mv) {
 static float yaw_dt(float yaw) {
     static Timer* timer = NULL;
     static float yaw_last;
-    float dt, rate;
+    double dt, rate;
 
     if(timer == NULL) {
         timer = Timer_new();
         yaw_last = yaw;
-        rate = 0;
+        rate = 0.0;
     } else {
         dt = Timer_getDelta(timer);
-        rate = (yaw - yaw_last) / dt;
+        if (dt < 0.01) {
+            printf("dt Less than 0.01!\n");
+        } else {
+            rate = (yaw - yaw_last) / dt;
+            printf("            %6.4f %6.4f          %.4f  %.4f\n", yaw, yaw_last, dt, rate);
+        }
         yaw_last = yaw;
     }
 
@@ -77,6 +82,8 @@ int main(void) {
         if(strcmp(data, "IMU") == 0) {
             yaw = Var_get("SEA.Yaw");
             rate = yaw_dt(yaw);
+
+            printf("%.2f\n", rate);
 
             if(mode == Var_get("RotModeRate")) {
                 if(reset) {
