@@ -19,23 +19,39 @@
  * \{
  */
 
-
 /**
- * Finds blobs in an image.
+ * \brief Finds blobs in an image.
+ * Takes a binary image (commonly from a color filter) and finds groups of
+ * adjacent pixels, or blobs.
  *
- * This is takes an image from colorfilter and finds what's left over.
- * arugment: center_type: 0 returns the middle of the bounding box
- * 1 returns the centroid of the blobs
+ * Always free the output when you're done.  The proper way to free is to use the \ref blob_free function.
+ *
+ * Here is an example of the basic usage:
+ * \code
+ * BLOB *blobs; // The blobs will be stored here.
+ * int number_of_blobs_found = blob(image, &blobs, 4, 100);
+ * int area = blobs[0].area;
+ * blob_free(blobs, number_of_blobs_found);
+ * \endcode
+ *
+ * \param Img The binary image to find blobs in.
+ * \param targets This double pointer will be filled will an array of
+ *        blobs corresponding to the blob found in the image.
+ * \param tracking_number The maximum number of blobs to find.  If more blobs
+ *        are found, only the largest are kept.
+ * \param minimum_blob_area Blobs with less than this many pixels are ignored.
+ * \return The number of blobs found.
+ *
  */
 int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_area) {
 
-    int blobnumber; //holds the number of blobs we found
+    int blobnumber; // Holds the number of blobs we found
 
-    //find the most massive blob and assigns it to targets
+    // Find the most massive blob and assigns it to targets
     *targets = findPrimary(Img, tracking_number, minimum_blob_area, &blobnumber);
 
     int i;
-    //now compute the middle of each blob
+    // Now compute the middle of each blob
     for(i=0;i<blobnumber;i++){
         (*targets)[i].mid.x = ((*targets)[i].left+(*targets)[i].right)/2;
         (*targets)[i].mid.y = ((*targets)[i].top + (*targets)[i].bottom)/2;
@@ -47,23 +63,24 @@ int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_a
         cvNamedWindow("Blob", CV_WINDOW_AUTOSIZE);
         int x,y;
 
-        //bind the blobs
+        // Bind the blobs
         for(i=0; i<(blobnumber<tracking_number?blobnumber:tracking_number);i++){
-            //draw the top of the binding box
+
+            // Draw the top of the binding box
             uchar* ptr = (uchar*) (blob_pic->imageData + (*targets)[i].top * blob_pic->widthStep);
             for(x=(*targets)[i].left; x<=(*targets)[i].right;x++){
                 ptr[3*x+0] = 0;
                 ptr[3*x+1] = 254;
                 ptr[3*x+2] = 0;
             }
-            //draw the bottom of the binding box
+            // Draw the bottom of the binding box
             ptr = (uchar*) (blob_pic->imageData + (*targets)[i].bottom * blob_pic->widthStep);
             for(x=(*targets)[i].left; x<=(*targets)[i].right;x++){
                 ptr[3*x+0] = 0;
                 ptr[3*x+1] = 254;
                 ptr[3*x+2] = 0;
             }
-            //draw the left of the box
+            // Draw the left of the box
             for(y = (*targets)[i].top; y>= (*targets)[i].bottom; y--){
                 ptr = (uchar*) (blob_pic->imageData + y * blob_pic->widthStep);
                 x = (*targets)[i].left;
@@ -72,7 +89,7 @@ int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_a
                 ptr[3*x+2] = 0;
             }
 
-            //draw the left of the box
+            // Draw the left of the box
             for(y = (*targets)[i].top; y>= (*targets)[i].bottom; y--){
                 ptr = (uchar*) (blob_pic->imageData + y * blob_pic->widthStep);
                 x = (*targets)[i].right;
@@ -81,23 +98,26 @@ int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_a
                 ptr[3*x+2] = 0;
             }
         }
-        //Show the image
-        cvShowImage("Blob",blob_pic);
 
-        //release image
+        cvShowImage("Blob",blob_pic);
         cvReleaseImage(&blob_pic);
+
     #endif
 
-    //return the number of blobs we found
     return blobnumber;
 }
 
 
-//-----------------------------------------------------------------
-//Function: findPrimary
-//
-// Searches the image for the largest blob, currently returns that blob as a BLOB
-//
+/**
+ * \brief Searches the image for the largest blob.
+ * \internal
+ *
+ * \param Img
+ * \param tracking_number
+ * \param minimum_blob_area
+ * \param blobnumber
+ * \return The blob found.
+ */
 
 BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int *blobnumber){
 
