@@ -18,10 +18,10 @@ static float yaw_dt(float yaw) {
     } else {
         dt = Timer_getDelta(timer);
         if (dt < 0.01) {
-            printf("dt Less than 0.01!\n");
+            //printf("dt Less than 0.01!\n");
         } else {
             rate = (yaw - yaw_last) / dt;
-            printf("            %6.4f %6.4f          %.4f  %.4f\n", yaw, yaw_last, dt, rate);
+            //printf("            %6.4f %6.4f          %.4f  %.4f\n", yaw, yaw_last, dt, rate);
         }
         yaw_last = yaw;
     }
@@ -83,23 +83,23 @@ int main(void) {
             yaw = Var_get("SEA.Yaw");
             rate = yaw_dt(yaw);
 
-            printf("%.2f\n", rate);
-
+            //printf("%.2f\n", rate);
             if(mode == Var_get("RotModeRate")) {
                 if(reset) {
                     mv = PID_start(rotpid, rate);
-                    reset = false;
                 } else {
                     mv = PID_update(rotpid, rate);
                 }
             } else {
                 if(reset) {
+                    printf("Set desired heading to: %f\n", yaw);
                     PID_setSetPoint(straightpid, yaw);
                     mv = PID_start(straightpid, yaw);
                     reset = false;
                 } else {
                     mv = PID_update(straightpid, yaw);
                 }
+                printf("PID Error: %f\n", straightpid->sp - yaw);
             }
 
             dataOut(mv);
