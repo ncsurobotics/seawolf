@@ -1,3 +1,8 @@
+/**
+ * \file
+ * Target Color
+ */
+
 //************************************************
 //  target_color.c: 
 //
@@ -11,6 +16,36 @@
 #include <cv.h>
 #include <highgui.h>  
 
+/** 
+ * \ingroup colortools
+ * \{
+ */
+ 
+ /** 
+ * \brief Searches for pixels in an image that most closely match target color.
+ *  
+ * This function takes in an IplImage and a target color.  It searches the image for the 
+ * pixels which most closely match the target color.  All other pixels are set to black.  
+ * Location of pixels to eachother is ignored.  The number of pixels found (not blacked out) is 
+ * returned.  The filtered image is passed as an argument.  
+ *
+ * Be Wary - the trickiest facet of this function is determining when the target color is not 
+ * in fact present in the image.  For example, if the target is green, and the algorithm is passed
+ * an image of a grey table, it will select the greenest part of the grey image, even if it does 
+ * not appear to be green at all.  The argument to adjust for this problem is dev_threshold. 
+ *
+ * \param in The origional image to be filtered 
+ * \param out The IplImage the filtered output will be assigned to.
+ * \param color and RGBPixel of the target color
+ * \param min_blobsize an integer of the smallest number of pixels the function is allowed to
+ * return (intended to keep from returning noise) NOTE: the term "blob" in the title does not
+ * have anything to do with it's use in the rest of the library.
+ * \param dev_threshold determines how far removed the accepted pixels must be from the average
+ * color of the image
+ * \param precision_threshold influences how close to eachother in color the accepted pixels 
+ * must be, but not neccesarily how close they are to the target color
+ */
+ 
 int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsize, int dev_threshold, double precision_threshold){ //should find the set of colors closest to the target color
     int i,j,s;
     int* sigmas; //holds the accumulation for all possible standard deviations in the image
@@ -82,9 +117,14 @@ int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsi
     return blobsize;//averagestddev-smallest_stddev;
 }
 
+/**
+ * \brief computes distance between two pixels in rgb space
+ * \private
+ */
 float Pixel_stddev(RGBPixel* px_1, RGBPixel* px_2) {
     return sqrt(pow((short)px_1->r - px_2->r, 2) +
                 pow((short)px_1->g - px_2->g, 2) +
                 pow((short)px_1->b - px_2->b, 2));
 }
+/** } */
 

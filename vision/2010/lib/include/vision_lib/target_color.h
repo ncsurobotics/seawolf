@@ -4,9 +4,9 @@
 #define __SEAWOLF_VISION_LIB_FIND_TARGET_COLOR_INCLUDE_H
 
 struct RGBPixel_s {
-    unsigned char r;
-    unsigned char g;
-    unsigned char b;
+    unsigned char r; /**< A char containing the red channel of a pixel */
+    unsigned char g; /**< A char containing the green channel of a pixel */
+    unsigned char b; /**< A char containing the blue channel of a pixel */
 };
 
 typedef struct RGBPixel_s RGBPixel;

@@ -1,8 +1,38 @@
+/** \file
+ * A specialized file for aiding specific vision problems   
+ */
+
 #include "vision_lib.h"
 
 #include <cv.h>
 #include <highgui.h>
 //removes highlighted areas from the edge-dectected image 
+
+/**
+ * \ingroup edgetools
+ * \{
+ */
+ 
+/**
+ * \brief additional filter for finding vertical lines
+ * Built in color-filter to remove edges not next to a certain color. Originally used for finding
+ * orange pipes underwater.  
+ *
+ * Also removes vertically isolated pixels.  Used to filter noise out of images when looking for 
+ * vertical pipes underwater.  
+ *
+ * \param img the origional image that the edge detect was run on
+ * \param edge the edge detected image to be filtered
+ * \param rmin minimum red allowed near edges
+ * \param rmax maximum red allowed near edges
+ * \param bmin minimum blue allowed near edges
+ * \param bmax maximum blue allowed near edges
+ * \param gmin minimum green allowed near edges
+ * \param gmax maximum green allowed near edges
+ * 
+ * \return IplImage containing filtered edge-detection  
+ *
+ */
 
 IplImage* remove_edges(IplImage* img, IplImage* edge, int rmin, int rmax, int bmin, int bmax, int gmin, int gmax) {
 
@@ -51,3 +81,4 @@ IplImage* remove_edges(IplImage* img, IplImage* edge, int rmin, int rmax, int bm
     cvReleaseImage(&edge);
   return modified; 
 }
+/** \} */

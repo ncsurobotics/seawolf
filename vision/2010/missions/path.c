@@ -221,6 +221,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
     cvReleaseImage(&grey);
     cvReleaseImage(&edge);
     cvReleaseImage(&ipl_out);
+    //cvRelease((void**) &lines);
     cvReleaseMemStorage(&(lines->storage));
 
     return result;

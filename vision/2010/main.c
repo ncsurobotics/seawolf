@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 
     for (unsigned int frame_num=0; true; frame_num++)
     {
-
+        
         // Run mission_step
         int current_mission = mission_order[mission_index];
         results.frame = NULL;
