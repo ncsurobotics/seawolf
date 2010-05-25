@@ -1,7 +1,18 @@
-#define ACOUSTICS_DEBUG
+
+/*      -- Debug levels --
+ * 0 - No debug output (run silently)
+ * 1 - Output delays only
+ * 2 - Give feedback on processing stages
+ * 3 - Dump FIR data
+ * 4 - Run full channel dumps and exit after one run
+ */
+#define ACOUSTICS_DEBUG 2
+
+/* Disable Seawolf communication functionality. This is useful when debuging */
+#define USE_LIBSEAWOLF
 
 #ifdef USE_LIBSEAWOLF
-#include "seawolf.h"
+# include "seawolf.h"
 #endif
 
 #include <stdbool.h>
@@ -89,7 +100,7 @@ fract16* rwD;
 fract16* rwSmallFir;
 
 /* Dump channel buffer to CSV file */
-#ifdef ACOUSTICS_DEBUG
+#if ACOUSTICS_DEBUG >= 4
 static void dump(const char* fname, adcsample* n) {
     FILE* f = fopen(fname, "w");
     for(int i = START_DUMP; i < END_DUMP; i++) {
@@ -99,6 +110,7 @@ static void dump(const char* fname, adcsample* n) {
 }
 #endif
 
+/* Initialize FIR filters */
 static void fir_setup(void) {
     /* FIR variables */
     int pingFrequency;
@@ -106,15 +118,10 @@ static void fir_setup(void) {
     int numTaps;
     char* fileName = "27.cof";
 
-    /* Initialize FIR filter */
-#ifdef USE_LIBSEAWOLF
-    /* Pull frequencies from SQL */
-#else
     /* Pull frequencies from rear end */
     pingFrequency = 27;
     unPingFrequency = 1728;
     numTaps = 613;
-#endif
 
     /* Initialize coefficients */
     coefs  = calloc(sizeof(adcsample), numTaps);
@@ -197,7 +204,7 @@ int main(int argc, char** argv) {
         cirbuff_offset = 0x00;
         RESET_FLAG = 1;
 
-#ifdef ACOUSTICS_DEBUG
+#if ACOUSTICS_DEBUG >= 2
         printf("Waiting for trigger...");
         fflush(stdout);
 #endif
@@ -217,14 +224,14 @@ int main(int argc, char** argv) {
             if(state == READING && cirbuff_full) {
                 temp_ptr = cirbuff[A] + cirbuff_offset;
 
-#ifdef ACOUSTICS_DEBUG
+#if ACOUSTICS_DEBUG >= 2
                 printf("Looking for trigger... \n" );
 #endif
 
                 /* Copy data to temporary buffer for analysis */
                 memcpy(fftInput, cirbuff[A] + cirbuff_offset, sizeof(adcsample) * SAMPLES_PER_CHANNEL);
 
-#ifdef ACOUSTICS_DEBUG
+#if ACOUSTICS_DEBUG >= 3
                 /* Output waveform data */
                 printf("CHANNEL A WAVE DATA \n");
                 for(i = 0; i < SAMPLES_PER_CHANNEL; i++) {
@@ -239,7 +246,7 @@ int main(int argc, char** argv) {
                    rfft_fr16(fftInput, fftOutput, twiddleTable, 1, SAMPLES_PER_CHANNEL, 0, 0); */
                 firfly(fftInput, SAMPLES_PER_CHANNEL, &smallFir);
 
-#ifdef ACOUSTICS_DEBUG
+#if ACOUSTICS_DEBUG >= 3
                 /* Threshold frequency value */
                 printf("CHANNEL A FIR DATA \n");
                 for(i = 0; i < SAMPLES_PER_CHANNEL; i++) {
@@ -278,7 +285,7 @@ int main(int argc, char** argv) {
             READY_FLAG = 1;
         }
 
-#ifdef ACOUSTICS_DEBUG
+#if ACOUSTICS_DEBUG >= 2
         printf("done\nLinearizing data...");
         fflush(stdout);
 #endif
@@ -301,9 +308,11 @@ int main(int argc, char** argv) {
         memcpy(outbuff + (BUFFER_SIZE_CHANNEL - cirbuff_offset), cirbuff[D], sizeof(adcsample) * cirbuff_offset);
         memcpy(cirbuff[D], outbuff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
 
-#ifdef ACOUSTICS_DEBUG
+#if ACOUSTICS_DEBUG >= 2
         printf("done\n");
+#endif
 
+#if ACOUSTICS_DEBUG >= 4
         for(int i = 1; i < argc; i++) {
             switch(argv[i][0]) {
             case 'a':
@@ -352,7 +361,12 @@ int main(int argc, char** argv) {
         pDelay12 = findMax(delay12, BUFFER_SIZE_CHANNEL);
         pDelay34 = findMax(delay34, BUFFER_SIZE_CHANNEL);
 
-#ifdef ACOUSTICS_DEBUG
+#ifdef USE_LIBSEAWOLF
+        Var_set("Acoustics.delay12", pDelay12);
+        Var_set("Acoustics.delay34", pDelay12);
+#endif
+
+#if ACOUSTICS_DEBUG >= 1
         /* Output pDelay values */
         printf("pDelay12: %d \n", pDelay12);
         printf("pDelay34: %d \n", pDelay34);
