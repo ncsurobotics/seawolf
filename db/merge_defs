@@ -1,0 +1,61 @@
+#!/usr/bin/env python
+
+import commands
+import sys
+import os
+import readline
+
+# Format: NAME DEFAULT PERSISENT READONLY
+
+if len(sys.argv) > 1:
+    fname = sys.argv[1]
+else:
+    fname = "variables.txt"
+    print "Using", fname
+
+try:
+    f = open(fname, "r")
+except IOError:
+    print "Could not open '%s'" % (fname)
+    sys.exit(1)
+
+definitions_raw = f.read()
+f.close()
+
+definitions_raw = definitions_raw.strip().split("\n")
+definitions_raw = [d.strip() for d in definitions_raw if not d.strip().startswith(';')]
+definitions_raw = [d.split() for d in definitions_raw]
+definitions = dict([(d[0], d) for d in definitions_raw])
+definitions_var_names = set(definitions.keys())
+
+existing_raw = commands.getoutput('sqlite3 seawolf.db "select * from variable_definitions"')
+existing_raw = existing_raw.strip().split("\n")
+existing_raw = [d.strip().replace('|', ' ') for d in existing_raw]
+existing_raw = [d.split() for d in existing_raw]
+existing = dict([(d[0], d) for d in existing_raw])
+existing_var_names = set(existing.keys())
+
+new_var_names = definitions_var_names - existing_var_names
+del_var_names = existing_var_names - definitions_var_names
+
+print "The following variables existing in your local database but not in the definitions file,"
+for n in del_var_names:
+    print "  ", n
+sys.stdout.write("\nWould you like to remove them? [y/N] ")
+sys.stdout.flush()
+l = sys.stdin.readline()
+
+# Remove old variables
+if l.lower() in ["y", "yes"]:
+    for n in del_var_names:
+        commands.getoutput("./hub_config var del %s -y" % (n))
+
+# Add new variables
+for n in new_var_names:
+    command = "./hub_config var add " + n
+    command += " default " + definitions[n][1]
+    if definitions[n][2] != "0":
+        command += " persistent"
+    if definitions[n][3] != "0":
+        command += " readonly"
+    commands.getoutput(command)
