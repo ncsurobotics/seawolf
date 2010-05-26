@@ -15,8 +15,7 @@ void convolve(fract16*, fract16*, fract16*, int);
 void fast_convolve(fract16*, fract16*, fract16*, int);
 void correlate(fract16*, fract16*, fract16*, int);
 void fast_correlate(fract16*, fract16*, fract16*, int);
-
-
+int findMax(fract16* f, int size);
 
 #define ARRAY_SIZE 8192
 

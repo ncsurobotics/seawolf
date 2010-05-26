@@ -101,4 +101,8 @@ struct mission_output mission_bouy_step(struct mission_output);
 void mission_align_path_init(IplImage* frame);
 struct mission_output mission_align_path_step(struct mission_output);
 
+// Window
+void mission_window_init(IplImage* frame);
+struct mission_output mission_window_step(struct mission_output);
+
 #endif

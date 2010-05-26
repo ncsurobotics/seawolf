@@ -12,19 +12,22 @@
 
 #define MAX_BLOB_AREA 50000
 
-/**
- * \defgroup blob Blob Detection
+/** 
  * \ingroup blob
- * Provides a BLOB data structure and tools for detecting blobs.
  * \{
  */
 
 /**
  * \brief Finds blobs in an image.
- * Takes a binary image (commonly from a color filter) and finds groups of
- * adjacent pixels, or blobs.
+ * This function is designed to be run on a color-filtered image.  It considers any NON-BLACK 
+ * pixel to be of interest.  It sweeps the image for all clusters (blobs) of adjacent 
+ * non-black pixels.  It then returns n largets blobs, where n is the tracking_number 
  *
  * Always free the output when you're done.  The proper way to free is to use the \ref blob_free function.
+ *
+ * Note! there is a hard-coded max blob size of 50,000 pixels to avoid stack errors.  
+ * The recursive function also collapses at a depth of 100,000.  This has not been
+ * observed to be a problem in any vision application
  *
  * Here is an example of the basic usage:
  * \code
@@ -47,7 +50,7 @@ int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_a
 
     int blobnumber; // Holds the number of blobs we found
 
-    // Find the most massive blob and assigns it to targets
+    // Find the most massive blobs and assign them to targets
     *targets = findPrimary(Img, tracking_number, minimum_blob_area, &blobnumber);
 
     int i;
@@ -110,7 +113,7 @@ int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_a
 
 /**
  * \brief Searches the image for the largest blob.
- * \internal
+ * \private
  *
  * \param Img
  * \param tracking_number
@@ -225,13 +228,15 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
     return targets;
 }
 
-//--------------------------------------------------------------------------------------------
-// Function: checkPixel
-// Examines an object pixel-by-pixel, checking each pixel to see if it
-//   is the top bottom left or rightmost of the object. Then recursively calls
-//   itself on all surrounding pixels that are part of the object. assignes total
-//   number of pixels in the object to the object's area
-
+/**
+ * \brief Recursively called pixel-checking function of findprimary().
+ * Examines an object pixel-by-pixel, checking each pixel to see if it
+ * is the top bottom left or rightmost of the object. Then recursively calls
+ * itself on all surrounding pixels that are part of the object. assignes total
+ * number of pixels in the object to the object's area
+ * \private
+ */
+ 
 int checkPixel(IplImage* Img, int x, int y, unsigned int** pixlog, BLOB* blob, int depth){
 
     //we will crash if we keep going, so let's just stop now
@@ -286,6 +291,10 @@ int checkPixel(IplImage* Img, int x, int y, unsigned int** pixlog, BLOB* blob, i
     return 0;
 }
 
+/**
+ * \brief copies contents of one BLOB structure to another
+ * \private
+ */
 void blob_copy(BLOB* dest, BLOB* src){
     //copy src to destination
     dest->top   = src->top;
@@ -299,6 +308,13 @@ void blob_copy(BLOB* dest, BLOB* src){
     memcpy(dest->pixels,src->pixels,MAX_BLOB_AREA*sizeof(CvPoint));
 }
 
+/**
+ * \brief frees memory assigned by blob()
+ *
+ * \param blobs the array of BLOB elements to be freed
+ * \param blobs_found the number of elements in that array
+ */
+ 
 void blob_free(BLOB* blobs, int blobs_found)
 {
     int i;
@@ -308,4 +324,4 @@ void blob_free(BLOB* blobs, int blobs_found)
     free(blobs);
 }
 
-/** } */
+/** \} */

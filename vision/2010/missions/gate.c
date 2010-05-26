@@ -158,6 +158,7 @@ struct mission_output mission_gate_step(struct mission_output result)
         cvReleaseImage(&grey);
         cvReleaseImage(&edge);
         cvReleaseImage(&ipl_out);
+        //cvRelease((void**) &lines);
         cvReleaseMemStorage(&(lines->storage));
     }
 
