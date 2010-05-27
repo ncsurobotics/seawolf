@@ -1,6 +1,9 @@
 #include <seawolf.h>
+#include <seawolf3.h>
+
 #include "vision_lib.h"
 #include "missions/mission.h"
+#include "control.h"
 
 #define DELAY 10
 
@@ -46,8 +49,8 @@ int main(int argc, char** argv)
 
     // Setup Initial results struct
     struct mission_output results;
-    results.theta = 0;
-    results.phi = 0;
+    results.yaw = 0;
+    results.depth = 0;
     results.rho = 0;
     results.depth_control = 0;
     results.depth = 0;
@@ -76,14 +79,14 @@ int main(int argc, char** argv)
         results.frame = NULL;
         results.mission_done = false;
         results = *mission_step(&results, current_mission);
-        printf("Theta, Phi, Rho: %f, %f, %f\n", results.theta, results.phi, results.rho);
+        printf("Theta, Phi, Rho: %f, %f, %f\n", results.yaw, results.depth, results.rho);
 
         // Give mission control its heading
         if (memcmp(&results, &previous_results, sizeof(struct mission_output))) {
 
             // Set headings
-            set_depth(mission_output.depth, mission_output.depth_control);
-            set_yaw(mission_output.yaw, mission_output.yaw_control);
+            set_depth(results.depth, results.depth_control);
+            set_yaw(results.yaw, results.yaw_control);
             previous_results = results;
 
             // Switch missions
@@ -102,8 +105,8 @@ int main(int argc, char** argv)
         #ifdef VISION_SHOW_HEADING
             // Heading Circle
             if (results.frame != NULL) {
-                CvPoint heading = {results.theta + results.frame->width/2,
-                                   results.phi + results.frame->height/2};
+                CvPoint heading = {results.yaw + results.frame->width/2,
+                                   results.depth + results.frame->height/2};
                 cvCircle(results.frame, heading, 5, cvScalar(0,255,0,0),1,8,0);
                 // Middle Circle
                 cvCircle(results.frame, cvPoint(results.frame->width/2, results.frame->height/2), 5, cvScalar(0,255,255,0),1,8,0);
@@ -237,8 +240,8 @@ struct mission_output* mission_step(struct mission_output* results, int mission)
 
         case MISSION_STOP:
             Util_usleep(1);
-            results->theta = 0;
-            results->phi = 0;
+            results->yaw = 0;
+            results->depth = 0;
             results->rho = 0;
             results->depth_control = DEPTH_ABSOLUTE;
             results->depth = 0;

@@ -7,7 +7,8 @@ CFLAGS+=-Wall -Werror -Wno-unused
 $(shell cp -u debug.mk.default debug.mk)
 include debug.mk
 export VISION_LIB_FLAGS=$(DEBUG_FLAGS)
-CFLAGS += $(DEBUG_FLAGS)
+CFLAGS +=$(DEBUG_FLAGS)
+CFLAGS +=-I../../include/
 
 OPENCV_FLAGS=$(shell pkg-config --libs --cflags opencv) \
              -DCV_NO_BACKWARD_COMPATIBILITY

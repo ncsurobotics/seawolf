@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include <seawolf3.h>
+
 #include "vision_lib.h"
 #include <cv.h>
 #include <highgui.h>
@@ -102,7 +104,7 @@ struct mission_output mission_gate_step(struct mission_output result)
         right_pole = pt_gate[0]>pt_gate[1]?pt_gate[0]:pt_gate[1];
 
         //result.theta = ((pt_gate[0]+pt_gate[1])/2-frame->width/2)/2+frame->width/2; // Head towards the middle of the gate
-        result.theta = (pt_gate[0]+pt_gate[1])/2; // - frame->width/2;
+        result.yaw = (pt_gate[0]+pt_gate[1])/2; // - frame->width/2;
 
     } else if (rho_gate[1] != -999) { // We only see one line
         seen_gate++;
@@ -115,14 +117,14 @@ struct mission_output mission_gate_step(struct mission_output result)
             int difference =  pt_gate[1] - left_pole;
             right_pole = right_pole + difference;
             left_pole = pt_gate[1];
-            result.theta = frame->width/2 + 30;
+            result.yaw = frame->width/2 + 30;
         } else {
             // We see the right pole
             printf("I see the right pole!");
             int difference =  pt_gate[1] - right_pole;
             left_pole = left_pole + difference;
             right_pole = pt_gate[1];
-            result.theta = frame->width/2 - 30;
+            result.yaw = frame->width/2 - 30;
         }
 
     } else { // We don't see anything
@@ -130,7 +132,7 @@ struct mission_output mission_gate_step(struct mission_output result)
             result.mission_done = true;
         }
 
-        result.theta = frame->width/2;
+        result.yaw = frame->width/2;
     }
 
     // Determine rho
@@ -142,13 +144,13 @@ struct mission_output mission_gate_step(struct mission_output result)
     // Debugs:
     #ifdef VISION_SHOW_HEADING
         hough_draw_lines(result.frame, lines);
-        cvCircle(result.frame, cvPoint(result.theta, frame->height/2), 5, cvScalar(0,0,0,255),1,8,0);
+        cvCircle(result.frame, cvPoint(result.yaw, frame->height/2), 5, cvScalar(0,0,0,255),1,8,0);
     #endif
 
     // Scale output
-    result.theta -= frame->width/2;
-    result.theta = (result.theta*MAX_THETA / (frame->width/2))/9;
-    result.phi = 0;
+    result.yaw -= frame->width/2;
+    result.yaw = (result.yaw*MAX_THETA / (frame->width/2))/9;
+    result.depth = 0;
 
     if (WHITE_GATE_FLAG) { // Free white gate resources
         cvReleaseImage(&grey);

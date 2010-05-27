@@ -42,9 +42,9 @@ struct mission_output mission_align_path_step(struct mission_output result)
     ipl_out = cvCreateImage(cvGetSize(frame),8,3);
     result.frame = frame;
 
-    // Temporary variables for theta,phi,rho
-    int theta=result.theta;
-    int phi=result.phi;
+    // Temporary variables
+    int theta=result.yaw;
+    int phi=result.depth;
     int rho=result.rho;
 
     // Run a color filter on the frame to select the path's color
@@ -212,8 +212,8 @@ struct mission_output mission_align_path_step(struct mission_output result)
     }
 
     // Update direction
-    result.theta = theta;
-    result.phi = phi;
+    result.yaw = theta;
+    result.depth = phi;
     result.rho = rho;
 
     // Release Resources
