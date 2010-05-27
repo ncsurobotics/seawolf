@@ -33,93 +33,82 @@ int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("Yaw PID");
 
-    PID* rotpid;
-    PID* straightpid;
+    PID* angularpid;
+    PID* ratepid;
 
     double mv;
     double yaw, rate;
     float mode;
-    bool reset;
 
     char action[64], data[64];
-   
-    /* Default to not rotating in rotational rate mode */
-    Var_set("RotHeading", 0.0);
-    Var_set("RotMode", Var_get("RotModeRate"));
-    mode = Var_get("RotMode");
-    
-    rotpid = PID_new(0.0,
-                     Var_get("RotPID.p"),
-                     Var_get("RotPID.i"),
-                     Var_get("RotPID.d"));
 
-    straightpid = PID_new(0.0,
-                          Var_get("StraightPID.p"),
-                          Var_get("StraightPID.i"),
-                          Var_get("StraightPID.d"));
+    /* Default to not rotating in rotational rate mode */
+    Var_set("Rot.Angular.Target", 0.0);
+    Var_set("Rot.Rate.Target", 0.0);
+    mode = Var_get("Rot.Mode.Angular");
+    Var_set("Rot.Mode", mode);
+
+    angularpid = PID_new(0.0,
+                     Var_get("Rot.Angular.p"),
+                     Var_get("Rot.Angular.i"),
+                     Var_get("Rot.Angular.d"));
+    ratepid = PID_new(0.0,
+                          Var_get("Rot.Rate.p"),
+                          Var_get("Rot.Rate.i"),
+                          Var_get("Rot.Rate.d"));
 
     Notify_filter(FILTER_MATCH, "UPDATED IMU");
-    Notify_filter(FILTER_MATCH, "UPDATED RotPID");
-    Notify_filter(FILTER_MATCH, "UPDATED StraightPID");
-    Notify_filter(FILTER_MATCH, "UPDATED RotHeading");
-    Notify_filter(FILTER_MATCH, "UPDATED RotMode");
+    Notify_filter(FILTER_PREFIX, "UPDATED Rot");
 
     /* Zero ouputs */
     dataOut(0.0);
 
-    /* Seed yaw derivative */
+    /* Initialize PIDs */
     do {
         Notify_get(action, data);
     } while(strcmp(data, "IMU") != 0);
     yaw = Var_get("SEA.Yaw");
     rate = yaw_dt(yaw);
-
-    reset = true;
+    PID_start(angularpid, yaw);
+    PID_start(ratepid, rate);
 
     while(true) {
         Notify_get(action, data);
-        
+
         if(strcmp(data, "IMU") == 0) {
             yaw = Var_get("SEA.Yaw");
             rate = yaw_dt(yaw);
 
-            //printf("%.2f\n", rate);
-            if(mode == Var_get("RotModeRate")) {
-                if(reset) {
-                    mv = PID_start(rotpid, rate);
-                } else {
-                    mv = PID_update(rotpid, rate);
-                }
+            if(mode == Var_get("Rot.Mode.Rate")) {
+                mv = PID_update(ratepid, rate);
+            } else if (mode == Var_get("Rot.Mode.Angular")) {
+                mv = PID_update(angularpid, yaw);
             } else {
-                if(reset) {
-                    printf("Set desired heading to: %f\n", yaw);
-                    PID_setSetPoint(straightpid, yaw);
-                    mv = PID_start(straightpid, yaw);
-                    reset = false;
-                } else {
-                    mv = PID_update(straightpid, yaw);
-                }
-                printf("PID Error: %f\n", straightpid->sp - yaw);
+                printf("Rot.Mode is incorrectly set to \"%f\"!!!!\n", Var_get("Rot.Mode"));
             }
 
             dataOut(mv);
-        } else if(strcmp(data, "RotHeading") == 0) {
-            /* Update rotation rate heading */
-            PID_setSetPoint(rotpid, Var_get("RotHeading"));
-        } else if(strcmp(data, "RotMode") == 0) {
-            /* Mode change, reset PID */
-            mode = Var_get("RotMode");
-            reset = true;
-        } else if(strcmp(data, "RotPID") == 0) {
-            PID_setCoefficients(rotpid,
-                                Var_get("RotPID.p"),
-                                Var_get("RotPID.i"),
-                                Var_get("RotPID.d"));
-        } else if(strcmp(data, "StraightPID") == 0) {
-            PID_setCoefficients(straightpid,
-                                Var_get("StraightPID.p"),
-                                Var_get("StraightPID.i"),
-                                Var_get("StraightPID.d"));
+
+        } else if(strcmp(data, "Rot.Rate.Target") == 0) {
+            PID_setSetPoint(ratepid, Var_get("Rot.Rate.Target"));
+
+        } else if(strcmp(data, "Rot.Angular.Target") == 0) {
+            PID_setSetPoint(ratepid, Var_get("Rot.Angular.Target"));
+
+        } else if(strcmp(data, "Rot.Mode") == 0) {
+            mode = Var_get("Rot.Mode");
+
+        } else if(strncmp(data, "Rot.Rate", 8) == 0) {
+            PID_setCoefficients(ratepid,
+                                Var_get("Rot.Rate.p"),
+                                Var_get("Rot.Rate.i"),
+                                Var_get("Rot.Rate.d"));
+
+        } else if(strncmp(data, "Rot.Angular", 11) == 0) {
+            PID_setCoefficients(angularpid,
+                                Var_get("Rot.Angular.p"),
+                                Var_get("Rot.Angular.i"),
+                                Var_get("Rot.Angular.d"));
         }
     }
 

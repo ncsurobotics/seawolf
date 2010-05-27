@@ -11,26 +11,28 @@
 #define MAX_PHI   20
 #define MAX_RHO   50
 
-#define DEPTH_RELATIVE 1.0
-#define DEPTH_ABSOLUTE 0.0
-
 /**
  * mission_output
  * This structure is passed into and also returned from every mission.
  */
 struct mission_output {
 
-    // Cylindrical Coordinates
-    float theta;  // Angle
-    float rho;    // Speed
+    // Yaw
+    // Control for yaw is either absolute or relative.  If "yaw_control" is
+    // YAW_ABSOLUTE then "yaw" is interpreted as a desired IMU heading.  If "yaw_control" is
+    // YAW_RELATIVE then "yaw" is interpreted as desired change in the current IMU heading.
+    float yaw_control;
+    float yaw;  // Angle
+
+    // Speed
+    float rho;
 
     // Depth
     // Control for depth is either absolute or relative.  If "depth_control" is
-    // DEPTH_ABSOLUTE then the "depth" variable is used.  If "depth_control" is
-    // DEPTH_RELATIVE then the "phi" variable is used.
+    // DEPTH_ABSOLUTE then "depth" is interpreted as relative to the surface.  If "depth_control" is
+    // DEPTH_RELATIVE then "depth" is interpreted as a desired change in depth relative to the craft.
     float depth_control;
-    float depth;  // Absolute Depth
-    float phi;    // Relative Depth
+    float depth;  // Depth
 
     // Missions should set this to the frame they recieved from the camera, so
     // main.c can use it for debugging.  Missions may also write debug

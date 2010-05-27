@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 
     for (unsigned int frame_num=0; true; frame_num++)
     {
-        
+
         // Run mission_step
         int current_mission = mission_order[mission_index];
         results.frame = NULL;
@@ -81,17 +81,9 @@ int main(int argc, char** argv)
         // Give mission control its heading
         if (memcmp(&results, &previous_results, sizeof(struct mission_output))) {
 
-            // Update Variables
-            Var_set("SetPointVision.Theta", results.theta);
-            Var_set("SetPointVision.Phi", results.phi);
-            Var_set("SetPointVision.Rho", results.rho);
-
-            // Set depth if tracker does not
-            if(!results.depth_control) {
-                Var_set("DepthHeading", results.depth);
-            }
-            Var_set("TrackerDoDepth", results.depth_control);
-            Notify_send("UPDATED", "SetPointVision");
+            // Set headings
+            set_depth(mission_output.depth, mission_output.depth_control);
+            set_yaw(mission_output.yaw, mission_output.yaw_control);
             previous_results = results;
 
             // Switch missions
