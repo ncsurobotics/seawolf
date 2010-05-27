@@ -18,9 +18,13 @@
 struct mission_output {
 
     // Yaw
-    // Control for yaw is either absolute or relative.  If "yaw_control" is
-    // YAW_ABSOLUTE then "yaw" is interpreted as a desired IMU heading.  If "yaw_control" is
-    // YAW_RELATIVE then "yaw" is interpreted as desired change in the current IMU heading.
+    // yaw_control can be one of the following:
+    // ROT_MODE_ABSOLUTE
+    //     "yaw" is interpreted as a desired IMU heading.
+    // ROT_MODE_RELATIVE
+    //     "yaw" is interpreted as desired change in the current IMU heading
+    // ROT_MODE_RATE
+    //     "yaw" is interpreted as a desired turning rate (degrees per second)
     float yaw_control;
     float yaw;  // Angle
 
@@ -28,11 +32,15 @@ struct mission_output {
     float rho;
 
     // Depth
-    // Control for depth is either absolute or relative.  If "depth_control" is
-    // DEPTH_ABSOLUTE then "depth" is interpreted as relative to the surface.  If "depth_control" is
-    // DEPTH_RELATIVE then "depth" is interpreted as a desired change in depth relative to the craft.
+    // Control for depth is either absolute or relative.  So "depth_control"
+    // can be one of the following:
+    // DEPTH_ABSOLUTE
+    //     "depth" is interpreted as distance relative to the surface.
+    // DEPTH_RELATIVE
+    //     "depth" is interpreted as a desired change in depth relative to the
+    //     craft.
     float depth_control;
-    float depth;  // Depth
+    float depth;
 
     // Missions should set this to the frame they recieved from the camera, so
     // main.c can use it for debugging.  Missions may also write debug
