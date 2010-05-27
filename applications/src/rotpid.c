@@ -1,5 +1,6 @@
 
 #include "seawolf.h"
+#include "seawolf3.h"
 
 static void dataOut(double mv) {
     Notify_send("THRUSTER_REQUEST", Util_format("Yaw %d %d", (int) mv, (int) -mv));
@@ -45,7 +46,7 @@ int main(void) {
     /* Default to not rotating in rotational rate mode */
     Var_set("Rot.Angular.Target", 0.0);
     Var_set("Rot.Rate.Target", 0.0);
-    mode = Var_get("Rot.Mode.Angular");
+    mode = ROT_MODE_ANGULAR;
     Var_set("Rot.Mode", mode);
 
     angularpid = PID_new(0.0,
@@ -59,6 +60,7 @@ int main(void) {
 
     Notify_filter(FILTER_MATCH, "UPDATED IMU");
     Notify_filter(FILTER_PREFIX, "UPDATED Rot");
+    //Notify_filter(FILTER_MATCH, "UPDATED Rot.Angular.Target");
 
     /* Zero ouputs */
     dataOut(0.0);
@@ -79,9 +81,9 @@ int main(void) {
             yaw = Var_get("SEA.Yaw");
             rate = yaw_dt(yaw);
 
-            if(mode == Var_get("Rot.Mode.Rate")) {
+            if(mode == ROT_MODE_RATE) {
                 mv = PID_update(ratepid, rate);
-            } else if (mode == Var_get("Rot.Mode.Angular")) {
+            } else if (mode == ROT_MODE_ANGULAR) {
                 mv = PID_update(angularpid, yaw);
             } else {
                 printf("Rot.Mode is incorrectly set to \"%f\"!!!!\n", Var_get("Rot.Mode"));
@@ -93,7 +95,7 @@ int main(void) {
             PID_setSetPoint(ratepid, Var_get("Rot.Rate.Target"));
 
         } else if(strcmp(data, "Rot.Angular.Target") == 0) {
-            PID_setSetPoint(ratepid, Var_get("Rot.Angular.Target"));
+            PID_setSetPoint(angularpid, Var_get("Rot.Angular.Target"));
 
         } else if(strcmp(data, "Rot.Mode") == 0) {
             mode = Var_get("Rot.Mode");
