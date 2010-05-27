@@ -10,6 +10,7 @@ int main(void) {
 
     Notify_send("THRUSTER_REQUEST", Util_format("Forward %d %d", 0, 0));
     Var_set("Rot.Angular.Target", 50.0);
+    Var_set("DepthHeading", 10.0);
     //Notify_send("THRUSTER_REQUEST", Util_format("Forward %d %d", 40, 40));
 
     Seawolf_close();

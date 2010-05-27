@@ -73,6 +73,7 @@ int main(void) {
     rate = yaw_dt(yaw);
     PID_start(angularpid, yaw);
     PID_start(ratepid, rate);
+    Var_set("Rot.Angular.Target", yaw);
 
     while(true) {
         Notify_get(action, data);

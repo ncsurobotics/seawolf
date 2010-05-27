@@ -76,7 +76,6 @@ int main(void) {
     Seawolf_init("PID Mixer");
 
     Var_set("DepthHeading", 0.5);
-    Var_set("YawHeading", Var_get("SEA.Yaw"));
 
     /* Thruster values */
     short out[] = {0, 0, 0, 0, 0};
