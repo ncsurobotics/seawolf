@@ -22,9 +22,6 @@ int main(int argc, char** argv)
     Seawolf_loadConfig("../../conf/seawolf.conf");
     Seawolf_init("Vision Mission Control");
 
-    // Set point source is vision
-    Var_set("SetPointSource", 1.0);
-
     // Setup Cameras
     if (argc == 4) {
         multicam_set_camera(DOWN_CAM, argv[1]);
@@ -49,8 +46,8 @@ int main(int argc, char** argv)
 
     // Setup Initial results struct
     struct mission_output results;
+    results.yaw_control = ROT_MODE_ANGULAR;
     results.yaw = 0;
-    results.depth = 0;
     results.rho = 0;
     results.depth_control = 0;
     results.depth = 0;

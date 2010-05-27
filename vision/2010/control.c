@@ -37,11 +37,11 @@ void set_yaw(float yaw, float yaw_control) {
         Var_set("Rot.Mode", yaw_control);
         yaw_control_cache = yaw_control;
     }
-    if (yaw_control == YAW_ABSOLUTE) {
+    if (yaw_control == ROT_MODE_ANGULAR) {
         set_yaw_absolute(yaw);
-    } else if (yaw_control == YAW_RELATIVE) {
+    } else if (yaw_control == ROT_MODE_RELATIVE) {
         set_yaw_relative(yaw);
-    } else if (yaw_control == YAW_RATE) {
+    } else if (yaw_control == ROT_MODE_RATE) {
         set_yaw_rate(yaw);
     } else {
         printf("ERROR: yaw_control incorrectly set to %f!!!\n", yaw_control);

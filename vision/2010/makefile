@@ -27,8 +27,8 @@ $(shell mkdir -p $(PWD)/missions/bin)
 
 all: vision_lib main
 
-main: $(MISSION_OBJS) bin/main.o
-	$(CC) $(ALL_FLAGS) bin/main.o lib/vision_lib.o $(MISSION_OBJS) -o main
+main: $(MISSION_OBJS) bin/control.o bin/main.o
+	$(CC) $(ALL_FLAGS) bin/*.o lib/vision_lib.o $(MISSION_OBJS) -o main
 
 vision_lib:
 	$(MAKE) -C lib
