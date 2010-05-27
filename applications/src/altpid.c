@@ -1,10 +1,11 @@
 
 #include "seawolf.h"
+#include "seawolf3.h"
 
 static int thruster_max;
 
 static void dataOut(double mv) {
-    int out = Util_inRange(-thruster_max, (int) mv, thruster_max);
+    int out = Util_inRange(-THRUSTER_MAX, (int) mv, THRUSTER_MAX);
     int front = (int) out * 0.7;
     Notify_send("THRUSTER_REQUEST", Util_format("Alt %d %d %d", front, front, out));
 }
@@ -16,8 +17,6 @@ int main(void) {
     PID* pid;
     char action[64], data[64];
     double mv;
-
-    thruster_max = Var_get("ThrusterMax");
 
     Notify_filter(FILTER_MATCH, "UPDATED AltitudePID");
     Notify_filter(FILTER_MATCH, "UPDATED AltitudeHeading");

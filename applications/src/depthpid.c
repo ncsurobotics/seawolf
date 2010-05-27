@@ -1,10 +1,9 @@
 
 #include "seawolf.h"
-
-static int thruster_max;
+#include "seawolf3.h"
 
 static void dataOut(double mv) {
-    int out = Util_inRange(-thruster_max, (int) mv, thruster_max);
+    int out = Util_inRange(-THRUSTER_MAX, (int) mv, THRUSTER_MAX);
     int front = (int) out * 0.7;
     Notify_send("THRUSTER_REQUEST", Util_format("Depth %d %d %d", front, front, out));
 }
@@ -16,8 +15,6 @@ int main(void) {
     PID* pid;
     char action[64], data[64];
     double mv;
-
-    thruster_max = Var_get("ThrusterMax");
 
     Notify_filter(FILTER_MATCH, "UPDATED DepthPID");
     Notify_filter(FILTER_MATCH, "UPDATED DepthHeading");

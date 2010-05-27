@@ -1,5 +1,6 @@
 
 #include "seawolf.h"
+#include "seawolf3.h"
 
 #include <ncurses.h>
 #include <pthread.h>
@@ -91,9 +92,6 @@ int main(void) {
     char action[32], data[64];
     char requester[16], values[48];
 
-    /* Max thruster value */
-    int thruster_max = Var_get("ThrusterMax");
-
     /* Zero thrusters */
     setThrusters(out);
 
@@ -128,11 +126,11 @@ int main(void) {
         mix(req_roll, req_pitch, req_depth, req_forward, req_yaw, out);
 
         /* Check bounds on all output values */
-        out[PORTY] = Util_inRange(-thruster_max, out[PORTY], thruster_max);
-        out[STARY] = Util_inRange(-thruster_max, out[STARY], thruster_max);
-        out[AFT]   = Util_inRange(-thruster_max, out[AFT]  , thruster_max);
-        out[PORTX] = Util_inRange(-thruster_max, out[PORTX], thruster_max);
-        out[STARX] = Util_inRange(-thruster_max, out[STARX], thruster_max);
+        out[PORTY] = Util_inRange(-THRUSTER_MAX, out[PORTY], THRUSTER_MAX);
+        out[STARY] = Util_inRange(-THRUSTER_MAX, out[STARY], THRUSTER_MAX);
+        out[AFT]   = Util_inRange(-THRUSTER_MAX, out[AFT]  , THRUSTER_MAX);
+        out[PORTX] = Util_inRange(-THRUSTER_MAX, out[PORTX], THRUSTER_MAX);
+        out[STARX] = Util_inRange(-THRUSTER_MAX, out[STARX], THRUSTER_MAX);
 
         /* Output new thruster values */
         setThrusters(out);

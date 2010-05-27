@@ -1,5 +1,6 @@
 
 #include "seawolf.h"
+#include "seawolf3.h"
 
 #include <ncurses.h>
 #include <pthread.h>
@@ -31,7 +32,6 @@
 
 static bool running = true;
 static float depth_heading = SURFACE;
-static int thruster_max;
 
 static void* notify_monitor(void* _n) {
     char action[64], data[64];
@@ -100,16 +100,16 @@ static void updateThrusters(float magnitude, float rotate) {
     rot_f = pow(rot_f, R_POWER_FACTOR);
 
     /* Calculate rotational offset */
-    offset = (int)(rot_f * R_FRAC_MAX * thruster_max);
-    star = port = (int) (mag_f * mag_sign * (thruster_max-offset));
+    offset = (int)(rot_f * R_FRAC_MAX * THRUSTER_MAX);
+    star = port = (int) (mag_f * mag_sign * (THRUSTER_MAX-offset));
 
     /* Add in offset with correct sign */
     star += offset * rot_sign;
     port -= offset * rot_sign;
 
     /* Bound for good measure */
-    star = Util_inRange(-thruster_max, star, thruster_max);
-    port = Util_inRange(-thruster_max, port, thruster_max);
+    star = Util_inRange(-THRUSTER_MAX, star, THRUSTER_MAX);
+    port = Util_inRange(-THRUSTER_MAX, port, THRUSTER_MAX);
 
     /* Send out */
     Notify_send("THRUSTER_REQUEST", Util_format("Forward %d %d", (int)star, (int)port));
@@ -121,8 +121,6 @@ int main(void) {
 
     int c;
     float magnitude = 0, rotate = 0;
-
-    thruster_max = Var_get("ThrusterMax");
 
     initscr();
     cbreak();

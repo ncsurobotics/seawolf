@@ -4,6 +4,7 @@
  */
 
 #include "seawolf.h"
+#include "seawolf3.h"
 
 #include "math.h"
 
@@ -26,13 +27,11 @@
 #define RHO_Ki 0
 #define RHO_Kd 0
 
-static int thruster_max;
-
 static void dataOut(double mv[3], bool do_depth) {
     /* Base value for horizontal thrusters */
     float port_x, star_x;
-    port_x = Util_inRange(-thruster_max, mv[RHO], thruster_max);
-    star_x = Util_inRange(-thruster_max, mv[RHO], thruster_max);
+    port_x = Util_inRange(-THRUSTER_MAX, mv[RHO], THRUSTER_MAX);
+    star_x = Util_inRange(-THRUSTER_MAX, mv[RHO], THRUSTER_MAX);
     
     if(mv[THETA] != 0.0) {
         Var_set("RotHeading", mv[THETA]);
@@ -67,15 +66,13 @@ int main(void) {
     /* Set point is always the zero vector */
     const float sp[3] = {0, 0, 0};
     double pv[3], mv[3];
-    double last_theta = (double) (Var_get("RotMode") != Var_get("RotModeStraight"));
+    double last_theta = (double) (Var_get("RotMode") != ROT_MODE_STRAIGHT);
 
     /* Tracker controls depth */
     bool do_depth = (Var_get("TrackerDoDepth") == 1.0);
 
     /* Notify buffers */
     char action[16], data[16];
-
-    thruster_max = Var_get("ThrusterMax");
 
     /* Only receive SetPoint updates */
     Notify_filter(FILTER_MATCH, "UPDATED SetPoint");
@@ -98,10 +95,10 @@ int main(void) {
         pv[RHO] = Var_get("SetPoint.Rho");
 
         if(pv[THETA] == 0.0 && last_theta != 0.0) {
-            Var_set("RotMode", Var_get("RotModeStraight"));
+            Var_set("RotMode", ROT_MODE_STRAIGHT);
             Logging_log(DEBUG, "Switch to straight path");
         } else if(pv[THETA] != 0 && last_theta == 0.0) {
-            Var_set("RotMode", Var_get("RotModeRate"));
+            Var_set("RotMode", ROT_MODE_RATE);
             Logging_log(DEBUG, "Switch to tracking path");
         }
 
