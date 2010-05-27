@@ -5,6 +5,7 @@
 
 #include <seawolf3.h>
 
+#include "util.h"
 #include "vision_lib.h"
 #include <cv.h>
 #include <highgui.h>
@@ -13,7 +14,6 @@
 
 
 // State variables for GATE (static limits scope to file)
-static int WHITE_GATE_FLAG =0; // Set to zero to look for black gate
 static int close_to_gate =0; // Number of consecutive frames we've seen something we think is a gate
 static int gate_width =0; // The width of the last gate we saw
 static int frames_since_seen_gate = 0; // Frames since we've seen the gate
@@ -21,7 +21,10 @@ static int seen_gate = 0;
 static int left_pole = 0;
 static int right_pole = 0;
 static int seen_both_poles = 0; // Increments every time we see both poles
-static double desired_depth = 2.0;
+
+// Manual State Variables
+static int WHITE_GATE_FLAG = 0; // Set to zero to look for black gate
+static double desired_depth = 2.0; // desired depth
 
 void mission_gate_init(IplImage* frame, double depth)
 {
@@ -49,13 +52,16 @@ struct mission_output mission_gate_step(struct mission_output result)
     // Set the depth
     result.depth_control = DEPTH_ABSOLUTE;
     result.depth = desired_depth;
+    
+    // Set Yaw control 
+    result.yaw_control = ROT_MODE_RELATIVE;
 
     // Find lines, white or black
     if (WHITE_GATE_FLAG) { // LOOK FOR WHITE LINES
         grey = cvCreateImage(cvSize(frame->width,frame->height), 8, 1);
         cvCvtColor(frame, grey, CV_BGR2GRAY);
         edge = edge_opencv(grey, 60,100, 3); // This should be much more lenient than normal
-        edge = remove_edges(frame, edge, 0,0,0,0,0,0); // For now this isn't neccessary, leavin in for debugging
+        edge = remove_edges(frame, edge, 0,0,0,0,0,0); 
         lines = hough(edge, frame, 27, 2, 90,20, 10, 150, 150);
 
     } else { // LOOK FOR BLACK LINES
@@ -67,7 +73,7 @@ struct mission_output mission_gate_step(struct mission_output result)
         num_pixels = FindTargetColor(frame, ipl_out, &color, 80, 256,2);
         cvCvtColor(ipl_out, grey, CV_BGR2GRAY);
         edge = edge_opencv(grey, 40, 60, 3);
-        edge = remove_edges(frame, edge, 0,0,0,0,0,0); // For now this isn't neccessary, leavin in for debugging
+        edge = remove_edges(frame, edge, 0,0,0,0,0,0); 
         lines = hough(edge, frame, 20, 2, 90,20, 10, 150, 150);
 
         #ifdef DEBUG_BLACK_GATE
@@ -103,10 +109,12 @@ struct mission_output mission_gate_step(struct mission_output result)
         left_pole = pt_gate[0]<pt_gate[1]?pt_gate[0]:pt_gate[1];
         right_pole = pt_gate[0]>pt_gate[1]?pt_gate[0]:pt_gate[1];
 
-        //result.theta = ((pt_gate[0]+pt_gate[1])/2-frame->width/2)/2+frame->width/2; // Head towards the middle of the gate
-        result.yaw = (pt_gate[0]+pt_gate[1])/2; // - frame->width/2;
+        //Set the yaw heading to the center of the two poles
+        result.yaw = (pt_gate[0]+pt_gate[1])/2; 
 
-    } else if (rho_gate[1] != -999) { // We only see one line
+    } else if (rho_gate[1] != -999 && seen_both_poles < 2) { 
+        // We only see one line, and don't know where the gate is
+        
         seen_gate++;
         frames_since_seen_gate = 0;
 
@@ -126,13 +134,16 @@ struct mission_output mission_gate_step(struct mission_output result)
             right_pole = pt_gate[1];
             result.yaw = frame->width/2 - 30;
         }
-
+    } else if (rho_gate[1] != -999 && seen_both_poles >1) {
+    
+        //We only see one line, but should know where the gate is, so don't do anything
+        
     } else { // We don't see anything
+    
+        // Check to see if we could have passed through the gate
         if (++frames_since_seen_gate > 20 && seen_gate > 10) {
             result.mission_done = true;
         }
-
-        result.yaw = frame->width/2;
     }
 
     // Determine rho
@@ -147,10 +158,12 @@ struct mission_output mission_gate_step(struct mission_output result)
         cvCircle(result.frame, cvPoint(result.yaw, frame->height/2), 5, cvScalar(0,0,0,255),1,8,0);
     #endif
 
-    // Scale output
+    // Shift output to zero center of the frame
     result.yaw -= frame->width/2;
-    result.yaw = (result.yaw*MAX_THETA / (frame->width/2))/9;
     result.depth = 0;
+    
+    // Convert pixels to degrees
+    result.yaw = PixToDeg(result.yaw);
 
     if (WHITE_GATE_FLAG) { // Free white gate resources
         cvReleaseImage(&grey);

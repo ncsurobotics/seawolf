@@ -2,13 +2,13 @@ SHELL = /bin/sh
 CC=gcc
 CFLAGS=-g --std=c99 -pedantic -Wmissing-prototypes
 CFLAGS+=-Wall -Werror -Wno-unused
+CFLAGS +=-I../../include/ -I./ -lutil
 
 # Handle debug.mk
 $(shell cp -u debug.mk.default debug.mk)
 include debug.mk
 export VISION_LIB_FLAGS=$(DEBUG_FLAGS)
 CFLAGS +=$(DEBUG_FLAGS)
-CFLAGS +=-I../../include/
 
 OPENCV_FLAGS=$(shell pkg-config --libs --cflags opencv) \
              -DCV_NO_BACKWARD_COMPATIBILITY
@@ -27,7 +27,7 @@ $(shell mkdir -p $(PWD)/missions/bin)
 
 all: vision_lib main
 
-main: $(MISSION_OBJS) bin/control.o bin/main.o
+main: $(MISSION_OBJS) bin/control.o bin/util.o bin/main.o
 	$(CC) $(ALL_FLAGS) bin/*.o lib/vision_lib.o $(MISSION_OBJS) -o main
 
 vision_lib:
