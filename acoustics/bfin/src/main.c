@@ -22,9 +22,6 @@
 #include <math_bf.h>
 #include <complex_bf.h>
 
-#include "acoustics_math.h"
-#include "csv_io.h"
-
 /* A sample from the FPGA/ADC is 16 bits */
 typedef fract16 adcsample;
 
@@ -73,39 +70,6 @@ typedef fract16 adcsample;
    channels */
 #define EXTRA_READS 4
 
-/* Specify samples to start and end dump at */
-#define START_DUMP 4096
-#define DUMP_SIZE  1048576
-#define END_DUMP   (START_DUMP + DUMP_SIZE)
-
-/* Dump channel buffer to CSV file */
-#if ACOUSTICS_DEBUG >= 4
-static void dump(const char* fname, adcsample* n) {
-    FILE* f = fopen(fname, "w");
-    for(int i = START_DUMP; i < END_DUMP; i++) {
-        fprintf(f, "%.5f\n", n[i] / ((float)(1 << 15)));
-    }
-    fclose(f);
-}
-#endif
-
-#if 0
-static int my_atoi(const char* s) {
-    int n = 0;
-
-    while(isspace(*s)) {
-        s++;
-    }
-
-    while(isdigit(*s) && *s != '\0') {
-        n = (n * 10) + ((*s) - '0');
-        s++;
-    }
-
-    return n;
-}
-#endif
-
 /* Pull in coefficient values from a file */
 static void load_coefs(fract16* coefs, char* coef_file_name, int num_coefs) {
     FILE* f;
@@ -129,22 +93,53 @@ static void load_coefs(fract16* coefs, char* coef_file_name, int num_coefs) {
     fclose(f);
 }
 
+/* Return the index of the real part maximum of the array */
+static int find_max_cmplx(complex_fract16* w, int size) {
+    fract16 max_y = 0;
+    int max_x = 0;
+
+    for(int i = 0; i < size; i++) {
+        if(w[i].re > max_y) {
+            max_y = w[i].re;
+            max_x = i;
+        } 
+    }
+
+    return max_x;
+}
+
+/* Perform a pointwise product of the complex valued arrrays in1 and in2 storing
+   the result in out */
+static void multiply(complex_fract16* in1, complex_fract16* in2, complex_fract16* out, int size) {
+    while(size--) {
+        *out++ = cmlt_fr16(*in1++, *in2++);
+    }
+}
+
+/* Conjugate every element in the given complex valued array */
+static void conjugate(complex_fract16* w, int size) {
+    while(size--) {
+        *w = conj_fr16(*w);
+        w++;
+    }
+}
+
 int main(int argc, char** argv) {
 #ifdef USE_LIBSEAWOLF
     Seawolf_loadConfig("seawolf.conf");
     Seawolf_init("Blackfin");
 #endif
+
+    /* Timer for profiling */
     Timer* t = Timer_new();
 
+    /* Data source address in async back 2 */
     adcsample* last_addr = (adcsample*) 0x00;
-    adcsample* cir_buff[4];
-    adcsample* temp_buff;
-
-    unsigned int cir_buff_offset;
-    unsigned int extra_reads;
-    unsigned int i;
 
     /* Circular buffer state */
+    adcsample* cir_buff[4];
+    unsigned int cir_buff_offset;
+    unsigned int extra_reads;
     int state;
     bool cir_buff_full;
 
@@ -159,11 +154,6 @@ int main(int argc, char** argv) {
     fract16* fir_delay[4];
     fract16* fir_delay_trig;
 
-    /* Signal delays */
-    int delay_AB;
-    int delay_AC;
-    int delay_AD;
-
     /* Twiddle table for correlations */
     complex_fract16* tt;
 
@@ -172,6 +162,15 @@ int main(int argc, char** argv) {
     complex_fract16* fft_temp;
     complex_fract16* cmplx_buff;
     int block_exponent;
+
+    /* Signal delays */
+    int delay_AB;
+    int delay_AC;
+    int delay_AD;
+
+    /* Misc */
+    unsigned int i;
+    adcsample* temp_buff;
 
     /* Missing coefficients file argument */
     if(argc <= 1) {
@@ -211,13 +210,13 @@ int main(int argc, char** argv) {
     /* Twiddle table for use in optimized correlation block */
     tt = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL / 2);
 
-    /* Initialize fft output buffers */
+    /* Intialize twiddle table */
+    twidfftrad2_fr16(tt, BUFFER_SIZE_CHANNEL);
+
+    /* Initialize fft output buffers for use in correlation block */
     fft_ref = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL);
     fft_temp = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL);
     cmplx_buff = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL);
-
-    /* Intialize twiddle table */
-    twidfftrad2_fr16(tt, BUFFER_SIZE_CHANNEL);
 
     while(true) {
         /* Reset state */
@@ -317,16 +316,16 @@ int main(int argc, char** argv) {
         Timer_reset(t);
 
         /* Apply FIR filter to each buffer */
-        fir(cir_buff[A], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[A]);
+        fir_fr16(cir_buff[A], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[A]);
         memcpy(cir_buff[A], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
 
-        fir(cir_buff[B], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[B]);
+        fir_fr16(cir_buff[B], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[B]);
         memcpy(cir_buff[B], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
 
-        fir(cir_buff[C], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[C]);
+        fir_fr16(cir_buff[C], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[C]);
         memcpy(cir_buff[C], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
 
-        fir(cir_buff[D], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[D]);
+        fir_fr16(cir_buff[D], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[D]);
         memcpy(cir_buff[D], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
         printf("%5.3f\n", Timer_getDelta(t));
 
