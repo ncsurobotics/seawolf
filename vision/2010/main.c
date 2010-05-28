@@ -84,6 +84,7 @@ int main(int argc, char** argv)
             // Set headings
             set_depth(results.depth, results.depth_control);
             set_yaw(results.yaw, results.yaw_control);
+            set_rho(results.rho);
             previous_results = results;
 
             // Switch missions

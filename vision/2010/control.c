@@ -34,7 +34,11 @@ void set_depth_absolute(float depth) {
 /* Yaw */
 void set_yaw(float yaw, float yaw_control) {
     if (yaw_control != yaw_control_cache) {
-        Var_set("Rot.Mode", yaw_control);
+        if (yaw_control == ROT_MODE_RELATIVE) {
+            Var_set("Rot.Mode", ROT_MODE_ANGULAR);
+        } else {
+            Var_set("Rot.Mode", yaw_control);
+        }
         yaw_control_cache = yaw_control;
     }
     if (yaw_control == ROT_MODE_ANGULAR) {
@@ -59,4 +63,10 @@ void set_yaw_absolute(float yaw) {
 
 void set_yaw_rate(float yaw) {
     Var_set("Rot.Rate.Target", yaw);
+}
+
+/* Forward */
+void set_rho(float rho) {
+    rho = Util_inRange(-THRUSTER_MAX, rho, THRUSTER_MAX);
+    Notify_send("THRUSTER_REQUEST", Util_format("Forward %d %d", (int) rho, (int) rho));
 }
