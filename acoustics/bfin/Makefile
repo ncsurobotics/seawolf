@@ -1,17 +1,21 @@
 
 CC= bfin-linux-uclibc-gcc
 CFLAGS= -O2 --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include -I$(PWD)/include
-LDFLAGS= -L$(PWD)/../../libseawolf/ -lseawolf-bfin -lbfdsp -lm
+LDFLAGS= -L$(PWD)/../../libseawolf/ -lbfdsp -lm
 
 #CC= bfin-uclinux-gcc
 #CFLAGS= -static --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include -I$(PWD)/include
-#LDFLAGS= -L$(PWD)/../../libseawolf -lseawolf-bfin -lbfdsp -lm -Wl,-elf2flt
+#LDFLAGS= -L$(PWD)/../../libseawolf -lbfdsp -lm -Wl,-elf2flt
+
+# Enable the use of libseawolf (when not in testing)
+#CFLAGS+= -DUSE_LIBSEAWOLF
+LDFLAGS+= -lseawolf-bfin
 
 BIN_DIR= $(PWD)/bin
 BIN_NAME= acoustics-bfin
 
-SRCS= src/acoustics_math.c src/csv_io.c src/main.c
-INCLUDES= include/acoustics_math.h include/csv_io.h
+SRCS= src/acoustics_math.c src/main.c
+INCLUDES= include/acoustics_math.h
 
 all: $(BIN_DIR)/$(BIN_NAME)
 
