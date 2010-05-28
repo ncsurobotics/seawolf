@@ -24,26 +24,31 @@
  /** 
  * \brief Searches for pixels in an image that most closely match target color.
  *  
- * This function takes in an IplImage and a target color.  It searches the image for the 
- * pixels which most closely match the target color.  All other pixels are set to black.  
- * Location of pixels to eachother is ignored.  The number of pixels found (not blacked out) is 
- * returned.  The filtered image is passed as an argument.  
+ * This function takes in an IplImage and a target color.  It searches the
+ * image for the pixels which most closely match the target color.  All other
+ * pixels are set to black.  Location of pixels to eachother is ignored.  The
+ * number of pixels found (not blacked out) is returned.  The filtered image is
+ * passed as an argument.  
  *
- * Be Wary - the trickiest facet of this function is determining when the target color is not 
- * in fact present in the image.  For example, if the target is green, and the algorithm is passed
- * an image of a grey table, it will select the greenest part of the grey image, even if it does 
- * not appear to be green at all.  The argument to adjust for this problem is dev_threshold. 
+ * Be Wary - the trickiest facet of this function is determining when the
+ * target color is not in fact present in the image.  For example, if the
+ * target is green, and the algorithm is passed an image of a grey table, it
+ * will select the greenest part of the grey image, even if it does not appear
+ * to be green at all.  The argument to adjust for this problem is
+ * dev_threshold. 
  *
  * \param in The origional image to be filtered 
  * \param out The IplImage the filtered output will be assigned to.
  * \param color and RGBPixel of the target color
- * \param min_blobsize an integer of the smallest number of pixels the function is allowed to
- * return (intended to keep from returning noise) NOTE: the term "blob" in the title does not
- * have anything to do with it's use in the rest of the library.
- * \param dev_threshold determines how far removed the accepted pixels must be from the average
- * color of the image
- * \param precision_threshold influences how close to eachother in color the accepted pixels 
- * must be, but not neccesarily how close they are to the target color
+ * \param min_blobsize an integer of the smallest number of pixels the function
+ *        is allowed to return (intended to keep from returning noise) NOTE:
+ *        the term "blob" in the title does not have anything to do with it's
+ *        use in the rest of the library.
+ * \param dev_threshold Determines how far removed the accepted pixels may be
+ *        from the target color in RGB space.
+ * \param precision_threshold Influences how close to eachother in color the
+ *        accepted pixels must be, but not neccesarily how close they are to
+ *        the target color
  */
  
 int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsize, int dev_threshold, double precision_threshold){ //should find the set of colors closest to the target color
@@ -61,25 +66,26 @@ int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsi
     RGBPixel imgAverage;
     RGBPixel tempPixel;
 
-    sigmas = (int*)calloc(444,sizeof(int)); //allocate memory for sigma table (max sigma is sqrt(256^2 + 256^2 + 256^2) ) 
+    sigmas = (int*)calloc(444,sizeof(int)); // Allocate memory for sigma table (max sigma is sqrt(256^2 + 256^2 + 256^2) ) 
 
-    //initialize tables
-    for(i=0;i<444;i++)
-    sigmas[i] = 0;
-  
-   
-    for(i=in->width*in->height; i>=0;i--){ //fill the acumulator tables 
-    tempPixel.r = ptrIn[3*i+2];
-    tempPixel.b = ptrIn[3*i+1];
-    tempPixel.g = ptrIn[3*i+0];
+    // Initialize tables
+    for (i=0;i<444;i++) {
+        sigmas[i] = 0;
+    }
+
+
+    for(i=in->width*in->height; i>=0;i--){ // Fill the acumulator tables 
+        tempPixel.r = ptrIn[3*i+2];
+        tempPixel.b = ptrIn[3*i+1];
+        tempPixel.g = ptrIn[3*i+0];
         s = (int)Pixel_stddev(color, &tempPixel); //this function used to keep color data associated with each sigma, so this s got used a lot
         sigmas[s]++;
-            //update the average color
+        // Update the average color
         imgAverage_r = (imgAverage_r*(i)+tempPixel.r)/(i+1);
         imgAverage_g = (imgAverage_g*(i)+tempPixel.g)/(i+1);
         imgAverage_b = (imgAverage_b*(i)+tempPixel.b)/(i+1); 
     }
-    //update the imgAverage pixel (converting all averages to integers)
+    // Update the imgAverage pixel (converting all averages to integers)
     imgAverage.r = (int)imgAverage_r;
     imgAverage.g = (int)imgAverage_g;
     imgAverage.b = (int)imgAverage_b;
@@ -87,34 +93,35 @@ int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsi
     averagestddev= Pixel_stddev(color,&imgAverage); 
 
     for(i=0; (blobsize < min_blobsize || i < smallest_stddev + (averagestddev-smallest_stddev)/precision_threshold)  && i<dev_threshold;i++){ //analyze data to determine sigma
-        if(sigmas[i] != 0 && smallest_stddev < 0 )
-        smallest_stddev = i;
-    blobsize += sigmas[i]; 
+        if(sigmas[i] != 0 && smallest_stddev < 0 ) {
+            smallest_stddev = i;
+        }
+        blobsize += sigmas[i]; 
     }
-    stddev = i; //save the max. std dev
+    stddev = i; // Save the max. std dev
 
     for(i=in->width*in->height-1;i>=0;i--){ //Update the Output Image
-    tempPixel.r = ptrIn[3*i+2];
-    tempPixel.b = ptrIn[3*i+1];
-    tempPixel.g = ptrIn[3*i+0];
-    if((int)Pixel_stddev(color,&tempPixel) < stddev){
-            //this pixel is "close" to the target color, mark it white
+        tempPixel.r = ptrIn[3*i+2];
+        tempPixel.b = ptrIn[3*i+1];
+        tempPixel.g = ptrIn[3*i+0];
+        if((int)Pixel_stddev(color,&tempPixel) < stddev){
+            // This pixel is "close" to the target color, mark it white
             ptrOut[3*i+2] = 0xff;   
             ptrOut[3*i+1] = 0xff;
             ptrOut[3*i+0] = 0xff;
-    }else{
-            //this pixel is not "close" to the target color: mark it black
+        } else {
+            // This pixel is not "close" to the target color: mark it black
             ptrOut[3*i+2] = 0x00;   
             ptrOut[3*i+1] = 0x00;
             ptrOut[3*i+0] = 0x00;
-    } 
+        } 
     }
-   
+
     free(sigmas);
 
     //printf("confidence = %d blobsize = %d\n",averagestddev-smallest_stddev,blobsize);
     //fflush(NULL);
-    return blobsize;//averagestddev-smallest_stddev;
+    return blobsize; //averagestddev-smallest_stddev;
 }
 
 /**
@@ -127,4 +134,3 @@ float Pixel_stddev(RGBPixel* px_1, RGBPixel* px_2) {
                 pow((short)px_1->b - px_2->b, 2));
 }
 /** } */
-
