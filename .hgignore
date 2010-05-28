@@ -12,6 +12,8 @@ syntax: regexp
 ^serial/bin/
 ^serial/serialapp
 ^applications/bin/
+^acoustics/bfin/bin/
+^acoustics/bfin/acoustics_bundle.tar$
 
 # Vision
 syntax: regexp
