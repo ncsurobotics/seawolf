@@ -5,7 +5,7 @@
 #include <string.h>
 
 #define SIGNBIT(x) (((x) & (1<<7)) ? (((~((x)-1)) | (((x) & (1 << 7)) >> 1))) : (x))
-#define DEAD_BAND 8
+#define DEAD_BAND 3
 
 void manage(SerialPort sp);
 
