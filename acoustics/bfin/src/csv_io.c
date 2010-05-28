@@ -84,21 +84,19 @@ void printCSVcmplx(complex_fract16* location, int size) {
     };
 }
 
-//Pull in coefficient values from a file
-void pullCoefs( fract16* coefs, char* coefFilename, int numCoef ) {
-    //Control integer
-    int i = 0;
-    char* str="AAAAAAAAAAAAAA";
+/* Pull in coefficient values from a file */
+void pullCoefs(fract16* coefs, char* coefFilename, int numCoef) {
+    char str[256];
 
-    //Open file
+    /* Open file */
     FILE* coefFile = fopen(coefFilename, "r");
 
-    //Read coefficients
-    for( i = 0; i < numCoef; i++ ) {
-        fgets( str, 255, coefFile );
+    /* Read coefficients */
+    for(int i = 0; i < numCoef; i++) {
+        fgets(str, 255, coefFile);
         coefs[i] = my_atoi(str);
     }
 
-    //Close File
+    /* Close File */
     fclose(coefFile);
 }

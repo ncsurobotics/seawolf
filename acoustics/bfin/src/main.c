@@ -9,7 +9,7 @@
 #define ACOUSTICS_DEBUG 2
 
 /* Disable Seawolf communication functionality. This is useful when debuging */
-#define USE_LIBSEAWOLF
+//#define USE_LIBSEAWOLF
 
 #ifdef USE_LIBSEAWOLF
 # include "seawolf.h"
@@ -53,6 +53,9 @@ typedef fract16 adcsample;
 #define CHANNELS 4
 #define SAMPLES_PER_CHANNEL (8 * 1024)
 #define SAMPLES_PER_BANK    (CHANNELS * SAMPLES_PER_CHANNEL)
+
+/* Size of a circular buffer for a single channel. This is populated in
+   increments of SAMPLES_PER_CHANNEL */
 #define BUFFER_SIZE_CHANNEL (512 * 1024)
 
 /* Value to trigger on */
@@ -76,28 +79,21 @@ typedef fract16 adcsample;
 #define END_DUMP  (START_DUMP + DUMP_SIZE)
 
 /* FIR Filter States */
-fir_state_fr16 firA;
-fir_state_fr16 firB;
-fir_state_fr16 firC;
-fir_state_fr16 firD;
-fir_state_fr16 smallFir;
+static fir_state_fr16 firA;
+static fir_state_fr16 firB;
+static fir_state_fr16 firC;
+static fir_state_fr16 firD;
+static fir_state_fr16 smallFir;
 
 /* FIR Coefficients */
-fract16* coefs;
+static fract16* coefs;
 
 /* FIR delay lines */
-fract16* delayA;
-fract16* delayB;
-fract16* delayC;
-fract16* delayD;
-fract16* delaySmallFir;
-
-/* FIR r/w pointers */
-fract16* rwA;
-fract16* rwB;
-fract16* rwC;
-fract16* rwD;
-fract16* rwSmallFir;
+static fract16* delayA;
+static fract16* delayB;
+static fract16* delayC;
+static fract16* delayD;
+static fract16* delaySmallFir;
 
 /* Dump channel buffer to CSV file */
 #if ACOUSTICS_DEBUG >= 4
@@ -111,23 +107,14 @@ static void dump(const char* fname, adcsample* n) {
 #endif
 
 /* Initialize FIR filters */
-static void fir_setup(void) {
-    /* FIR variables */
-    int pingFrequency;
-    short unPingFrequency;
-    int numTaps;
-    char* fileName = "27.cof";
-
-    /* Pull frequencies from rear end */
-    pingFrequency = 27;
-    unPingFrequency = 1728;
-    numTaps = 613;
+static void fir_setup(char* fileName) {
+    const int numTaps = 613;
 
     /* Initialize coefficients */
-    coefs  = calloc(sizeof(adcsample), numTaps);
+    coefs = calloc(sizeof(adcsample), numTaps);
 
     /* Pull coefficients from file */
-    pullCoefs( coefs, fileName, numTaps );
+    pullCoefs(coefs, fileName, numTaps);
 
     /* Initialize delay lines */
     delayA = calloc(sizeof(adcsample), numTaps);
@@ -144,6 +131,18 @@ static void fir_setup(void) {
     fir_init(smallFir, coefs, delaySmallFir, numTaps, 0);
 }
 
+/* Return true if the given file can be opened, false otherwise */
+static bool file_exists(char* file_name) {
+    FILE* f_tmp = fopen(file_name, "r");
+
+    if(f_tmp == NULL) {
+        return false;
+    }
+
+    fclose(f_tmp);
+    return true;
+}
+
 int main(int argc, char** argv) {
 #ifdef USE_LIBSEAWOLF
     Seawolf_loadConfig("seawolf.conf");
@@ -152,49 +151,56 @@ int main(int argc, char** argv) {
 
     adcsample* last_addr = (adcsample*) 0x00;
     adcsample* cirbuff[4];
-    adcsample* outbuff;
-    adcsample* temp_ptr;
+    adcsample* temp_buff;
 
     unsigned int cirbuff_offset;
     unsigned int extra_reads;
     unsigned int i;
 
-    fract16 *fftInput;
-    complex_fract16 *fftOutput;
-    complex_fract16 *twiddleTable;
-    complex_fract16 *tempTable;
-
-    fract16 *delay12;
-    fract16 *delay34;
+    fract16* trigger_fft_buffer;
 
     int state;
     bool cirbuff_full;
 
+    fract16 *delay12;
+    fract16 *delay34;
     int pDelay12;
     int pDelay34;
 
-    /* Setup FIR filters */
-    fir_setup();
+    char* coefsFile;
 
-    twiddleTable = calloc(sizeof(complex_fract16), SAMPLES_PER_CHANNEL );
-    tempTable = calloc(sizeof(complex_fract16), SAMPLES_PER_CHANNEL );
+    /* Missing coefficients file argument */
+    if(argc <= 1) {
+        printf("Missing required argument. Please provide a FIR filter coefficients file\n");
+        exit(1);
+    }
+
+    /* First argument should be to a .cof file */
+    coefsFile = argv[1];
+
+    if(!file_exists(coefsFile)) {
+        printf("Could not open coefficients file: %s\n", coefsFile);
+        exit(1);
+    }
+
+    /* Setup FIR filters */
+    fir_setup(coefsFile);
 
     /* Circular buffers per channel */
     cirbuff[A] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
     cirbuff[B] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
     cirbuff[C] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
     cirbuff[D] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
+    
+    /* Temporary buffer used in linearization of circular buffers */
+    temp_buff = malloc(sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
 
     /* Correlation stuff */
-    delay12 = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
-    delay34 = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
-
+    delay12 = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL * 2);
+    delay34 = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL * 2);
+    
     /* FFT buffers */
-    fftInput  = calloc(sizeof(adcsample), SAMPLES_PER_CHANNEL);
-    fftOutput = calloc(sizeof(adcsample), SAMPLES_PER_CHANNEL);
-
-    /* Buffer used in linearization of circular buffers */
-    outbuff = malloc(sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+    trigger_fft_buffer = calloc(sizeof(adcsample), SAMPLES_PER_CHANNEL);
 
     while(true) {
         /* Reset state */
@@ -210,8 +216,9 @@ int main(int argc, char** argv) {
 #endif
 
         while(state != DONE) {
-            /* Wait for the address pointer to change */
-            while(DATA_ADDR == last_addr);
+            while(DATA_ADDR == last_addr) {
+                /* Wait for the address pointer to change */
+            }
             last_addr = DATA_ADDR;
 
             /* Copy data out of the FPGA */
@@ -222,45 +229,21 @@ int main(int argc, char** argv) {
 
             /* Don't look for a trigger until the buffer has been filled */
             if(state == READING && cirbuff_full) {
-                temp_ptr = cirbuff[A] + cirbuff_offset;
-
 #if ACOUSTICS_DEBUG >= 2
-                printf("Looking for trigger... \n" );
+                printf(".");
+                fflush(stdout);
 #endif
 
-                /* Copy data to temporary buffer for analysis */
-                memcpy(fftInput, cirbuff[A] + cirbuff_offset, sizeof(adcsample) * SAMPLES_PER_CHANNEL);
+                /* Run the FIR filter on a copy of the current sample data */
+                memcpy(trigger_fft_buffer, cirbuff[A] + cirbuff_offset, sizeof(adcsample) * SAMPLES_PER_CHANNEL);
+                firfly(trigger_fft_buffer, SAMPLES_PER_CHANNEL, &smallFir);
 
-#if ACOUSTICS_DEBUG >= 3
-                /* Output waveform data */
-                printf("CHANNEL A WAVE DATA \n");
+                /* for(i = SAMPLES_PER_CHANNEL / 2; i < SAMPLES_PER_CHANNEL; i++) { */
                 for(i = 0; i < SAMPLES_PER_CHANNEL; i++) {
-                    printf("%d \n", fftInput[i]);
-                }
-                printf("END DATA \n");
-#endif
-
-                /* Zip data through FFT */
-                /* What was this for?
-                   twidfftrad2_fr16(twiddleTable, SAMPLES_PER_CHANNEL);
-                   rfft_fr16(fftInput, fftOutput, twiddleTable, 1, SAMPLES_PER_CHANNEL, 0, 0); */
-                firfly(fftInput, SAMPLES_PER_CHANNEL, &smallFir);
-
-#if ACOUSTICS_DEBUG >= 3
-                /* Threshold frequency value */
-                printf("CHANNEL A FIR DATA \n");
-                for(i = 0; i < SAMPLES_PER_CHANNEL; i++) {
-                    printf("%d \n", fftInput[i]);
-                }
-                printf("END DATA \n");
-#endif
-
-                for(i = SAMPLES_PER_CHANNEL / 2; i < SAMPLES_PER_CHANNEL; i++) {
-                    if(fftInput[i] > TRIGGER_VALUE ) {
+                    if(trigger_fft_buffer[i] > TRIGGER_VALUE ) {
                         state = TRIGGERED;
                         break;
                     }
-
                 }
             }
 
@@ -292,21 +275,21 @@ int main(int argc, char** argv) {
 
         /* Linearize each circular buffer using a temporary buffer. Output is
            stored back into the circular buffer space */
-        memcpy(outbuff, cirbuff[A] + cirbuff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cirbuff_offset));
-        memcpy(outbuff + (BUFFER_SIZE_CHANNEL - cirbuff_offset), cirbuff[A], sizeof(adcsample) * cirbuff_offset);
-        memcpy(cirbuff[A], outbuff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+        memcpy(temp_buff, cirbuff[A] + cirbuff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cirbuff_offset));
+        memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cirbuff_offset), cirbuff[A], sizeof(adcsample) * cirbuff_offset);
+        memcpy(cirbuff[A], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
 
-        memcpy(outbuff, cirbuff[B] + cirbuff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cirbuff_offset));
-        memcpy(outbuff + (BUFFER_SIZE_CHANNEL - cirbuff_offset), cirbuff[B], sizeof(adcsample) * cirbuff_offset);
-        memcpy(cirbuff[B], outbuff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+        memcpy(temp_buff, cirbuff[B] + cirbuff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cirbuff_offset));
+        memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cirbuff_offset), cirbuff[B], sizeof(adcsample) * cirbuff_offset);
+        memcpy(cirbuff[B], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
 
-        memcpy(outbuff, cirbuff[C] + cirbuff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cirbuff_offset));
-        memcpy(outbuff + (BUFFER_SIZE_CHANNEL - cirbuff_offset), cirbuff[C], sizeof(adcsample) * cirbuff_offset);
-        memcpy(cirbuff[C], outbuff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+        memcpy(temp_buff, cirbuff[C] + cirbuff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cirbuff_offset));
+        memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cirbuff_offset), cirbuff[C], sizeof(adcsample) * cirbuff_offset);
+        memcpy(cirbuff[C], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
 
-        memcpy(outbuff, cirbuff[D] + cirbuff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cirbuff_offset));
-        memcpy(outbuff + (BUFFER_SIZE_CHANNEL - cirbuff_offset), cirbuff[D], sizeof(adcsample) * cirbuff_offset);
-        memcpy(cirbuff[D], outbuff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+        memcpy(temp_buff, cirbuff[D] + cirbuff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cirbuff_offset));
+        memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cirbuff_offset), cirbuff[D], sizeof(adcsample) * cirbuff_offset);
+        memcpy(cirbuff[D], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
 
 #if ACOUSTICS_DEBUG >= 2
         printf("done\n");
@@ -347,16 +330,25 @@ int main(int argc, char** argv) {
         exit(0);
 #endif
 
+#if ACOUSTICS_DEBUG >= 2
+        printf("Apply FIR filters\n");
+#endif
         /* FIR data */
         firfly(cirbuff[A], BUFFER_SIZE_CHANNEL, &firA);
         firfly(cirbuff[B], BUFFER_SIZE_CHANNEL, &firB);
         firfly(cirbuff[C], BUFFER_SIZE_CHANNEL, &firC);
         firfly(cirbuff[D], BUFFER_SIZE_CHANNEL, &firD);
 
+#if ACOUSTICS_DEBUG >= 2
+        printf("Correlating...\n");
+#endif
         /* Correlation Blocks */
-        correlate(cirbuff[A], cirbuff[B], delay12, BUFFER_SIZE_CHANNEL);
-        correlate(cirbuff[C], cirbuff[D], delay34, BUFFER_SIZE_CHANNEL);
+        fast_correlate(cirbuff[A], cirbuff[B], delay12, BUFFER_SIZE_CHANNEL);
+        fast_correlate(cirbuff[C], cirbuff[D], delay34, BUFFER_SIZE_CHANNEL);
 
+#if ACOUSTICS_DEBUG >= 2
+        printf("Locating maximum delays...\n");
+#endif
         /* Find maximum points of correlation blocks */
         pDelay12 = findMax(delay12, BUFFER_SIZE_CHANNEL);
         pDelay34 = findMax(delay34, BUFFER_SIZE_CHANNEL);
@@ -373,11 +365,12 @@ int main(int argc, char** argv) {
 #endif
     }
 
+    free(trigger_fft_buffer);
     free(cirbuff[A]);
     free(cirbuff[B]);
     free(cirbuff[C]);
     free(cirbuff[D]);
-    free(outbuff);
+    free(temp_buff);
 
 #ifdef USE_LIBSEAWOLF
     Seawolf_close();

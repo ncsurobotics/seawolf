@@ -1,11 +1,11 @@
 
 CC= bfin-linux-uclibc-gcc
-CFLAGS= --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include -I$(PWD)/include
+CFLAGS= -O2 --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include -I$(PWD)/include
 LDFLAGS= -L$(PWD)/../../libseawolf/ -lseawolf-bfin -lbfdsp -lm
 
 #CC= bfin-uclinux-gcc
-#CFLAGS= --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include -I$(PWD)/include
-#LDFLAGS= -L$(PWD)/../../libseawolf/ -lseawolf-bfin -lbfdsp -lm -Wl,-elf2flt
+#CFLAGS= -static --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include -I$(PWD)/include
+#LDFLAGS= -L$(PWD)/../../libseawolf -lseawolf-bfin -lbfdsp -lm -Wl,-elf2flt
 
 BIN_DIR= $(PWD)/bin
 BIN_NAME= acoustics-bfin
@@ -21,7 +21,7 @@ clean:
 	  rm $(BIN_DIR)/$(BIN_NAME); \
 	fi;
 
-bundle:
+bundle: $(BIN_DIR)/$(BIN_NAME)
 	@if [ -d acoustics ]; then \
 	  echo "The acoustics directory already exists. I need that as a temporary directory"; \
 	else \
@@ -31,6 +31,9 @@ bundle:
 	  cp $(BIN_DIR)/$(BIN_NAME) $(PWD)/../../libseawolf/libseawolf-bfin.so acoustics/; \
 	  echo "Comm_server = 10.17.0.2" > acoustics/seawolf.conf; \
 	  echo "Comm_password = " >> acoustics/seawolf.conf; \
+	  echo "#!/bin/sh" > acoustics/update; \
+	  echo "cd .. && wget http://10.17.0.2:8080/acoustics.tar -O - | tar -xf - && cd acoustics" >> acoustics/update; \
+	  chmod +x acoustics/update; \
 	  for _f in $(PWD)/../fir_coef/*.fcf; do \
 	    python $(PWD)/../fir_coef/convert.py < $$_f > acoustics/coefs/`basename $$_f .fcf`.cof; \
 	  done; \
@@ -39,10 +42,13 @@ bundle:
 	  echo "done."; \
 	fi;
 
+bundle_push:
+	scp acoustics_bundle.tar seawolf@10.17.0.2:acoustics_bundle/acoustics.tar
+
 $(BIN_DIR)/$(BIN_NAME): $(BIN_DIR) $(SRCS) $(INCLUDES)
 	$(CC) $(CFLAGS) -o $(BIN_DIR)/$(BIN_NAME) $(SRCS) $(LDFLAGS)
 
 $(BIN_DIR):
-	mkdir $(BIN_DIR)
+	mkdir -p $(BIN_DIR)
 
-.PHONY: all clean bundle
+.PHONY: all clean bundle bundle_push

@@ -1,7 +1,9 @@
 
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <complex_bf.h>
 #include <filter.h>
@@ -27,45 +29,57 @@ void multiply(complex_fract16* in1, complex_fract16* in2, complex_fract16* out, 
     }
 }
 
-void fft(fract16* data, complex_fract16* cmplx, int ending) {
-    /* Control variables */
-    /* int twiddleSize = ending;
-       int wst = ending;
-       int scale=0;
-       int *blockExp = 0; */
+void fft(fract16* input, complex_fract16* output, int size) {
+    /* Create space for twiddle table */
+    complex_fract16* tt;
+    int block_exponent;
 
-    /* FFT stuff */
-    complex_fract16 w[ending];
+    printf(" Allocating buffers\n");
+    tt = malloc(sizeof(complex_fract16) * (size / 2));
 
-    /* Set up twiddle tables */
-    twidfftrad2_fr16(w,ending);
+    /* Populate twiddle table */
+    printf(" Setting up twiddle table\n");
+    twidfftrad2_fr16(tt, size);
 
     /* Execute FFT */
-    rfft_fr16(data, cmplx, w, 1, ending, 0 , 0);
+    printf(" Doing FFT\n");
+    rfft_fr16(input, output, tt, 1, size, &block_exponent, 1);
+
+    /* Free twiddle table */
+    printf(" Freeing\n");
+    free(tt);
 }
 
-void ifft(complex_fract16* cmplx, fract16* data, int ending) {
+void ifft(complex_fract16* cmplx, fract16* data, int size) {
     /* Control variables */
-    int twiddleSize = ending / 2;
-    int wst = 2 * twiddleSize / ending;
-    int scale;
+    int tt_size = (size / 2) + 1;
+    int block_exponent;
 
     /* FFT stuff */
-    complex_fract16 w[ending];
-    complex_fract16 o[ending];
-    complex_fract16* o_ptr = (complex_fract16*) o;
+    complex_fract16* tt;
+    complex_fract16* temp_out;
 
-    /* Set up twiddle tables */
-    twidfftrad2_fr16(w,ending/2);
+    printf(" Allocating buffers\n");
+    tt = malloc(sizeof(complex_fract16) * tt_size);
+    temp_out = malloc(sizeof(complex_fract16) * size);
+
+    /* Set up twiddle table */
+    printf(" Setting up twiddle table\n");
+    twidfftrad2_fr16(tt, size);
 
     /* Execute IFFT */
-    ifft_fr16(cmplx, (complex_fract16*) o, (complex_fract16*) w, wst, ending, &scale, 2);
+    printf(" Doing IFFT\n");
+    ifft_fr16(cmplx, temp_out, tt, 1, size, &block_exponent, 1);
 
     /* Convert complex to real */
-    for(int i = 0; i < ending; i++) {
+    printf(" Converting complex to real\n");
+    for(int i = 0; i < size; i++) {
         /* This works, data is a local copy of the data pointer being passed to it */
-        *(data++) = (o_ptr++)->re;
+        *(data++) = temp_out[i].re;
     }
+
+    free(tt);
+    free(temp_out);
 }
 
 /* FIR filter (send it down the zipline) */
@@ -79,7 +93,10 @@ void firfly(fract16* data, int size, fir_state_fr16* firState) {
     fir_fr16(data, tempData, size, firState);
 
     /* overwrite input data */
-    memcpy(data, tempData, sizeof(fract16)*size );
+    memcpy(data, tempData, sizeof(fract16) * size);
+
+    /* Free temporary buffer */
+    free(tempData);
 }
 
 void convolve(fract16* f, fract16*g, fract16* out, int size) {
@@ -88,14 +105,29 @@ void convolve(fract16* f, fract16*g, fract16* out, int size) {
 
 void fast_convolve(fract16* f, fract16* g, fract16* out, int size) {
     /* Implements fast convolution */
-    complex_fract16 f_fft[size];
-    complex_fract16 g_fft[size];
-    complex_fract16 out_fft[size];
+    complex_fract16* f_fft;
+    complex_fract16* g_fft;
+    complex_fract16* out_fft;
 
+    f_fft = malloc(sizeof(complex_fract16) * size);
+    g_fft = malloc(sizeof(complex_fract16) * size);
+    out_fft = malloc(sizeof(complex_fract16) * size);
+
+    printf("FFT 1\n");
     fft(f, f_fft, size);
+
+    printf("FFT 2\n");
     fft(g, g_fft, size);
+
+    printf("Multiply\n");
     multiply(f_fft, g_fft, out_fft, size);
+
+    printf("IFFT\n");
     ifft(out_fft, out, size);
+
+    free(f_fft);
+    free(g_fft);
+    free(out_fft);
 }
 
 void correlate(fract16* f, fract16* g, fract16* out, int size) {
