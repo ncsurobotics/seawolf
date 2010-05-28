@@ -13,6 +13,6 @@
 //convert pixels from center into degrees from center
 float PixToDeg(int p){
     float degrees;
-    degrees = p*p*-0.0001+p*0.1488+0.1381;
+    degrees = floor( p*p*-0.0001+p*0.1488+0.1381 );
     return degrees;
 }
