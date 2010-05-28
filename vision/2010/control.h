@@ -12,4 +12,7 @@ void set_yaw_relative(float yaw);
 void set_yaw_absolute(float yaw);
 void set_yaw_rate(float yaw);
 
+/* Forward */
+void set_rho(float rho);
+
 #endif
