@@ -226,6 +226,8 @@ static void filter_buffers(void) {
  * the correlations and delays between each channel and a reference channel.
  * Channel A is the reference channel, and the delays AB, AC, and AD correspond
  * to the delay between A and B, A and C, and A and D respectively.
+ *
+ * See http://en.wikipedia.org/wiki/Cross_correlation
  */
 static void correlate_buffers(void) {
     /* Compute conjugate of the FFT of channel A */
