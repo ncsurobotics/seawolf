@@ -7,6 +7,7 @@
  * 4 - Run full channel dumps and exit after one run
  */
 #define ACOUSTICS_DEBUG 2
+#define ACOUSTICS_PROFILE
 
 #include "seawolf.h"
 
@@ -22,165 +23,48 @@
 #include <math_bf.h>
 #include <complex_bf.h>
 
-/* A sample from the FPGA/ADC is 16 bits */
-typedef fract16 adcsample;
+#include "acoustics.h"
 
-/* Asychronous banks */
-#define BANK_0 0x20000000
-#define BANK_1 0x20100000
-#define BANK_2 0x20200000
-#define BANK_3 0x20300000
-
-/* Channels */
-#define A 0
-#define B 1
-#define C 2
-#define D 3
-
-/* Data source locations */
-#define DATA_ADDR  (*((adcsample**)BANK_2))
-#define READY_FLAG (*(((adcsample*)BANK_2) + 1))
-#define RESET_FLAG (*(((adcsample*)BANK_2) + 3))
-
-/* Input data configuration */
-#define CHANNELS 4
-#define SAMPLES_PER_CHANNEL (8 * 1024)
-#define SAMPLES_PER_BANK    (CHANNELS * SAMPLES_PER_CHANNEL)
-
-/* Size of a circular buffer for a single channel. This is populated in
-   increments of SAMPLES_PER_CHANNEL */
-//#define BUFFER_SIZE_CHANNEL (512 * 1024)
-#define BUFFER_SIZE_CHANNEL (128 * 1024)
-
-/* FIR filter coefficient count */
-#define FIR_COEF_COUNT 613
-
-/* Value to trigger on */
-#define TRIGGER_VALUE ((short)(-1100))
-#define UN_FREQ 1728 /* Unnormalized Frequency to look for (1728 = 27kHz / 64kHz * 4096 samples) */
-#define THRESH_LEVEL 0x0120
+/* Data source address in async back 2 */
+static adcsample* last_addr = (adcsample*) 0x00;
 
 /* Circular buffer state */
-#define READING   0x00
-#define TRIGGERED 0x01
-#define DONE      0x02
+static adcsample* cir_buff[4];
+static unsigned int cir_buff_offset;
 
-/* Extra number of read cyles to perform after trigger. This can be used to
-   "pad" the other channels and ensure that the trigger is present in all
-   channels */
-#define EXTRA_READS 4
+/* FIR Coefficients */
+static fract16* coefs;
 
-/* Pull in coefficient values from a file */
-static void load_coefs(fract16* coefs, char* coef_file_name, int num_coefs) {
-    FILE* f;
-    char buff[256];
+/* FIR Filter States */
+static fir_state_fr16 fir_state[4];
+static fir_state_fr16 fir_state_trig;
 
-    /* Open file */
-    f = fopen(coef_file_name, "r");
+/* FIR delay lines */
+static fract16* fir_delay[4];
+static fract16* fir_delay_trig;
 
-    if(f == NULL) {
-        printf("Could not open coefficients file: %s\n", coef_file_name);
-        exit(1);
-    }
+/* Twiddle table for correlations */
+static complex_fract16* tt;
 
-    /* Read coefficients */
-    for(int i = 0; i < num_coefs; i++) {
-        fgets(buff, 255, f);
-        coefs[i] = atoi(buff);
-    }
+/* FFT buffers for correlation */
+static complex_fract16* fft_ref;
+static complex_fract16* fft_temp;
+static complex_fract16* cmplx_buff;
+static int block_exponent;
 
-    /* Close File */
-    fclose(f);
-}
+/* Signal delays */
+static int delay_AB;
+static int delay_AC;
+static int delay_AD;
 
-/* Return the index of the real part maximum of the array */
-static int find_max_cmplx(complex_fract16* w, int size) {
-    fract16 max_y = 0;
-    int max_x = 0;
+/* Misc */
+static unsigned int i;
+static adcsample* temp_buff;
 
-    for(int i = 0; i < size; i++) {
-        if(w[i].re > max_y) {
-            max_y = w[i].re;
-            max_x = i;
-        } 
-    }
-
-    return max_x;
-}
-
-/* Perform a pointwise product of the complex valued arrrays in1 and in2 storing
-   the result in out */
-static void multiply(complex_fract16* in1, complex_fract16* in2, complex_fract16* out, int size) {
-    while(size--) {
-        *out++ = cmlt_fr16(*in1++, *in2++);
-    }
-}
-
-/* Conjugate every element in the given complex valued array */
-static void conjugate(complex_fract16* w, int size) {
-    while(size--) {
-        *w = conj_fr16(*w);
-        w++;
-    }
-}
-
-int main(int argc, char** argv) {
-#ifdef USE_LIBSEAWOLF
-    Seawolf_loadConfig("seawolf.conf");
-    Seawolf_init("Blackfin");
-#endif
-
-    /* Timer for profiling */
-    Timer* t = Timer_new();
-
-    /* Data source address in async back 2 */
-    adcsample* last_addr = (adcsample*) 0x00;
-
-    /* Circular buffer state */
-    adcsample* cir_buff[4];
-    unsigned int cir_buff_offset;
-    unsigned int extra_reads;
-    int state;
-    bool cir_buff_full;
-
-    /* FIR Coefficients */
-    fract16* coefs;
-
-    /* FIR Filter States */
-    fir_state_fr16 fir_state[4];
-    fir_state_fr16 fir_state_trig;
-    
-    /* FIR delay lines */
-    fract16* fir_delay[4];
-    fract16* fir_delay_trig;
-
-    /* Twiddle table for correlations */
-    complex_fract16* tt;
-
-    /* FFT buffers for correlation */
-    complex_fract16* fft_ref;
-    complex_fract16* fft_temp;
-    complex_fract16* cmplx_buff;
-    int block_exponent;
-
-    /* Signal delays */
-    int delay_AB;
-    int delay_AC;
-    int delay_AD;
-
-    /* Misc */
-    unsigned int i;
-    adcsample* temp_buff;
-
-    /* Missing coefficients file argument */
-    if(argc <= 1) {
-        printf("Missing required argument. Please provide a FIR filter coefficients file\n");
-        exit(1);
-    }
-
+static void init(char* coefs_file_name) {
     /* Load coefficients from .cof file */
     coefs = calloc(sizeof(adcsample), FIR_COEF_COUNT);
-    load_coefs(coefs, argv[1], FIR_COEF_COUNT );
+    load_coefs(coefs, coefs_file_name, FIR_COEF_COUNT );
 
     /* Initialize delay lines for FIR filters */
     fir_delay[A] = calloc(sizeof(adcsample), FIR_COEF_COUNT);
@@ -202,11 +86,6 @@ int main(int argc, char** argv) {
     cir_buff[C] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
     cir_buff[D] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
 
-    /* Temporary buffer used in linearization of circular buffers, to store
-       output of the FIR filter applied to trigger samples, and to store the
-       result from correlation */
-    temp_buff = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL * 2);
-
     /* Twiddle table for use in optimized correlation block */
     tt = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL / 2);
 
@@ -218,184 +97,205 @@ int main(int argc, char** argv) {
     fft_temp = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL);
     cmplx_buff = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL);
 
-    while(true) {
-        /* Reset state */
-        state = READING;
-        extra_reads = EXTRA_READS;
-        cir_buff_full = false;
-        cir_buff_offset = 0x00;
-        RESET_FLAG = 1;
+    /* Temporary buffer used in linearization of circular buffers, to store
+       output of the FIR filter applied to trigger samples, and to store the
+       result from correlation */
+    temp_buff = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL * 2);
+}
 
+/* Move input data from the FPGA into the circular buffers until a trigger is
+   located */
+static void record_ping(void) {
+    int state = READING;
+    unsigned int extra_reads = EXTRA_READS;
+    bool cir_buff_full = false;
+
+    /* Reset state */
+    cir_buff_offset = 0x00;
+    RESET_FLAG = 1;
+    
 #if ACOUSTICS_DEBUG >= 2
-        printf("Waiting for trigger...");
-        fflush(stdout);
+    printf("Waiting for trigger...");
+    fflush(stdout);
 #endif
-
-        while(state != DONE) {
-            while(DATA_ADDR == last_addr) {
-                /* Wait for the address pointer to change */
-            }
-            last_addr = DATA_ADDR;
-
-            /* Copy data out of the FPGA */
-            memcpy(cir_buff[A] + cir_buff_offset, last_addr + (0 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
-            memcpy(cir_buff[B] + cir_buff_offset, last_addr + (1 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
-            memcpy(cir_buff[C] + cir_buff_offset, last_addr + (2 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
-            memcpy(cir_buff[D] + cir_buff_offset, last_addr + (3 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
-
-            /* Don't look for a trigger until the buffer has been filled */
-            if(state == READING && cir_buff_full) {
-#if ACOUSTICS_DEBUG >= 2
-                printf(".");
-                fflush(stdout);
-#endif
-
-                /* Run the FIR filter on the current sample from channel A */
-                fir_fr16(cir_buff[A] + cir_buff_offset, temp_buff, SAMPLES_PER_CHANNEL, &fir_state_trig);
-
-                /* for(i = SAMPLES_PER_CHANNEL / 2; i < SAMPLES_PER_CHANNEL; i++) { */
-                for(i = 0; i < SAMPLES_PER_CHANNEL; i++) {
-                    if(temp_buff[i] > TRIGGER_VALUE ) {
-                        state = TRIGGERED;
-                        break;
-                    }
-                }
-            }
-
-            /* Increment the offset into the circular buffer -- if we are back
-               to 0 then set the buffer as filled to indicate that we have a
-               full buffers worth of data */
-            cir_buff_offset = (cir_buff_offset + SAMPLES_PER_CHANNEL) % BUFFER_SIZE_CHANNEL;
-            if(cir_buff_offset == 0x00) {
-                cir_buff_full = true;
-            }
-
-            /* Handle padding once triggered */
-            if(state == TRIGGERED) {
-                if(extra_reads > 0) {
-                    extra_reads--;
-                } else {
-                    state = DONE;
-                }
-            }
-
-            /* Tell the FPGA we are ready again */
-            READY_FLAG = 1;
+    
+    while(state != DONE) {
+        while(DATA_ADDR == last_addr) {
+            /* Wait for the address pointer to change */
         }
-
+        last_addr = DATA_ADDR;
+        
 #if ACOUSTICS_DEBUG >= 2
-        printf("done\n");
-        printf("%-30s", "Linearizing data...");
-        fflush(stdout);
-#endif
-        Timer_reset(t);
-
-        /* Linearize each circular buffer using a temporary buffer. Output is
-           stored back into the circular buffer space */
-        memcpy(temp_buff, cir_buff[A] + cir_buff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cir_buff_offset));
-        memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cir_buff_offset), cir_buff[A], sizeof(adcsample) * cir_buff_offset);
-        memcpy(cir_buff[A], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
-
-        memcpy(temp_buff, cir_buff[B] + cir_buff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cir_buff_offset));
-        memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cir_buff_offset), cir_buff[B], sizeof(adcsample) * cir_buff_offset);
-        memcpy(cir_buff[B], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
-
-        memcpy(temp_buff, cir_buff[C] + cir_buff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cir_buff_offset));
-        memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cir_buff_offset), cir_buff[C], sizeof(adcsample) * cir_buff_offset);
-        memcpy(cir_buff[C], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
-
-        memcpy(temp_buff, cir_buff[D] + cir_buff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cir_buff_offset));
-        memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cir_buff_offset), cir_buff[D], sizeof(adcsample) * cir_buff_offset);
-        memcpy(cir_buff[D], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
-        printf("%5.3f\n", Timer_getDelta(t));
-
-#if ACOUSTICS_DEBUG >= 2
-        printf("%-30s", "Running FIR filters...");
-        fflush(stdout);
-#endif
-        Timer_reset(t);
-
-        /* Apply FIR filter to each buffer */
-        fir_fr16(cir_buff[A], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[A]);
-        memcpy(cir_buff[A], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
-
-        fir_fr16(cir_buff[B], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[B]);
-        memcpy(cir_buff[B], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
-
-        fir_fr16(cir_buff[C], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[C]);
-        memcpy(cir_buff[C], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
-
-        fir_fr16(cir_buff[D], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[D]);
-        memcpy(cir_buff[D], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
-        printf("%5.3f\n", Timer_getDelta(t));
-
-#if ACOUSTICS_DEBUG >= 2
-        printf("%-30s", "Running correlation...");
+        printf(".");
         fflush(stdout);
 #endif
 
-#if 0
-        /* Correlation and delay detection */
-        fast_correlate(cir_buff[A], cir_buff[B], temp_buff, BUFFER_SIZE_CHANNEL);
-        delay_AB = find_max(temp_buff, BUFFER_SIZE_CHANNEL);
+        /* Copy data out of the FPGA */
+        memcpy(cir_buff[A] + cir_buff_offset, last_addr + (0 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
+        memcpy(cir_buff[B] + cir_buff_offset, last_addr + (1 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
+        memcpy(cir_buff[C] + cir_buff_offset, last_addr + (2 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
+        memcpy(cir_buff[D] + cir_buff_offset, last_addr + (3 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
+        
+        /* Don't look for a trigger until the buffer has been filled */
+        if(state == READING && cir_buff_full) {
+            /* Run the FIR filter on the current sample from channel A */
+            fir_fr16(cir_buff[A] + cir_buff_offset, temp_buff, SAMPLES_PER_CHANNEL, &fir_state_trig);
+            
+            /* for(i = SAMPLES_PER_CHANNEL / 2; i < SAMPLES_PER_CHANNEL; i++) { */
+            for(i = 0; i < SAMPLES_PER_CHANNEL; i++) {
+                if(temp_buff[i] > TRIGGER_VALUE ) {
+                    state = TRIGGERED;
+                    break;
+                }
+            }
+        }
+        
+        /* Increment the offset into the circular buffer -- if we are back
+           to 0 then set the buffer as filled to indicate that we have a
+           full buffers worth of data */
+        cir_buff_offset = (cir_buff_offset + SAMPLES_PER_CHANNEL) % BUFFER_SIZE_CHANNEL;
+        if(cir_buff_offset == 0x00) {
+            cir_buff_full = true;
+        }
+        
+        /* Handle padding once triggered */
+        if(state == TRIGGERED) {
+            if(extra_reads > 0) {
+                extra_reads--;
+            } else {
+                state = DONE;
+            }
+        }
+        
+        /* Tell the FPGA we are ready again */
+        READY_FLAG = 1;
+    }
 
-        fast_correlate(cir_buff[A], cir_buff[C], temp_buff, BUFFER_SIZE_CHANNEL);
-        delay_AC = find_max(temp_buff, BUFFER_SIZE_CHANNEL);
-
-        fast_correlate(cir_buff[A], cir_buff[D], temp_buff, BUFFER_SIZE_CHANNEL);
-        delay_AD = find_max(temp_buff, BUFFER_SIZE_CHANNEL);
-#else
-        Timer_reset(t);
-
-        /*** TEMPORARY OPTIMIZED CORRELATION COMPUTATION. THIS NEEDS CLEAN UP ***/
-        rfft_fr16(cir_buff[A], fft_ref, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
-        conjugate(fft_ref, BUFFER_SIZE_CHANNEL);
-
-        rfft_fr16(cir_buff[B], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
-        multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
-        ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
-        delay_AB = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
-
-        rfft_fr16(cir_buff[C], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
-        multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
-        ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
-        delay_AC = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
-
-        rfft_fr16(cir_buff[D], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
-        multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
-        ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
-        delay_AD = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
-        printf("%5.3f\n\n", Timer_getDelta(t));
+#if ACOUSTICS_DEBUG >= 2
+    printf("done\n");
 #endif
+}
 
+static void linearize_buffers(void) {
+    /* Linearize each circular buffer using a temporary buffer. Output is
+       stored back into the circular buffer space */
+    memcpy(temp_buff, cir_buff[A] + cir_buff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cir_buff_offset));
+    memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cir_buff_offset), cir_buff[A], sizeof(adcsample) * cir_buff_offset);
+    memcpy(cir_buff[A], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+    
+    memcpy(temp_buff, cir_buff[B] + cir_buff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cir_buff_offset));
+    memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cir_buff_offset), cir_buff[B], sizeof(adcsample) * cir_buff_offset);
+    memcpy(cir_buff[B], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+    
+    memcpy(temp_buff, cir_buff[C] + cir_buff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cir_buff_offset));
+    memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cir_buff_offset), cir_buff[C], sizeof(adcsample) * cir_buff_offset);
+    memcpy(cir_buff[C], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+    
+    memcpy(temp_buff, cir_buff[D] + cir_buff_offset, sizeof(adcsample) * (BUFFER_SIZE_CHANNEL - cir_buff_offset));
+    memcpy(temp_buff + (BUFFER_SIZE_CHANNEL - cir_buff_offset), cir_buff[D], sizeof(adcsample) * cir_buff_offset);
+    memcpy(cir_buff[D], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+}
+
+static void filter_buffers(void) {
+    /* Apply FIR filter to each buffer */
+    fir_fr16(cir_buff[A], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[A]);
+    memcpy(cir_buff[A], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+    
+    fir_fr16(cir_buff[B], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[B]);
+    memcpy(cir_buff[B], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+    
+    fir_fr16(cir_buff[C], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[C]);
+    memcpy(cir_buff[C], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+    
+    fir_fr16(cir_buff[D], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[D]);
+    memcpy(cir_buff[D], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+}
+
+static void correlate_buffers(void) {
+    /*** TEMPORARY OPTIMIZED CORRELATION COMPUTATION. THIS NEEDS CLEAN UP ***/
+    rfft_fr16(cir_buff[A], fft_ref, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    conjugate(fft_ref, BUFFER_SIZE_CHANNEL);
+    
+    rfft_fr16(cir_buff[B], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
+    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    delay_AB = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
+    
+    rfft_fr16(cir_buff[C], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
+    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    delay_AC = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
+    
+    rfft_fr16(cir_buff[D], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
+    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    delay_AD = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
+}
+
+static void data_out(void) {
 #ifdef USE_LIBSEAWOLF
-        Var_set("Acoustics.Delays.AB", delay_AB);
-        Var_set("Acoustics.Delays.AC", delay_AC);
-        Var_set("Acoustics.Delays.AD", delay_AD);
+    Var_set("Acoustics.Delays.AB", delay_AB);
+    Var_set("Acoustics.Delays.AC", delay_AC);
+    Var_set("Acoustics.Delays.AD", delay_AD);
+#endif
+    
+#if ACOUSTICS_DEBUG >= 1
+    /* Output pDelay values */
+    printf("delay_AB: %d \n", delay_AB);
+    printf("delay_AC: %d \n", delay_AC);
+    printf("delay_AD: %d \n", delay_AD);
+#endif
+}
+
+int main(int argc, char** argv) {
+#ifdef USE_LIBSEAWOLF
+    Seawolf_loadConfig("seawolf.conf");
+    Seawolf_init("Blackfin");
 #endif
 
-#if ACOUSTICS_DEBUG >= 1
-        /* Output pDelay values */
-        /* printf("delay_AB: %d \n", delay_AB);
-           printf("delay_AC: %d \n", delay_AC);
-           printf("delay_AD: %d \n", delay_AD); */
+#ifdef ACOUSTICS_PROFILE
+    /* Timer for profiling */
+    Timer* t = Timer_new();
 #endif
+
+    /* Missing coefficients file argument */
+    if(argc <= 1) {
+        printf("Missing required argument. Please provide a FIR filter coefficients file\n");
+        exit(1);
+    }
+    
+    /* Initialize all data structures */
+    init(argv[1]);
+
+    while(true) {
+        record_ping();
+
+        TIME_PRE(t, "Linearizing buffers...");
+        linearize_buffers();
+        TIME_POST(t);
+
+        TIME_PRE(t, "Filtering buffers...");
+        filter_buffers();
+        TIME_POST(t);
+
+        TIME_PRE(t, "Correlating buffers...");
+        correlate_buffers();
+        TIME_POST(t);
+
+        data_out();
     }
 
     /* Free all allocated buffers */
     free(coefs);
-
     free(fir_delay[A]);
     free(fir_delay[B]);
     free(fir_delay[C]);
     free(fir_delay[D]);
     free(fir_delay_trig);
-
     free(cir_buff[A]);
     free(cir_buff[B]);
     free(cir_buff[C]);
     free(cir_buff[D]);
-
     free(temp_buff);
 
 #ifdef USE_LIBSEAWOLF

@@ -1,6 +1,6 @@
 
 CC= bfin-linux-uclibc-gcc
-CFLAGS= -O2 --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include -I$(PWD)/include
+CFLAGS= -O2 --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include
 LDFLAGS= -L$(PWD)/../../libseawolf/ -lseawolf-bfin -lbfdsp -lm
 
 #CC= bfin-uclinux-gcc
@@ -15,8 +15,8 @@ BIN_NAME= acoustics-bfin
 
 #SRCS= src/acoustics_math.c src/main.c
 #INCLUDES= include/acoustics_math.h
-SRCS= src/main.c
-INCLUDES= 
+SRCS= src/main.c src/routines.c
+INCLUDES= src/acoustics.h
 
 all: $(BIN_DIR)/$(BIN_NAME)
 
