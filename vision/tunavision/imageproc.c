@@ -52,15 +52,15 @@ void Image_colorFilter(Image* in, Image* out, RGBPixel* color, int count) {
     for(int i = 1; i < in->palette_size; i++) {
         current_highdev = 0;
         for(int j = 1; j < count; j++) {
-            thisdev = Pixel_stddev(color, &in->palette[low_items[j]]);
-            highdev = Pixel_stddev(color, &in->palette[low_items[current_highdev]]);
+            thisdev = Pixel_diff(color, &in->palette[low_items[j]]);
+            highdev = Pixel_diff(color, &in->palette[low_items[current_highdev]]);
             if(thisdev > highdev) {
                 current_highdev = j;
             }
         }
 
-        highdev = Pixel_stddev(color, &in->palette[low_items[current_highdev]]);
-        thisdev = Pixel_stddev(color, &in->palette[i]);
+        highdev = Pixel_diff(color, &in->palette[low_items[current_highdev]]);
+        thisdev = Pixel_diff(color, &in->palette[i]);
         if(thisdev < highdev) {
             low_items[current_highdev] = i;
         }
@@ -125,7 +125,7 @@ void Image_colorMask(Image* in, Image* out, RGBPixel* color, float stddev) {
 
     /* Trace image */
     for(int i = width * height - 1; i >= 0; i--) {
-        if(Pixel_stddev(&in_data[i], color) < stddev) {
+        if(Pixel_diff(&in_data[i], color) < stddev) {
             out_data[i] = 1;
         } else {
             out_data[i] = 0;
@@ -163,6 +163,61 @@ void Image_reduceRGB(Image* in, Image* out) {
     }
 }
 
+/* rgb -> rgb */
+void Image_edgeDetect(Image* in, Image* out, float sensitivity) {
+    Image* src = Image_duplicate(in);
+    int width = in->width;
+    int height = in->height;
+    RGBPixel* in_data = src->data.rgb;
+    RGBPixel* out_data = out->data.rgb;
+
+    int i, r, c, m, n;
+    float ar, ag, ab;
+    float stddev;
+    RGBPixel average;
+
+    const int s = 3;
+    const int s_n = s * s;
+    const int s_i = -((s-1) / 2);
+    const int s_f =  ((s-1) / 2);
+    
+    for(r = s_f; r < height - s_f; r++) {
+        for(c = s_f; c < width - s_f; c++) {
+            i = r * width + c;
+
+            stddev = ar = ag = ab = 0.0;
+            for(m = s_i; m <= s_f; m++) {
+                for(n = s_i; n <= s_f; n++) {
+                    ar += in_data[i + (m * width + n)].r;
+                    ag += in_data[i + (m * width + n)].g;
+                    ab += in_data[i + (m * width + n)].b;
+                }
+            }
+
+            average.r = (int) ar / s_n;
+            average.g = (int) ag / s_n;
+            average.b = (int) ab / s_n;
+
+            for(m = s_i; m <= s_f; m++) {
+                for(n = s_i; n <= s_f; n++) {
+                    stddev += pow(Pixel_diff(&in_data[i + (m * width + n)], &average), 2);
+                }
+            }
+            stddev = sqrt(stddev / s_n);
+
+            if(stddev > sensitivity) {
+                out_data[i] = in_data[i];
+            } else {
+                out_data[i].r = 255;
+                out_data[i].g = 255;
+                out_data[i].b = 255;
+            }
+        }
+    }
+    
+    Image_destroy(src);
+}
+
 /* rgb -> indexed */
 void Image_reduceSpectrum(Image* in, Image* out, unsigned short color_count, float stddev) {
     int width = in->width;
@@ -197,7 +252,7 @@ void Image_reduceSpectrum(Image* in, Image* out, unsigned short color_count, flo
             temp_pixel.r = (unsigned char) temp_palette[p][0];
             temp_pixel.g = (unsigned char) temp_palette[p][1];
             temp_pixel.b = (unsigned char) temp_palette[p][2];
-            tmp_stddev = Pixel_stddev(&temp_pixel, &in_data[i]);
+            tmp_stddev = Pixel_diff(&temp_pixel, &in_data[i]);
             if(tmp_stddev < low_stddev) {
                 if(tmp_stddev < stddev) {
                     match = true;
@@ -289,7 +344,11 @@ void Image_identifyBlobs(Image* in, Image* _out) {
 
                 if(in_data[cur->i + offset_map[cur->p]] == 1 && blob_mask[cur->i + offset_map[cur->p]] == -1) {
                     /* Unvisited element */
-                    Stack_push(ptstack, BlobState_out(cur->i + offset_map[cur->p]));
+                    if((cur->i % width == 0 && (cur->p == 1 || cur->p == 2 || cur->p == 4 || cur->p == 6 || cur->p == 7)) || 
+                       ((cur->i + 1) % width == 0 && (cur->p == 1 || cur->p == 0 || cur->p == 3 || cur->p == 6 || cur->p == 5)) ||
+                       (cur->i % width != 0 && (cur->i + 1) % width != 0)) {
+                        Stack_push(ptstack, BlobState_out(cur->i + offset_map[cur->p]));
+                    }
                 }
                 cur->p++;
             }
@@ -415,14 +474,14 @@ void Image_removeColor(Image* in, Image* out, RGBPixel* color, int repeat) {
 
     while(repeat--) {
         for(min = 0; Pixel_equal(&out->palette[min], &BLACK); min++);
-        min_stddev = Pixel_stddev(color, &out->palette[min]);
+        min_stddev = Pixel_diff(color, &out->palette[min]);
 
         for(int i = min + 1; i < out->palette_size; i++) {
             if(Pixel_equal(&out->palette[i], &BLACK)) {
                 continue;
             }
 
-            tmp_stddev = Pixel_stddev(color, &out->palette[i]);
+            tmp_stddev = Pixel_diff(color, &out->palette[i]);
             if(tmp_stddev < min_stddev) {
                 min_stddev = tmp_stddev;
                 min = i;
@@ -430,6 +489,62 @@ void Image_removeColor(Image* in, Image* out, RGBPixel* color, int repeat) {
         }
         out->palette[min] = BLACK;
     }
+}
+
+void Image_nr(Image* in, Image* out, float sensitivity) {
+    Image* src = Image_duplicate(in);
+    int width = in->width;
+    int height = in->height;
+    RGBPixel* in_data = src->data.rgb;
+    RGBPixel* out_data = out->data.rgb;
+
+    int i, r, c, m, n;
+    float ar, ag, ab;
+    float stddev;
+    RGBPixel average;
+
+    const int s = 5;
+    const int s_n = s * s;
+    const int s_i = -((s-1) / 2);
+    const int s_f =  ((s-1) / 2);
+    
+    for(r = s_f; r < height - s_f; r++) {
+        for(c = s_f; c < width - s_f; c++) {
+            i = r * width + c;
+
+            stddev = ar = ag = ab = 0.0;
+            for(m = s_i; m <= s_f; m++) {
+                for(n = s_i; n <= s_f; n++) {
+                    if(m || n) {
+                        ar += in_data[i + (m * width + n)].r;
+                        ag += in_data[i + (m * width + n)].g;
+                        ab += in_data[i + (m * width + n)].b;
+                    }
+                }
+            }
+
+            average.r = (int) ar / (s_n - 1);
+            average.g = (int) ag / (s_n - 1);
+            average.b = (int) ab / (s_n - 1);
+
+            for(m = s_i; m <= s_f; m++) {
+                for(n = s_i; n <= s_f; n++) {
+                    if(m || n) {
+                        stddev += pow(Pixel_diff(&in_data[i + (m * width + n)], &average), 2);
+                    }
+                }
+            }
+            stddev = sqrt(stddev / (s_n - 1));
+
+            if(Pixel_diff(&in_data[i], &average) < sensitivity) {
+                out_data[i] = in_data[i];
+            } else {
+                out_data[i] = average;
+            }
+        }
+    }
+    
+    Image_destroy(src);
 }
 
 /* rgb -> rgb */
@@ -474,20 +589,13 @@ void Image_blur(Image* in, Image* out, int rounds) {
 }
 
 /* rgb -> rgb */
-void Image_normalize(Image* in, Image* out) {
+void Image_normalize(Image* in, Image* out, short brightness) {
     int width = in->width;
     int height = in->height;
     RGBPixel* in_data = in->data.rgb;
     RGBPixel* out_data = out->data.rgb;
     
-    double average = 0;
-
     for(int i = width * height - 1; i >= 0; i--) {
-        average += Pixel_brightness(&in_data[i]);
-    }
-    
-    average /= width * height;
-    for(int i = width * height - 1; i >= 0; i--) {
-        out_data[i] = Pixel_normalize(&in_data[i], average);
+        out_data[i] = Pixel_normalize(&in_data[i], brightness);
     }
 }

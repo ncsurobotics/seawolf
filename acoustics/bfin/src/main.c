@@ -1,6 +1,7 @@
 
 #define ACOUSTICS_DEBUG
 #define ACOUSTICS_PROFILE
+//#define ACOUSTICS_DUMP
 //#define USE_LIBSEAWOLF
 
 #include "seawolf.h"
@@ -117,11 +118,6 @@ static void record_ping(void) {
     /* Signal the FPGA that we have reset (new sampling) */
     RESET_FLAG = 1;
     
-#ifdef ACOUSTICS_DEBUG
-    printf("Waiting for trigger...");
-    fflush(stdout);
-#endif
-    
     while(state != DONE) {
         while(DATA_ADDR == last_addr) {
             /* Wait for the FPGA to change the data address pointer, singaling
@@ -153,11 +149,11 @@ static void record_ping(void) {
             }
         }
         
-        /* Increment the offset into the circular buffer -- if we are back
-           to 0 then set the buffer as filled to indicate that we have a
-           full buffers worth of data */
+        /* Increment the offset into the circular buffer -- if we are going to
+           be back to 0 within EXTRA_READS then set the buffer as filled to
+           indicate that we have a full buffers worth of data */
         cir_buff_offset = (cir_buff_offset + SAMPLES_PER_CHANNEL) % BUFFER_SIZE_CHANNEL;
-        if(cir_buff_offset == 0x00) {
+        if(BUFFER_SIZE_CHANNEL == (EXTRA_READS * SAMPLES_PER_CHANNEL) + cir_buff_offset) {
             cir_buff_full = true;
         }
         
@@ -174,10 +170,6 @@ static void record_ping(void) {
         /* Tell the FPGA we are ready again */
         READY_FLAG = 1;
     }
-
-#ifdef ACOUSTICS_DEBUG
-    printf("done\n");
-#endif
 }
 
 /*
@@ -231,25 +223,25 @@ static void filter_buffers(void) {
  */
 static void correlate_buffers(void) {
     /* Compute conjugate of the FFT of channel A */
-    rfft_fr16(cir_buff[A], fft_ref, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    rfft_fr16(cir_buff[A], fft_ref, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
     conjugate(fft_ref, BUFFER_SIZE_CHANNEL);
     
     /* Correlate and find the delay between channels A and B */
-    rfft_fr16(cir_buff[B], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    rfft_fr16(cir_buff[B], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
     multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
-    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
     delay_AB = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
     
     /* Correlate and find the delay between channels A and C */
-    rfft_fr16(cir_buff[C], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    rfft_fr16(cir_buff[C], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
     multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
-    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
     delay_AC = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
     
     /* Correlate and find the delay between channels A and D */
-    rfft_fr16(cir_buff[D], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    rfft_fr16(cir_buff[D], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
     multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
-    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 1);
+    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
     delay_AD = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
 }
 
@@ -275,6 +267,16 @@ static void data_out(void) {
 #endif
 }
 
+#ifdef ACOUSTICS_DUMP
+static void dump(int channel) {
+    FILE* f = fopen("dump.txt", "w");
+    for(int i = 0; i < BUFFER_SIZE_CHANNEL; i++) {
+        fprintf(f, "%d\n", (signed short) cir_buff[channel][i]);
+    }
+    fclose(f);
+}
+#endif
+
 int main(int argc, char** argv) {
 #ifdef USE_LIBSEAWOLF
     Seawolf_loadConfig("seawolf.conf");
@@ -297,7 +299,9 @@ int main(int argc, char** argv) {
     init(argv[1]);
 
     while(true) {
+        TIME_PRE(t, "Collecting data...");
         record_ping();
+        TIME_POST(t);
 
         TIME_PRE(t, "Linearizing buffers...");
         linearize_buffers();
@@ -306,6 +310,11 @@ int main(int argc, char** argv) {
         TIME_PRE(t, "Filtering buffers...");
         filter_buffers();
         TIME_POST(t);
+
+#ifdef ACOUSTICS_DUMP
+        dump(A);
+        break;
+#endif
 
         TIME_PRE(t, "Correlating buffers...");
         correlate_buffers();

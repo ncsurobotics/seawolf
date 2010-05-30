@@ -57,12 +57,14 @@ void Image_copy(Image* src, Image* dest);
 /* Misc functions */
 int* Int_new(int n);
 float* Float_new(float n);
-float Pixel_stddev(RGBPixel* px_1, RGBPixel* px_2);
+float Pixel_diff(RGBPixel* px_1, RGBPixel* px_2);
 bool Pixel_equal(RGBPixel* px_1, RGBPixel* px_2);
 RGBPixel Pixel_normalize(RGBPixel* px, int brightness);
 float Pixel_brightness(RGBPixel* px);
 
 /* Image processing */
+void Image_nr(Image* in, Image* out, float sensitivity);
+void Image_edgeDetect(Image* in, Image* out, float sensitivity);
 void Image_indexedToRGB(Image* in, Image* out);
 void Image_toGrayscale(Image* in, Image* out);
 void Image_colorFilter(Image* in, Image* out, RGBPixel* color, int count);
@@ -75,7 +77,7 @@ void Image_boxBlob(Image* in, Image* out);
 int Image_blobCenter(Image* in);
 void Image_removeColor(Image* in, Image* out, RGBPixel* color, int repeat);
 void Image_blur(Image* in, Image* out, int rounds);
-void Image_normalize(Image* in, Image* out);
+void Image_normalize(Image* in, Image* out, short brightness);
 
 /* Image <--> IplImage */
 void IplImageToImage(IplImage* src, Image* dest);

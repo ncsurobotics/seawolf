@@ -11,78 +11,148 @@
 #include <stdlib.h>
 
 int main(void) {
-    //CvCapture* capture = cvCaptureFromCAM(0);
-    CvCapture* capture = cvCaptureFromFile("gate.avi");
-    IplImage* ipl_frame;
-    IplImage* ipl_out = NULL;
+    Image* img_src = NULL;
     Image* rgb_tmp = NULL;
     Image* indexed_tmp = NULL;
     RGBPixel color = {0xff, 0x40, 0x00};
+    Timer* timer = Timer_new();
+    int i = 0;
 
-    cvNamedWindow("src", 0);
-    cvNamedWindow("out1", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("out2", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("out3", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("out4", CV_WINDOW_AUTOSIZE);
+#ifdef TUNADEBUG
+    IplImage* ipl_src = NULL;
+    IplImage* ipl_out1 = NULL;
+    IplImage* ipl_out2 = NULL;
+    IplImage* ipl_out3 = NULL;
+    IplImage* ipl_out4 = NULL;
 
-    cvMoveWindow("out1", 200, 50);
-    cvMoveWindow("out2", 400, 50);
-    cvMoveWindow("out3", 600, 50);
-    cvMoveWindow("out4", 800, 50);
+    const char* src = "Controls";
+    const char* out1 = "Normalized";
+    const char* out2 = "Blur/Reduced";
+    const char* out3 = "Color Filter";
+    const char* out4 = "Blob";
     
-    int wait = 0,
-        blur = 1,
-        colorCount = 16,
+    int w = 450;
+    int h = 300;
+    int s = 400;
+
+    cvNamedWindow(src, 0);
+    cvNamedWindow(out1, 0);
+    cvNamedWindow(out2, 0);
+    cvNamedWindow(out3, 0);
+    cvNamedWindow(out4, 0);
+
+    cvMoveWindow(src, 10, 10);
+    cvMoveWindow(out1, s + 20, 10);
+    cvMoveWindow(out2, s + w + 40, 10);
+    cvMoveWindow(out3, s + 20, 10 + h + 50);
+    cvMoveWindow(out4, s + w + 40, 10 + h + 50);
+
+    cvResizeWindow(src, s, 500);
+    cvResizeWindow(out1, w, h);
+    cvResizeWindow(out2, w, h);
+    cvResizeWindow(out3, w, h);
+    cvResizeWindow(out4, w, h);
+#endif
+    
+    int blur = 1,
+        colorCount = 8,
         colorThreshold = 16,
-        colorFilterCount = 1;
+        colorFilterCount = 1,
+        nr = 10,
+        normalize = 128,
+        edge = 16;
         
-    cvCreateTrackbar("Wait", "src", &wait, 100, NULL);
-    cvCreateTrackbar("Blur Rounds", "src", &blur, 16, NULL);
-    cvCreateTrackbar("Color Count", "src", &colorCount, 256, NULL);
-    cvCreateTrackbar("Color Blend", "src", &colorThreshold, 256, NULL);
-    cvCreateTrackbar("Color Filter Threshold", "src", &colorFilterCount, 256, NULL);
+#ifdef TUNADEBUG
+    cvCreateTrackbar("Noise", src, &nr, 128, NULL);
+    cvCreateTrackbar("Normalize", src, &normalize, 256, NULL);
+    cvCreateTrackbar("Edge", src, &edge, 64, NULL);
+    cvCreateTrackbar("Blur Rounds", src, &blur, 16, NULL);
+    cvCreateTrackbar("Palette Count", src, &colorCount, 64, NULL);
+    cvCreateTrackbar("Palette Sensitivity", src, &colorThreshold, 128, NULL);
+    cvCreateTrackbar("Filter Choose", src, &colorFilterCount, 64, NULL);
+#endif
 
     /* Initialize temporary images */
-    ipl_frame = cvQueryFrame(capture);
-    ipl_out = cvCreateImage(cvGetSize(ipl_frame), IPL_DEPTH_8U, 3);
-    rgb_tmp = Image_new(RGB, ipl_frame->width, ipl_frame->height);
-    indexed_tmp = Image_new(INDEXED, ipl_frame->width, ipl_frame->height);
+    img_src = Bitmap_read("in.bmp");
 
-    while(cvWaitKey(wait) != 'q') {
-        ipl_frame = cvQueryFrame(capture);
-        cvShowImage("src", ipl_frame);
-      
-        IplImageToImage(ipl_frame, rgb_tmp);
+    rgb_tmp = Image_new(RGB, img_src->width, img_src->height);
+    indexed_tmp = Image_new(INDEXED, img_src->width, img_src->height);
 
-        Image_normalize(rgb_tmp, rgb_tmp);
+#ifdef TUNADEBUG
+    ipl_src = cvCreateImage(cvSize(rgb_tmp->width, rgb_tmp->height), IPL_DEPTH_8U, 3);
+    ipl_out1 = cvCreateImage(cvSize(rgb_tmp->width, rgb_tmp->height), IPL_DEPTH_8U, 3);
+    ipl_out2 = cvCreateImage(cvSize(rgb_tmp->width, rgb_tmp->height), IPL_DEPTH_8U, 3);
+    ipl_out3 = cvCreateImage(cvSize(rgb_tmp->width, rgb_tmp->height), IPL_DEPTH_8U, 3);
+    ipl_out4 = cvCreateImage(cvSize(rgb_tmp->width, rgb_tmp->height), IPL_DEPTH_8U, 3);
+#endif    
 
-        ImageToIplImage(rgb_tmp, ipl_out);
-        cvShowImage("out1", ipl_out);
+    Timer_reset(timer);
+#ifdef TUNADEBUG
+    while(cvWaitKey(50) != 'q') {
+#else
+    while(true) {
+#endif
+        Image_copy(img_src, rgb_tmp);
 
-        Image_blur(rgb_tmp, rgb_tmp, 2);
+#ifdef TUNADEBUG
+        ImageToIplImage(rgb_tmp, ipl_src);
+        cvShowImage(src, ipl_src);
+#endif
+
+        if(normalize) {
+            //Image_nr(rgb_tmp, rgb_tmp, nr);
+            if(normalize > 16) {
+                Image_normalize(rgb_tmp, rgb_tmp, normalize);
+            }
+            Image_edgeDetect(rgb_tmp, rgb_tmp, edge);
+        } else {
+            Image_toGrayscale(rgb_tmp, indexed_tmp);
+            Image_indexedToRGB(indexed_tmp, rgb_tmp);
+        }
+
+#ifdef TUNADEBUG
+        ImageToIplImage(rgb_tmp, ipl_out1);
+        cvShowImage(out1, ipl_out1);
+#endif
+        
         Image_reduceSpectrum(rgb_tmp, indexed_tmp, colorCount, colorThreshold);
 
+#ifdef TUNADEBUG
         Image_indexedToRGB(indexed_tmp, rgb_tmp);
-        ImageToIplImage(rgb_tmp, ipl_out);
-        cvShowImage("out2", ipl_out);
+        ImageToIplImage(rgb_tmp, ipl_out2);
+        cvShowImage(out2, ipl_out2);
+#endif
 
-        Image_colorFilter(indexed_tmp, indexed_tmp, &color, colorFilterCount);
+        continue;
+        Image_colorFilter(indexed_tmp, indexed_tmp, &color, Util_max(colorFilterCount, 1));
         Image_toMonochrome(indexed_tmp, indexed_tmp);
 
+#ifdef TUNADEBUG
         Image_indexedToRGB(indexed_tmp, rgb_tmp);
-        ImageToIplImage(rgb_tmp, ipl_out);
-        cvShowImage("out3", ipl_out);
+        ImageToIplImage(rgb_tmp, ipl_out3);
+        cvShowImage(out3, ipl_out3);
+#endif
 
         Image_identifyBlobs(indexed_tmp, indexed_tmp);
 
+#ifdef TUNADEBUG
         Image_indexedToRGB(indexed_tmp, rgb_tmp);
-        ImageToIplImage(rgb_tmp, ipl_out);
-        cvShowImage("out4", ipl_out);
+        ImageToIplImage(rgb_tmp, ipl_out4);
+        cvShowImage(out4, ipl_out4);
+#endif
+  
+        printf("%5d\t%.3f\n", i++, Timer_getDelta(timer));
     }
 
+    Timer_destroy(timer);
+
+    Image_destroy(img_src);
     Image_destroy(rgb_tmp);
     Image_destroy(indexed_tmp);
-    cvReleaseCapture(&capture);
+
+#ifdef TUNADEBUG
     cvDestroyAllWindows();
+#endif
+
     return 0;
 }

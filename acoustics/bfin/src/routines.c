@@ -39,7 +39,7 @@ int find_max_cmplx(complex_fract16* w, int size) {
         if(w[i].re > max_y) {
             max_y = w[i].re;
             max_x = i;
-        } 
+        }
     }
 
     return max_x;
