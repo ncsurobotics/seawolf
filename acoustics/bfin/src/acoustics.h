@@ -35,7 +35,7 @@ typedef fract16 adcsample;
 
 /* Size of a circular buffer for a single channel. This must be a power of 2
    multiple of SAMPLES_PER_CHANNEL */
-#define BUFFER_SIZE_CHANNEL (256 * 1024)
+#define BUFFER_SIZE_CHANNEL (32 * 1024)
 
 /* FIR filter coefficient count */
 #define FIR_COEF_COUNT 613
@@ -51,7 +51,7 @@ typedef fract16 adcsample;
 /* Extra number of read cyles to perform after trigger. This can be used to
    "pad" the other channels and ensure that the trigger is present in all
    channels */
-#define EXTRA_READS 4
+#define EXTRA_READS 1
 
 /* Profiling helpers */
 #ifdef ACOUSTICS_PROFILE
