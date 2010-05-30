@@ -99,19 +99,25 @@ static const int mission_order[] = {
 };
 
 /*********** Mission Prototypes **************/
-// Gate
+/*** Gate ***/
 void mission_gate_init(IplImage* frame, double depth);
 struct mission_output mission_gate_step(struct mission_output);
 
-// Bouy
+/*** Bouy ***/
 void mission_bouy_init(IplImage* frame);
 struct mission_output mission_bouy_step(struct mission_output);
 
-// Path
+//internal bouy functions
+int bouy_first_approach(void);
+
+void bouy_bump_init(void);
+int bouy_bump(struct mission_output* result, RGBPixel* color);
+
+/*** Path ***/
 void mission_align_path_init(IplImage* frame);
 struct mission_output mission_align_path_step(struct mission_output);
 
-// Window
+// ---- Window ---- //
 void mission_window_init(IplImage* frame);
 struct mission_output mission_window_step(struct mission_output);
 
