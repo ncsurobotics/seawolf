@@ -23,7 +23,7 @@ static int right_pole = 0;
 static int seen_both_poles = 0; // Increments every time we see both poles
 
 // Manual State Variables
-static int WHITE_GATE_FLAG = 0; // Set to zero to look for black gate
+static int WHITE_GATE_FLAG = 1; // Set to zero to look for black gate
 static double desired_depth = 2.0; // desired depth
 
 void mission_gate_init(IplImage* frame, double depth)
@@ -111,6 +111,7 @@ struct mission_output mission_gate_step(struct mission_output result)
 
         //Set the yaw heading to the center of the two poles
         result.yaw = (pt_gate[0]+pt_gate[1])/2; 
+        result.yaw -= frame->width/2;
 
     } else if (rho_gate[1] != -999 && seen_both_poles < 2) { 
         // We only see one line, and don't know where the gate is
@@ -126,6 +127,8 @@ struct mission_output mission_gate_step(struct mission_output result)
             right_pole = right_pole + difference;
             left_pole = pt_gate[1];
             result.yaw = frame->width/2 + 30;
+            result.yaw -= frame->width/2;
+
         } else {
             // We see the right pole
             printf("I see the right pole!");
@@ -133,6 +136,7 @@ struct mission_output mission_gate_step(struct mission_output result)
             left_pole = left_pole + difference;
             right_pole = pt_gate[1];
             result.yaw = frame->width/2 - 30;
+            result.yaw -= frame->width/2;
         }
     } else if (rho_gate[1] != -999 && seen_both_poles >1) {
     
@@ -159,7 +163,6 @@ struct mission_output mission_gate_step(struct mission_output result)
     #endif
 
     // Shift output to zero center of the frame
-    result.yaw -= frame->width/2;
     result.depth = 0;
     
     // Convert pixels to degrees
