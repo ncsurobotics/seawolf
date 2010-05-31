@@ -76,8 +76,8 @@ int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsi
 
     for(i=in->width*in->height; i>=0;i--){ // Fill the acumulator tables 
         tempPixel.r = ptrIn[3*i+2];
-        tempPixel.b = ptrIn[3*i+1];
-        tempPixel.g = ptrIn[3*i+0];
+        tempPixel.b = ptrIn[3*i+0];
+        tempPixel.g = ptrIn[3*i+1];
         s = (int)Pixel_stddev(color, &tempPixel); //this function used to keep color data associated with each sigma, so this s got used a lot
         sigmas[s]++;
         // Update the average color
@@ -102,8 +102,8 @@ int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsi
 
     for(i=in->width*in->height-1;i>=0;i--){ //Update the Output Image
         tempPixel.r = ptrIn[3*i+2];
-        tempPixel.b = ptrIn[3*i+1];
-        tempPixel.g = ptrIn[3*i+0];
+        tempPixel.b = ptrIn[3*i+0];
+        tempPixel.g = ptrIn[3*i+1];
         if((int)Pixel_stddev(color,&tempPixel) < stddev){
             // This pixel is "close" to the target color, mark it white
             ptrOut[3*i+2] = 0xff;   
