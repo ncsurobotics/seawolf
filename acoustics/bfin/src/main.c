@@ -1,6 +1,7 @@
 
 #define ACOUSTICS_DEBUG
 #define ACOUSTICS_PROFILE
+//#define ACOUSTICS_CORRELATE
 //#define ACOUSTICS_DUMP
 //#define USE_LIBSEAWOLF
 
@@ -36,6 +37,8 @@ static fir_state_fr16 fir_state_trig;
 static fract16* fir_delay[4];
 static fract16* fir_delay_trig;
 
+#ifdef ACOUSTICS_CORRELATE
+
 /* Twiddle table for correlations */
 static complex_fract16* tt;
 
@@ -49,6 +52,13 @@ static int block_exponent;
 static int delay_AB;
 static int delay_AC;
 static int delay_AD;
+
+#else
+
+/* Time of arrival on each channel */
+static int toa[4];
+
+#endif
 
 /* Misc */
 static unsigned int i;
@@ -80,6 +90,7 @@ static void init(char* coefs_file_name) {
     cir_buff[C] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
     cir_buff[D] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
 
+#ifdef ACOUSTICS_CORRELATE
     /* Twiddle table for use in optimized correlation block */
     tt = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL / 2);
 
@@ -90,6 +101,7 @@ static void init(char* coefs_file_name) {
     fft_ref = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL);
     fft_temp = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL);
     cmplx_buff = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL);
+#endif
 
     /* Temporary buffer used in linearization of circular buffers, to store
        output of the FIR filter applied to trigger samples, and to store the
@@ -206,6 +218,7 @@ static void filter_buffers(void) {
     }
 }
 
+#ifdef ACOUSTICS_CORRELATE
 /*
  * Perform correlations and compute delays in the signals between the channels
  *
@@ -245,6 +258,35 @@ static void correlate_buffers(void) {
     delay_AD = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
 }
 
+#else
+
+/*
+ * Compute time of arrival for the signal on each channel
+ *
+ * Locate the leading each of the ping in each channel and use this to create
+ * times of arrival for the ping on each channel. The time are then rezeroed so
+ * that the time of arrival on channel A is 0.
+ */
+static void compute_toa(void) {
+    /* Compute time of arrival for all channels */
+    for(int channel = A; channel <= D; channel++) {
+        /* Default to 5000 (a bogus value) */
+        toa[channel] = 5000;
+        for(int i = 0; i < BUFFER_SIZE_CHANNEL; i++) {
+            if(cir_buff[channel][i] > TRIGGER_VALUE) {
+                toa[channel] = i;
+                break;
+            }
+        }
+    }
+
+    /* Rezero all the TOA values */
+    for(int channel = A; channel <= D; channel++) {
+        toa[channel] -= toa[A];
+    }
+}
+#endif
+
 /*
  * Output the delays
  *
@@ -253,17 +295,32 @@ static void correlate_buffers(void) {
  */
 static void data_out(void) {
 #ifdef USE_LIBSEAWOLF
+# ifdef ACOUSTICS_CORRELATE
     Var_set("Acoustics.Delays.AB", delay_AB);
     Var_set("Acoustics.Delays.AC", delay_AC);
     Var_set("Acoustics.Delays.AD", delay_AD);
     Notify_send("UPDATED", "Acoustics.Delays");
+# else
+    Var_set("Acoustics.TOA.A", toa[A]);
+    Var_set("Acoustics.TOA.B", toa[B]);
+    Var_set("Acoustics.TOA.C", toa[C]);
+    Var_set("Acoustics.TOA.D", toa[D]);
+    Notify_send("UPDATED", "Acoustics.TOA");
+# endif
 #endif
     
 #ifdef ACOUSTICS_DEBUG
+# ifdef ACOUSTICS_CORRELATE
     /* Output pDelay values */
     printf("delay_AB: %d \n", delay_AB);
     printf("delay_AC: %d \n", delay_AC);
     printf("delay_AD: %d \n", delay_AD);
+# else
+    printf("A: %d\n", toa[A]);
+    printf("B: %d\n", toa[B]);
+    printf("C: %d\n", toa[C]);
+    printf("D: %d\n", toa[D]);
+# endif
 #endif
 }
 
@@ -316,9 +373,15 @@ int main(int argc, char** argv) {
         break;
 #endif
 
+#ifdef ACOUSTICS_CORRELATE
         TIME_PRE(t, "Correlating buffers...");
         correlate_buffers();
         TIME_POST(t);
+#else
+        TIME_PRE(t, "Computing times of arrival...");
+        compute_toa();
+        TIME_POST(t);
+#endif
 
         data_out();
     }
