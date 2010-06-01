@@ -16,7 +16,7 @@ void manage(SerialPort sp) {
     Notify_filter(FILTER_MATCH, "UPDATED PortX"); // 4
     Notify_filter(FILTER_MATCH, "UPDATED StarX"); // 5
 
-    char action[16], varname[32];
+    char varname[32];
     float read_value;
     unsigned char param;
 
@@ -26,7 +26,7 @@ void manage(SerialPort sp) {
 
     /* Main loop */
     while(true) {
-        Notify_get(action, varname);
+        Notify_get(NULL, varname);
         if(strcmp(varname, "PortX") == 0) {
             /* thruster PortX */
             read_value = Var_get("PortX");

@@ -14,7 +14,7 @@ void manage(SerialPort sp) {
     /* Only recieved notifications for the following */
     Notify_filter(FILTER_MATCH, "UPDATED Aft");
 
-    char action[16], varname[32];
+    char varname[32];
     float read_value;
     unsigned char param;
 
@@ -23,7 +23,7 @@ void manage(SerialPort sp) {
 
     /* Main loop */
     while(true) {
-        Notify_get(action, varname);
+        Notify_get(NULL, varname);
         read_value = Var_get("Aft");
         if(fabs(read_value) > DEAD_BAND) {
             param = (unsigned char) read_value;
