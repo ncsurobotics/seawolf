@@ -34,7 +34,7 @@ static bool running = true;
 static float depth_heading = SURFACE;
 
 static void* notify_monitor(void* _n) {
-    char action[64], data[64];
+    char data[64];
     int aft = 0, portx = 0, porty = 0, starx = 0, stary = 0;
     float depth = 0;
 
@@ -67,7 +67,7 @@ static void* notify_monitor(void* _n) {
         printw(display, depth_heading, depth, porty, stary, portx, starx, aft);
         refresh();
 
-        Notify_get(action, data);
+        Notify_get(NULL, data);
 
         if(strcmp(data, "Aft") == 0) {
             aft = (int) Var_get("Aft");

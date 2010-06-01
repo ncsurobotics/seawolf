@@ -88,7 +88,7 @@ int main(void) {
     short req_yaw[]     = {0, 0};    /* port_x, star_x */
 
     /* Notify buffers */
-    char action[32], data[64];
+    char data[64];
     char requester[16], values[48];
 
     /* Zero thrusters */
@@ -101,7 +101,7 @@ int main(void) {
     Task_background(rate);
 
     while(true) {
-        Notify_get(action, data);
+        Notify_get(NULL, data);
         Util_split(data, ' ', requester, values);
 
         count++;

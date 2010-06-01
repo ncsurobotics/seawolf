@@ -40,8 +40,8 @@ int main(void) {
     double mv;
     double yaw, rate;
     float mode;
-
-    char action[64], data[64];
+    
+    char data[64];
 
     /* Default to not rotating in rotational rate mode */
     Var_set("Rot.Angular.Target", 0.0);
@@ -67,7 +67,7 @@ int main(void) {
 
     /* Initialize PIDs */
     do {
-        Notify_get(action, data);
+        Notify_get(NULL, data);
     } while(strcmp(data, "IMU") != 0);
     yaw = Var_get("SEA.Yaw");
     rate = yaw_dt(yaw);
@@ -76,7 +76,7 @@ int main(void) {
     Var_set("Rot.Angular.Target", yaw);
 
     while(true) {
-        Notify_get(action, data);
+        Notify_get(NULL, data);
 
         if(strcmp(data, "IMU") == 0) {
             yaw = Var_get("SEA.Yaw");

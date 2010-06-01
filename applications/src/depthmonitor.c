@@ -70,7 +70,7 @@ int main(void) {
 
     int aft = 0, portx = 0, porty = 0, starx = 0, stary = 0;
     float depth=0, seapitch = 0, searoll = 0, seayaw = 0;
-    char action[64], data[64];
+    char data[64];
 
     pthread_t control_thread;
     pthread_create(&control_thread, NULL, control_heading, NULL);
@@ -90,7 +90,7 @@ int main(void) {
         printw(display, depth_heading, depth, seapitch, searoll, seayaw, porty, stary, portx, starx, aft);
         refresh();
 
-        Notify_get(action, data);
+        Notify_get(NULL, data);
 
         if(strcmp(data, "Aft") == 0) {
             aft = (int) Var_get("Aft");

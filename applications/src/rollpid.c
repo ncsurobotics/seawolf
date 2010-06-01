@@ -12,7 +12,7 @@ int main(void) {
     Seawolf_init("Roll PID");
 
     PID* pid;
-    char action[64], data[64];
+    char data[64];
     double mv;
 
     Notify_filter(FILTER_MATCH, "UPDATED RollPID");
@@ -25,7 +25,7 @@ int main(void) {
     mv = PID_start(pid, 0.0);
     dataOut(mv);
     while(true) {
-        Notify_get(action, data);
+        Notify_get(NULL, data);
 
         if(strcmp(data, "RollPID") == 0) {
             PID_setCoefficients(pid,
