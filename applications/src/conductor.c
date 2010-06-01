@@ -6,8 +6,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-/* Top level Seawolf directory */
-#define SEAWOLF_DIR "../"
 #define MAX_ARGS 31
 
 /* Run an application with the given NULL terminated argument list. The
@@ -42,6 +40,14 @@ static int spawn(char* path, char* args, ...) {
     return pid;
 }
 
+static void zero_thrusters(void) {
+    Var_set("PortX", 0);
+    Var_set("StarX", 0);
+    Var_set("PortY", 0);
+    Var_set("StarY", 0);
+    Var_set("Aft", 0);
+}
+
 int main(int argc, char** argv) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("Conductor");
@@ -51,37 +57,37 @@ int main(int argc, char** argv) {
 
     Notify_filter(FILTER_ACTION, "MISSIONTRIGGER");
 
+    /* Clear VisionReset */
+    Var_set("VisionReset", 0.0);
+    zero_thrusters();
+
     while(true) {
-        Var_set("PortX", 0);
-        Var_set("StarX", 0);
-        Var_set("PortY", 0);
-        Var_set("StarY", 0);
-        Var_set("Aft", 0);
-        
-        /* Move to vision directory */
-        chdir("../vision/2010/");
-        pid[0] = spawn("./main", argv[1], argv[2], NULL);
-        
         Notify_get(NULL, NULL);
         for(int i = 3; i > 0; i--) {
             Logging_log(DEBUG, Util_format("Preparing to start - %d", i));
             Util_usleep(1);
         }
         
-        chdir("../../applications/");
+        /* Start everthing */
+        Notify_send("GO", "Vision");
         pid[1] = spawn("./bin/depthpid", NULL);
         pid[2] = spawn("./bin/rotpid", NULL);
-        
-        Util_usleep(1);
+        Util_usleep(0.5);
+
         pid[7] = spawn("./bin/mixer", NULL);
         
         Notify_get(NULL, NULL);
         Logging_log(DEBUG, "Killing...");
-        kill(pid[0], SIGTERM);
         kill(pid[1], SIGTERM);
         kill(pid[2], SIGTERM);
         kill(pid[7], SIGTERM);
-        Util_usleep(1.0);
+        
+        Var_set("VisionReset", 1.0);
+        zero_thrusters();
+
+        while(Var_get("VisionReset") == 1.0) {
+            Util_usleep(0.05);
+        }
     }
 
     Seawolf_close();
