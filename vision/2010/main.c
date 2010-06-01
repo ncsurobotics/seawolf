@@ -54,6 +54,11 @@ int main(int argc, char** argv)
     results.mission_done = false;
     struct mission_output previous_results = results;
 
+    // Zero heading
+    set_depth(results.depth, results.depth_control);
+    set_yaw(results.yaw, results.yaw_control);
+    set_rho(results.rho);
+
     #ifdef VISION_SHOW_HEADING
        cvNamedWindow("Heading", CV_WINDOW_AUTOSIZE);
     #endif
@@ -82,8 +87,16 @@ int main(int argc, char** argv)
         if (memcmp(&results, &previous_results, sizeof(struct mission_output))) {
 
             // Set headings
-            set_depth(results.depth, results.depth_control);
-            set_yaw(results.yaw, results.yaw_control);
+            if (results.depth != previous_results.depth ||
+                results.depth_control != previous_results.depth_control)
+            {
+                set_depth(results.depth, results.depth_control);
+            }
+            if (results.yaw != previous_results.yaw ||
+                results.yaw_control != previous_results.yaw_control)
+            {
+                set_yaw(results.yaw, results.yaw_control);
+            }
             set_rho(results.rho);
             previous_results = results;
 
