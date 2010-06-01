@@ -1,3 +1,5 @@
+
+#include "seawolf.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -12,36 +14,16 @@
 
 #include "mission.h"
 
-//TODO: 
-//      -set depth
-//      -mission switching
-//      -add debug
+/******* #DEFINES for BOUY **********/
 
-// State Variables for Bouy
-static int bouy_state = 0;        //Keeps track of primary bouy state machine
-
-// State variables for BOUY - Bump Bouy Sub Routine
-static int lost_blob = 0;         //how long it's been since we lost the blob
-static int tracking_counter = 0;  //total number of frames we've seen a blob
-static int saw_big_blob = 0;      //starts incrementing once we see a big enough blob
-static int hit_blob = 0;          //increments for every frame we think we've hit the blob
-static int bump_initialized = 0;  //flag to keep track of initializing bump routine
-
-
-// Bouy colors
-#define YELLOW 1
-#define RED 2
-#define GREEN 3
-
-RGBPixel yellow = { 0xff, 0xff, 0x00 };
-RGBPixel red = { 0xff, 0x00, 0x00 };
-RGBPixel green = { 0x00, 0xff, 0x00 };
-
-// The order that the 3 bouys are in, left to right
+// Bouy colors from left to right
+#define YELLOW_BOUY 1
+#define RED_BOUY    2
+#define GREEN_BOUY  3
 
 // The order to hit the bouys in
-#define BOUY_1 (red)
-#define BOUY_2 (yellow)
+#define BOUY_1 RED_BOUY
+#define BOUY_2 YELLOW_BOUY
 
 // States for the bouy state machine
 #define BOUY_STATE_FIRST_APPROACH 0
@@ -54,9 +36,42 @@ RGBPixel green = { 0x00, 0xff, 0x00 };
 #define BOUY_STATE_FINAL_ORIENTATION 7
 #define BOUY_STATE_COMPLETE 8
 
+
+// Turn Rate When Searching For Bouys
+#define TURN_RATE 5
+
+// How Long To Back Up After 1st Bouy
+#define BACK_UP_TIME_1 5
+
+/************* STATE VARIABLES FOR BOUY *************/
+
+// State Variables for Bouy Mission
+static int bouy_state = 0;           //Keeps track of primary bouy state machine
+static int bouys_found = 0;          //turns to 1,2, or 3 when a bouy is found, # signifies color
+static RGBPixel bouy_colors[] = {    //holds the three colors of the bouys
+    [YELLOW_BOUY] = {0xff, 0xff, 0x00 },
+    [RED_BOUY]    = {0xff, 0x00, 0x00 },
+    [GREEN_BOUY]  = {0x00, 0xff, 0x00 },   
+};
+
+// State Variables for BOUY - First Approach sub routine
+
+// State Variables for BOUY - First Orientation sub routine
+
+// State variables for BOUY - Bump Bouy Sub Routine
+static int lost_blob = 0;         //how long it's been since we lost the blob
+static int tracking_counter = 0;  //total number of frames we've seen a blob
+static int saw_big_blob = 0;      //starts incrementing once we see a big enough blob
+static int hit_blob = 0;          //increments for every frame we think we've hit the blob
+static int bump_initialized = 0;  //flag to keep track of initializing bump routine
+
+// State Variables for Bouy - First Backing Up
+static Timer* backing_timer = NULL;      //times our backing up step for us
+
+
 void mission_bouy_init (IplImage * frame)
 {
-    bouy_state = BOUY_STATE_BUMP_FIRST_BOUY;
+    bouy_state = BOUY_STATE_FIRST_APPROACH;
 }
 
 struct mission_output mission_bouy_step (struct mission_output result)
@@ -64,16 +79,34 @@ struct mission_output mission_bouy_step (struct mission_output result)
     switch (bouy_state) {
         
         case BOUY_STATE_FIRST_APPROACH:
+            //drive forward 
+            result.rho = 10;
+                
+            //scan the image for any of the three bouys
+            bouys_found = bouy_first_approach();
             
-            //if we see a bouy, move on
-            if( bouy_first_approach() ){
+            // if we see a bouy, move on
+            if(bouys_found){
                 printf("we finished the approach \n");
                 bouy_state++;
             }
             break;
             
         case BOUY_STATE_FIRST_ORIENTATION:
-            //check which direction we need to turn
+            //turn towards our first bouy
+            
+            if(bouys_found < BOUY_1){
+                //TURN LEFT
+                result.yaw = -1*TURN_RATE;
+            } 
+            else if(bouys_found > BOUY_1){
+                //TURN RIGHT
+                result.yaw = TURN_RATE;
+            }
+            else{
+                //STAY STRAIGHT 
+            }
+            bouy_state++;
             break;
             
         case BOUY_STATE_BUMP_FIRST_BOUY:
@@ -84,7 +117,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
             }
             
             //run bump routine until complete
-            if( bouy_bump(&result, &(BOUY_1)) == 1){
+            if( bouy_bump(&result, &bouy_colors[BOUY_1]) == 1){
                 bouy_state++;
                 bump_initialized = 0;
                 printf("we finished bouy bump 1 \n");
@@ -92,14 +125,55 @@ struct mission_output mission_bouy_step (struct mission_output result)
             break;
             
         case BOUY_STATE_FIRST_BACKING_UP:
-            //back up until X
+            
+            //back up for X seconds
+            if( backing_timer == NULL){
+                backing_timer = Timer_new();
+            }            
+             
+            if(Timer_getTotal(backing_timer) > BACK_UP_TIME_1){
+                //we have backed up long enough
+                bouy_state++;
+                printf("We are done backing up \n");
+            }            
+            break;
+            
+        case BOUY_STATE_SECOND_ORIENTATION:
+            //turn towards our second bouy
+            if(BOUY_2 < BOUY_1){
+                //TURN_LEFT
+                result.yaw = -1*TURN_RATE;
+                printf("Turning Left, towards the second bouy");
+            }
+            else if(BOUY_2 > BOUY_1){
+                //TURN_RIGHT
+                result.yaw = TURN_RATE;
+                printf("Turning Right, towards the second bouy");
+            }
+            else{
+                printf("Why are we hitting the same bouy twice? really? are we that vindictive? what did that bouy ever do to us?");
+            }
+            break;
+            
+        case BOUY_STATE_BUMP_SECOND_BOUY:
+        
+            //initialize bouy bump
+            if(bump_initialized == 0){
+                bouy_bump_init;
+            }
+            
+            //run bump routine until complete
+            if( bouy_bump(&result, &bouy_colors[BOUY_2]) == 1){
+                bouy_state++;
+                bump_initialized = 0;
+                printf("we finished bouy bump 1 \n");
+            }         
             break;
             
         default:
             printf("bouy_state set to meaningless value");
             break;
     }
-
     
     //Convert Pixels to Degrees
     result.yaw = PixToDeg(result.yaw);
@@ -107,11 +181,72 @@ struct mission_output mission_bouy_step (struct mission_output result)
     return result;
 }
 
+
+/*******      First Approach      ***********/
+// Scan Image, if we see a bouy, return it's color.  Otherwise
+// return zero.
+
 int bouy_first_approach(void){
     int found_bouy = 0;
-    //drive forward, and if we see either a red green or yellow blob, return 1
+    
+    //obtain frame
+    IplImage* frame = multicam_get_frame (FORWARD_CAM);
+    
+    //scan image for any of the bouy colors
+    IplImage* ipl_out_1;
+    ipl_out_1 = cvCreateImage(cvGetSize (frame), 8, 3);
+    IplImage* ipl_out_2;
+    ipl_out_2 = cvCreateImage(cvGetSize (frame), 8, 3);
+    IplImage* ipl_out_3;
+    ipl_out_3 = cvCreateImage(cvGetSize (frame), 8, 3);
+    
+    int num_pixels_1 = FindTargetColor(frame, ipl_out_1, &bouy_colors[YELLOW_BOUY], 1, 350, 1);
+    int num_pixels_2 = FindTargetColor(frame, ipl_out_2, &bouy_colors[RED_BOUY], 1, 350, 1);
+    int num_pixels_3 = FindTargetColor(frame, ipl_out_3, &bouy_colors[GREEN_BOUY], 1, 350, 1);
+    
+    //Look for blobs
+    BLOB *blobs1;
+    int blobs_found1 = blob(ipl_out_1, &blobs1, 4, 100);
+    BLOB *blobs2;
+    int blobs_found2 = blob(ipl_out_2, &blobs2, 4, 100);
+    BLOB *blobs3;
+    int blobs_found3 = blob(ipl_out_3, &blobs3, 4, 100);
+    
+    //if any of these look like a bouy, return the color and we're done
+    if((blobs_found1 == 1 || blobs_found1 == 2) && blobs1[0].area > 80){
+        //we see a yellow blob
+        found_bouy = YELLOW_BOUY;
+        printf("We see a yellow blob\n");
+    }
+    else if((blobs_found2 == 1 || blobs_found2 == 2) && blobs2[0].area > 80){
+        //we see a red blob
+        found_bouy = RED_BOUY;
+        printf("We see a red blob\n");
+    }
+    else if((blobs_found3 == 1 || blobs_found3 == 2) && blobs3[0].area > 80){
+        //we see a green blob
+        found_bouy = GREEN_BOUY;
+        printf("We see a green blob\n");
+    }
+    else{
+        //we don't see anything
+        found_bouy = 0;
+    }
+    
+    //free resources
+    blob_free (blobs1, blobs_found1);
+    blob_free (blobs2, blobs_found2);
+    blob_free (blobs3, blobs_found3);
+    cvReleaseImage (&ipl_out_1);
+    cvReleaseImage (&ipl_out_2);
+    cvReleaseImage (&ipl_out_3);
+    
+    
     return found_bouy;
 }
+
+
+/*******      Bouy Bump      ***********/
 
 void bouy_bump_init(void){
     //initialize state variables for the bouy_bump routine
