@@ -1,7 +1,10 @@
+#include "seawolf.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
+
+#include "seawolf3.h"
 
 #include "vision_lib.h"
 #include <cv.h>
@@ -16,7 +19,7 @@ static int path_alligned = 0;
 static CvPoint last_heading = {-999,-999};
 static int seen_blob = 0;
 static int lost_path = 0;
-static float last_theta = -999; // Used to keep track of the correct end of the marker
+static double last_theta = -999; // Used to keep track of the correct end of the marker
 
 
 void mission_align_path_init(IplImage* frame)
@@ -28,22 +31,27 @@ void mission_align_path_init(IplImage* frame)
     CvPoint last_heading = {-999,-999};
     int seen_blob = 0;
     int lost_path = 0;
-    float last_theta = -999; // Used to keep track of the correct end of the marker
+    double last_theta = -999; // Used to keep track of the correct end of the marker
 }
 
 struct mission_output mission_align_path_step(struct mission_output result)
 {
+
     IplImage* grey;
     IplImage* edge;
     IplImage* ipl_out = NULL;
-    RGBPixel color = {0xff, 0x00, 0x00};
+    RGBPixel color = {0xff, 0x88, 0x00};
     CvSeq* lines;
     IplImage* frame = multicam_get_frame(DOWN_CAM);
     ipl_out = cvCreateImage(cvGetSize(frame),8,3);
     result.frame = frame;
+    
+    //set variable modes
+    result.depth_control = DEPTH_RELATIVE;
+    result.yaw_control = ROT_MODE_RELATIVE;
 
     // Temporary variables
-    int theta=result.yaw;
+    double theta=result.yaw;
     int phi=result.depth;
     int rho=result.rho;
 
@@ -63,17 +71,24 @@ struct mission_output mission_align_path_step(struct mission_output result)
 
     // If we've seen a blob, keep track of the angle
     if(last_theta != -999 && line[0] != -999){
-        theta = (sin(line[1])*50); //determine how much to turn
-        theta = cos(line[1])>0 ? theta : -1*theta; //determine which direction to turn
+    
+        //********* HOW HOUGH RETURNS ANGLES: ***********// 
+        //  line[1] is returned in radians, measured clockwise 
+        //  off the vertical (range from zero to pi)
+        //***********************************************//
+        theta = line[1]> PI/2 ? line[1] - PI : line[1]; //Grab angle from hough line 
+                                                        // 0 to pi/2 clockwise
+                                                        // 0 to -pi/2 ccw from vertical
         // Don't allow theta to jump 180 degrees when the line passes pi/2
-        // (which for some reason is 1)
         if(theta < 0){
-            theta = fabs(theta-last_theta) < fabs((theta + 50*2) - last_theta) ? theta : theta + 50*2;
+            theta = fabs(theta-last_theta) < fabs((theta + PI) - last_theta) ? theta : theta + PI;
         }else{
-            theta = fabs(theta-last_theta) < fabs((theta - 50*2) - last_theta) ? theta : theta - 50*2;
+            theta = fabs(theta-last_theta) < fabs((theta - PI) - last_theta) ? theta : theta - PI;
         }
         // Store this theta value
         last_theta = theta;
+        
+        printf("******** theta = %f \n", theta);
     }
 
     // Look for multiple blobs (3) if we see more than two, assume we arn't
@@ -110,7 +125,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
             phi = 0;
             xdist = heading.x - frame->width/2;
             ydist = frame->height/2 - heading.y ;
-            theta = xdist;
+            theta = tan(abs(ydist)/xdist);
             max_measured_rho = sqrt((frame->width/2)*(frame->width/2)+(frame->height/2)*(frame->height/2));
             rho = sqrt(xdist*xdist + ydist*ydist); // Compute estimated distance to target
             if(ydist < 0){
@@ -120,7 +135,6 @@ struct mission_output mission_align_path_step(struct mission_output result)
             }
             // Scale the rho and theta value
             rho = (rho*MAX_RHO/max_measured_rho);
-            theta = (theta*MAX_THETA/(frame->width/2))/6;
 
             // Decide if this counts as on top of the marker
             if(abs(rho) < MAX_RHO/6) {
@@ -129,7 +143,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
                 on_path = 0;
             }
             // Don't go charging off until we are pointed at the target
-            if(abs(theta) > MAX_THETA/20) rho = 0;
+            if(abs(theta) > .1) rho = 0;
 
             // Try to aproximate actual distance we need to cover (so scale rho
             // AGAIN)
@@ -140,14 +154,16 @@ struct mission_output mission_align_path_step(struct mission_output result)
             // here
             // Only initialize this value once.
             if(last_theta == -999){
-                last_theta = (sin(line[1])*50); // Determine how much to turn
-                last_theta = cos(line[1])>0 ? last_theta : -1*last_theta; // Determine which direction to turn
+                printf("initializing theta\n");
+                last_theta = line[1]> PI/2 ? line[1] - PI : line[1]; //Grab angle from hough line 
             }
         }
 
     }else{
         // We are now supposing ourselves to be on the marker, and need to
         // orient correctly
+
+        printf("on maker: **** theta = %f \n",theta);
 
         if(blobs_found == 0 || blobs_found>3) { // If we don't see the marker
             // Just wait for it to come back I suppose
@@ -157,11 +173,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
         }else if(line[0] != -999) {
             lost_path=0;
 
-            // Limit theta in case it for some reason overflows (it really
-            // shouldn't)
-            theta = theta>MAX_THETA ? MAX_THETA:theta;
-            theta = theta/6;
-            if(fabs(theta)<1.5) {
+            if(fabs(theta)< .1) {
                 path_alligned++;
             } else {
                 path_alligned=0; // Only consecutive counts
