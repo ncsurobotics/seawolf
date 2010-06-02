@@ -76,9 +76,26 @@ int main(int argc, char** argv)
     for (unsigned int frame_num=0; true; frame_num++)
     {
 
+        // Check for the mission reset flag
+        if (Var_get("VisionReset")) {
+            Var_set("VisionReset", 0.0);
+            // We actually set mission_index to 0 here, assuming that
+            // MISSION_WAIT is the first mission executed.
+            mission_index = 0;
+            results.mission_done = false;
+
+            // Reset mission structure also:
+            results.yaw_control = ROT_MODE_ANGULAR;
+            results.yaw = 0;
+            results.rho = 0;
+            results.depth_control = 0;
+            results.depth = 0;
+            results.mission_done = false;
+            previous_results = results;
+        }
+
         // Run mission_step
         int current_mission = mission_order[mission_index];
-        results.frame = NULL;
         results.mission_done = false;
         results = *mission_step(&results, current_mission);
         printf("Theta, Phi, Rho: %f, %f, %f\n", results.yaw, results.depth, results.rho);
@@ -246,7 +263,11 @@ struct mission_output* mission_step(struct mission_output* results, int mission)
         break;
 
         case MISSION_WAIT:
-            //TODO
+            // Wait for a go signal from the conductor.
+            printf("WAITING...\n");
+            Notify_get(NULL, NULL);
+            printf("Done!\n");
+            results->mission_done = true; // This will only run once
         break;
 
         case MISSION_STOP:

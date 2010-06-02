@@ -85,6 +85,7 @@ static const char* mission_strings[] = {
 // Gives the order which the missions are executed.  The initial mission
 // defaults to 0, but can be changed in debug.mk
 static const int mission_order[] = {
+    MISSION_WAIT,
     MISSION_GATE,
     MISSION_BOUY,
     MISSION_ALIGN_PATH,

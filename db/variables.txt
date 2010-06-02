@@ -35,3 +35,4 @@ SEA.Roll                       0.0        0          0
 SEA.Yaw                        0.0        0          0
 StarX                          0.0        0          0
 StarY                          0.0        0          0
+VisionReset                    0.0        0          0
