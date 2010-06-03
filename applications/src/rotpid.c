@@ -34,6 +34,7 @@ int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("Yaw PID");
 
+    double angularpid_setpoint = 0.0;
     PID* angularpid;
     PID* ratepid;
 
@@ -84,8 +85,20 @@ int main(void) {
 
             if(mode == ROT_MODE_RATE) {
                 mv = PID_update(ratepid, rate);
+
             } else if (mode == ROT_MODE_ANGULAR) {
-                mv = PID_update(angularpid, yaw);
+
+                // Give angularpid the error, it's setpoint is always 0.0
+                // We do this so that we can test which way around the 360
+                // degree circle is closer to go.
+                double error = angularpid_setpoint - yaw;
+                if (error > 180) {
+                    error = 360-error;
+                } else if (error < -180) {
+                    error = 360+error;
+                }
+                mv = PID_update(angularpid, error);
+
             } else {
                 printf("Rot.Mode is incorrectly set to \"%f\"!!!!\n", Var_get("Rot.Mode"));
             }
@@ -96,7 +109,9 @@ int main(void) {
             PID_setSetPoint(ratepid, Var_get("Rot.Rate.Target"));
 
         } else if(strcmp(data, "Rot.Angular.Target") == 0) {
-            PID_setSetPoint(angularpid, Var_get("Rot.Angular.Target"));
+            // Keep track of the setpoint internally
+            angularpid_setpoint = Var_get("Rot.Angular.Target");
+            //PID_setSetPoint(angularpid, Var_get("Rot.Angular.Target"));
 
         } else if(strcmp(data, "Rot.Mode") == 0) {
             mode = Var_get("Rot.Mode");
