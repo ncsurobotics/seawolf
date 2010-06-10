@@ -36,7 +36,9 @@ int main(void) {
 
     double angularpid_setpoint = 0.0;
     PID* angularpid;
-    PID* ratepid;
+    //PID* ratepid;
+    double rot_rate_p = Var_get("Rot.Rate.p");
+    double rot_rate_target = Var_get("Rot.Rate.Target");
 
     double mv;
     double yaw, rate;
@@ -54,10 +56,10 @@ int main(void) {
                      Var_get("Rot.Angular.p"),
                      Var_get("Rot.Angular.i"),
                      Var_get("Rot.Angular.d"));
-    ratepid = PID_new(0.0,
-                          Var_get("Rot.Rate.p"),
-                          Var_get("Rot.Rate.i"),
-                          Var_get("Rot.Rate.d"));
+    //ratepid = PID_new(0.0,
+                          //Var_get("Rot.Rate.p"),
+                          //Var_get("Rot.Rate.i"),
+                          //Var_get("Rot.Rate.d"));
 
     Notify_filter(FILTER_MATCH, "UPDATED IMU");
     Notify_filter(FILTER_PREFIX, "UPDATED Rot");
@@ -73,7 +75,7 @@ int main(void) {
     yaw = Var_get("SEA.Yaw");
     rate = yaw_dt(yaw);
     PID_start(angularpid, yaw);
-    PID_start(ratepid, rate);
+    //PID_start(ratepid, rate);
     Var_set("Rot.Angular.Target", yaw);
 
     while(true) {
@@ -81,19 +83,20 @@ int main(void) {
 
         if(strcmp(data, "IMU") == 0) {
             yaw = Var_get("SEA.Yaw");
-            rate = yaw_dt(yaw);
+            //rate = yaw_dt(yaw);
 
             if(mode == ROT_MODE_RATE) {
-                mv = PID_update(ratepid, rate);
+                //mv = PID_update(ratepid, rate);
+                mv = rot_rate_p * rot_rate_target;
 
             } else if (mode == ROT_MODE_ANGULAR) {
 
                 // Give angularpid the error, it's setpoint is always 0.0
                 // We do this so that we can test which way around the 360
                 // degree circle is closer to go.
-                double error = angularpid_setpoint - yaw;
+                double error = yaw - angularpid_setpoint;
                 if (error > 180) {
-                    error = 360-error;
+                    error = error-360;
                 } else if (error < -180) {
                     error = 360+error;
                 }
@@ -106,7 +109,8 @@ int main(void) {
             dataOut(mv);
 
         } else if(strcmp(data, "Rot.Rate.Target") == 0) {
-            PID_setSetPoint(ratepid, Var_get("Rot.Rate.Target"));
+            rot_rate_target = Var_get("Rot.Rate.Target");
+            //PID_setSetPoint(ratepid, Var_get("Rot.Rate.Target"));
 
         } else if(strcmp(data, "Rot.Angular.Target") == 0) {
             // Keep track of the setpoint internally
@@ -117,10 +121,11 @@ int main(void) {
             mode = Var_get("Rot.Mode");
 
         } else if(strncmp(data, "Rot.Rate", 8) == 0) {
-            PID_setCoefficients(ratepid,
-                                Var_get("Rot.Rate.p"),
-                                Var_get("Rot.Rate.i"),
-                                Var_get("Rot.Rate.d"));
+            rot_rate_p = Var_get("Rot.Rate.p");
+            //PID_setCoefficients(ratepid,
+                                //Var_get("Rot.Rate.p"),
+                                //Var_get("Rot.Rate.i"),
+                                //Var_get("Rot.Rate.d"));
 
         } else if(strncmp(data, "Rot.Angular", 11) == 0) {
             PID_setCoefficients(angularpid,
