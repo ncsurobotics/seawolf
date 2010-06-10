@@ -60,7 +60,7 @@ struct mission_output mission_gate_step(struct mission_output result)
     if (WHITE_GATE_FLAG) { // LOOK FOR WHITE LINES
         grey = cvCreateImage(cvSize(frame->width,frame->height), 8, 1);
         cvCvtColor(frame, grey, CV_BGR2GRAY);
-        edge = edge_opencv(grey, 60,100, 3); // This should be much more lenient than normal
+        edge = edge_opencv(grey, 30,40, 3); // This should be much more lenient than normal
         edge = remove_edges(frame, edge, 0,0,0,0,0,0); 
         lines = hough(edge, frame, 27, 2, 90,20, 10, 150, 150);
 
