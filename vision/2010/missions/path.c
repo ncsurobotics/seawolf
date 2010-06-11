@@ -59,6 +59,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
     int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 250,3);
 
     // Run hough transform to look for line
+    normalize_image(frame);
     grey = cvCreateImage(cvGetSize(frame), 8, 1);
     cvCvtColor(ipl_out, grey, CV_BGR2GRAY);
     edge = edge_opencv(grey, 50, 200, 3);

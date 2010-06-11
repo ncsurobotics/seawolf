@@ -227,6 +227,7 @@ int bouy_first_approach(void){
     
     //obtain frame
     IplImage* frame = multicam_get_frame (FORWARD_CAM);
+    frame = normalize_image(frame);
     
     //scan image for any of the bouy colors
     IplImage* ipl_out_1;
@@ -316,6 +317,7 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
 
     //obtain image data
     IplImage* frame = multicam_get_frame (FORWARD_CAM);
+    frame = normalize_image(frame);
     result->frame = frame;
     int frame_width = frame->width;
     int frame_height = frame->height;

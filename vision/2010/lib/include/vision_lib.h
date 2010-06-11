@@ -47,6 +47,7 @@
 #include "vision_lib/color_filter.h"
 #include "vision_lib/hough.h"
 #include "vision_lib/edge.h"
+#include "vision_lib/normalize.h"
 #include "vision_lib/remove_edges.h"
 #include "vision_lib/target_color.h"
 
