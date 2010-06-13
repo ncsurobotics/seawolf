@@ -18,13 +18,21 @@
 #define PATH_STATE_RECORDING 3
 #define PATH_STATE_ALIGNING 4
 
+static char* path_state_names[] = {
+    [PATH_STATE_SEARCHING_FORWARD] = "SEARCHING FORWARD",
+    [PATH_STATE_SEARCHING_STOPPING] = "SEARCHING STOPPING",
+    [PATH_STATE_SEARCHING_TURNING] = "SEARCHING TURNING",
+    [PATH_STATE_RECORDING] = "RECORDING",
+    [PATH_STATE_ALIGNING] = "ALIGNING"
+};
+
 /********* Tuning Values **********/
 
 // Speed we go while searching
 #define SEARCHING_SPEED 20
 
 // Time it takes us to stop (in seconds)
-#define STOP_TIME 1.0
+#define STOP_TIME 0.0
 
 // How many frames we must see a blob before we think we see the path.
 #define SEEN_BLOB_THRESHOLD 3
@@ -36,25 +44,28 @@
 
 // How far from the center in the respective direction a blob has to be in
 // order to be considered to that side.
-#define FORWARD_THRESHOLD 100
-#define BACKWARD_THRESHOLD 50
-#define LEFT_THRESHOLD 50
-#define RIGHT_THRESHOLD 50
+#define FORWARD_THRESHOLD 75
+#define BACKWARD_THRESHOLD 25
+#define LEFT_THRESHOLD 75
+#define RIGHT_THRESHOLD 75
+
+// How many frames in a row a blob is centered before we move on
+#define FRAMES_BLOB_CENTERED 5
 
 // Threshold for our angle when turning toward the blob
 #define BLOB_ANGLE_THRESHOLD 10
 
 // The number of frames we must stay facing the correct direction before moving
 // on while searching for the path
-#define BLOB_TURNING_ALLIGNMENT_FRAMES 3
+#define BLOB_TURNING_ALLIGNMENT_FRAMES 2
 
 // When I'm getting a reading for where the marker is pointed, I'll average
 // over this many samples to figure out where to go.
-#define NUM_ANGLES_TO_AVERAGE 5
+#define NUM_ANGLES_TO_AVERAGE 4
 
 // While averaging the angles, the range must be less than this or it's assumed
 // that we're getting bad values
-#define ANGLE_DEVIATION_THRESHOLD 3
+#define ANGLE_DEVIATION_THRESHOLD 10
 
 // Threshold for our angle while aligning with the marker
 #define ALIGN_ANGLE_THRESHOLD 10
@@ -75,12 +86,18 @@ Timer* stop_timer = NULL;
 static double recorded_angles[NUM_ANGLES_TO_AVERAGE];
 static int num_angles_recorded = 0;
 static int align_correct_angle;
+static int path_centered;
+static bool recording;
+static int initial_angle;
+
+double get_absolute_angle(double theta);
 
 void mission_align_path_init(IplImage* frame, struct mission_output* results)
 {
     path_state = 0;
     frames_in_a_row_i_have_seen_a_line = 0;
     frames_in_a_row_i_have_seen_a_blob = 0;
+    path_centered = 0;
     if (stop_timer != NULL) {
         Timer_destroy(stop_timer);
     }
@@ -88,15 +105,20 @@ void mission_align_path_init(IplImage* frame, struct mission_output* results)
     blob_correct_angle = 0;
     num_angles_recorded = 0;
     align_correct_angle = 0;
+    recording = false;
 
+    //record which way we are currently facing
+    initial_angle = (int)get_absolute_angle(0);
+    
     results->rho = SEARCHING_SPEED;
+    results->yaw = 0;
 
 }
 
-double get_absolute_angle(double theta);
 double get_absolute_angle(double theta) {
     double heading = Var_get("SEA.Yaw") + 180; // From 0 to 360
-    return ((int)(theta+heading)) % 360 - 180;
+    printf("THETA, HEADING: %f, %f\n", theta, heading);
+    return abs( ((int)(theta+heading)) % 360) - 180; // From -180 to 180
 }
 
 struct mission_output mission_align_path_step(struct mission_output result)
@@ -117,17 +139,17 @@ struct mission_output mission_align_path_step(struct mission_output result)
     result.frame = frame;
 
     // Color Filter
-    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 250,3);
+    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 275, 2.25);
 
     // Blob Detection
     BLOB *blobs;
-    int blobs_found = blob(ipl_out, &blobs, 4, 100);
+    int blobs_found = blob(ipl_out, &blobs, 4, 300);
 
     // Determine if we've seen a blob
     bool see_blob = true;
     if (blobs_found < 1) see_blob = false;
     if (blobs_found > 2) see_blob = false;
-    if (blobs[0].area < 0.25*num_pixels) see_blob = false;
+    if (blobs[0].area < BLOB_PIXEL_PERCENTAGE*num_pixels) see_blob = false;
 
     // Keep track of how many frames in a row we've seen a blob
     if (see_blob) {
@@ -135,6 +157,8 @@ struct mission_output mission_align_path_step(struct mission_output result)
     } else {
         frames_in_a_row_i_have_seen_a_blob = 0;
     }
+
+    printf("path_state: %s\n", path_state_names[path_state]);
 
     int lines_found;
     if (see_blob) {
@@ -167,7 +191,6 @@ struct mission_output mission_align_path_step(struct mission_output result)
     switch (path_state) {
 
         case PATH_STATE_SEARCHING_FORWARD:
-            result.yaw = 0;
             result.yaw_control = ROT_MODE_RELATIVE;
 
             // Determine if we see the path
@@ -197,44 +220,134 @@ struct mission_output mission_align_path_step(struct mission_output result)
                     }
                     printf("Turning toward path at angle %f\n", theta);
                     blob_angle = get_absolute_angle(theta);
-                    result.yaw = 0;
+                    result.yaw = theta;
+                    path_centered = 0;
                     result.rho = 0;
-                    path_state = PATH_STATE_SEARCHING_STOPPING;
 
                 } else if (y > FORWARD_THRESHOLD) { // Forward
                     result.rho = SEARCHING_SPEED;
-                } else if (y < BACKWARD_THRESHOLD) { // Backward
+                    path_centered = 0;
+                } else if (y < -1*BACKWARD_THRESHOLD) { // Backward
                     result.rho = -1*SEARCHING_SPEED;
+                    path_centered = 0;
                 } else if (lines_found) { // Center
                     printf("The path is in the center!!!!\n");
+                    path_centered++;
                     result.rho = 0;
                     result.yaw = 0;
-                    path_state = PATH_STATE_RECORDING;
                 } else { // Blob is centered, but we see no lines, something is wrong
                     printf("I'm confused.  There's a blob in the center, but I see no lines!\n");
                 }
             }
 
+            if (result.yaw != 0) {
+                current_yaw = Var_get("SEA.Yaw");
+                printf("Turning to Blob angle: %f / %f\n", current_yaw, blob_angle);
+                if (fabs(blob_angle - current_yaw) < BLOB_ANGLE_THRESHOLD) {
+                    blob_correct_angle++;
+                } else {
+                    blob_correct_angle = 0;
+                }
+            }
+
+            // If we've been heading in the right direction for long enough, go
+            // forward
+            if (blob_correct_angle > BLOB_TURNING_ALLIGNMENT_FRAMES) {
+                blob_correct_angle = 0;
+                result.rho = SEARCHING_SPEED;
+            }
+
+            // Determine if we've finished
+            if (path_centered >= FRAMES_BLOB_CENTERED) {
+                printf("I've been centered for long enough.  Recording...\n");
+                //path_state = PATH_STATE_RECORDING;
+                recording = true;
+            }
+
+            if (recording && lines_found != 0) {
+
+                // Record a value
+                double theta = line[1] * 180.0/PI;
+                printf("line[1], theta: %f, %f\n", line[1], theta);
+                recorded_angles[num_angles_recorded%NUM_ANGLES_TO_AVERAGE] = get_absolute_angle(theta);
+                num_angles_recorded++;
+
+                printf("RECORDED ANGLES:");
+                for (int i=0; i<NUM_ANGLES_TO_AVERAGE; i++) {
+                    printf(" %f", recorded_angles[i]);
+                }
+                printf("\n");
+
+                if (num_angles_recorded >= NUM_ANGLES_TO_AVERAGE) {
+                    // Search for highest and lowest to get range
+                    double min = recorded_angles[0];
+                    double max = recorded_angles[0];
+                    double sum = 0;
+                    for (int i=0; i<NUM_ANGLES_TO_AVERAGE; i++) {
+                        double recorded_angle = recorded_angles[i];
+                        if (recorded_angle < min) {
+                            min = recorded_angles[i];
+                        }
+                        if (recorded_angle > max) {
+                            max = recorded_angles[i];
+                        }
+                        sum += recorded_angle;
+                    }
+
+                    // The second term accounts for wraparound
+                    if (fabs(min-max) < ANGLE_DEVIATION_THRESHOLD ||
+                        fabs(min-max) > 360-ANGLE_DEVIATION_THRESHOLD) {
+
+                        // Average angle and move to next state
+                        result.yaw = sum / NUM_ANGLES_TO_AVERAGE;
+
+                        //now set yaw to the end of the marker closest to 
+                        // our origional heading
+                        if(result.yaw <= 0){
+                            result.yaw = fabs(result.yaw + 180 - initial_angle) < fabs(result.yaw - initial_angle)?result.yaw + 180 : result.yaw;
+                        }else{
+                            result.yaw = fabs(result.yaw - 180 - initial_angle) < fabs(result.yaw - initial_angle)?result.yaw - 180 : result.yaw;
+                        }
+                        result.yaw_control = ROT_MODE_ANGULAR;
+                        path_state = PATH_STATE_ALIGNING;
+
+                    }
+                }
+            }
+
+            #ifdef VISION_SHOW_HEADING
+                CvPoint lower_right = cvPoint(frame->width/2 + RIGHT_THRESHOLD, frame->height/2 - BACKWARD_THRESHOLD);
+                CvPoint upper_left = cvPoint(frame->width/2 - LEFT_THRESHOLD, frame->height/2 + FORWARD_THRESHOLD);
+                CvScalar rect_color = cvScalar(255, 255, 0, 0);
+                cvRectangle(result.frame, lower_right, upper_left, rect_color, 0, 8, 0);
+            #endif
+
         break;
 
+        /*
         case PATH_STATE_SEARCHING_STOPPING:
 
-            printf("Stopping...\n");
-            result.yaw = 0;
-            result.rho = 0;
+            if (STOP_TIME != 0.0) {
+                printf("Stopping...\n");
+                result.yaw = 0;
+                result.rho = 0;
 
-            // Init timer
-            if (stop_timer == NULL) {
-                stop_timer = Timer_new();
-            }
+                // Init timer
+                if (stop_timer == NULL) {
+                    stop_timer = Timer_new();
+                }
 
-            if (Timer_getTotal(stop_timer) > STOP_TIME) {
-                Timer_destroy(stop_timer);
-                stop_timer = NULL;
+                if (Timer_getTotal(stop_timer) > STOP_TIME) {
+                    Timer_destroy(stop_timer);
+                    stop_timer = NULL;
+                    path_state = PATH_STATE_SEARCHING_TURNING;
+                }
+
+                break;
+            } else {
                 path_state = PATH_STATE_SEARCHING_TURNING;
             }
-
-        break;
+        // If STOP_TIME is zero, we'll just fall through
 
         case PATH_STATE_SEARCHING_TURNING:
             // Turn to the angle I recorded in PATH_STATE_SEARCHING
@@ -244,7 +357,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
             result.yaw = blob_angle;
 
             current_yaw = Var_get("SEA.Yaw");
-            printf("Zeroing in on angle: %f / %f\n", current_yaw, blob_angle);
+            printf("Turning to Blob angle: %f / %f\n", current_yaw, blob_angle);
             if (fabs(blob_angle - current_yaw) < BLOB_ANGLE_THRESHOLD) {
                 blob_correct_angle++;
             } else {
@@ -258,13 +371,25 @@ struct mission_output mission_align_path_step(struct mission_output result)
             }
 
         break;
+        */
 
+        /*
         case PATH_STATE_RECORDING:
+            
+            //make sure we see a line before recording
+            if(lines_found == 0) break;
 
             // Record a value
-            printf("Don't remove me!\n");
-            double theta = line[0] * 180.0/PI;
+            double theta = line[1] * 180.0/PI;
+            printf("line[1], theta: %f, %f\n", line[1], theta);
             recorded_angles[num_angles_recorded%NUM_ANGLES_TO_AVERAGE] = get_absolute_angle(theta);
+            num_angles_recorded++;
+
+            printf("RECORDED ANGLES:");
+            for (int i=0; i<NUM_ANGLES_TO_AVERAGE; i++) {
+                printf(" %f", recorded_angles[i]);
+            }
+            printf("\n");
 
             if (num_angles_recorded >= NUM_ANGLES_TO_AVERAGE) {
                 // Search for highest and lowest to get range
@@ -272,28 +397,35 @@ struct mission_output mission_align_path_step(struct mission_output result)
                 double max = recorded_angles[0];
                 double sum = 0;
                 for (int i=0; i<NUM_ANGLES_TO_AVERAGE; i++) {
-                    if (recorded_angles[i] < min) {
+                    double recorded_angle = recorded_angles[i];
+                    if (recorded_angle < min) {
                         min = recorded_angles[i];
                     }
-                    if (recorded_angles[i] > max) {
+                    if (recorded_angle > max) {
                         max = recorded_angles[i];
                     }
-                    sum += recorded_angles[i];
+                    sum += recorded_angle;
                 }
-                if (fabs(min-max) < ANGLE_DEVIATION_THRESHOLD) {
+
+                // The second term accounts for wraparound
+                if (fabs(min-max) < ANGLE_DEVIATION_THRESHOLD ||
+                    fabs(min-max) > 360-ANGLE_DEVIATION_THRESHOLD) {
+
                     // Average angle and move to next state
                     result.yaw = sum / NUM_ANGLES_TO_AVERAGE;
                     result.yaw_control = ROT_MODE_ANGULAR;
                     path_state = PATH_STATE_ALIGNING;
+
                 }
             }
 
         break;
+        */
 
         case PATH_STATE_ALIGNING:
 
             current_yaw = Var_get("SEA.Yaw");
-            printf("Zeroing in on angle: %f / %f\n", current_yaw, result.yaw);
+            printf("Alligning with path angle: %f / %f\n", current_yaw, result.yaw);
             if (fabs(result.yaw - current_yaw) < ALIGN_ANGLE_THRESHOLD) {
                 align_correct_angle++;
             } else {
