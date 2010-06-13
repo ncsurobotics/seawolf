@@ -26,7 +26,7 @@ static int seen_both_poles = 0; // Increments every time we see both poles
 static int WHITE_GATE_FLAG = 1; // Set to zero to look for black gate
 static double desired_depth = 2.0; // desired depth
 
-#define ONE_POLE_CORRECTION_DEGREES 2
+#define ONE_POLE_CORRECTION_DEGREES 5
 
 void mission_gate_init(IplImage* frame, double depth)
 {
@@ -62,7 +62,7 @@ struct mission_output mission_gate_step(struct mission_output result)
     if (WHITE_GATE_FLAG) { // LOOK FOR WHITE LINES
         grey = cvCreateImage(cvSize(frame->width,frame->height), 8, 1);
         cvCvtColor(frame, grey, CV_BGR2GRAY);
-        edge = edge_opencv(grey, 10,30, 3); // This should be much more lenient than normal
+        edge = edge_opencv(grey, 25,40, 3); // This should be much more lenient than normal
         edge = remove_edges(frame, edge, 1,0,0,0,0,0); 
         lines = hough(edge, frame, 27, 2, 90,20, 10, 150, 150);
 
@@ -98,6 +98,7 @@ struct mission_output mission_gate_step(struct mission_output result)
 
     // Figure out where the gate is
     if (rho_gate[0] != -999) { // We see two lines
+        printf("I see two lines \n");
         seen_gate++;
         seen_both_poles++;
         frames_since_seen_gate = 0;
@@ -115,7 +116,14 @@ struct mission_output mission_gate_step(struct mission_output result)
         result.yaw = (pt_gate[0]+pt_gate[1])/2; 
         result.yaw -= frame->width/2;
 
-    } else if (rho_gate[1] != -999 && seen_both_poles < 2) { 
+        printf("before pixToDeg yaw = %f \n",result.yaw);
+        // Convert pixels to degrees
+        result.yaw = PixToDeg(result.yaw);
+
+        printf("after pixToDeg yaw = %f \n",result.yaw);
+
+    } else if (rho_gate[1] != -999 && seen_both_poles < 2) {
+        printf("I see one line and havne't yet seen both poles for 2 frames\n");
         // We only see one line, and don't know where the gate is
         
         seen_gate++;
@@ -128,19 +136,23 @@ struct mission_output mission_gate_step(struct mission_output result)
             int difference =  pt_gate[1] - left_pole;
             right_pole = right_pole + difference;
             left_pole = pt_gate[1];
-            result.yaw = frame->width/2 + ONE_POLE_CORRECTION_DEGREES;
-            result.yaw -= frame->width/2;
+            result.yaw =  ONE_POLE_CORRECTION_DEGREES;
 
+            // Convert pixels to degrees
+            result.yaw = PixToDeg(result.yaw);
         } else {
             // We see the right pole
             printf("I see the right pole!");
             int difference =  pt_gate[1] - right_pole;
             left_pole = left_pole + difference;
             right_pole = pt_gate[1];
-            result.yaw = frame->width/2 - ONE_POLE_CORRECTION_DEGREES;
-            result.yaw -= frame->width/2;
+            result.yaw = -1 * ONE_POLE_CORRECTION_DEGREES;
+        
+            // Convert pixels to degrees
+            result.yaw = PixToDeg(result.yaw);
         }
     } else if (rho_gate[1] != -999 && seen_both_poles >1) {
+        printf("I see one line and am ignoring it\n");
     
         //We only see one line, but should know where the gate is, so don't do anything
         
@@ -167,8 +179,6 @@ struct mission_output mission_gate_step(struct mission_output result)
     // Shift output to zero center of the frame
     result.depth = 0;
     
-    // Convert pixels to degrees
-    result.yaw = PixToDeg(result.yaw);
 
     if (WHITE_GATE_FLAG) { // Free white gate resources
         cvReleaseImage(&grey);
