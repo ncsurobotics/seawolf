@@ -12,7 +12,7 @@
 #define MAX_RHO   50
 
 // Prototypes
-void mission_init(int current_mission, IplImage* frame);
+void mission_init(int current_mission, struct mission_output* results);
 struct mission_output* mission_step(struct mission_output* results, int mission);
 
 int main(int argc, char** argv)
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
         mission_index = 0;
     #endif
     results.frame = multicam_get_frame(FORWARD_CAM);
-    mission_init(mission_order[mission_index], results.frame);
+    mission_init(mission_order[mission_index], &results);
 
     for (unsigned int frame_num=0; true; frame_num++)
     {
@@ -124,7 +124,7 @@ int main(int argc, char** argv)
                         mission_strings[current_mission]);
                 mission_index++;
                 current_mission = mission_order[mission_index];
-                mission_init(current_mission, results.frame);
+                mission_init(current_mission, &results);
 
             }
 
@@ -166,25 +166,25 @@ int main(int argc, char** argv)
 
 }
 
-void mission_init(int current_mission, IplImage* frame)
+void mission_init(int current_mission, struct mission_output* results)
 {
     printf("Starting Mission: %s\n", mission_strings[current_mission]);
     switch (current_mission) {
 
         case MISSION_GATE:
-            mission_gate_init(frame, 1.0);
+            mission_gate_init(results->frame, 1.0);
         break;
 
         case MISSION_ALIGN_PATH:
-            mission_align_path_init(frame);
+            mission_align_path_init(results->frame, results);
         break;
 
         case MISSION_BOUY:
-            mission_bouy_init(frame);
+            mission_bouy_init(results->frame);
         break;
 
         case MISSION_HEDGE:
-            mission_gate_init(frame, 2.0);
+            mission_gate_init(results->frame, 2.0);
         break;
 
         case MISSION_WINDOW:

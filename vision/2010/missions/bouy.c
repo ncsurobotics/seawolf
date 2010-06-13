@@ -320,6 +320,9 @@ void bouy_bump_init(void){
     saw_big_blob = 0;
     lost_blob = 0;
     hit_blob = 0;
+    if (bouy_timer != NULL) {
+        Timer_destroy(bouy_timer);
+    }
     bouy_timer = NULL;
     bump_initialized = 1;
 }

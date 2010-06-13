@@ -115,7 +115,7 @@ void bouy_bump_init(void);
 int bouy_bump(struct mission_output* result, RGBPixel* color);
 
 /*** Path ***/
-void mission_align_path_init(IplImage* frame);
+void mission_align_path_init(IplImage* frame, struct mission_output* results);
 struct mission_output mission_align_path_step(struct mission_output);
 
 // ---- Window ---- //
