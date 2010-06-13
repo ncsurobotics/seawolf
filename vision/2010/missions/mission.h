@@ -19,7 +19,7 @@ struct mission_output {
 
     // Yaw
     // yaw_control can be one of the following:
-    // ROT_MODE_ABSOLUTE
+    // ROT_MODE_ANGULAR
     //     "yaw" is interpreted as a desired IMU heading.
     // ROT_MODE_RELATIVE
     //     "yaw" is interpreted as desired change in the current IMU heading
