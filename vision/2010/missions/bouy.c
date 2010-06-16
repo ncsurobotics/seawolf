@@ -249,17 +249,17 @@ int bouy_first_approach(void){
     IplImage* ipl_out_3;
     ipl_out_3 = cvCreateImage(cvGetSize (frame), 8, 3);
     
-    //int num_pixels_1 = FindTargetColor(frame, ipl_out_1, &bouy_colors[YELLOW_BOUY], 1, 150, 1);
+    int num_pixels_1 = FindTargetColor(frame, ipl_out_1, &bouy_colors[YELLOW_BOUY], 1, 150, 1);
     int num_pixels_2 = FindTargetColor(frame, ipl_out_2, &bouy_colors[RED_BOUY], 1, 300, 2);
-    //int num_pixels_3 = FindTargetColor(frame, ipl_out_3, &bouy_colors[GREEN_BOUY], 1, 150, 2);
+    int num_pixels_3 = FindTargetColor(frame, ipl_out_3, &bouy_colors[GREEN_BOUY], 1, 150, 2);
     
     //Look for blobs
     BLOB *blobs1;
-    int blobs_found1 = 0;//blob(ipl_out_1, &blobs1, 4, 100);
+    int blobs_found1 = 0;blob(ipl_out_1, &blobs1, 4, 100);
     BLOB *blobs2;
     int blobs_found2 = blob(ipl_out_2, &blobs2, 4, 100);
     BLOB *blobs3;
-    int blobs_found3 = 0;//blob(ipl_out_3, &blobs3, 4, 100);
+    int blobs_found3 = 0;blob(ipl_out_3, &blobs3, 4, 100);
     
     //assume we see a blob until proven otherwise
     approach_counter++;
@@ -300,12 +300,12 @@ int bouy_first_approach(void){
     }
     
     //free resources
-    //blob_free (blobs1, blobs_found1);
+    blob_free (blobs1, blobs_found1);
     blob_free (blobs2, blobs_found2);
-    //blob_free (blobs3, blobs_found3);
-    //cvReleaseImage (&ipl_out_1);
+    blob_free (blobs3, blobs_found3);
+    cvReleaseImage (&ipl_out_1);
     cvReleaseImage (&ipl_out_2);
-    //cvReleaseImage (&ipl_out_3);
+    cvReleaseImage (&ipl_out_3);
     
     
     return found_bouy;
