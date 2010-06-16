@@ -61,7 +61,7 @@ static char* path_state_names[] = {
 
 // When I'm getting a reading for where the marker is pointed, I'll average
 // over this many samples to figure out where to go.
-#define NUM_ANGLES_TO_AVERAGE 4
+#define NUM_ANGLES_TO_AVERAGE 400
 
 // While averaging the angles, the range must be less than this or it's assumed
 // that we're getting bad values
@@ -446,6 +446,17 @@ struct mission_output mission_align_path_step(struct mission_output result)
             printf("Warning!  Invalid value for path_state: %d.", path_state);
         break;
     }
+    
+    //Free Our Resources
+    blob_free (blobs, blobs_found);
+    cvReleaseImage (&ipl_out);
+    if (see_blob) {
+        // Free Hough resources
+        cvReleaseImage(&grey);
+        cvReleaseImage(&edge);
+        cvRelease((void**) &lines);
+    }    
+    
+    
     return result;
-
 }
