@@ -32,11 +32,11 @@
 #define BOUY_STATE_FIRST_BACKING_UP 3
 #define BOUY_STATE_SECOND_ORIENTATION 4
 #define BOUY_STATE_BUMP_SECOND_BOUY 5
+#define BOUY_STATE_SECOND_BACKING_UP 6
 #define BOUY_STATE_FINAL_ORIENTATION 7
-#define BOUY_STATE_FINISH_FINAL_TURN_1 8
-#define BOUY_STATE_COMPLETE 9
+#define BOUY_STATE_COMPLETE 8
 
-// How Long We Must See a Blob Durring Approach 
+// How Long We Must See a Blob Durring Approach
 #define APPROACH_THRESHOLD 3
 
 // Turn Rate When Searching For Bouys
@@ -48,9 +48,6 @@
 // How long after we first saw a blob in bouy_bump before we give up and say we hit it.
 #define BOUY_BUMP_TIMER 7
 
-// How far to turn after bumping the second bouy in degrees
-#define TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP 45
-
 /************* STATE VARIABLES FOR BOUY *************/
 
 // State Variables for Bouy Mission
@@ -61,21 +58,21 @@ static RGBPixel bouy_colors[] = {    //holds the three colors of the bouys
     // Ideal Colors
     [YELLOW_BOUY] = {0xff, 0xff, 0x00 },
     [RED_BOUY]    = {0xff, 0x00, 0x00 },
-    [GREEN_BOUY]  = {0x00, 0xff, 0x00 },   
+    [GREEN_BOUY]  = {0x00, 0xff, 0x00 },
 
     // Numbers from about as far away as it can see, taken from Jeff's pool on
     // a very good visibility day.
     //[YELLOW_BOUY] = {0x9C, 0xC8, 0xC7 },
     //[RED_BOUY]    = {0xA3, 0xA3, 0xBB },
-    //[GREEN_BOUY]  = {0xD8, 0xCB, 0xCB },   
+    //[GREEN_BOUY]  = {0xD8, 0xCB, 0xCB },
 
     // Numbers very close, taken from Jeff's pool on a very good visibility
     // day.
     //[YELLOW_BOUY] = {0xD7, 0xDE, 0xB2 },
     //[RED_BOUY]    = {0xAE, 0x83, 0x94 },
-    //[GREEN_BOUY]  = {0xAE, 0xE4, 0xCA },   
+    //[GREEN_BOUY]  = {0xAE, 0xE4, 0xCA },
 
-    //[GREEN_BOUY]  = {0x96, 0xBB, 0xC4 },   
+    //[GREEN_BOUY]  = {0x96, 0xBB, 0xC4 },
 
 };
 
@@ -95,10 +92,24 @@ static Timer* bouy_timer = NULL;      //time how long since we first saw the bou
 // State Variables for Bouy - First Backing Up
 static Timer* backing_timer = NULL;      //times our backing up step for us
 
-//State Variables for Dead Reckoning At End
-
-double heading;
-double target;
+RGBPixel find_blob_avg_color(IplImage* img, BLOB* blob);
+RGBPixel find_blob_avg_color(IplImage* img, BLOB* blob) {
+    unsigned int avg_r = 0;
+    unsigned int avg_g = 0;
+    unsigned int avg_b = 0;
+    CvPoint* pixel = blob->pixels;
+    for (int i=0; i<blob->area; i++) {
+        avg_r += (unsigned int) img->imageData[img->width*pixel->y + img->height*pixel->x + 2];
+        avg_g += (unsigned int) img->imageData[img->width*pixel->y + img->height*pixel->x + 1];
+        avg_b += (unsigned int) img->imageData[img->width*pixel->y + img->height*pixel->x + 0];
+        pixel++;
+    }
+    avg_r = avg_r / blob->area;
+    avg_g = avg_g / blob->area;
+    avg_b = avg_b / blob->area;
+    RGBPixel average = {avg_r, avg_g, avg_b};
+    return average;
+}
 
 void mission_bouy_init (IplImage * frame)
 {
@@ -110,31 +121,31 @@ struct mission_output mission_bouy_step (struct mission_output result)
 {
 
     switch (bouy_state) {
-        
+
         case BOUY_STATE_FIRST_APPROACH:
-            //drive forward 
+            //drive forward
             result.rho = 20;
-                
+
             //scan the image for any of the three bouys
             bouys_found = bouy_first_approach();
-            
+
             // if we see a bouy, move on
             if(bouys_found){
                 printf("we finished the approach \n");
                 bouy_state++;
             }
             break;
-            
+
         case BOUY_STATE_FIRST_ORIENTATION:
             //turn towards our first bouy
             result.yaw_control = ROT_MODE_RATE;
-            
+
             if(bouys_found > BOUY_1){
                 //TURN LEFT
                 printf("Going LEFT to desired bouy\n");
                 result.rho = 0;
                 result.yaw = -1*TURN_RATE;
-            } 
+            }
             else if(bouys_found < BOUY_1){
                 //TURN RIGHT
                 result.rho = 0;
@@ -143,32 +154,32 @@ struct mission_output mission_bouy_step (struct mission_output result)
             }
             else{
                 printf("Going STRAIGHT to desired bouy\n");
-                //STAY STRAIGHT 
+                //STAY STRAIGHT
             }
             bouy_state++;
             break;
-            
+
         case BOUY_STATE_BUMP_FIRST_BOUY:
-        
+
             //initialize bouy bump
             if(bump_initialized == 0){
                 bouy_bump_init();
             }
-            
+
             //run bump routine until complete
             if( bouy_bump(&result, &bouy_colors[BOUY_1]) == 1){
                 bouy_state++;
                 bump_initialized = 0;
                 printf("we finished bouy bump 1 \n");
-            }            
+            }
             break;
-            
+
         case BOUY_STATE_FIRST_BACKING_UP:
-            
+
             //back up
             result.rho = -20;
             printf("we are backing up \n");
-            
+
             //back up for X seconds
             if( backing_timer == NULL){
                 backing_timer = Timer_new();
@@ -176,7 +187,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
                 //kill some time
                 Util_usleep(0.1);
             }
-             
+
             if(Timer_getTotal(backing_timer) > BACK_UP_TIME_1){
                 //we have backed up long enough
                 bouy_state++;
@@ -184,7 +195,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
             }
 
             break;
-            
+
         case BOUY_STATE_SECOND_ORIENTATION:
             //turn towards our second bouy
             result.yaw_control = ROT_MODE_RATE;
@@ -207,90 +218,23 @@ struct mission_output mission_bouy_step (struct mission_output result)
             bouy_state++;
 
             break;
-            
+
         case BOUY_STATE_BUMP_SECOND_BOUY:
-        
+
             //initialize bouy bump
             if(bump_initialized == 0){
                 printf("initializing bump for bouy 2\n");
                 bouy_bump_init();
             }
-            
+
             //run bump routine until complete
             if( bouy_bump(&result, &bouy_colors[BOUY_2]) == 1){
                 bouy_state++;
                 bump_initialized = 0;
                 printf("we finished bouy bump 2 \n");
-            }         
-            break;
-            
-        case BOUY_STATE_FINAL_ORIENTATION:
-            //determine which direction to turn to turn beyond the obstacle
-            
-            if(BOUY_2 == 1){
-                //turn right
-                result.yaw = TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP;
-            }else if(BOUY_2 == 2){
-                //don't turn at all
-                
-            }else if(BOUY_2 == 3){
-                //turn left
-                result.yaw = -1*TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP;
-            }else{
-                printf("BOUY_2 DEFINED INCORRECTLY\n");
-            }
-            
-            bouy_state++;
-            break;
-            
-        case BOUY_STATE_FINISH_FINAL_TURN_1:
-        
-            //if our heading is close enough to 
-            heading = Var_get("SEA.Yaw");
-            target = Var_get("SEA.Rot.Target");
-            
-            if(abs(heading-target) < 10){
-                bouy_state++;
             }
             break;
-            
-        //case BOUY_STATE_SMALL_DRIVE_1:
-            //drive a short ways beyond the obstacle
-            
-            
-            bouy_state++;
-            break;
-        
-        //case BOUY_STATE_TURN_TOWARDS_BOUY:
-            //determine which way to turn to orient ourselves
-        
-            bouy_state++;
-            break;
-            
-        //case BOUY_STATE_TURNING_TOWARDS_BOUY:
-            //turn towards the bouy being used for orientation
-        
-            bouy_state++;
-            break;
-            
-        //case BOUY_STATE_TURN_FROM_BOUY:
-            //set the turn to angle us away from the orientation bouy
-        
-            bouy_state++;
-            break;
-            
-        //case BOUY_STATE_TURNING_FROM_BOUY:
-            //turn away from the orientation bouy
-            
-            bouy_state++;
-            break;
-        
-        //case BOUY_STATE_SEARCHING_FOR_PATH:
-            //perform a search patter to begin looking for the path
-            
-            bouy_state++;
-            break;
-            
+
         case BOUY_STATE_COMPLETE:
             result.mission_done = true;
             break;
@@ -310,11 +254,11 @@ struct mission_output mission_bouy_step (struct mission_output result)
 
 int bouy_first_approach(void){
     int found_bouy = 0;
-    
+
     //obtain frame
     IplImage* frame = multicam_get_frame (FORWARD_CAM);
     frame = normalize_image(frame);
-    
+
     //scan image for any of the bouy colors
     IplImage* ipl_out_1;
     ipl_out_1 = cvCreateImage(cvGetSize (frame), 8, 3);
@@ -322,46 +266,82 @@ int bouy_first_approach(void){
     ipl_out_2 = cvCreateImage(cvGetSize (frame), 8, 3);
     IplImage* ipl_out_3;
     ipl_out_3 = cvCreateImage(cvGetSize (frame), 8, 3);
-    
+
     int num_pixels_1 = FindTargetColor(frame, ipl_out_1, &bouy_colors[YELLOW_BOUY], 1, 150, 1);
     int num_pixels_2 = FindTargetColor(frame, ipl_out_2, &bouy_colors[RED_BOUY], 1, 300, 2);
     int num_pixels_3 = FindTargetColor(frame, ipl_out_3, &bouy_colors[GREEN_BOUY], 1, 150, 2);
-    
+
     //Look for blobs
     BLOB *blobs1;
-    int blobs_found1 = 0;blob(ipl_out_1, &blobs1, 4, 100);
+    int blobs_found1 = blob(ipl_out_1, &blobs1, 4, 100);
     BLOB *blobs2;
     int blobs_found2 = blob(ipl_out_2, &blobs2, 4, 100);
     BLOB *blobs3;
-    int blobs_found3 = 0;blob(ipl_out_3, &blobs3, 4, 100);
-    
+    int blobs_found3 = blob(ipl_out_3, &blobs3, 4, 100);
+
     //assume we see a blob until proven otherwise
     approach_counter++;
 
-    //if any of these look like a bouy, return the color and we're done
+    // Gather information about what color blobs we're seeing
     static int max_blob_size = 10000;
-    if((blobs_found1 == 1 || blobs_found1 == 2) 
+    int seen_yellow = 0;
+    int seen_red = 0;
+    int seen_green = 0;
+    float distance_yellow = sqrt(256*256*256); // Default to max distance
+    float distance_red = sqrt(256*256*256);
+    float distance_green = sqrt(256*256*256);
+    if((blobs_found1 == 1 || blobs_found1 == 2)
         && blobs1[0].area < max_blob_size)
     {
         //we see a yellow blob
+        seen_yellow = 1;
         found_bouy = YELLOW_BOUY;
         printf("We see a yellow blob\n");
+        RGBPixel avg = find_blob_avg_color(frame, &blobs1[0]);
+        distance_yellow = Pixel_stddev(&(bouy_colors[YELLOW_BOUY]), &avg);
     }
-    else if((blobs_found2 == 1 || blobs_found2 == 2) 
+    if((blobs_found2 == 1 || blobs_found2 == 2)
         && blobs2[0].area < max_blob_size)
     {
         //we see a red blob
+        seen_red = 1;
         found_bouy = RED_BOUY;
         printf("We see a red blob\n");
+        RGBPixel avg = find_blob_avg_color(frame, &blobs2[0]);
+        distance_red = Pixel_stddev(&(bouy_colors[RED_BOUY]), &avg);
     }
-    else if((blobs_found3 == 1 || blobs_found3 == 2)
+    if((blobs_found3 == 1 || blobs_found3 == 2)
         && blobs3[0].area < max_blob_size)
     {
         //we see a green blob
+        seen_green = 1;
         found_bouy = GREEN_BOUY;
         printf("We see a green blob\n");
+        RGBPixel avg = find_blob_avg_color(frame, &blobs3[0]);
+        distance_green = Pixel_stddev(&(bouy_colors[GREEN_BOUY]), &avg);
     }
-    else{
+
+    // Make a decision baised on how many colors we've seen:
+    //  0) We saw nothing
+    //  1) The one color we saw is correct
+    //  2) Choose the color that's closer to it's target
+    //  3) We're getting bad data, assume we saw nothing
+    int number_seen = seen_yellow + seen_red + seen_green;
+    if (number_seen == 2) {
+        if (distance_green < distance_red) {
+            if (distance_red > distance_yellow) {
+                found_bouy = RED_BOUY;
+            } else {
+                found_bouy = YELLOW_BOUY;
+            }
+        } else {
+            if (distance_green > distance_yellow) {
+                found_bouy = GREEN_BOUY;
+            } else {
+                found_bouy = YELLOW_BOUY;
+            }
+        }
+    } else if (number_seen == 0 || number_seen == 3) {
         //we don't see anything
         approach_counter = 0;
         found_bouy = 0;
@@ -372,7 +352,7 @@ int bouy_first_approach(void){
         //we haven't seen the blob long enough, keep trying
         found_bouy = 0;
     }
-    
+
     //free resources
     blob_free (blobs1, blobs_found1);
     blob_free (blobs2, blobs_found2);
@@ -380,8 +360,8 @@ int bouy_first_approach(void){
     cvReleaseImage (&ipl_out_1);
     cvReleaseImage (&ipl_out_2);
     cvReleaseImage (&ipl_out_3);
-    
-    
+
+
     return found_bouy;
 }
 
@@ -404,14 +384,14 @@ void bouy_bump_init(void){
 int bouy_bump(struct mission_output* result, RGBPixel* color){
 
     int bump_complete = 0;
-    
+
     //obtain image data
     IplImage* frame = multicam_get_frame (FORWARD_CAM);
     frame = normalize_image(frame);
     result->frame = frame;
     int frame_width = frame->width;
     int frame_height = frame->height;
-    
+
     // Scan image for color
     IplImage* ipl_out;
     ipl_out = cvCreateImage(cvGetSize (frame), 8, 3);
@@ -446,7 +426,7 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
         else if (tracking_counter > 5)
         {
             //don't udpate yaw heading, head for last place we saw the blob
-            
+
             if (++lost_blob > 100)
             {
                 //Something might be wrong.  Keep looking for the blob though
@@ -465,11 +445,11 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
         //we do see a blob
         result->depth_control = DEPTH_RELATIVE;
         result->yaw_control = ROT_MODE_RELATIVE;
-        
+
         //modify state variables
         hit_blob = 0;
         lost_blob = 0;
-        
+
         // Update heading
         // We do this only for a few frames to get a good heading
         if (tracking_counter < 15) {
@@ -481,7 +461,7 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
             //adjust to put the origin in the center of the frame
             result->yaw = result->yaw - frame_width / 2;
             result->depth = result->depth - frame_height / 2;
-            //subjectively scale output !!!!!!! 
+            //subjectively scale output !!!!!!!
             result->yaw = result->yaw / 8; // Scale Output
 
             //Convert Pixels to Degrees
@@ -498,7 +478,7 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
         }
 
         printf ("tracking_counter = %d\n", tracking_counter);
-        
+
         //if the blob gets big enough for us to be close, start a countdown
         if(blobs[0].area > frame_width*frame_height / 4 && saw_big_blob == 0){
             saw_big_blob++;
@@ -514,8 +494,8 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
         }
 
     }
-    
-    //check big blob countdown 
+
+    //check big blob countdown
     if(saw_big_blob > 0){
         if(++saw_big_blob > 10){
             result->yaw = 0;
@@ -537,7 +517,7 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
             printf("  We probably either hit it, or failed, so I'm moving on.\n");
     }
 
-    //RELEASE THINGS 
+    //RELEASE THINGS
     blob_free (blobs, blobs_found);
     cvReleaseImage (&ipl_out);
 
