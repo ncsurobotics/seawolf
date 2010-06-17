@@ -32,9 +32,9 @@
 #define BOUY_STATE_FIRST_BACKING_UP 3
 #define BOUY_STATE_SECOND_ORIENTATION 4
 #define BOUY_STATE_BUMP_SECOND_BOUY 5
-#define BOUY_STATE_SECOND_BACKING_UP 6
 #define BOUY_STATE_FINAL_ORIENTATION 7
-#define BOUY_STATE_COMPLETE 8
+#define BOUY_STATE_FINISH_FINAL_TURN_1 8
+#define BOUY_STATE_COMPLETE 9
 
 // How Long We Must See a Blob Durring Approach 
 #define APPROACH_THRESHOLD 3
@@ -47,6 +47,9 @@
 
 // How long after we first saw a blob in bouy_bump before we give up and say we hit it.
 #define BOUY_BUMP_TIMER 7
+
+// How far to turn after bumping the second bouy in degrees
+#define TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP 45
 
 /************* STATE VARIABLES FOR BOUY *************/
 
@@ -92,6 +95,10 @@ static Timer* bouy_timer = NULL;      //time how long since we first saw the bou
 // State Variables for Bouy - First Backing Up
 static Timer* backing_timer = NULL;      //times our backing up step for us
 
+//State Variables for Dead Reckoning At End
+
+double heading;
+double target;
 
 void mission_bouy_init (IplImage * frame)
 {
@@ -215,6 +222,73 @@ struct mission_output mission_bouy_step (struct mission_output result)
                 bump_initialized = 0;
                 printf("we finished bouy bump 2 \n");
             }         
+            break;
+            
+        case BOUY_STATE_FINAL_ORIENTATION:
+            //determine which direction to turn to turn beyond the obstacle
+            
+            if(BOUY_2 == 1){
+                //turn right
+                result.yaw = TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP;
+            }else if(BOUY_2 == 2){
+                //don't turn at all
+                
+            }else if(BOUY_2 == 3){
+                //turn left
+                result.yaw = -1*TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP;
+            }else{
+                printf("BOUY_2 DEFINED INCORRECTLY\n");
+            }
+            
+            bouy_state++;
+            break;
+            
+        case BOUY_STATE_FINISH_FINAL_TURN_1:
+        
+            //if our heading is close enough to 
+            heading = Var_get("SEA.Yaw");
+            target = Var_get("SEA.Rot.Target");
+            
+            if(abs(heading-target) < 10){
+                bouy_state++;
+            }
+            break;
+            
+        //case BOUY_STATE_SMALL_DRIVE_1:
+            //drive a short ways beyond the obstacle
+            
+            
+            bouy_state++;
+            break;
+        
+        //case BOUY_STATE_TURN_TOWARDS_BOUY:
+            //determine which way to turn to orient ourselves
+        
+            bouy_state++;
+            break;
+            
+        //case BOUY_STATE_TURNING_TOWARDS_BOUY:
+            //turn towards the bouy being used for orientation
+        
+            bouy_state++;
+            break;
+            
+        //case BOUY_STATE_TURN_FROM_BOUY:
+            //set the turn to angle us away from the orientation bouy
+        
+            bouy_state++;
+            break;
+            
+        //case BOUY_STATE_TURNING_FROM_BOUY:
+            //turn away from the orientation bouy
+            
+            bouy_state++;
+            break;
+        
+        //case BOUY_STATE_SEARCHING_FOR_PATH:
+            //perform a search patter to begin looking for the path
+            
+            bouy_state++;
             break;
             
         case BOUY_STATE_COMPLETE:
