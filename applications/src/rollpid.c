@@ -14,13 +14,18 @@ int main(void) {
     PID* pid;
     char data[64];
     double mv;
+    double strafe_amount = Var_get("Strafe.Amount");
+    double strafe_direction = Var_get("Strafe");
+    double sp = strafe_direction * strafe_amount;
 
     Notify_filter(FILTER_MATCH, "UPDATED RollPID");
     Notify_filter(FILTER_MATCH, "UPDATED IMU");
+    Notify_filter(FILTER_MATCH, "UPDATED Strafe");
+    Notify_filter(FILTER_MATCH, "UPDATED Strafe.Amount");
 
-    pid = PID_new(0.0, Var_get("RollPID.p"),
-                       Var_get("RollPID.i"),
-                       Var_get("RollPID.d"));
+    pid = PID_new(sp, Var_get("RollPID.p"),
+                      Var_get("RollPID.i"),
+                      Var_get("RollPID.d"));
 
     mv = PID_start(pid, 0.0);
     dataOut(mv);
@@ -33,9 +38,19 @@ int main(void) {
                                 Var_get("RollPID.i"),
                                 Var_get("RollPID.d"));
             PID_resetIntegral(pid);
-        } else {
-            mv = PID_update(pid, Var_get("SEA.Roll"));
+        } else if (strcmp(data, "IMU")) {
+            // Do nothing, PID is updated every cycle regardless
+            //mv = PID_update(pid, Var_get("SEA.Roll"));
+        } else if (strcmp(data, "Strafe.Amount")) {
+            strafe_amount = Var_get("Strafe.Amount");
+            sp = strafe_direction * strafe_amount;
+            PID_setSetPoint(pid, sp);
+        } else { // Strafe
+            strafe_direction = Var_get("Strafe");
+            sp = strafe_direction * strafe_amount;
+            PID_setSetPoint(pid, sp);
         }
+        mv = PID_update(pid, Var_get("SEA.Roll"));
         
         dataOut(mv);
     }

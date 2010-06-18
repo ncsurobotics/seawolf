@@ -35,4 +35,6 @@ SEA.Roll                       0.0        0          0
 SEA.Yaw                        0.0        0          0
 StarX                          0.0        0          0
 StarY                          0.0        0          0
+Strafe                         0.0        0          0
+Strafe.Amount                  10.0       1          0
 VisionReset                    0.0        0          0
