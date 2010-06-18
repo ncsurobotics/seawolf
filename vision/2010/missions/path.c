@@ -61,7 +61,7 @@ static char* path_state_names[] = {
 
 // When I'm getting a reading for where the marker is pointed, I'll average
 // over this many samples to figure out where to go.
-#define NUM_ANGLES_TO_AVERAGE 400
+#define NUM_ANGLES_TO_AVERAGE 4
 
 // While averaging the angles, the range must be less than this or it's assumed
 // that we're getting bad values
@@ -282,7 +282,6 @@ struct mission_output mission_align_path_step(struct mission_output result)
                     // Search for highest and lowest to get range
                     double min = recorded_angles[0];
                     double max = recorded_angles[0];
-                    double sum = 0;
                     for (int i=0; i<NUM_ANGLES_TO_AVERAGE; i++) {
                         double recorded_angle = recorded_angles[i];
                         if (recorded_angle < min) {
@@ -291,15 +290,26 @@ struct mission_output mission_align_path_step(struct mission_output result)
                         if (recorded_angle > max) {
                             max = recorded_angles[i];
                         }
-                        sum += recorded_angle;
                     }
 
                     // The second term accounts for wraparound
                     if (fabs(min-max) < ANGLE_DEVIATION_THRESHOLD ||
                         fabs(min-max) > 360-ANGLE_DEVIATION_THRESHOLD) {
 
-                        // Average angle and move to next state
-                        result.yaw = sum / NUM_ANGLES_TO_AVERAGE;
+                        // Compute average in cartesian space
+                        double avg_x = 0;
+                        double avg_y = 0;
+                        for (int i=0; i<NUM_ANGLES_TO_AVERAGE; i++) {
+                            avg_x += cos(PI/180 * recorded_angles[i]);
+                            avg_y += sin(PI/180 * recorded_angles[i]);
+                        }
+                        avg_x /= NUM_ANGLES_TO_AVERAGE;
+                        avg_y /= NUM_ANGLES_TO_AVERAGE;
+                        result.yaw = atan(avg_y / avg_x);
+                        if(avg_x < 0) {
+                            result.yaw += PI * (avg_y < 0 ? 1 : -1);
+                        }
+                        result.yaw *= 180/PI;
 
                         //now set yaw to the end of the marker closest to 
                         // our origional heading
