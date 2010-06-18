@@ -192,7 +192,7 @@ void mission_init(int current_mission, struct mission_output* results)
         break;
 
         case MISSION_WEAPONS_RUN:
-            //TODO
+            mission_weapons_init();
         break;
 
         case MISSION_MACHETE:
@@ -247,7 +247,7 @@ struct mission_output* mission_step(struct mission_output* results, int mission)
         break;
 
         case MISSION_WEAPONS_RUN:
-            //TODO
+            *results = mission_weapons_step(*results);
         break;
 
         case MISSION_MACHETE:

@@ -90,13 +90,12 @@ static const int mission_order[] = {
     MISSION_BOUY,
     MISSION_ALIGN_PATH,
     MISSION_HEDGE,
-    MISSION_STOP,
-    //MISSION_WINDOW,
-    //MISSION_WEAPONS_RUN,
-    //MISSION_MACHETE,
-    //MISSION_BRIEFCASE_GRAB,
-    //MISSION_OCTOGON,
-    //MISSION_WAIT,
+    MISSION_WINDOW,
+    MISSION_WEAPONS_RUN,
+    MISSION_MACHETE,
+    MISSION_BRIEFCASE_GRAB,
+    MISSION_OCTOGON,
+    MISSION_WAIT,
 };
 
 /*********** Mission Prototypes **************/
@@ -113,6 +112,10 @@ int bouy_first_approach(void);
 
 void bouy_bump_init(void);
 int bouy_bump(struct mission_output* result, RGBPixel* color);
+
+/*** Weapons Run ***/
+void mission_weapons_init(void);
+struct mission_output mission_weapons_step(struct mission_output);
 
 /*** Path ***/
 void mission_align_path_init(IplImage* frame, struct mission_output* results);

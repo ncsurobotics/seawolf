@@ -132,7 +132,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
     CvSeq* lines;
     float* line;
     double current_yaw;
-
+    
     // Grab Frame
     IplImage* frame = multicam_get_frame(DOWN_CAM);
     ipl_out = cvCreateImage(cvGetSize(frame),8,3);
