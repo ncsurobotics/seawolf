@@ -14,6 +14,10 @@ int main(void) {
     Var_set("StarY", 0);
     Var_set("Aft", 0);
 
+    Notify_send("THRUSTER_REQUEST", Util_format("Depth %d %d %d", 0, 0, 0));
+    Notify_send("THRUSTER_REQUEST", Util_format("Roll %d %d", 0, 0));
+    Var_set("DepthHeading", 0.0);
+
     // Zero yaw pid
     float current_yaw = Var_get("SEA.Yaw");
     Var_set("Rot.Mode", 1.0);
