@@ -40,13 +40,17 @@
 #define APPROACH_THRESHOLD 3
 
 // Turn Rate When Searching For Bouys
-#define TURN_RATE 10
+#define TURN_RATE 5
 
 // How Long To Back Up After 1st Bouy
-#define BACK_UP_TIME_1 10
+#define BACK_UP_TIME_1 5
 
 // How long after we first saw a blob in bouy_bump before we give up and say we hit it.
-#define BOUY_BUMP_TIMER 7
+#define BOUY_BUMP_TIMER 23
+
+// Y value for where a blob is found is multiplied by this to get the relative
+// depth heading
+#define DEPTH_SCALE_FACTOR (1.0/150.0)
 
 /************* STATE VARIABLES FOR BOUY *************/
 
@@ -111,10 +115,12 @@ RGBPixel find_blob_avg_color(IplImage* img, BLOB* blob) {
     return average;
 }
 
-void mission_bouy_init (IplImage * frame)
+void mission_bouy_init(IplImage * frame, struct mission_output* result)
 {
     bouy_state = BOUY_STATE_FIRST_APPROACH;
     bouy_bump_init();
+    result->depth_control = DEPTH_ABSOLUTE;
+    result->depth = 1.0;
 }
 
 struct mission_output mission_bouy_step (struct mission_output result)
@@ -127,7 +133,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
             result.rho = 20;
 
             //scan the image for any of the three bouys
-            bouys_found = bouy_first_approach();
+            bouys_found = bouy_first_approach(&result);
 
             // if we see a bouy, move on
             if(bouys_found){
@@ -252,7 +258,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
 // Scan Image, if we see a bouy, return it's color.  Otherwise
 // return zero.
 
-int bouy_first_approach(void){
+int bouy_first_approach(struct mission_output* result){
     int found_bouy = 0;
 
     //obtain frame
@@ -267,9 +273,16 @@ int bouy_first_approach(void){
     IplImage* ipl_out_3;
     ipl_out_3 = cvCreateImage(cvGetSize (frame), 8, 3);
 
-    int num_pixels_1 = FindTargetColor(frame, ipl_out_1, &bouy_colors[YELLOW_BOUY], 1, 150, 1);
+    int num_pixels_1 = FindTargetColor(frame, ipl_out_1, &bouy_colors[YELLOW_BOUY], 1, 200, 1);
     int num_pixels_2 = FindTargetColor(frame, ipl_out_2, &bouy_colors[RED_BOUY], 1, 300, 2);
-    int num_pixels_3 = FindTargetColor(frame, ipl_out_3, &bouy_colors[GREEN_BOUY], 1, 150, 2);
+    int num_pixels_3 = FindTargetColor(frame, ipl_out_3, &bouy_colors[GREEN_BOUY], 1, 200, 2);
+
+     cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
+     cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
+     cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
+     cvShowImage("Yellow", ipl_out_1);
+     cvShowImage("Red", ipl_out_2);
+     cvShowImage("Green", ipl_out_3);
 
     //Look for blobs
     BLOB *blobs1;
@@ -327,6 +340,7 @@ int bouy_first_approach(void){
     //  2) Choose the color that's closer to it's target
     //  3) We're getting bad data, assume we saw nothing
     int number_seen = seen_yellow + seen_red + seen_green;
+    printf("Number of bouys seen: %d\n", number_seen);
     if (number_seen == 2) {
         if (distance_green < distance_red) {
             if (distance_red > distance_yellow) {
@@ -353,6 +367,14 @@ int bouy_first_approach(void){
         found_bouy = 0;
     }
 
+    if (found_bouy == YELLOW_BOUY) {
+        result->depth = blobs1[0].mid.y * DEPTH_SCALE_FACTOR;
+    } else if (found_bouy == RED_BOUY) {
+        result->depth = blobs2[0].mid.y * DEPTH_SCALE_FACTOR;
+    } else if (found_bouy == GREEN_BOUY) {
+        result->depth = blobs3[0].mid.y * DEPTH_SCALE_FACTOR;
+    }
+
     //free resources
     blob_free (blobs1, blobs_found1);
     blob_free (blobs2, blobs_found2);
@@ -360,7 +382,6 @@ int bouy_first_approach(void){
     cvReleaseImage (&ipl_out_1);
     cvReleaseImage (&ipl_out_2);
     cvReleaseImage (&ipl_out_3);
-
 
     return found_bouy;
 }
@@ -397,7 +418,7 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
     ipl_out = cvCreateImage(cvGetSize (frame), 8, 3);
     int num_pixels;
     if (color == &bouy_colors[GREEN_BOUY]) {
-        num_pixels = FindTargetColor(frame, ipl_out, color, 1, 225, 1);
+        num_pixels = FindTargetColor(frame, ipl_out, color, 1, 225, 2);
     } else {
         num_pixels = FindTargetColor(frame, ipl_out, color, 1, 225, 2);
     }
@@ -461,6 +482,7 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
             //adjust to put the origin in the center of the frame
             result->yaw = result->yaw - frame_width / 2;
             result->depth = result->depth - frame_height / 2;
+            result->depth *= DEPTH_SCALE_FACTOR; // Scaling factor
             //subjectively scale output !!!!!!!
             result->yaw = result->yaw / 8; // Scale Output
 

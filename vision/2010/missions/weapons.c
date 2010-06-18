@@ -32,8 +32,8 @@ struct mission_output mission_weapons_step(struct mission_output result){
     //run a hough transform
     grey = cvCreateImage(cvSize(frame->width,frame->height), 8, 1);
     cvCvtColor(frame, grey, CV_BGR2GRAY);
-    edge = edge_opencv(grey, 25,40, 3); // This should be much more lenient than normal
-    lines = hough(edge, frame, 27, 10, 90,20, 10, 150, 150);
+    edge = edge_opencv(grey, 600, 650, 5); // This should be much more lenient than normal
+    lines = hough(edge, frame, 27, 10, 90,180, 10, 150, 150);
     
     //sort the hough lines into a grid
     find_regions(lines,&grid, frame);
@@ -43,6 +43,5 @@ struct mission_output mission_weapons_step(struct mission_output result){
     cvReleaseImage(&edge);
     cvRelease((void**) &lines);
     
-    printf("We Just Completed the Weapons Run!!");
     return result;   
 }

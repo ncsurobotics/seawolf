@@ -180,7 +180,7 @@ void mission_init(int current_mission, struct mission_output* results)
         break;
 
         case MISSION_BOUY:
-            mission_bouy_init(results->frame);
+            mission_bouy_init(results->frame, results);
         break;
 
         case MISSION_HEDGE:

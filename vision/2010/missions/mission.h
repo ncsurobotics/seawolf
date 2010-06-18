@@ -104,11 +104,11 @@ void mission_gate_init(IplImage* frame, double depth);
 struct mission_output mission_gate_step(struct mission_output);
 
 /*** Bouy ***/
-void mission_bouy_init(IplImage* frame);
+void mission_bouy_init(IplImage* frame, struct mission_output*);
 struct mission_output mission_bouy_step(struct mission_output);
 
 //internal bouy functions
-int bouy_first_approach(void);
+int bouy_first_approach(struct mission_output*);
 
 void bouy_bump_init(void);
 int bouy_bump(struct mission_output* result, RGBPixel* color);
