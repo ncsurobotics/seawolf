@@ -50,5 +50,6 @@
 #include "vision_lib/normalize.h"
 #include "vision_lib/remove_edges.h"
 #include "vision_lib/target_color.h"
+#include "vision_lib/grid.h"
 
 #endif // __SEAWOLF_VISION_LIB_ROOT_INCLUDE_H
