@@ -12,12 +12,18 @@ void manage(SerialPort sp) {
     char buffer[64];
     float depth;
 
+    Serial_setBlocking(sp);
+
     /* Wait for good data */
     while(Serial_getByte(sp) != '\n');
 
     while(true) {
-        Serial_getLine(sp, buffer);
-        depth = atof(buffer);
-        Var_set("Depth", depth);
+        if (Serial_getLine(sp, buffer) == -1) {
+            printf("Error reading serial!\n");
+            Util_usleep(0.2);
+        } else {
+            depth = atof(buffer);
+            Var_set("Depth", depth);
+        }
     }
 }

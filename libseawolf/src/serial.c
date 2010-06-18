@@ -358,8 +358,9 @@ int Serial_getByte(SerialPort sp) {
  *
  * \param sp Handler for the device to read from
  * \param[out] buffer The buffer to write the line into
+ * \return -1 if an error occurs, 0 otherwise
  */
-void Serial_getLine(SerialPort sp, char* buffer) {
+int Serial_getLine(SerialPort sp, char* buffer) {
     int n = 0;
     int i = 0;
 
@@ -369,10 +370,12 @@ void Serial_getLine(SerialPort sp, char* buffer) {
 
     buffer[0] = n;
     do {
-        while((n = Serial_getByte(sp)) == -1);
+        n = Serial_getByte(sp);
+        if (n == -1) { return -1; }
         buffer[++i] = n;
     } while(n != '\n');
     buffer[i] = '\0';
+    return 0;
 }
 
 /**
