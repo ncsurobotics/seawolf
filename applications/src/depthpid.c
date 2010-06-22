@@ -38,11 +38,14 @@ int main(void) {
             PID_resetIntegral(pid);
         } else if(strcmp(data, "DepthHeading") == 0) {
             PID_setSetPoint(pid, Var_get("DepthHeading"));
-            mv = PID_start(pid, Var_get("Depth"));
+            mv = PID_update(pid, Var_get("Depth"));
         } else {
             mv = PID_update(pid, Var_get("Depth"));
         }
-        
+       
+        if(pid->sp == 0){
+             PID_resetIntegral(pid);
+        }
         dataOut(mv);
     }
 
