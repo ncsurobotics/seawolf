@@ -39,6 +39,9 @@
 // How Long We Must See a Blob Durring Approach
 #define APPROACH_THRESHOLD 3
 
+// How large blobs must be
+#define MIN_BLOB_SIZE 200
+
 // Turn Rate When Searching For Bouys
 #define TURN_RATE 5
 
@@ -139,8 +142,11 @@ struct mission_output mission_bouy_step (struct mission_output result)
             if(bouys_found){
                 printf("we finished the approach \n");
                 bouy_state++;
+            } else {
+                // Don't break if we're going to change states, or we would
+                // waste a frame
+                break;
             }
-            break;
 
         case BOUY_STATE_FIRST_ORIENTATION:
             //turn towards our first bouy
@@ -163,7 +169,8 @@ struct mission_output mission_bouy_step (struct mission_output result)
                 //STAY STRAIGHT
             }
             bouy_state++;
-            break;
+            // Move onto next case without a break so that we don't waste a
+            // frame
 
         case BOUY_STATE_BUMP_FIRST_BOUY:
 
@@ -253,6 +260,33 @@ struct mission_output mission_bouy_step (struct mission_output result)
     return result;
 }
 
+/**
+ * find_closest_blob
+ * Takes in n colors and n blobs so that the nth blob corresponds to the nth
+ * color.  This function finds which blob it closest to it's target color and
+ * returns it.
+ *
+ * We did not get good results from using this.  It may have bugs in it, or it
+ * may just be a bad idea.
+ */
+int find_closest_blob(int n, RGBPixel colors[], BLOB* blobs[], IplImage* image);
+int find_closest_blob(int n, RGBPixel colors[], BLOB* blobs[], IplImage* image) {
+
+    // Gather information about what color blobs we're seeing
+    double min_distance = sqrt(255*255*255);
+    int closest_blob = 0;
+    for (int i=0; i<n; i++) {
+
+        RGBPixel average = find_blob_avg_color(image, blobs[i]);
+        double distance = Pixel_stddev(&colors[i], &average);
+        if (distance < min_distance) {
+            min_distance = distance;
+            closest_blob = i;
+        }
+
+    }
+    return closest_blob;
+}
 
 /*******      First Approach      ***********/
 // Scan Image, if we see a bouy, return it's color.  Otherwise
@@ -263,75 +297,56 @@ int bouy_first_approach(struct mission_output* result){
 
     //obtain frame
     IplImage* frame = multicam_get_frame (FORWARD_CAM);
+    result->frame = frame;
     frame = normalize_image(frame);
 
-    //scan image for any of the bouy colors
-    IplImage* ipl_out_1;
-    ipl_out_1 = cvCreateImage(cvGetSize (frame), 8, 3);
-    IplImage* ipl_out_2;
-    ipl_out_2 = cvCreateImage(cvGetSize (frame), 8, 3);
-    IplImage* ipl_out_3;
-    ipl_out_3 = cvCreateImage(cvGetSize (frame), 8, 3);
+    IplImage* ipl_out[3];
+    ipl_out[0] = cvCreateImage(cvGetSize (frame), 8, 3);
+    ipl_out[1] = cvCreateImage(cvGetSize (frame), 8, 3);
+    ipl_out[2] = cvCreateImage(cvGetSize (frame), 8, 3);
 
-    int num_pixels_1 = FindTargetColor(frame, ipl_out_1, &bouy_colors[YELLOW_BOUY], 1, 200, 1);
-    int num_pixels_2 = FindTargetColor(frame, ipl_out_2, &bouy_colors[RED_BOUY], 1, 300, 2);
-    int num_pixels_3 = FindTargetColor(frame, ipl_out_3, &bouy_colors[GREEN_BOUY], 1, 200, 2);
+    int num_pixels[3];
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 100, 2);
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 200, 2);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 200, 2);
 
-     cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
-     cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
-     cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
-     cvShowImage("Yellow", ipl_out_1);
-     cvShowImage("Red", ipl_out_2);
-     cvShowImage("Green", ipl_out_3);
+    // Debugs
+    cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
+    cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
+    cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
+    cvShowImage("Yellow", ipl_out[0]);
+    cvShowImage("Red", ipl_out[1]);
+    cvShowImage("Green", ipl_out[2]);
 
     //Look for blobs
-    BLOB *blobs1;
-    int blobs_found1 = blob(ipl_out_1, &blobs1, 4, 100);
-    BLOB *blobs2;
-    int blobs_found2 = blob(ipl_out_2, &blobs2, 4, 100);
-    BLOB *blobs3;
-    int blobs_found3 = blob(ipl_out_3, &blobs3, 4, 100);
+    BLOB* blobs[3];
+    int blobs_found[3];
+    blobs_found[0] = blob(ipl_out[0], &blobs[0], 4, MIN_BLOB_SIZE);
+    blobs_found[1] = blob(ipl_out[1], &blobs[1], 4, MIN_BLOB_SIZE);
+    blobs_found[2] = blob(ipl_out[2], &blobs[2], 4, MIN_BLOB_SIZE);
+    printf("Blobs found: y=%d r=%d g=%d\n", blobs_found[0], blobs_found[1], blobs_found[2]);
 
-    //assume we see a blob until proven otherwise
-    approach_counter++;
-
-    // Gather information about what color blobs we're seeing
-    static int max_blob_size = 10000;
-    int seen_yellow = 0;
-    int seen_red = 0;
-    int seen_green = 0;
-    float distance_yellow = sqrt(256*256*256); // Default to max distance
-    float distance_red = sqrt(256*256*256);
-    float distance_green = sqrt(256*256*256);
-    if((blobs_found1 == 1 || blobs_found1 == 2)
-        && blobs1[0].area < max_blob_size)
-    {
-        //we see a yellow blob
-        seen_yellow = 1;
-        found_bouy = YELLOW_BOUY;
-        printf("We see a yellow blob\n");
-        RGBPixel avg = find_blob_avg_color(frame, &blobs1[0]);
-        distance_yellow = Pixel_stddev(&(bouy_colors[YELLOW_BOUY]), &avg);
-    }
-    if((blobs_found2 == 1 || blobs_found2 == 2)
-        && blobs2[0].area < max_blob_size)
-    {
-        //we see a red blob
-        seen_red = 1;
-        found_bouy = RED_BOUY;
-        printf("We see a red blob\n");
-        RGBPixel avg = find_blob_avg_color(frame, &blobs2[0]);
-        distance_red = Pixel_stddev(&(bouy_colors[RED_BOUY]), &avg);
-    }
-    if((blobs_found3 == 1 || blobs_found3 == 2)
-        && blobs3[0].area < max_blob_size)
-    {
-        //we see a green blob
-        seen_green = 1;
-        found_bouy = GREEN_BOUY;
-        printf("We see a green blob\n");
-        RGBPixel avg = find_blob_avg_color(frame, &blobs3[0]);
-        distance_green = Pixel_stddev(&(bouy_colors[GREEN_BOUY]), &avg);
+    int seen_blob[3];
+    BLOB* blobs_seen[3];
+    RGBPixel colors_seen[3];
+    int indexes_seen[3];
+    int num_colors_seen = 0;
+    static int max_blob_size = 1000000000;
+    for (int i=0; i<3; i++) {
+        printf("blobs[%d]->area = %ld\n", i, blobs[i]->area);
+        //TODO: Add a check to make sure the blob is taking up most of the found color
+        if ((blobs_found[i] == 1 || blobs_found[i] == 2) &&
+            blobs[i]->area < max_blob_size)
+        {
+            printf("i=%d\n", i);
+            blobs_seen[num_colors_seen] = blobs[i];
+            colors_seen[num_colors_seen] = bouy_colors[i+1];
+            indexes_seen[num_colors_seen] = i+1;
+            num_colors_seen++;
+            seen_blob[i] = 1;
+        } else {
+            seen_blob[i] = 0;
+        }
     }
 
     // Make a decision baised on how many colors we've seen:
@@ -339,26 +354,37 @@ int bouy_first_approach(struct mission_output* result){
     //  1) The one color we saw is correct
     //  2) Choose the color that's closer to it's target
     //  3) We're getting bad data, assume we saw nothing
-    int number_seen = seen_yellow + seen_red + seen_green;
-    printf("Number of bouys seen: %d\n", number_seen);
-    if (number_seen == 2) {
-        if (distance_green < distance_red) {
-            if (distance_red > distance_yellow) {
-                found_bouy = RED_BOUY;
-            } else {
-                found_bouy = YELLOW_BOUY;
-            }
+    printf("Number of bouys seen: %d\n", num_colors_seen);
+    if (num_colors_seen == 1) {
+        found_bouy = indexes_seen[0];
+        approach_counter++;
+    } else if (num_colors_seen == 2) {
+        /*
+        found_bouy = indexes_seen[
+            find_closest_blob(2, colors_seen, blobs_seen, frame)
+        ];
+        */
+        if (blobs_seen[0]->area > blobs_seen[1]->area) {
+            found_bouy = indexes_seen[0];
         } else {
-            if (distance_green > distance_yellow) {
-                found_bouy = GREEN_BOUY;
-            } else {
-                found_bouy = YELLOW_BOUY;
-            }
+            found_bouy = indexes_seen[1];
         }
-    } else if (number_seen == 0 || number_seen == 3) {
+        approach_counter++;
+    } else if (num_colors_seen == 0 || num_colors_seen == 3) {
         //we don't see anything
         approach_counter = 0;
         found_bouy = 0;
+    }
+
+    if (found_bouy == YELLOW_BOUY) {
+        result->depth = blobs[0]->mid.y * DEPTH_SCALE_FACTOR;
+        printf("FOUND YELLOW\n");
+    } else if (found_bouy == RED_BOUY) {
+        result->depth = blobs[1]->mid.y * DEPTH_SCALE_FACTOR;
+        printf("FOUND RED\n");
+    } else if (found_bouy == GREEN_BOUY) {
+        printf("FOUND GREEN\n");
+        result->depth = blobs[2]->mid.y * DEPTH_SCALE_FACTOR;
     }
 
     //if we've seen a blob for longer than a threshold, finish
@@ -367,21 +393,11 @@ int bouy_first_approach(struct mission_output* result){
         found_bouy = 0;
     }
 
-    if (found_bouy == YELLOW_BOUY) {
-        result->depth = blobs1[0].mid.y * DEPTH_SCALE_FACTOR;
-    } else if (found_bouy == RED_BOUY) {
-        result->depth = blobs2[0].mid.y * DEPTH_SCALE_FACTOR;
-    } else if (found_bouy == GREEN_BOUY) {
-        result->depth = blobs3[0].mid.y * DEPTH_SCALE_FACTOR;
-    }
-
     //free resources
-    blob_free (blobs1, blobs_found1);
-    blob_free (blobs2, blobs_found2);
-    blob_free (blobs3, blobs_found3);
-    cvReleaseImage (&ipl_out_1);
-    cvReleaseImage (&ipl_out_2);
-    cvReleaseImage (&ipl_out_3);
+    for (int i=0; i<3; i++) {
+        blob_free (blobs[i],blobs_found[i]);
+        cvReleaseImage(&ipl_out[i]);
+    }
 
     return found_bouy;
 }
