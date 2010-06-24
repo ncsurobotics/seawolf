@@ -27,30 +27,38 @@
 #include <asm/uaccess.h>
 
 #include <linux/cdev.h>
+#include <linux/completion.h>
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/module.h>
 
-
 #define DRIVER_NAME "ppi_adc"
 #define PPI_CHR_MAJOR 157
 
-#define PPI_CLK_FREQ 1000000 /* Drive the PPI clock at 1Mhz */
-#define ADC_CONVST_PER_SEC (96 * 1024) /* Samples per second */
+/* Number of conversion requests to generate per second */
+#define ADC_CONVST_PER_SEC (96 * 1024)
 
-/* See Blackfin Hardware Reference Manual 3.2, page 7-27, "PPI Control Register" */
-#define PPI_MODE 0xe80c
-
+/* Number of samples from each channel to store in a single buffer */
 #define SAMPLES_PER_BUFFER 8192
+
+/* Number of bytes used for a single sample on a single channel */
 #define BYTES_PER_SAMPLE 2
+
+/* Number of channels */
 #define CHANNELS 4
 
 #define BUFFER_SIZE (SAMPLES_PER_BUFFER * CHANNELS * BYTES_PER_SAMPLE)
+
+/* Number of buffers for the DMA engine to use. This should always be 2 */
 #define BUFFER_COUNT 2
 
-MODULE_LICENSE("BSD");
+/* Frequency to run the PPI port at (PPI_CLK) */
+#define PPI_CLK_FREQ 1000000
+
+/* See Blackfin Hardware Reference Manual 3.2, page 7-27, "PPI Control Register" */
+#define PPI_MODE 0xe80c
 
 static irqreturn_t buffer_full_handler(int irq, void* data);
 static int page_alloc_order(size_t size);
@@ -63,11 +71,13 @@ static int ppi_chr_release(struct inode* i, struct file* filp);
 static int timers_init(void);
 static int ppi_init(void);
 static int dma_init(void);
+static int device_init(void);
 static int __init ppi_adc_init(void);
 
 static void timers_close(void);
 static void ppi_close(void);
 static void dma_close(void);
+static void device_close(void);
 static void __exit ppi_adc_close(void);
 
 /* PPI pins to reserve */
@@ -88,6 +98,9 @@ static unsigned long dma_buffer = 0;
 static unsigned short current_buffer_index = 0;
 static unsigned long current_buffer_pointer = 0;
 
+/* Buffer full completion flag */
+DECLARE_COMPLETION(buffer_ready);
+
 static struct cdev* dev = NULL;
 static struct file_operations fops = {
     .read = ppi_chr_read,
@@ -96,13 +109,13 @@ static struct file_operations fops = {
     .release = ppi_chr_release
 };
 
-
 static irqreturn_t buffer_full_handler(int irq, void* data) {
     /* Compute the absolute address of the individual buffer */
     current_buffer_pointer = dma_buffer + (current_buffer_index * BUFFER_SIZE);
 
     /* Advance the buffer number */
     current_buffer_index = (current_buffer_index + 1) % BUFFER_COUNT;
+    complete(&buffer_ready);
 
     printk(KERN_INFO DRIVER_NAME ": 0x%08lX 0x%04X\n", current_buffer_pointer, ((unsigned short*) current_buffer_pointer)[0]);
     
@@ -139,9 +152,18 @@ static ssize_t ppi_chr_read(struct file* filp, char __user* buffer, size_t count
         return -EINVAL;
     }
 
+    /* Wait for buffer to fill and pointer to be set */
+    if(wait_for_completion_interruptible(&buffer_ready)) {
+        return -EINTR;
+    }
+
+    /* Copy value of the pointer to the just filled buffer to the user buffer */
     if(copy_to_user(buffer, &current_buffer_pointer, count)) {
         return -EFAULT;
     }
+
+    /* Reset the completion flag so completions don't pile up */
+    INIT_COMPLETION(buffer_ready);
 
     return 0;
 }
@@ -257,13 +279,9 @@ static int device_init(void) {
     return cdev_add(dev, MKDEV(PPI_CHR_MAJOR, 0), 1);
 }
 
-static void device_close(void) {
-    cdev_del(dev);
-}
-
 static int __init ppi_adc_init(void) {
     int ret;
-
+    
     ret = timers_init();
     if(ret) {
         return ret;
@@ -313,6 +331,10 @@ static void dma_close(void) {
     free_dma(CH_PPI);
 }
 
+static void device_close(void) {
+    cdev_del(dev);
+}
+
 static void __exit ppi_adc_close(void) {
     device_close();
     ppi_close();
@@ -320,5 +342,6 @@ static void __exit ppi_adc_close(void) {
     timers_close();
 }
 
+MODULE_LICENSE("BSD");
 module_init(ppi_adc_init);
 module_exit(ppi_adc_close);
