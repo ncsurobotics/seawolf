@@ -35,13 +35,15 @@
 #include <linux/module.h>
 
 #define DRIVER_NAME "ppi_adc"
+
+/* Major number of the device */
 #define PPI_CHR_MAJOR 157
 
 /* Number of conversion requests to generate per second */
 #define ADC_CONVST_PER_SEC (96 * 1024)
 
 /* Number of samples from each channel to store in a single buffer */
-#define SAMPLES_PER_BUFFER 8192
+#define SAMPLES_PER_CHANNEL (8 * 1024)
 
 /* Number of bytes used for a single sample on a single channel */
 #define BYTES_PER_SAMPLE 2
@@ -49,7 +51,7 @@
 /* Number of channels */
 #define CHANNELS 4
 
-#define BUFFER_SIZE (SAMPLES_PER_BUFFER * CHANNELS * BYTES_PER_SAMPLE)
+#define BUFFER_SIZE (SAMPLES_PER_CHANNEL * CHANNELS * BYTES_PER_SAMPLE)
 
 /* Number of buffers for the DMA engine to use. This should always be 2 */
 #define BUFFER_COUNT 2
@@ -169,7 +171,26 @@ static ssize_t ppi_chr_read(struct file* filp, char __user* buffer, size_t count
 }
 
 static ssize_t ppi_chr_write(struct file* filp, const char __user* buffer, size_t count, loff_t* offset) {
-    return -EINVAL;
+    uint8_t opcode = 0;
+
+    if(count != 1) {
+        return -EINVAL;
+    }
+
+    if(copy_from_user(&opcode, buffer, count)) {
+        return -EFAULT;
+    }
+
+    switch(opcode) {
+    case 1:
+        /* Reset the completion flag */
+        INIT_COMPLETION(buffer_ready);
+        break;
+    default:
+        return -EINVAL;
+    }
+
+    return 0;
 }
 
 static int ppi_chr_open(struct inode* i, struct file* filp) {
@@ -259,7 +280,7 @@ static int dma_init(void) {
     /* Set DMA configuration */
     set_dma_start_addr(CH_PPI, dma_buffer);
     set_dma_config(CH_PPI, (DMAFLOW_AUTO | WNR | RESTART | DI_EN | WDSIZE_16 | DMA2D | DI_SEL));
-    set_dma_x_count(CH_PPI, SAMPLES_PER_BUFFER * CHANNELS);
+    set_dma_x_count(CH_PPI, SAMPLES_PER_CHANNEL * CHANNELS);
     set_dma_x_modify(CH_PPI, BYTES_PER_SAMPLE);
     set_dma_y_count(CH_PPI, BUFFER_COUNT);
     set_dma_y_modify(CH_PPI, BYTES_PER_SAMPLE);

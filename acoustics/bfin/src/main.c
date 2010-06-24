@@ -7,11 +7,13 @@
 
 #include "seawolf.h"
 
+#include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <unistd.h>
 
 #include <filter.h>
 #include <math_bf.h>
@@ -19,15 +21,18 @@
 
 #include "acoustics.h"
 
-/* Data source address in async back 2 */
-static adcsample* last_addr = (adcsample*) 0x00;
-
 /* Circular buffer state */
 static adcsample* cir_buff[4];
 static unsigned int cir_buff_offset;
 
 /* FIR Coefficients */
 static fract16* coefs;
+
+/* File handler associated with the opened device driver /dev/ppiadc */
+static int driver_f = -1;
+
+/* Flags to be written to the control device */
+static const uint8_t RESET_FLAG = 1;
 
 /* FIR Filter States */
 static fir_state_fr16 fir_state[4];
@@ -110,10 +115,10 @@ static void init(char* coefs_file_name) {
 }
 
 /* 
- * Interface with the FPGA to collect a "ping" sample
+ * Interface with the PPI/ADC driver to collect a "ping" sample
  *
- * This function reads in sample blocks for each channel from the FPGA until the
- * circular buffer has been filled. Once the circular buffer has been filled
+ * This function reads in sample blocks for each channel from the drive until
+ * the circular buffer has been filled. Once the circular buffer has been filled
  * each new channel sample set is checked for the presence of the target
  * frequence. Once the signal is located the recording process is "triggered". A
  * few additional padding samples (specified by EXTRA_READS) are completed and
@@ -123,30 +128,31 @@ static void record_ping(void) {
     int state = READING;
     unsigned int extra_reads = EXTRA_READS;
     bool cir_buff_full = false;
+    short* current_buffer = NULL;
 
     /* Place write offset back to beginning of the circular buffer */
     cir_buff_offset = 0x00;
     
-    /* Signal the FPGA that we have reset (new sampling) */
-    RESET_FLAG = 1;
+    /* Signal the ADC driver that we have reset (new sampling set) */
+    write(driver_f, &RESET_FLAG, 1);
     
     while(state != DONE) {
-        while(DATA_ADDR == last_addr) {
-            /* Wait for the FPGA to change the data address pointer, singaling
-               that a full sample is ready to be read */
-        }
-        last_addr = DATA_ADDR;
-        
+        /* Wait for the ADC driver to fill a buffer and return its address */
+        read(driver_f, &current_buffer, sizeof(current_buffer));
+
 #ifdef ACOUSTICS_DEBUG
         printf(".");
         fflush(stdout);
 #endif
 
-        /* Copy data out of the FPGA buffers */
-        memcpy(cir_buff[A] + cir_buff_offset, last_addr + (0 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
-        memcpy(cir_buff[B] + cir_buff_offset, last_addr + (1 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
-        memcpy(cir_buff[C] + cir_buff_offset, last_addr + (2 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
-        memcpy(cir_buff[D] + cir_buff_offset, last_addr + (3 * SAMPLES_PER_CHANNEL), sizeof(adcsample) * SAMPLES_PER_CHANNEL);
+        /* Copy data out of driver. The data stored by the driver has samples
+           interleaved, so we must un-interleave them when copying them out */
+        for(unsigned int i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHANNEL; i++, j++) {
+            cir_buff[A][j] = current_buffer[(i * CHANNELS) + (0 * sizeof(adcsample))];
+            cir_buff[B][j] = current_buffer[(i * CHANNELS) + (1 * sizeof(adcsample))];
+            cir_buff[C][j] = current_buffer[(i * CHANNELS) + (2 * sizeof(adcsample))];
+            cir_buff[D][j] = current_buffer[(i * CHANNELS) + (3 * sizeof(adcsample))];
+        }
         
         /* Don't look for a trigger until the buffer has been filled */
         if(state == READING && cir_buff_full) {
@@ -178,9 +184,6 @@ static void record_ping(void) {
                 state = DONE;
             }
         }
-        
-        /* Tell the FPGA we are ready again */
-        READY_FLAG = 1;
     }
 }
 
@@ -341,6 +344,7 @@ int main(int argc, char** argv) {
     Var_setAutoNotify(false);
 #endif
 
+
 #ifdef ACOUSTICS_PROFILE
     /* Timer for profiling */
     Timer* t = Timer_new();
@@ -349,6 +353,14 @@ int main(int argc, char** argv) {
     /* Missing coefficients file argument */
     if(argc <= 1) {
         printf("Missing required argument. Please provide a FIR filter coefficients file\n");
+        exit(1);
+    }
+
+    /* Open driver connection */
+    driver_f = open("/dev/ppiadc", O_RDONLY);
+    if(driver_f < 0) {
+        perror("Could not open character device to communicate with PPI/ADC driver");
+        fprintf(stderr, "Make sure the module is loaded and that the device node has been created at /dev/ppiadc\n");
         exit(1);
     }
     
@@ -385,6 +397,9 @@ int main(int argc, char** argv) {
 
         data_out();
     }
+
+    /* Close driver connection */
+    close(driver_f);
 
     /* Free all allocated buffers */
     free(coefs);

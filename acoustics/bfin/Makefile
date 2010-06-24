@@ -1,6 +1,6 @@
 
 CC= bfin-linux-uclibc-gcc
-CFLAGS= -O2 --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include
+CFLAGS= -g --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include
 LDFLAGS= -L$(PWD)/../../libseawolf/ -lseawolf-bfin -lbfdsp -lm
 
 #CC= bfin-uclinux-gcc
