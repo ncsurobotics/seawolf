@@ -29,7 +29,7 @@ static char* path_state_names[] = {
 /********* Tuning Values **********/
 
 // Speed we go while searching
-#define SEARCHING_SPEED 20
+#define SEARCHING_SPEED 10
 
 // Time it takes us to stop (in seconds)
 #define STOP_TIME 0.0
@@ -44,10 +44,16 @@ static char* path_state_names[] = {
 
 // How far from the center in the respective direction a blob has to be in
 // order to be considered to that side.
-#define FORWARD_THRESHOLD 75
+/*
+#define FORWARD_THRESHOLD 100
 #define BACKWARD_THRESHOLD 25
-#define LEFT_THRESHOLD 75
-#define RIGHT_THRESHOLD 75
+#define LEFT_THRESHOLD 100
+#define RIGHT_THRESHOLD 100
+*/
+#define FORWARD_THRESHOLD 300
+#define BACKWARD_THRESHOLD 300
+#define LEFT_THRESHOLD 200
+#define RIGHT_THRESHOLD 200
 
 // How many frames in a row a blob is centered before we move on
 #define FRAMES_BLOB_CENTERED 5
@@ -109,9 +115,12 @@ void mission_align_path_init(IplImage* frame, struct mission_output* results)
 
     //record which way we are currently facing
     initial_angle = (int)get_absolute_angle(0);
+    printf("Initial angle: %d\n", initial_angle);
     
     results->rho = SEARCHING_SPEED;
     results->yaw = 0;
+    results->depth_control = DEPTH_ABSOLUTE;
+    results->depth = 1.0;
 
 }
 
@@ -139,7 +148,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
     result.frame = frame;
 
     // Color Filter
-    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 275, 2.25);
+    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 350, 2.25);
 
     // Blob Detection
     BLOB *blobs;
@@ -226,9 +235,11 @@ struct mission_output mission_align_path_step(struct mission_output result)
 
                 } else if (y > FORWARD_THRESHOLD) { // Forward
                     result.rho = SEARCHING_SPEED;
+                    result.yaw = 0;
                     path_centered = 0;
                 } else if (y < -1*BACKWARD_THRESHOLD) { // Backward
                     result.rho = -1*SEARCHING_SPEED;
+                    result.yaw = 0;
                     path_centered = 0;
                 } else if (lines_found) { // Center
                     printf("The path is in the center!!!!\n");
@@ -282,6 +293,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
                     // Search for highest and lowest to get range
                     double min = recorded_angles[0];
                     double max = recorded_angles[0];
+                    double sum = 0;
                     for (int i=0; i<NUM_ANGLES_TO_AVERAGE; i++) {
                         double recorded_angle = recorded_angles[i];
                         if (recorded_angle < min) {
@@ -290,6 +302,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
                         if (recorded_angle > max) {
                             max = recorded_angles[i];
                         }
+                        sum += recorded_angle;
                     }
 
                     // The second term accounts for wraparound
@@ -299,25 +312,39 @@ struct mission_output mission_align_path_step(struct mission_output result)
                         // Compute average in cartesian space
                         double avg_x = 0;
                         double avg_y = 0;
+                        printf("Computing average X and Y:\n");
                         for (int i=0; i<NUM_ANGLES_TO_AVERAGE; i++) {
-                            avg_x += cos(PI/180 * recorded_angles[i]);
-                            avg_y += sin(PI/180 * recorded_angles[i]);
+                            printf("  Recorded angle: %f\n", recorded_angles[i]);
+                            printf("    Adding %f to avg_x\n", cos(-1*PI/180 * recorded_angles[i]));
+                            printf("    Adding %f to avg_y\n", sin(-1*PI/180 * recorded_angles[i]));
+                            avg_x += cos(-1*PI/180 * recorded_angles[i]);
+                            avg_y += sin(-1*PI/180 * recorded_angles[i]);
                         }
+                        printf("Total: avg_x=%f avg_y=%f\n", avg_x, avg_y);
                         avg_x /= NUM_ANGLES_TO_AVERAGE;
                         avg_y /= NUM_ANGLES_TO_AVERAGE;
-                        result.yaw = atan(avg_y / avg_x);
+                        printf("AFter Dividing: avg_x=%f avg_y=%f\n", avg_x, avg_y);
+                        result.yaw = -1*atan(avg_y / avg_x);
+                        printf("-1*atan(avg_y / avg_x) = %f\n", result.yaw);
                         if(avg_x < 0) {
                             result.yaw += PI * (avg_y < 0 ? 1 : -1);
+                            printf("ADding %f to yaw\n", PI * (avg_y < 0 ? 1 : -1));
                         }
                         result.yaw *= 180/PI;
+                        printf("Final yaw in degrees: %f\n", result.yaw);
 
+                        printf("Initial_angle: %d\n", initial_angle);
                         //now set yaw to the end of the marker closest to 
                         // our origional heading
-                        if(result.yaw <= 0){
-                            result.yaw = fabs(result.yaw + 180 - initial_angle) < fabs(result.yaw - initial_angle)?result.yaw + 180 : result.yaw;
-                        }else{
-                            result.yaw = fabs(result.yaw - 180 - initial_angle) < fabs(result.yaw - initial_angle)?result.yaw - 180 : result.yaw;
+                        // backwards_angle is the angle 180 degrees away from our current yaw
+                        int backwards_angle = result.yaw + 180;
+                        backwards_angle = (backwards_angle + 180) % 360 - 180; // Modulous between -180 to 180
+                        if(abs(result.yaw - initial_angle) > 90 && abs(result.yaw - initial_angle) < 270){
+                            // The angle 180 degrees off from result.yaw is closer to inital_angle
+                            result.yaw = backwards_angle;
                         }
+
+
                         result.yaw_control = ROT_MODE_ANGULAR;
                         path_state = PATH_STATE_ALIGNING;
 
