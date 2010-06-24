@@ -23,7 +23,7 @@
 
 // The order to hit the bouys in
 #define BOUY_1 GREEN_BOUY
-#define BOUY_2 YELLOW_BOUY
+#define BOUY_2 RED_BOUY
 
 // States for the bouy state machine
 #define BOUY_STATE_FIRST_APPROACH 0
@@ -37,10 +37,14 @@
 #define BOUY_STATE_COMPLETE 8
 
 // How Long We Must See a Blob Durring Approach
-#define APPROACH_THRESHOLD 3
+#define APPROACH_THRESHOLD 2
 
 // How large blobs must be
 #define MIN_BLOB_SIZE 200
+
+// What fraction of the found color has to be taken up by a blob for us to
+// consider it a blob
+#define BLOB_COLOR_FRACTION (3.0/4.0)
 
 // Turn Rate When Searching For Bouys
 #define TURN_RATE 5
@@ -277,9 +281,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
             }else{
                 printf("BOUY_2 DEFINED INCORRECTLY\n");
             }
-
             bouy_state++;
-            break;
 
         case BOUY_STATE_FINISH_FINAL_TURN_1:
 
@@ -369,17 +371,10 @@ int find_closest_blob(int n, RGBPixel colors[], BLOB* blobs[], IplImage* image) 
     return closest_blob;
 }
 
-/*******      First Approach      ***********/
-// Scan Image, if we see a bouy, return it's color.  Otherwise
-// return zero.
+int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int target_color);
+int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int target_color) {
 
-int bouy_first_approach(struct mission_output* result){
     int found_bouy = 0;
-
-    //obtain frame
-    IplImage* frame = multicam_get_frame (FORWARD_CAM);
-    result->frame = frame;
-    frame = normalize_image(frame);
 
     IplImage* ipl_out[3];
     ipl_out[0] = cvCreateImage(cvGetSize (frame), 8, 3);
@@ -387,9 +382,9 @@ int bouy_first_approach(struct mission_output* result){
     ipl_out[2] = cvCreateImage(cvGetSize (frame), 8, 3);
 
     int num_pixels[3];
-    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 160, 2);
-    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 380, 2);
-    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 210, 2);
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 200, 1.5);
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 250, 1);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 220, 2);
 
     // Debugs
     cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
@@ -415,9 +410,9 @@ int bouy_first_approach(struct mission_output* result){
     static int max_blob_size = 1000000000;
     for (int i=0; i<3; i++) {
         printf("blobs[%d]->area = %ld\n", i, blobs[i]->area);
-        //TODO: Add a check to make sure the blob is taking up most of the found color
         if ((blobs_found[i] == 1 || blobs_found[i] == 2) &&
-            blobs[i]->area < max_blob_size)
+            blobs[i]->area < max_blob_size &&
+            ((float)blobs[i]->area) / ((float)num_pixels[i]) > BLOB_COLOR_FRACTION)
         {
             printf("i=%d\n", i);
             blobs_seen[num_colors_seen] = blobs[i];
@@ -426,6 +421,7 @@ int bouy_first_approach(struct mission_output* result){
             num_colors_seen++;
             seen_blob[i] = 1;
         } else {
+            printf("Blob amount / Filter amount = %f\n", ((float)blobs[i]->area) / ((float)num_pixels[i]));
             seen_blob[i] = 0;
         }
     }
@@ -438,7 +434,6 @@ int bouy_first_approach(struct mission_output* result){
     printf("Number of bouys seen: %d\n", num_colors_seen);
     if (num_colors_seen == 1) {
         found_bouy = indexes_seen[0];
-        approach_counter++;
     } else if (num_colors_seen == 2) {
         /*
         found_bouy = indexes_seen[
@@ -450,40 +445,69 @@ int bouy_first_approach(struct mission_output* result){
         } else {
             found_bouy = indexes_seen[1];
         }
-        approach_counter++;
     } else if (num_colors_seen == 0 || num_colors_seen == 3) {
         //we don't see anything
-        approach_counter = 0;
-        found_bouy = 0;
-    }
-
-    if (found_bouy == YELLOW_BOUY) {
-        result->depth_control = DEPTH_RELATIVE;
-        result->depth = blobs[0]->mid.y * DEPTH_SCALE_FACTOR;
-        printf("FOUND YELLOW\n");
-    } else if (found_bouy == RED_BOUY) {
-        result->depth_control = DEPTH_RELATIVE;
-        result->depth = blobs[1]->mid.y * DEPTH_SCALE_FACTOR;
-        printf("FOUND RED\n");
-    } else if (found_bouy == GREEN_BOUY) {
-        result->depth_control = DEPTH_RELATIVE;
-        printf("FOUND GREEN\n");
-        result->depth = blobs[2]->mid.y * DEPTH_SCALE_FACTOR;
-    }
-
-    //if we've seen a blob for longer than a threshold, finish
-    if(approach_counter <= APPROACH_THRESHOLD){
-        //we haven't seen the blob long enough, keep trying
         found_bouy = 0;
     }
 
     //free resources
     for (int i=0; i<3; i++) {
-        blob_free (blobs[i],blobs_found[i]);
+        if (i == found_bouy-1) {
+            *found_blob = blobs[i];
+            *blobs_found_arg = blobs_found[i];
+        } else {
+            blob_free(blobs[i], blobs_found[i]);
+        }
         cvReleaseImage(&ipl_out[i]);
     }
 
     return found_bouy;
+}
+
+/*******      First Approach      ***********/
+// Scan Image, if we see a bouy, return it's color.  Otherwise
+// return zero.
+int bouy_first_approach(struct mission_output* result){
+
+    //obtain frame
+    IplImage* frame = multicam_get_frame (FORWARD_CAM);
+    result->frame = frame;
+    frame = normalize_image(frame);
+
+    BLOB* found_blob = NULL;
+    int blobs_found = 0;
+    int found_bouy = find_bouy(frame, &found_blob, &blobs_found, 0);
+
+    approach_counter++;
+    if (found_bouy == YELLOW_BOUY) {
+        result->depth_control = DEPTH_RELATIVE;
+        result->depth = found_blob->mid.y * DEPTH_SCALE_FACTOR;
+        printf("FOUND YELLOW\n");
+    } else if (found_bouy == RED_BOUY) {
+        result->depth_control = DEPTH_RELATIVE;
+        result->depth = found_blob->mid.y * DEPTH_SCALE_FACTOR;
+        printf("FOUND RED\n");
+    } else if (found_bouy == GREEN_BOUY) {
+        result->depth_control = DEPTH_RELATIVE;
+        printf("FOUND GREEN\n");
+        result->depth = found_blob->mid.y * DEPTH_SCALE_FACTOR;
+    } else {
+        approach_counter = 0;
+    }
+
+    //if we've seen a blob for longer than a threshold, finish
+    printf("approch_counter=%d\n", approach_counter);
+    if(approach_counter <= APPROACH_THRESHOLD){
+        //we haven't seen the blob long enough, keep trying
+        found_bouy = 0;
+    }
+
+    if (found_blob != NULL) {
+        blob_free(found_blob, blobs_found);
+    }
+
+    return found_bouy;
+
 }
 
 
@@ -513,27 +537,23 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
     int frame_width = frame->width;
     int frame_height = frame->height;
 
-    // Scan image for color
-    IplImage* ipl_out;
-    ipl_out = cvCreateImage(cvGetSize (frame), 8, 3);
-    int num_pixels;
-    if (color == &bouy_colors[GREEN_BOUY]) { //Green
-        num_pixels = FindTargetColor(frame, ipl_out, color, 1, 200, 2);
-    } else if(color == &bouy_colors[RED_BOUY]) { //Red
-        num_pixels = FindTargetColor(frame, ipl_out, color, 1, 320, 2);
-    } else {                                    //Yellow
-        num_pixels = FindTargetColor(frame, ipl_out, color, 1, 180, 2);
+    BLOB* found_blob = NULL;
+    int blobs_found = 0;
+    int found_bouy = find_bouy(frame, &found_blob, &blobs_found, 0);
+
+    // If we saw the wrong color, ignore it
+    if (bouy_colors[found_bouy].r != color->r ||
+        bouy_colors[found_bouy].g != color->g ||
+        bouy_colors[found_bouy].b != color->b
+    ) {
+        blobs_found = 0;
     }
 
-    // Find blobs
-    BLOB *blobs;
-    int blobs_found = blob(ipl_out, &blobs, 4, 80);
-
     // Determine course
+    printf ("tracking_counter = %d\n", tracking_counter);
     CvPoint heading;
-    if (blobs_found == 0 || blobs_found > 3 ||
-         blobs[0].area < (num_pixels * 3 / 4 > 100 ? num_pixels * 3 / 4 : 100))
-    {
+    if (blobs_found == 0 || blobs_found > 3) {
+
         // We don't think what we see is a blob
         if (tracking_counter > 10)
         {
@@ -577,7 +597,7 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
         // We do this only for a few frames to get a good heading
         if (tracking_counter < 15) {
             printf("setting yaw to chase a blob\n");
-            heading = blobs[0].mid;
+            heading = found_blob[0].mid;
             result->yaw = heading.x;
             result->depth = heading.y;
             cvCircle(result->frame, cvPoint(result->yaw, result->depth), 5, cvScalar(0,0,0,255),1,8,0);
@@ -601,10 +621,8 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
 
         }
 
-        printf ("tracking_counter = %d\n", tracking_counter);
-
         //if the blob gets big enough for us to be close, start a countdown
-        if(blobs[0].area > frame_width*frame_height / 4 && saw_big_blob == 0){
+        if(found_blob[0].area > frame_width*frame_height / 4 && saw_big_blob == 0){
             saw_big_blob++;
         }
 
@@ -642,8 +660,10 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
     }
 
     //RELEASE THINGS
-    blob_free (blobs, blobs_found);
-    cvReleaseImage (&ipl_out);
+    if (found_blob != NULL) {
+        blob_free (found_blob, blobs_found);
+    }
+    //cvReleaseImage (&frame);
 
     return bump_complete;
 }
