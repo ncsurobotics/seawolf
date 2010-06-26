@@ -16,13 +16,20 @@
 
 /******* #DEFINES for BOUY **********/
 
-// Bouy colors from left to right
+// Definitions for the bouy colors
 #define YELLOW_BOUY 1
 #define RED_BOUY    2
 #define GREEN_BOUY  3
 
+//order of bouys from left to right
+static int bouy_order[] = {
+    [RED_BOUY]    = 1,
+    [GREEN_BOUY]  = 2,
+    [YELLOW_BOUY] = 3
+};
+
 // The order to hit the bouys in
-#define BOUY_1 GREEN_BOUY
+#define BOUY_1 YELLOW_BOUY
 #define BOUY_2 RED_BOUY
 
 // States for the bouy state machine
@@ -34,7 +41,8 @@
 #define BOUY_STATE_BUMP_SECOND_BOUY 5
 #define BOUY_STATE_FINAL_ORIENTATION 6
 #define BOUY_STATE_FINISH_FINAL_TURN_1 7
-#define BOUY_STATE_COMPLETE 8
+#define BOUY_STATE_SEARCHING_FOR_PATH 8
+#define BOUY_STATE_COMPLETE 9
 
 // How Long We Must See a Blob Durring Approach
 #define APPROACH_THRESHOLD 2
@@ -50,7 +58,7 @@
 #define TURN_RATE 5
 
 // How Long To Back Up After 1st Bouy
-#define BACK_UP_TIME_1 5
+#define BACK_UP_TIME_1 7
 
 // How long in SECONDS after we first saw a blob in bouy_bump before we give up and say we hit it.
 #define BOUY_BUMP_TIMER 7
@@ -66,11 +74,20 @@
 #define DEPTH_SCALE_FACTOR (1.0/200.0)
 
 // How far to turn after bumping the second bouy in degrees
-#define TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP 45
+#define TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP 70
 
+// How many frames we need to see an orangle blob to think we've seen the path
+#define SEEN_PATH_THRESHOLD 2 
+
+// Bigger the number, the less we turn
+#define YAW_SCALE_FACTOR 1
+
+//how long each leg of the search should be
+#define SEARCH_PATTERN_TIME 6
 /************* STATE VARIABLES FOR BOUY *************/
 
 // State Variables for Bouy Mission
+double initial_angle = 0;
 static int bouy_state = 0;           //Keeps track of primary bouy state machine
 static int bouys_found = 0;          //turns to 1,2, or 3 when a bouy is found, # signifies color
 static RGBPixel bouy_colors[] = {    //holds the three colors of the bouys
@@ -116,6 +133,14 @@ static Timer* backing_timer = NULL;      //times our backing up step for us
 double heading;
 double target;
 
+// State Variables for Search Pattern For Path
+static int search_direction = 0; //which direction we need to turn next (1 or 2)
+static int initial_leg_length = 0; //how long our first leg of the search pattern should be
+static int search_pattern_turning = 0; //flags we are completing a turn
+static int seen_orange_blob = 0; //lets us know if we have found the path
+static Timer* search_timer = NULL; //times the legs of our search
+static int first_search_leg = 1; //true when we are on our first search leg
+
 RGBPixel find_blob_avg_color(IplImage* img, BLOB* blob);
 RGBPixel find_blob_avg_color(IplImage* img, BLOB* blob) {
     unsigned int avg_r = 0;
@@ -140,7 +165,13 @@ void mission_bouy_init(IplImage * frame, struct mission_output* result)
     bouy_state = BOUY_STATE_FIRST_APPROACH;
     bouy_bump_init();
     result->depth_control = DEPTH_ABSOLUTE;
-    result->depth = 1.0;
+    result->depth = 1.5;
+
+    if (search_timer != NULL) {
+        Timer_destroy(search_timer);
+    }
+    search_timer = NULL;
+    initial_angle = Var_get("SEA.Yaw");
 }
 
 struct mission_output mission_bouy_step (struct mission_output result)
@@ -169,13 +200,13 @@ struct mission_output mission_bouy_step (struct mission_output result)
             //turn towards our first bouy
             result.yaw_control = ROT_MODE_RATE;
 
-            if(bouys_found > BOUY_1){
+            if(bouy_order[bouys_found] > bouy_order[BOUY_1]){
                 //TURN LEFT
                 printf("Going LEFT to desired bouy\n");
                 result.rho = 0;
                 result.yaw = -1*TURN_RATE;
             }
-            else if(bouys_found < BOUY_1){
+            else if(bouy_order[bouys_found] < bouy_order[BOUY_1]){
                 //TURN RIGHT
                 result.rho = 0;
                 printf("Going RIGHT to desired bouy\n");
@@ -231,12 +262,12 @@ struct mission_output mission_bouy_step (struct mission_output result)
             //turn towards our second bouy
             result.yaw_control = ROT_MODE_RATE;
 
-            if(BOUY_2 < BOUY_1){
+            if(bouy_order[BOUY_2] < bouy_order[BOUY_1]){
                 //TURN_LEFT
                 result.yaw = -1*TURN_RATE;
                 printf("Turning Left, towards the second bouy \n");
             }
-            else if(BOUY_2 > BOUY_1){
+            else if(bouy_order[BOUY_2] > bouy_order[BOUY_1]){
                 //TURN_RIGHT
                 result.yaw = TURN_RATE;
                 printf("Turning Right, towards the second bouy \n");
@@ -269,15 +300,21 @@ struct mission_output mission_bouy_step (struct mission_output result)
         case BOUY_STATE_FINAL_ORIENTATION:
             //determine which direction to turn to turn beyond the obstacle
 
-            if(BOUY_2 == 1){
+            if(bouy_order[BOUY_2] == 1){
                 //turn right
                 result.yaw = TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP;
-            }else if(BOUY_2 == 2){
-                //don't turn at all
-
-            }else if(BOUY_2 == 3){
+                search_direction = 1;
+                printf("turning right\n");
+            }else if(bouy_order[BOUY_2] == 2){
+                //arbitrarily turn right
+                result.yaw = TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP;
+                search_direction = 1;
+                printf("turning right\n");
+            }else if(bouy_order[BOUY_2]== 3){
                 //turn left
                 result.yaw = -1*TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP;
+                search_direction = -1;
+                printf("turning left\n");
             }else{
                 printf("BOUY_2 DEFINED INCORRECTLY\n");
             }
@@ -287,9 +324,10 @@ struct mission_output mission_bouy_step (struct mission_output result)
 
             //if our heading is close enough to
             heading = Var_get("SEA.Yaw");
-            target = Var_get("SEA.Rot.Target");
-
-            if(abs(heading-target) < 10){
+            target = Var_get("Rot.Angular.Target");
+            printf("completing final turn, heading = %f, target = %f \n",heading,target);
+            if(fabs(heading-target) < 10){
+                printf("finished final turn\n");
                 bouy_state++;
             }
             break;
@@ -325,10 +363,52 @@ struct mission_output mission_bouy_step (struct mission_output result)
             bouy_state++;
             break;
 
-        //case BOUY_STATE_SEARCHING_FOR_PATH:
+        case BOUY_STATE_SEARCHING_FOR_PATH:
             //perform a search patter to begin looking for the path
 
-            bouy_state++;
+            result.yaw_control = ROT_MODE_ANGULAR; 
+
+            if(search_pattern_turning == 0){
+                printf("going forward in search\n");
+                if( search_timer == NULL){
+                    //start a timer
+                    search_timer = Timer_new();
+                } else if(Timer_getTotal(search_timer) > SEARCH_PATTERN_TIME || 
+                          (Timer_getTotal(search_timer) > SEARCH_PATTERN_TIME/2 && bouy_order[BOUY_2] == 2 && first_search_leg ==1) ){
+                    //we've been driving long enough
+                    Timer_destroy(search_timer);
+                    search_timer = NULL;
+                    first_search_leg = 0;
+                    search_pattern_turning = 1;
+                } else {
+                    //go forward 
+                    result.rho = 10;
+                }
+            }else if (search_pattern_turning == 1){
+                //initiate turn
+                result.yaw = (int)(initial_angle + 70 * search_direction+180)%360-180; 
+                search_direction *= -1;
+                search_pattern_turning = 2;
+            }else{
+                printf("turning in search\n");
+                //continue turning
+                result.rho = 5;
+
+                //if our heading is close enough, finish turn
+                heading = Var_get("SEA.Yaw");
+                target = Var_get("Rot.Angular.Target");
+
+                if(fabs(heading-target) < 10){
+                    search_pattern_turning = 0;
+                }
+            }
+
+
+            if(/*we see orange XXX */0){
+                if(++seen_orange_blob > SEEN_PATH_THRESHOLD){
+                    bouy_state++;
+                }
+            }
             break;
 
         case BOUY_STATE_COMPLETE:
@@ -382,9 +462,9 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     ipl_out[2] = cvCreateImage(cvGetSize (frame), 8, 3);
 
     int num_pixels[3];
-    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 200, 1.5);
-    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 250, 1);
-    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 220, 2);
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 190, 1);
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 190, 1.5);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 210, 1.5);
 
     // Debugs
     cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
@@ -555,10 +635,10 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
     if (blobs_found == 0 || blobs_found > 3) {
 
         // We don't think what we see is a blob
-        if (tracking_counter > 10)
+        if (tracking_counter > 6)
         {
             // We have seen the blob for long enough, we may have hit it
-            if (++hit_blob > 5)
+            if (++hit_blob > 2)
             {
                 //we have probably hit the blob, so let's look for a marker
                 printf("We've missed the blob for a while; assuming we hit it.\n");
@@ -606,7 +686,7 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
             result->depth = result->depth - frame_height / 2;
             result->depth *= DEPTH_SCALE_FACTOR; // Scaling factor
             //subjectively scale output !!!!!!!
-            result->yaw = result->yaw / 8; // Scale Output
+            result->yaw = result->yaw / YAW_SCALE_FACTOR; // Scale Output
 
             //Convert Pixels to Degrees
             result->yaw = PixToDeg(result->yaw);
@@ -647,17 +727,17 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
         }
         printf("saw_big_blob = %d \n", saw_big_blob);
     }
-
-    if (bouy_timer != NULL &&
-        Timer_getTotal(bouy_timer) >= BOUY_BUMP_TIMER)
-    {
-            result->yaw = 0;
-            result->depth = 0;
-            result->rho = 0;
-            bump_complete = 1;
-            printf("It's been a while since we've first seen the blob...\n");
-            printf("  We probably either hit it, or failed, so I'm moving on.\n");
-    }
+//
+//   if (bouy_timer != NULL &&
+//        Timer_getTotal(bouy_timer) >= BOUY_BUMP_TIMER)
+//    {
+///            result->yaw = 0;
+//            result->depth = 0;
+//            result->rho = 0;
+//            bump_complete = 1;
+//            printf("It's been a while since we've first seen the blob...\n");
+//            printf("  We probably either hit it, or failed, so I'm moving on.\n");
+//    }
 
     //RELEASE THINGS
     if (found_blob != NULL) {
