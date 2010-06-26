@@ -77,13 +77,16 @@ static int bouy_order[] = {
 #define TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP 70
 
 // How many frames we need to see an orangle blob to think we've seen the path
-#define SEEN_PATH_THRESHOLD 2 
+#define SEEN_PATH_THRESHOLD 3 
 
 // Bigger the number, the less we turn
 #define YAW_SCALE_FACTOR 1
 
 //how long each leg of the search should be
 #define SEARCH_PATTERN_TIME 6
+
+//How well we have to see a blob to think it's the path
+#define PATH_FRACTION_THRESHOLD .75
 /************* STATE VARIABLES FOR BOUY *************/
 
 // State Variables for Bouy Mission
@@ -140,6 +143,8 @@ static int search_pattern_turning = 0; //flags we are completing a turn
 static int seen_orange_blob = 0; //lets us know if we have found the path
 static Timer* search_timer = NULL; //times the legs of our search
 static int first_search_leg = 1; //true when we are on our first search leg
+static RGBPixel PathColor = {0xff, 0x88, 0x00};
+
 
 RGBPixel find_blob_avg_color(IplImage* img, BLOB* blob);
 RGBPixel find_blob_avg_color(IplImage* img, BLOB* blob) {
@@ -402,13 +407,28 @@ struct mission_output mission_bouy_step (struct mission_output result)
                     search_pattern_turning = 0;
                 }
             }
+            
+            //Check the Down Cam for an Orange Blob (the path)
+            IplImage* frame = multicam_get_frame (DOWN_CAM);
+            result.frame = frame;
+            //frame = normalize_image(frame);
+            
+            IplImage* ipl_out = cvCreateImage(cvGetSize (frame), 8, 3);
+            int num_pixels = FindTargetColor(frame, ipl_out, &PathColor , 1, 110, 1.5);
 
+            BLOB* path_blob; 
+            int blobs_found = blob(ipl_out, &path_blob, 4, MIN_BLOB_SIZE);
 
-            if(/*we see orange XXX */0){
+            if((blobs_found == 1 || blobs_found == 2) &&
+                (float)path_blob->area / num_pixels > PATH_FRACTION_THRESHOLD ){
                 if(++seen_orange_blob > SEEN_PATH_THRESHOLD){
                     bouy_state++;
                 }
             }
+            
+            //free blob resources
+            blob_free (path_blob, blobs_found);
+            cvReleaseImage (&ipl_out);
             break;
 
         case BOUY_STATE_COMPLETE:
