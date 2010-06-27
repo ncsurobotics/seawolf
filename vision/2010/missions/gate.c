@@ -1,10 +1,11 @@
+#include <seawolf.h>
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
 
 #include <seawolf3.h>
-#include <seawolf.h>
 
 #include "util.h"
 #include "vision_lib.h"
