@@ -28,6 +28,13 @@ static int bouy_order[] = {
     [YELLOW_BOUY] = 3
 };
 
+//depths of each bouy from the surface in feet
+static int bouy_depth[] = {
+    [RED_BOUY]    = 1.7,
+    [GREEN_BOUY]  = 2.5,
+    [YELLOW_BOUY] = 1.5
+};
+
 // The order to hit the bouys in
 #define BOUY_1 YELLOW_BOUY
 #define BOUY_2 RED_BOUY
@@ -59,6 +66,9 @@ static int bouy_order[] = {
 
 // How Long To Back Up After 1st Bouy
 #define BACK_UP_TIME_1 7
+
+// How Far to Turn When Looking for a Bouy
+#define TURNING_THRESHOLD 120
 
 // How long in SECONDS after we first saw a blob in bouy_bump before we give up and say we hit it.
 #define BOUY_BUMP_TIMER 7
@@ -120,6 +130,7 @@ static RGBPixel bouy_colors[] = {    //holds the three colors of the bouys
 static int approach_counter = 0;  //counts how many frames we've seen any blob
 
 // State Variables for BOUY - First Orientation sub routine
+static double starting_angle; 
 
 // State variables for BOUY - Bump Bouy Sub Routine
 static int lost_blob = 0;         //how long it's been since we lost the blob
@@ -202,8 +213,15 @@ struct mission_output mission_bouy_step (struct mission_output result)
             }
 
         case BOUY_STATE_FIRST_ORIENTATION:
+
+            //set our depth to the first bouy we need to see
+            result.depth = bouy_depth[BOUY_1];
+
             //turn towards our first bouy
             result.yaw_control = ROT_MODE_RATE;
+
+            //record what angle we started this turn
+            starting_angle = Var_get("SEA.Yaw");
 
             if(bouy_order[bouys_found] > bouy_order[BOUY_1]){
                 //TURN LEFT
@@ -237,10 +255,23 @@ struct mission_output mission_bouy_step (struct mission_output result)
                 bouy_state++;
                 bump_initialized = 0;
                 printf("we finished bouy bump 1 \n");
+            }else{
+                //grab angle data to check how far we have turned
+                double current_angle = Var_get("SEA.Yaw");
+                if(fabs(current_angle-starting_angle) < TURNING_THRESHOLD ||
+                    fabs(current_angle-starting_angle) > 360-TURNING_THRESHOLD){
+                        //We have turned too far
+                        result.yaw *= -1;
+                        starting_angle = current_angle;
+                }
             }
             break;
 
         case BOUY_STATE_FIRST_BACKING_UP:
+
+            //set our depth to the second bouy 
+            result.depth_control = DEPTH_ABSOLUTE;
+            result.depth = bouy_depth[BOUY_2];
 
             //back up
             result.rho = -20;
@@ -481,9 +512,9 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     ipl_out[1] = cvCreateImage(cvGetSize (frame), 8, 3);
     ipl_out[2] = cvCreateImage(cvGetSize (frame), 8, 3);
 
-    int num_pixels[3];
-    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 190, 1);
-    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 190, 1.5);
+    int num_pixels[3];                                                 //color thresholds
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 200, 1); 
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 240, 1.2);
     num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 210, 1.5);
 
     // Debugs
@@ -549,6 +580,7 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
         //we don't see anything
         found_bouy = 0;
     }
+    printf("found_bouy = %d \n", found_bouy);
 
     //free resources
     for (int i=0; i<3; i++) {
