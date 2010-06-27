@@ -44,16 +44,10 @@ static char* path_state_names[] = {
 
 // How far from the center in the respective direction a blob has to be in
 // order to be considered to that side.
-/*
 #define FORWARD_THRESHOLD 100
 #define BACKWARD_THRESHOLD 25
 #define LEFT_THRESHOLD 100
 #define RIGHT_THRESHOLD 100
-*/
-#define FORWARD_THRESHOLD 300
-#define BACKWARD_THRESHOLD 300
-#define LEFT_THRESHOLD 200
-#define RIGHT_THRESHOLD 200
 
 // How many frames in a row a blob is centered before we move on
 #define FRAMES_BLOB_CENTERED 5
