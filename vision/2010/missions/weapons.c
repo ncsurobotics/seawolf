@@ -26,7 +26,7 @@ struct mission_output mission_weapons_step(struct mission_output result){
     CvSeq* lines;
     
     //grab a frame
-    IplImage* frame = multicam_get_frame (FORWARD_CAM);
+    IplImage* frame = multicam_get_frame (DOWN_CAM);
     frame = normalize_image(frame);
     
     //run a hough transform
