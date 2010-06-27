@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include <seawolf3.h>
+#include <seawolf.h>
 
 #include "util.h"
 #include "vision_lib.h"
@@ -38,6 +39,7 @@ void mission_gate_init(IplImage* frame, double depth)
     right_pole = frame->width;
     seen_both_poles = 0;
     desired_depth = depth;
+    Var_set("ReferenceAngle", Var_get("SEA.Yaw"));
 }
 
 struct mission_output mission_gate_step(struct mission_output result)

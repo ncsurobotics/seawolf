@@ -18,6 +18,7 @@ PitchPID.i                     0.0        1          0
 PitchPID.p                     0.0        1          0
 PortX                          0.0        0          0
 PortY                          0.0        0          0
+ReferenceAngle                 0.0        0          0
 RollPID.d                      0.0        1          0
 RollPID.i                      0.0        1          0
 RollPID.p                      0.0        1          0

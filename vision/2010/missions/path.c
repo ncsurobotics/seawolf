@@ -114,9 +114,9 @@ void mission_align_path_init(IplImage* frame, struct mission_output* results)
     recording = false;
 
     //record which way we are currently facing
-    initial_angle = (int)get_absolute_angle(0);
+    initial_angle = Var_get("ReferenceAngle");
     printf("Initial angle: %d\n", initial_angle);
-    
+
     results->rho = SEARCHING_SPEED;
     results->yaw = 0;
     results->depth_control = DEPTH_ABSOLUTE;
