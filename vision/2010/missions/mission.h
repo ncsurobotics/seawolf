@@ -87,6 +87,7 @@ static const char* mission_strings[] = {
 static const int mission_order[] = {
     MISSION_WAIT,
     MISSION_GATE,
+    MISSION_ALIGN_PATH,
     MISSION_BOUY,
     MISSION_ALIGN_PATH,
     MISSION_HEDGE,
