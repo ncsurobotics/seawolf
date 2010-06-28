@@ -540,19 +540,19 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     int num_colors_seen = 0;
     static int max_blob_size = 1000000000;
     for (int i=0; i<3; i++) {
-        printf("blobs[%d]->area = %ld\n", i, blobs[i]->area);
+        //printf("blobs[%d]->area = %ld\n", i, blobs[i]->area);
         if ((blobs_found[i] == 1 || blobs_found[i] == 2) &&
             blobs[i]->area < max_blob_size &&
             ((float)blobs[i]->area) / ((float)num_pixels[i]) > BLOB_COLOR_FRACTION)
         {
-            printf("i=%d\n", i);
+            //printf("i=%d\n", i);
             blobs_seen[num_colors_seen] = blobs[i];
             colors_seen[num_colors_seen] = bouy_colors[i+1];
             indexes_seen[num_colors_seen] = i+1;
             num_colors_seen++;
             seen_blob[i] = 1;
         } else {
-            printf("Blob amount / Filter amount = %f\n", ((float)blobs[i]->area) / ((float)num_pixels[i]));
+            //printf("Blob amount / Filter amount = %f\n", ((float)blobs[i]->area) / ((float)num_pixels[i]));
             seen_blob[i] = 0;
         }
     }
@@ -562,7 +562,7 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     //  1) The one color we saw is correct
     //  2) Choose the color that's closer to it's target
     //  3) We're getting bad data, assume we saw nothing
-    printf("Number of bouys seen: %d\n", num_colors_seen);
+    //printf("Number of bouys seen: %d\n", num_colors_seen);
     if (num_colors_seen == 1) {
         found_bouy = indexes_seen[0];
     } else if (num_colors_seen == 2) {
@@ -580,7 +580,6 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
         //we don't see anything
         found_bouy = 0;
     }
-    printf("found_bouy = %d \n", found_bouy);
 
     //free resources
     for (int i=0; i<3; i++) {
@@ -604,7 +603,7 @@ int bouy_first_approach(struct mission_output* result){
     //obtain frame
     IplImage* frame = multicam_get_frame (FORWARD_CAM);
     result->frame = frame;
-    frame = normalize_image(frame);
+    //frame = normalize_image(frame);
 
     BLOB* found_blob = NULL;
     int blobs_found = 0;
@@ -664,7 +663,7 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
 
     //obtain image data
     IplImage* frame = multicam_get_frame (FORWARD_CAM);
-    frame = normalize_image(frame);
+    //frame = normalize_image(frame);
     result->frame = frame;
     int frame_width = frame->width;
     int frame_height = frame->height;
