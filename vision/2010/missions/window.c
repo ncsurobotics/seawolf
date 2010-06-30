@@ -37,24 +37,27 @@ static int window_order[] = {
 
 static RGBPixel window_colors[] = {
     [RED_WINDOW] = {0xff, 0x00, 0x00},
-    [BLUE_WINDOW] = {0x00, 0x00, 0x00},
+    [BLUE_WINDOW] = {0x00, 0x00, 0xff},
     [GREEN_WINDOW] = {0x00, 0xff, 0x00},
     [YELLOW_WINDOW] = {0xff, 0xff, 0x00},
 };
 
 //DEPTH OF THE WINDOW ROWS
 #define TOP_ROW_DEPTH 2
-#define BOTTOM_ROW_DEPTH 3
+#define BOTTOM_ROW_DEPTH 3.75
 
 // Y value for where a blob is found is multiplied by this to get the relative
 // depth heading
 #define DEPTH_SCALE_FACTOR (1.0/200.0)
 
 // Bigger the number, the less we turn
-#define YAW_SCALE_FACTOR 1
+#define YAW_SCALE_FACTOR 5
 
 // How Long We Must See a Blob Durring Approach
-#define APPROACH_THRESHOLD 2
+#define APPROACH_THRESHOLD 200 /* XXX */
+
+// How Long we must see a blob durring Lock on Target to think it's not noise
+#define TRACKING_THRESHOLD 2
 
 // How large blobs must be
 #define MIN_BLOB_SIZE 200
@@ -64,7 +67,7 @@ static RGBPixel window_colors[] = {
 #define BLOB_COLOR_FRACTION (3.0/4.0)
 
 //what height to start the robot at
-#define INITIAL_DEPTH 2
+#define INITIAL_DEPTH 3
 
 //how fast to turn when alligning with a window
 #define TURN_RATE 5
@@ -222,10 +225,10 @@ int find_window(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int ta
     ipl_out[3] = cvCreateImage(cvGetSize (frame), 8, 3);
 
     int num_pixels[4];                                                 //color thresholds
-    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &window_colors[YELLOW_WINDOW], 1, 200, 1); 
-    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &window_colors[RED_WINDOW], 1, 240, 1.2);
-    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &window_colors[GREEN_WINDOW], 1, 210, 1.5);
-    num_pixels[3] = FindTargetColor(frame, ipl_out[3], &window_colors[BLUE_WINDOW], 1, 150, 1.5);
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &window_colors[YELLOW_WINDOW], 1, 230, 1); 
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &window_colors[RED_WINDOW], 1, 340, 1);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &window_colors[GREEN_WINDOW], 1, 300, 1);
+    num_pixels[3] = FindTargetColor(frame, ipl_out[3], &window_colors[BLUE_WINDOW], 1, 410, 2);
 
     // Debugs
     cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
@@ -325,17 +328,11 @@ int window_first_approach(struct mission_output* result){
 
     approach_counter++;
     if (found_target == YELLOW_WINDOW) {
-        result->depth_control = DEPTH_RELATIVE;
-        result->depth = found_blob->mid.y * DEPTH_SCALE_FACTOR;
         printf("FOUND YELLOW\n");
     } else if (found_target == RED_WINDOW) {
-        result->depth_control = DEPTH_RELATIVE;
-        result->depth = found_blob->mid.y * DEPTH_SCALE_FACTOR;
         printf("FOUND RED\n");
     } else if (found_target == GREEN_WINDOW) {
-        result->depth_control = DEPTH_RELATIVE;
         printf("FOUND GREEN\n");
-        result->depth = found_blob->mid.y * DEPTH_SCALE_FACTOR;
     } else if (found_target == BLUE_WINDOW) {
         printf("FOUND BLUE\n");
         approach_counter = 0;
@@ -384,11 +381,12 @@ int window_lock_on_target(struct mission_output* result, RGBPixel* color) {
         blobs_found = 0;
     }
 
-    if (blobs_found == 0) {
+    if (blobs_found == 0 && tracking_counter < TRACKING_THRESHOLD) {
         // Keep turning, we didn't see anything
         tracking_counter = 0;
-    } else if (++tracking_counter) {
+    } else if (++tracking_counter > TRACKING_THRESHOLD) {
 
+        result->depth_control = DEPTH_RELATIVE;
         // Set thruster values to track
         printf("setting yaw to chase a blob\n");
         CvPoint heading = found_blob[0].mid;
