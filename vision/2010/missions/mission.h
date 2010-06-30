@@ -110,9 +110,10 @@ struct mission_output mission_bouy_step(struct mission_output);
 
 //internal bouy functions
 int bouy_first_approach(struct mission_output*);
-
 void bouy_bump_init(void);
 int bouy_bump(struct mission_output* result, RGBPixel* color);
+int find_closest_blob(int n, RGBPixel colors[], BLOB* blobs[], IplImage* image);
+int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int target_color);
 
 /*** Weapons Run ***/
 void mission_weapons_init(void);
@@ -122,8 +123,10 @@ struct mission_output mission_weapons_step(struct mission_output);
 void mission_align_path_init(IplImage* frame, struct mission_output* results);
 struct mission_output mission_align_path_step(struct mission_output);
 
-// ---- Window ---- //
-void mission_window_init(IplImage* frame);
+/*** Window ***/
+void mission_window_init(IplImage* frame, struct mission_output* result);
 struct mission_output mission_window_step(struct mission_output);
 
+//internal window functions
+int window_first_approach(struct mission_output*);
 #endif

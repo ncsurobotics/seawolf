@@ -16,10 +16,11 @@
 
 /******* #DEFINES for BOUY **********/
 
-// Definitions for the bouy colors
+// Definitions for the bouy colors NOT THE ORDER, SEE BELOW
 #define YELLOW_BOUY 1
 #define RED_BOUY    2
 #define GREEN_BOUY  3
+#define SUNSPOT_BOUY 4 //we can't avoid it unless we acount for it
 
 //order of bouys from left to right
 static int bouy_order[] = {
@@ -106,9 +107,10 @@ static int bouys_found = 0;          //turns to 1,2, or 3 when a bouy is found, 
 static RGBPixel bouy_colors[] = {    //holds the three colors of the bouys
 
     // Ideal Colors
-    [YELLOW_BOUY] = {0xff, 0xff, 0x00 },
-    [RED_BOUY]    = {0xff, 0x00, 0x00 },
-    [GREEN_BOUY]  = {0x00, 0xff, 0x00 },
+    [YELLOW_BOUY]  = {0xff, 0xff, 0x00 },
+    [RED_BOUY]     = {0xff, 0x00, 0x00 },
+    [GREEN_BOUY]   = {0x00, 0xff, 0x00 },
+    [SUNSPOT_BOUY] = {0xff, 0xff, 0xff },
 
     // Numbers from about as far away as it can see, taken from Jeff's pool on
     // a very good visibility day.
@@ -125,6 +127,7 @@ static RGBPixel bouy_colors[] = {    //holds the three colors of the bouys
     //[GREEN_BOUY]  = {0x96, 0xBB, 0xC4 },
 
 };
+
 
 // State Variables for BOUY - First Approach sub routine
 static int approach_counter = 0;  //counts how many frames we've seen any blob
@@ -258,10 +261,10 @@ struct mission_output mission_bouy_step (struct mission_output result)
             }else{
                 //grab angle data to check how far we have turned
                 double current_angle = Var_get("SEA.Yaw");
-                if(fabs(current_angle-starting_angle) < TURNING_THRESHOLD ||
-                    fabs(current_angle-starting_angle) > 360-TURNING_THRESHOLD){
+                if(!(fabs(current_angle-starting_angle) < TURNING_THRESHOLD ||
+                    fabs(current_angle-starting_angle) > 360-TURNING_THRESHOLD)){
                         //We have turned too far
-                        result.yaw *= -1;
+                        //result.yaw *= -1;
                         starting_angle = current_angle;
                 }
             }
@@ -483,7 +486,6 @@ struct mission_output mission_bouy_step (struct mission_output result)
  * We did not get good results from using this.  It may have bugs in it, or it
  * may just be a bad idea.
  */
-int find_closest_blob(int n, RGBPixel colors[], BLOB* blobs[], IplImage* image);
 int find_closest_blob(int n, RGBPixel colors[], BLOB* blobs[], IplImage* image) {
 
     // Gather information about what color blobs we're seeing
@@ -502,44 +504,49 @@ int find_closest_blob(int n, RGBPixel colors[], BLOB* blobs[], IplImage* image) 
     return closest_blob;
 }
 
-int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int target_color);
 int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int target_color) {
 
     int found_bouy = 0;
 
-    IplImage* ipl_out[3];
+    IplImage* ipl_out[4];
     ipl_out[0] = cvCreateImage(cvGetSize (frame), 8, 3);
     ipl_out[1] = cvCreateImage(cvGetSize (frame), 8, 3);
     ipl_out[2] = cvCreateImage(cvGetSize (frame), 8, 3);
+    ipl_out[3] = cvCreateImage(cvGetSize (frame), 8, 3);
 
-    int num_pixels[3];                                                 //color thresholds
+    int num_pixels[4];                                                 //color thresholds
     num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 200, 1); 
     num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 240, 1.2);
     num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 210, 1.5);
+    num_pixels[3] = FindTargetColor(frame, ipl_out[3], &bouy_colors[SUNSPOT_BOUY], 1, 150, 1.5);
 
     // Debugs
     cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
     cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
     cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
+    cvNamedWindow("Sunspot White", CV_WINDOW_AUTOSIZE); 
     cvShowImage("Yellow", ipl_out[0]);
     cvShowImage("Red", ipl_out[1]);
     cvShowImage("Green", ipl_out[2]);
+    cvShowImage("Sunspot White", ipl_out[3]);
 
     //Look for blobs
-    BLOB* blobs[3];
-    int blobs_found[3];
+    BLOB* blobs[4];
+    int blobs_found[4];
     blobs_found[0] = blob(ipl_out[0], &blobs[0], 4, MIN_BLOB_SIZE);
     blobs_found[1] = blob(ipl_out[1], &blobs[1], 4, MIN_BLOB_SIZE);
     blobs_found[2] = blob(ipl_out[2], &blobs[2], 4, MIN_BLOB_SIZE);
+    blobs_found[3] = blob(ipl_out[3], &blobs[3], 4, MIN_BLOB_SIZE);
+
     printf("Blobs found: y=%d r=%d g=%d\n", blobs_found[0], blobs_found[1], blobs_found[2]);
 
-    int seen_blob[3];
-    BLOB* blobs_seen[3];
-    RGBPixel colors_seen[3];
-    int indexes_seen[3];
+    int seen_blob[4];
+    BLOB* blobs_seen[4];
+    RGBPixel colors_seen[4];
+    int indexes_seen[4];
     int num_colors_seen = 0;
     static int max_blob_size = 1000000000;
-    for (int i=0; i<3; i++) {
+    for (int i=0; i<4; i++) {
         //printf("blobs[%d]->area = %ld\n", i, blobs[i]->area);
         if ((blobs_found[i] == 1 || blobs_found[i] == 2) &&
             blobs[i]->area < max_blob_size &&
@@ -582,7 +589,7 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     }
 
     //free resources
-    for (int i=0; i<3; i++) {
+    for (int i=0; i<4; i++) {
         if (i == found_bouy-1) {
             *found_blob = blobs[i];
             *blobs_found_arg = blobs_found[i];
@@ -622,6 +629,9 @@ int bouy_first_approach(struct mission_output* result){
         result->depth_control = DEPTH_RELATIVE;
         printf("FOUND GREEN\n");
         result->depth = found_blob->mid.y * DEPTH_SCALE_FACTOR;
+    } else if (found_bouy == SUNSPOT_BOUY) {
+        printf("FOUND SUNSPOT\n");
+        approach_counter = 0;
     } else {
         approach_counter = 0;
     }
