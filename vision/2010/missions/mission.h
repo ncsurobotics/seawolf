@@ -124,9 +124,14 @@ void mission_align_path_init(IplImage* frame, struct mission_output* results);
 struct mission_output mission_align_path_step(struct mission_output);
 
 /*** Window ***/
-void mission_window_init(IplImage* frame, struct mission_output* result);
+void mission_window_init(struct mission_output* result);
 struct mission_output mission_window_step(struct mission_output);
 
 //internal window functions
 int window_first_approach(struct mission_output*);
+int find_window(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int target_color);
+int window_first_approach(struct mission_output* result);
+void window_lock_on_target_init(void);
+int window_lock_on_target(struct mission_output* result, RGBPixel* color);
+
 #endif

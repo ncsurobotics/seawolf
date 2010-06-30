@@ -11,6 +11,7 @@
 #include <highgui.h>
 
 #include "mission.h"
+#include "util.h"
 
 
 /******* #DEFINES for Window **********/
@@ -34,16 +35,42 @@ static int window_order[] = {
     [YELLOW_WINDOW] = 4
 }; 
 
+static RGBPixel window_colors[] = {
+    [RED_WINDOW] = {0xff, 0x00, 0x00},
+    [BLUE_WINDOW] = {0x00, 0x00, 0x00},
+    [GREEN_WINDOW] = {0x00, 0xff, 0x00},
+    [YELLOW_WINDOW] = {0xff, 0xff, 0x00},
+};
+
 //DEPTH OF THE WINDOW ROWS
 #define TOP_ROW_DEPTH 2
 #define BOTTOM_ROW_DEPTH 3
 
+// Y value for where a blob is found is multiplied by this to get the relative
+// depth heading
+#define DEPTH_SCALE_FACTOR (1.0/200.0)
+
+// Bigger the number, the less we turn
+#define YAW_SCALE_FACTOR 1
+
+// How Long We Must See a Blob Durring Approach
+#define APPROACH_THRESHOLD 2
+
+// How large blobs must be
+#define MIN_BLOB_SIZE 200
+
+// What fraction of the found color has to be taken up by a blob for us to
+// consider it a blob
+#define BLOB_COLOR_FRACTION (3.0/4.0)
 
 //what height to start the robot at
 #define INITIAL_DEPTH 2
 
 //how fast to turn when alligning with a window
 #define TURN_RATE 5
+
+// How Far to Turn When Looking for a Window
+#define TURNING_THRESHOLD 70
 
 //State variables for Window
 #define WINDOW_STATE_FIRST_APPROACH 0
@@ -57,12 +84,18 @@ static Timer* search_timer = NULL; //timer used when searching for path after wi
 static double initial_angle = 0; //tracks what angle we were at approaching the Windows mission
 
 //state variables for first approach
+static int approach_counter = 0;  //counts how many frames we've seen any blob
 static int window_found = 0; //tracks which window we've seen
 
 //state variable for orientation
 static double starting_angle;
 
-void mission_window_init(IplImage* frame, struct mission_output* result)
+//state variables for window_lock_on_target
+static int lock_counter = 0;
+static int tracking_counter = 0;
+static int window_initialized = 0;
+
+void mission_window_init(struct mission_output* result)
 {
 
     window_state = WINDOW_STATE_FIRST_APPROACH;
@@ -76,7 +109,6 @@ void mission_window_init(IplImage* frame, struct mission_output* result)
     initial_angle = Var_get("SEA.Yaw");
 }
 
-
 struct mission_output mission_window_step(struct mission_output result)
 {
 
@@ -87,7 +119,7 @@ struct mission_output mission_window_step(struct mission_output result)
             result.rho = 20;
 
             //scan the image for any of the three bouys
-            //window_found = window_first_approach(&result);
+            window_found = window_first_approach(&result);
 
             // if we see a bouy, move on
             if(window_found){
@@ -141,32 +173,31 @@ struct mission_output mission_window_step(struct mission_output result)
             // frame
 
         case WINDOW_STATE_LOCK_ON_TARGET:
-/*
             //initialize targeting function
             if(window_initialized == 0){
-                bouy_bump_init();
+                window_lock_on_target_init();
             }
 
             //run bump routine until complete
-            if( bouy_bump(&result, &bouy_colors[BOUY_1]) == 1){
-                bouy_state++;
-                bump_initialized = 0;
-                printf("we finished bouy bump 1 \n");
+            if( window_lock_on_target(&result, &window_colors[TARGET_WINDOW]) == 1){
+                window_state++;
+                window_initialized = 0;
+                printf("we finished locking on target ^^\n");
             }else{
                 //grab angle data to check how far we have turned
                 double current_angle = Var_get("SEA.Yaw");
                 if(!(fabs(current_angle-starting_angle) < TURNING_THRESHOLD ||
-                    fabs(current_angle-starting_angle) > 360-TURNING_THRESHOLD)){
-                        //We have turned too far
-                        //result.yaw *= -1;
-                        starting_angle = current_angle;
+                    fabs(current_angle-starting_angle) > 360-TURNING_THRESHOLD))
+                {
+                    //We have turned too far
+                    result.yaw *= -1;
+                    starting_angle = current_angle;
                 }
-            }*/
+            }
             break;
 
         case FIRE_ZE_MISSILES: 
             //do it. do it now. 
-            break;
         
         case WINDOW_STATE_COMPLETE:
             //I guess we are done
@@ -178,4 +209,215 @@ struct mission_output mission_window_step(struct mission_output result)
               
     }
     return result;
+}
+
+int find_window(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int target_color) {
+
+    int found_target = 0;
+
+    IplImage* ipl_out[4];
+    ipl_out[0] = cvCreateImage(cvGetSize (frame), 8, 3);
+    ipl_out[1] = cvCreateImage(cvGetSize (frame), 8, 3);
+    ipl_out[2] = cvCreateImage(cvGetSize (frame), 8, 3);
+    ipl_out[3] = cvCreateImage(cvGetSize (frame), 8, 3);
+
+    int num_pixels[4];                                                 //color thresholds
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &window_colors[YELLOW_WINDOW], 1, 200, 1); 
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &window_colors[RED_WINDOW], 1, 240, 1.2);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &window_colors[GREEN_WINDOW], 1, 210, 1.5);
+    num_pixels[3] = FindTargetColor(frame, ipl_out[3], &window_colors[BLUE_WINDOW], 1, 150, 1.5);
+
+    // Debugs
+    cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
+    cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
+    cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
+    cvNamedWindow("Blue", CV_WINDOW_AUTOSIZE); 
+    cvShowImage("Yellow", ipl_out[0]);
+    cvShowImage("Red", ipl_out[1]);
+    cvShowImage("Green", ipl_out[2]);
+    cvShowImage("Blue", ipl_out[3]);
+
+    //Look for blobs
+    BLOB* blobs[4];
+    int blobs_found[4];
+    blobs_found[0] = blob(ipl_out[0], &blobs[0], 4, MIN_BLOB_SIZE);
+    blobs_found[1] = blob(ipl_out[1], &blobs[1], 4, MIN_BLOB_SIZE);
+    blobs_found[2] = blob(ipl_out[2], &blobs[2], 4, MIN_BLOB_SIZE);
+    blobs_found[3] = blob(ipl_out[3], &blobs[3], 4, MIN_BLOB_SIZE);
+
+    printf("Blobs found: y=%d r=%d g=%d b=%d\n", blobs_found[0], blobs_found[1], blobs_found[2], blobs_found[3]);
+
+    int seen_blob[4];
+    BLOB* blobs_seen[4];
+    RGBPixel colors_seen[4];
+    int indexes_seen[4];
+    int num_colors_seen = 0;
+    static int max_blob_size = 1000000000;
+    for (int i=0; i<4; i++) {
+        //printf("blobs[%d]->area = %ld\n", i, blobs[i]->area);
+        if ((blobs_found[i] == 1 || blobs_found[i] == 2) &&
+            blobs[i]->area < max_blob_size &&
+            ((float)blobs[i]->area) / ((float)num_pixels[i]) > BLOB_COLOR_FRACTION)
+        {
+            //printf("i=%d\n", i);
+            blobs_seen[num_colors_seen] = blobs[i];
+            colors_seen[num_colors_seen] = window_colors[i+1];
+            indexes_seen[num_colors_seen] = i+1;
+            num_colors_seen++;
+            seen_blob[i] = 1;
+        } else {
+            //printf("Blob amount / Filter amount = %f\n", ((float)blobs[i]->area) / ((float)num_pixels[i]));
+            seen_blob[i] = 0;
+        }
+    }
+
+    // Make a decision baised on how many colors we've seen:
+    //  0) We saw nothing
+    //  1) The one color we saw is correct
+    //  2) Choose the color that's closer to it's target
+    //  3) We're getting bad data, assume we saw nothing
+    //printf("Number of bouys seen: %d\n", num_colors_seen);
+    if (num_colors_seen == 1) {
+        found_target = indexes_seen[0];
+    } else if (num_colors_seen == 2) {
+        /*
+        found_bouy = indexes_seen[
+            find_closest_blob(2, colors_seen, blobs_seen, frame)
+        ];
+        */
+        if (blobs_seen[0]->area > blobs_seen[1]->area) {
+            found_target = indexes_seen[0];
+        } else {
+            found_target = indexes_seen[1];
+        }
+    } else if (num_colors_seen == 0 || num_colors_seen == 3) {
+        //we don't see anything
+        found_target = 0;
+    }
+
+    //free resources
+    for (int i=0; i<4; i++) {
+        if (i == found_target-1) {
+            *found_blob = blobs[i];
+            *blobs_found_arg = blobs_found[i];
+        } else {
+            blob_free(blobs[i], blobs_found[i]);
+        }
+        cvReleaseImage(&ipl_out[i]);
+    }
+
+    return found_target;
+}
+
+/*******      First Approach      ***********/
+// Scan Image, if we see a target, return it's color.  Otherwise
+// return zero.
+int window_first_approach(struct mission_output* result){
+
+    //obtain frame
+    IplImage* frame = multicam_get_frame (FORWARD_CAM);
+    result->frame = frame;
+    //frame = normalize_image(frame);
+
+    BLOB* found_blob = NULL;
+    int blobs_found = 0;
+    int found_target= find_window(frame, &found_blob, &blobs_found, 0);
+
+    approach_counter++;
+    if (found_target == YELLOW_WINDOW) {
+        result->depth_control = DEPTH_RELATIVE;
+        result->depth = found_blob->mid.y * DEPTH_SCALE_FACTOR;
+        printf("FOUND YELLOW\n");
+    } else if (found_target == RED_WINDOW) {
+        result->depth_control = DEPTH_RELATIVE;
+        result->depth = found_blob->mid.y * DEPTH_SCALE_FACTOR;
+        printf("FOUND RED\n");
+    } else if (found_target == GREEN_WINDOW) {
+        result->depth_control = DEPTH_RELATIVE;
+        printf("FOUND GREEN\n");
+        result->depth = found_blob->mid.y * DEPTH_SCALE_FACTOR;
+    } else if (found_target == BLUE_WINDOW) {
+        printf("FOUND BLUE\n");
+        approach_counter = 0;
+    } else {
+        approach_counter = 0;
+    }
+
+    //if we've seen a blob for longer than a threshold, finish
+    printf("approch_counter=%d\n", approach_counter);
+    if(approach_counter <= APPROACH_THRESHOLD){
+        //we haven't seen the blob long enough, keep trying
+        found_target = 0;
+    }
+
+    if (found_blob != NULL) {
+        blob_free(found_blob, blobs_found);
+    }
+
+    return found_target;
+
+}
+
+/******* Window lock on target ********/
+void window_lock_on_target_init(void) {
+    lock_counter = 0;
+    tracking_counter = 0;
+    window_initialized = 1;
+}
+
+int window_lock_on_target(struct mission_output* result, RGBPixel* color) {
+    IplImage* frame = multicam_get_frame(FORWARD_CAM);
+    result->frame = frame;
+    int frame_width = frame->width;
+    int frame_height = frame->height;
+    int target_locked = 0;
+
+    BLOB* found_blob = NULL;
+    int blobs_found = 0;
+    int found_target= find_window(frame, &found_blob, &blobs_found, 0);
+
+    // If we saw the wrong color, ignore it
+    if (window_colors[found_target].r != color->r ||
+        window_colors[found_target].g != color->g ||
+        window_colors[found_target].b != color->b
+    ) {
+        blobs_found = 0;
+    }
+
+    if (blobs_found == 0) {
+        // Keep turning, we didn't see anything
+        tracking_counter = 0;
+    } else if (++tracking_counter) {
+
+        // Set thruster values to track
+        printf("setting yaw to chase a blob\n");
+        CvPoint heading = found_blob[0].mid;
+        result->yaw = heading.x;
+        result->depth = heading.y;
+        cvCircle(result->frame, cvPoint(result->yaw, result->depth), 5, cvScalar(0,0,0,255),1,8,0);
+        //adjust to put the origin in the center of the frame
+        result->yaw = result->yaw - frame_width / 2;
+        result->depth = result->depth - frame_height / 2;
+        result->depth *= DEPTH_SCALE_FACTOR; // Scaling factor
+        //subjectively scale output !!!!!!!
+        result->yaw = result->yaw / YAW_SCALE_FACTOR; // Scale Output
+
+        //Convert Pixels to Degrees
+        result->yaw = PixToDeg(result->yaw);
+
+       // See if we've centered
+
+       // If we've centered for long enough... huzzah!!!
+
+    } else {
+        // We saw something but not long enough to be sure
+    }
+
+    //RELEASE THINGS
+    if (found_blob != NULL) {
+        blob_free (found_blob, blobs_found);
+    }
+
+    return target_locked;
+
 }

@@ -188,7 +188,7 @@ void mission_init(int current_mission, struct mission_output* results)
         break;
 
         case MISSION_WINDOW:
-            //TODO
+            mission_window_init(results);
         break;
 
         case MISSION_WEAPONS_RUN:
@@ -243,7 +243,7 @@ struct mission_output* mission_step(struct mission_output* results, int mission)
         break;
 
         case MISSION_WINDOW:
-            //TODO
+            *results = mission_window_step(*results);
         break;
 
         case MISSION_WEAPONS_RUN:

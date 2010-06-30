@@ -88,7 +88,7 @@ static int bouy_depth[] = {
 #define TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP 70
 
 // How many frames we need to see an orangle blob to think we've seen the path
-#define SEEN_PATH_THRESHOLD 3 
+#define SEEN_PATH_THRESHOLD 3
 
 // Bigger the number, the less we turn
 #define YAW_SCALE_FACTOR 1
@@ -133,7 +133,7 @@ static RGBPixel bouy_colors[] = {    //holds the three colors of the bouys
 static int approach_counter = 0;  //counts how many frames we've seen any blob
 
 // State Variables for BOUY - First Orientation sub routine
-static double starting_angle; 
+static double starting_angle;
 
 // State variables for BOUY - Bump Bouy Sub Routine
 static int lost_blob = 0;         //how long it's been since we lost the blob
@@ -264,7 +264,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
                 if(!(fabs(current_angle-starting_angle) < TURNING_THRESHOLD ||
                     fabs(current_angle-starting_angle) > 360-TURNING_THRESHOLD)){
                         //We have turned too far
-                        //result.yaw *= -1;
+                        result.yaw *= -1;
                         starting_angle = current_angle;
                 }
             }
@@ -272,7 +272,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
 
         case BOUY_STATE_FIRST_BACKING_UP:
 
-            //set our depth to the second bouy 
+            //set our depth to the second bouy
             result.depth_control = DEPTH_ABSOLUTE;
             result.depth = bouy_depth[BOUY_2];
 
@@ -405,14 +405,14 @@ struct mission_output mission_bouy_step (struct mission_output result)
         case BOUY_STATE_SEARCHING_FOR_PATH:
             //perform a search patter to begin looking for the path
 
-            result.yaw_control = ROT_MODE_ANGULAR; 
+            result.yaw_control = ROT_MODE_ANGULAR;
 
             if(search_pattern_turning == 0){
                 printf("going forward in search\n");
                 if( search_timer == NULL){
                     //start a timer
                     search_timer = Timer_new();
-                } else if(Timer_getTotal(search_timer) > SEARCH_PATTERN_TIME || 
+                } else if(Timer_getTotal(search_timer) > SEARCH_PATTERN_TIME ||
                           (Timer_getTotal(search_timer) > SEARCH_PATTERN_TIME/2 && bouy_order[BOUY_2] == 2 && first_search_leg ==1) ){
                     //we've been driving long enough
                     Timer_destroy(search_timer);
@@ -420,12 +420,12 @@ struct mission_output mission_bouy_step (struct mission_output result)
                     first_search_leg = 0;
                     search_pattern_turning = 1;
                 } else {
-                    //go forward 
+                    //go forward
                     result.rho = 10;
                 }
             }else if (search_pattern_turning == 1){
                 //initiate turn
-                result.yaw = (int)(initial_angle + 70 * search_direction+180)%360-180; 
+                result.yaw = (int)(initial_angle + 70 * search_direction+180)%360-180;
                 search_direction *= -1;
                 search_pattern_turning = 2;
             }else{
@@ -441,16 +441,16 @@ struct mission_output mission_bouy_step (struct mission_output result)
                     search_pattern_turning = 0;
                 }
             }
-            
+
             //Check the Down Cam for an Orange Blob (the path)
             IplImage* frame = multicam_get_frame (DOWN_CAM);
             result.frame = frame;
             //frame = normalize_image(frame);
-            
+
             IplImage* ipl_out = cvCreateImage(cvGetSize (frame), 8, 3);
             int num_pixels = FindTargetColor(frame, ipl_out, &PathColor , 1, 110, 1.5);
 
-            BLOB* path_blob; 
+            BLOB* path_blob;
             int blobs_found = blob(ipl_out, &path_blob, 4, MIN_BLOB_SIZE);
 
             if((blobs_found == 1 || blobs_found == 2) &&
@@ -459,7 +459,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
                     bouy_state++;
                 }
             }
-            
+
             //free blob resources
             blob_free (path_blob, blobs_found);
             cvReleaseImage (&ipl_out);
@@ -515,7 +515,7 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     ipl_out[3] = cvCreateImage(cvGetSize (frame), 8, 3);
 
     int num_pixels[4];                                                 //color thresholds
-    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 200, 1); 
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 200, 1);
     num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 240, 1.2);
     num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 210, 1.5);
     num_pixels[3] = FindTargetColor(frame, ipl_out[3], &bouy_colors[SUNSPOT_BOUY], 1, 150, 1.5);
@@ -524,7 +524,7 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
     cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
     cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("Sunspot White", CV_WINDOW_AUTOSIZE); 
+    cvNamedWindow("Sunspot White", CV_WINDOW_AUTOSIZE);
     cvShowImage("Yellow", ipl_out[0]);
     cvShowImage("Red", ipl_out[1]);
     cvShowImage("Green", ipl_out[2]);
@@ -792,7 +792,7 @@ int bouy_bump(struct mission_output* result, RGBPixel* color){
 //   if (bouy_timer != NULL &&
 //        Timer_getTotal(bouy_timer) >= BOUY_BUMP_TIMER)
 //    {
-///            result->yaw = 0;
+//            result->yaw = 0;
 //            result->depth = 0;
 //            result->rho = 0;
 //            bump_complete = 1;
