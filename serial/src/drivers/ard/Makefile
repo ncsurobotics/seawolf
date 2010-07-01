@@ -1,5 +1,5 @@
 
-DRIVERS=depth.c status.c thruster12-bin.c thruster3-bin.c thruster45-bin.c
+DRIVERS=depth.c status.c thruster12-bin.c thruster3-bin.c thruster45-bin.c thruster_board.c
 
 DEPS=ard.c
 OBJECTS=$(DRIVERS:%.c=%.o) $(DEPS:%.c=%.o)
