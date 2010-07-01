@@ -234,7 +234,7 @@ int find_window(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int ta
     num_pixels[0] = FindTargetColor(frame, ipl_out[0], &window_colors[YELLOW_WINDOW], 1, 230, 1); 
     num_pixels[1] = FindTargetColor(frame, ipl_out[1], &window_colors[RED_WINDOW], 1, 340, 1);
     num_pixels[2] = FindTargetColor(frame, ipl_out[2], &window_colors[GREEN_WINDOW], 1, 300, 1);
-    num_pixels[3] = FindTargetColor(frame, ipl_out[3], &window_colors[BLUE_WINDOW], 1, 410, 2);
+    num_pixels[3] = FindTargetColor(frame, ipl_out[3], &window_colors[BLUE_WINDOW], 1, 150, 1);
 
     // Debugs
     cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);

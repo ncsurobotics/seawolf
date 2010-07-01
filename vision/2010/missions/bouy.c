@@ -525,6 +525,10 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
     cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
     cvNamedWindow("Sunspot White", CV_WINDOW_AUTOSIZE);
+    cvMoveWindow("Yellow",0,150);
+    cvMoveWindow("Red",300,150);
+    cvMoveWindow("Green",600,150);
+    cvMoveWindow("Sunspot White",900,150);
     cvShowImage("Yellow", ipl_out[0]);
     cvShowImage("Red", ipl_out[1]);
     cvShowImage("Green", ipl_out[2]);
