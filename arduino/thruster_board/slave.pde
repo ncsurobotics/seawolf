@@ -44,7 +44,7 @@ void setup(void) {
  
     /* Start I2C */
     Wire.begin(SLAVE);
-    Wire.onRequest(set_thrusters);
+    Wire.onReceive(set_thrusters);
 }
 
 void set_thrusters(int _n) {
