@@ -19,7 +19,7 @@
 
 #define GET_BIT(v, b) ((v) >> (b)) & 1)
 
-unsigned int data[2];
+unsigned byte data[2];
 unsigned int thruster_id, dir, value;
 
 void set_thrusters(int _n);
