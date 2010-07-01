@@ -54,7 +54,7 @@ static RGBPixel window_colors[] = {
 #define YAW_SCALE_FACTOR 5
 
 // How Long We Must See a Blob Durring Approach
-#define APPROACH_THRESHOLD 200 /* XXX */
+#define APPROACH_THRESHOLD 2
 
 // How Long we must see a blob durring Lock on Target to think it's not noise
 #define TRACKING_THRESHOLD 2
@@ -74,6 +74,12 @@ static RGBPixel window_colors[] = {
 
 // How Far to Turn When Looking for a Window
 #define TURNING_THRESHOLD 70
+
+// How Fast to approach a window when locking onto it
+#define TRACKING_SPEED 10
+
+// How much of the frame a window must fill (horizontally) to be considered close enough to fire
+#define WINDOW_SCREEN_FRACTION 0.8
 
 //State variables for Window
 #define WINDOW_STATE_FIRST_APPROACH 0
@@ -403,9 +409,18 @@ int window_lock_on_target(struct mission_output* result, RGBPixel* color) {
         //Convert Pixels to Degrees
         result->yaw = PixToDeg(result->yaw);
 
-       // See if we've centered
+        //Check the size of the blob, and move forward (slowly) if neccessary
+        if((float)(found_blob[0].right - found_blob[0].left)/frame_width > WINDOW_SCREEN_FRACTION){
+            //we are close enough, stop the robot.
+            result->rho = 0;
+        }else{
+            //we should move forward slowly
+            result->rho = TRACKING_SPEED;
+        }
 
-       // If we've centered for long enough... huzzah!!!
+        // See if we've centered
+
+        // If we've centered for long enough... huzzah!!!
 
     } else {
         // We saw something but not long enough to be sure
