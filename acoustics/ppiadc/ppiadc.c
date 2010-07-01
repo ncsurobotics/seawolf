@@ -119,7 +119,9 @@ static irqreturn_t buffer_full_handler(int irq, void* data) {
     current_buffer_index = (current_buffer_index + 1) % BUFFER_COUNT;
     complete(&buffer_ready);
 
+#ifdef PPIADC_DEBUG
     printk(KERN_INFO DRIVER_NAME ": 0x%08lX 0x%04X\n", current_buffer_pointer, ((unsigned short*) current_buffer_pointer)[0]);
+#endif
     
     clear_dma_irqstat(CH_PPI);
     return IRQ_HANDLED;
@@ -174,10 +176,12 @@ static ssize_t ppi_chr_write(struct file* filp, const char __user* buffer, size_
     uint8_t opcode = 0;
 
     if(count != 1) {
+        printk(KERN_WARNING DRIVER_NAME ": Invalid size on write\n");
         return -EINVAL;
     }
 
     if(copy_from_user(&opcode, buffer, count)) {
+        printk(KERN_WARNING DRIVER_NAME ": Could not copy from user buffer\n");
         return -EFAULT;
     }
 
@@ -187,6 +191,7 @@ static ssize_t ppi_chr_write(struct file* filp, const char __user* buffer, size_
         INIT_COMPLETION(buffer_ready);
         break;
     default:
+        printk(KERN_WARNING DRIVER_NAME ": invalid opcode %d\n", opcode);
         return -EINVAL;
     }
 
