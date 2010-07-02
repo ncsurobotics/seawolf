@@ -49,8 +49,8 @@ void setup(void) {
 
 void set_thrusters(int _n) {
     /* Read command bytes */
-    data[0] = Serial.read();
-    data[1] = Serial.read();
+    data[0] = Wire.read();
+    data[1] = Wire.read();
     
     thruster_id = data[0];
     dir = GET_BIT(data[1], 6);
