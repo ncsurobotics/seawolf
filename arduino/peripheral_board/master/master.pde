@@ -64,10 +64,10 @@ void loop() {
                     last_rfid = millis();
                     check = 0;
                     
-                    data[0] = 0x01;
+                    wire_data[0] = 0x01;
                     
                     Wire.beginTransmission(SLAVE);
-                    Wire.send(data[0]);
+                    Wire.send(wire_data[0]);
                     Wire.endTransmission();
                 }                    
             } else {
@@ -81,12 +81,12 @@ void loop() {
         last_depth = millis();
         depth = analogRead(DEPTH_PIN);
 
-        data[0] = 0x02;
-        data[1] = depth / 256; /* High bit */
-        data[2] = depth % 256; /* Low bit */
+        wire_data[0] = 0x02;
+        wire_data[1] = depth / 256; /* High bit */
+        wire_data[2] = depth % 256; /* Low bit */
 
         Wire.beginTransmission(SLAVE);
-        Wire.send(data, 3);
+        Wire.send(wire_data, 3);
         Wire.endTransmission();
     }
 }

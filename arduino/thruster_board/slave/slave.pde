@@ -17,9 +17,9 @@
 #define STAR_Y 3
 #define AFT    4
 
-#define GET_BIT(v, b) ((v) >> (b)) & 1)
+#define GET_BIT(v, b) (((v) >> (b)) & 1)
 
-unsigned byte data[2];
+byte data[2];
 unsigned int thruster_id, dir, value;
 
 void set_thrusters(int _n);
@@ -49,8 +49,8 @@ void setup(void) {
 
 void set_thrusters(int _n) {
     /* Read command bytes */
-    data[0] = Wire.read();
-    data[1] = Wire.read();
+    data[0] = Wire.receive();
+    data[1] = Wire.receive();
     
     thruster_id = data[0];
     dir = GET_BIT(data[1], 6);

@@ -27,9 +27,9 @@
 #define STAR_Y 3
 #define AFT    4
 
-#define GET_BIT(v, b) ((v) >> (b)) & 1)
+#define GET_BIT(v, b) (((v) >> (b)) & 1)
 
-unsigned byte data[2];
+byte data[2];
 unsigned int thruster_id, dir, value;
 
 void setup(void) {
@@ -91,7 +91,7 @@ void loop() {
         digitalWrite(DIRECTION1, dir);
         break;
 
-    case STAR_Y:
+    case STAR_X:
         analogWrite(PWM2, value);
         digitalWrite(DIRECTION2, dir);
         break;
