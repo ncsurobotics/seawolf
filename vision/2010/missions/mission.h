@@ -109,9 +109,10 @@ void mission_bouy_init(IplImage* frame, struct mission_output*);
 struct mission_output mission_bouy_step(struct mission_output);
 
 //internal bouy functions
+void bouy_first_approach_init(void);
 int bouy_first_approach(struct mission_output*);
 void bouy_bump_init(void);
-int bouy_bump(struct mission_output* result, RGBPixel* color);
+int bouy_bump(struct mission_output* result, int target_color);
 int find_closest_blob(int n, RGBPixel colors[], BLOB* blobs[], IplImage* image);
 int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int target_color);
 
