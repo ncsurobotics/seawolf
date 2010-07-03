@@ -27,7 +27,7 @@ static int get_thruster_number(const char* name) {
         return PORT_Y;
     } else if(strcmp(name, "StarY") == 0) {
         return STAR_Y;
-    } else if(strcmp(name, "AFT") == 0) {
+    } else if(strcmp(name, "Aft") == 0) {
         return AFT;
     }
 
@@ -35,16 +35,19 @@ static int get_thruster_number(const char* name) {
 }
 
 void manage(SerialPort sp) {
+    char varname[32];
+    unsigned char data[2];
+    float value;
+
+    /* Set blocking */
+    Serial_setBlocking(sp);
+
     /* Receive all thruster update notifications */
     Notify_filter(FILTER_MATCH, "UPDATED PortX");
     Notify_filter(FILTER_MATCH, "UPDATED StarX");
     Notify_filter(FILTER_MATCH, "UPDATED PortY");
     Notify_filter(FILTER_MATCH, "UPDATED StarY");
     Notify_filter(FILTER_MATCH, "UPDATED Aft");
-
-    char varname[32];
-    unsigned char data[2];
-    float value;
 
     /* Main loop */
     while(true) {

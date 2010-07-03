@@ -18,6 +18,7 @@ typedef enum{PT_UNMANAGED,
              PT_THRUSTER3,
              PT_THRUSTER45,
              PT_THRUSTER_BOARD,
+             PT_PERIPH_BOARD,
              PT_MISSIONSTATUS} PeripheralType;
 
 struct comm_device {
@@ -46,12 +47,10 @@ static void cycleDTR(SerialPort sp) {
     ioctl(sp, TIOCMSET, &copy);
 
     /* Sleep */
-    Util_usleep(0.5);
+    Util_usleep(1.0);
 
     /* Unassert DTR */
-    copy = base;
-    copy &= ~TIOCM_DTR;
-    ioctl(sp, TIOCMSET, &copy);
+    ioctl(sp, TIOCMSET, &base);
 }
 
 static int getPeripheralType(SerialPort sp) {
@@ -119,6 +118,8 @@ static int getPeripheralType(SerialPort sp) {
                 return PT_THRUSTER45;
             } else if(strcmp(id, "ThrusterBoard") == 0) {
                 return PT_THRUSTER_BOARD;
+            } else if(strcmp(id, "PeriphBoard") == 0) {
+                return PT_PERIPH_BOARD;
             } else if(strcmp(id, "MissionStatus") == 0) {
                 return PT_MISSIONSTATUS;
             } else {
@@ -157,14 +158,15 @@ int main(void) {
     const int device_count = sizeof(device_pool) / sizeof(struct comm_device);
 
     /* App to executable mappings */
-    struct comm_assignment app_pool[] = {[PT_DEPTH]          = {"./bin/depth",          false},
-                                         [PT_THRUSTER12]     = {"./bin/thruster12-bin", false},
-                                         [PT_THRUSTER3]      = {"./bin/thruster3-bin",  false},
-                                         [PT_THRUSTER45]     = {"./bin/thruster45-bin", false},
-                                         [PT_THRUSTER_BOARD] = {"./bin/thruster_board", false},
-                                         [PT_ALTIMETER]      = {"./bin/altimeter",      false},
-                                         [PT_IMU]            = {"./bin/imu",            false},
-                                         [PT_MISSIONSTATUS]  = {"./bin/status",         false}};
+    struct comm_assignment app_pool[] = {[PT_DEPTH]          = {"./bin/depth",            false},
+                                         [PT_THRUSTER12]     = {"./bin/thruster12-bin",   false},
+                                         [PT_THRUSTER3]      = {"./bin/thruster3-bin",    false},
+                                         [PT_THRUSTER45]     = {"./bin/thruster45-bin",   false},
+                                         [PT_THRUSTER_BOARD] = {"./bin/thruster_board",   false},
+                                         [PT_PERIPH_BOARD]   = {"./bin/peripheral_board", false},
+                                         [PT_ALTIMETER]      = {"./bin/altimeter",        false},
+                                         [PT_IMU]            = {"./bin/imu",              false},
+                                         [PT_MISSIONSTATUS]  = {"./bin/status",           false}};
     const int app_count = sizeof(app_pool) / sizeof(struct comm_assignment);
 
     int i = 0;
@@ -177,8 +179,8 @@ int main(void) {
         device_pool[i].sp = Serial_open(device_pool[i].device);
         if(device_pool[i].sp != -1) {
             Logging_log(DEBUG, Util_format("Opening %s", device_pool[i].device));
+            Serial_setBlocking(device_pool[i].sp);
         } else {
-            //Logging_log(DEBUG, Util_format("Could not open %s - ignoring", device_pool[i].device));
             unassigned_ports--;
         }
     }
