@@ -27,28 +27,10 @@ clean:
 	fi;
 
 bundle: $(BIN_DIR)/$(BIN_NAME)
-	@if [ -d acoustics ]; then \
-	  echo "The acoustics directory already exists. I need that as a temporary directory"; \
-	else \
-	  echo -n "Generating bundle..."; \
-	  mkdir acoustics; \
-	  mkdir acoustics/coefs; \
-	  cp $(BIN_DIR)/$(BIN_NAME) $(PWD)/../../libseawolf/libseawolf-bfin.so acoustics/; \
-	  echo "Comm_server = 10.17.0.2" > acoustics/seawolf.conf; \
-	  echo "Comm_password = " >> acoustics/seawolf.conf; \
-	  echo "#!/bin/sh" > acoustics/update; \
-	  echo "cd .. && wget http://10.17.0.2:8080/acoustics.tar -O - | tar -xf - && cd acoustics" >> acoustics/update; \
-	  chmod +x acoustics/update; \
-	  for _f in $(PWD)/../fir_coef/*.fcf; do \
-	    python $(PWD)/../fir_coef/convert.py < $$_f > acoustics/coefs/`basename $$_f .fcf`.cof; \
-	  done; \
-	  tar -cf acoustics_bundle.tar acoustics; \
-	  rm -rf acoustics; \
-	  echo "done."; \
-	fi;
+	@./bundle.sh
 
 bundle_push:
-	scp acoustics_bundle.tar seawolf@10.17.0.2:acoustics_bundle/acoustics.tar
+	scp acoustics.tar seawolf@10.17.0.2:acoustics_bundle/acoustics.tar
 
 $(BIN_DIR)/$(BIN_NAME): $(BIN_DIR) $(SRCS) $(INCLUDES)
 	$(CC) $(CFLAGS) -o $(BIN_DIR)/$(BIN_NAME) $(SRCS) $(LDFLAGS)

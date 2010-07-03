@@ -357,7 +357,7 @@ int main(int argc, char** argv) {
     }
 
     /* Open driver connection */
-    driver_f = open("/dev/ppiadc", O_RDONLY);
+    driver_f = open("/dev/ppiadc", O_RDWR);
     if(driver_f < 0) {
         perror("Could not open character device to communicate with PPI/ADC driver");
         fprintf(stderr, "Make sure the module is loaded and that the device node has been created at /dev/ppiadc\n");
