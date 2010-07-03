@@ -1,8 +1,8 @@
 
 #include <Wire.h>
 
-/* 1 is for starboard/port y slave, 2 is for aft slave */
-#define SLAVE 1
+/* 0x10 is for starboard/port y slave, 0x20 is for aft slave */
+#define SLAVE 0x10
 
 #define PWM1 9
 #define PWM2 10
@@ -51,7 +51,7 @@ void set_thrusters(int _n) {
     /* Read command bytes */
     data[0] = Wire.receive();
     data[1] = Wire.receive();
-    
+
     thruster_id = data[0];
     dir = GET_BIT(data[1], 6);
     value = (data[1] & 0x3F) * 4; /* This was 8 in the old code, not sure why
@@ -60,25 +60,26 @@ void set_thrusters(int _n) {
 
     /* Set local thruster values or forward request over I2C */
     switch(thruster_id) {
-#if SLAVE == 1
-    case STAR_Y:
+#if SLAVE == 0x10
+    case PORT_Y:
         analogWrite(PWM1, value);
         digitalWrite(DIRECTION1, dir);
         break;
 
-    case PORT_Y:
+    case STAR_Y:
         analogWrite(PWM2, value);
         digitalWrite(DIRECTION2, dir);
         break;
 #endif
 
-#if SLAVE == 2
+#if SLAVE == 0x20
     case AFT:
         analogWrite(PWM1, value);
         digitalWrite(DIRECTION1, dir);
         break;
 #endif
     }
+
     
 }
 

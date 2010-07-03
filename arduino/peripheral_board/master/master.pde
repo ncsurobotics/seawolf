@@ -65,9 +65,11 @@ void loop() {
                     check = 0;
                     
                     wire_data[0] = 0x01;
+                    wire_data[1] = 0x00;
+                    wire_data[2] = 0x00;
                     
                     Wire.beginTransmission(SLAVE);
-                    Wire.send(wire_data[0]);
+                    Wire.send(wire_data, 3);
                     Wire.endTransmission();
                 }                    
             } else {

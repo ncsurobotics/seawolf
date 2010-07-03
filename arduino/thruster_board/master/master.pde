@@ -17,8 +17,8 @@
 #define DIRECTION2 12
 
 /* I2C slaves */
-#define SLAVE_1 1
-#define SLAVE_2 2
+#define SLAVE_1 0x10
+#define SLAVE_2 0x20
 
 /* Thrusters */
 #define PORT_X 0
@@ -53,6 +53,7 @@ void setup(void) {
     /* Start communication */
     Serial.begin(9600);
     handshakeSerial();
+    Serial.flush();
 
     /* Start I2C */
     Wire.begin();
@@ -66,14 +67,14 @@ void loop() {
 
     /* Read command bytes */
     data[0] = Serial.read();
-    data[1] = Serial.read();
 
     /* Invalid command byte order, flush serial buffers and continue */
     if(GET_BIT(data[0], 7)) {
-        Serial.flush();
         return;
     }
     
+    data[1] = Serial.read();
+        
     thruster_id = data[0];
     if(thruster_id == 0 || thruster_id == 1) {
 
