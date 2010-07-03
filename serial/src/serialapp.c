@@ -6,10 +6,8 @@
 #include <string.h>
 #include <stropts.h>
 #include <unistd.h>
-#include <termios.h>
-#include <asm/ioctls.h>
-#include <sys/ioctl.h>
 
+/* Device types */
 typedef enum{PT_UNMANAGED,
              PT_IMU,
              PT_DEPTH,
@@ -20,42 +18,28 @@ typedef enum{PT_UNMANAGED,
              PT_PERIPH_BOARD,
              PT_MISSIONSTATUS} PeripheralType;
 
+/* Represents and open serial port */
 struct comm_device {
     const char* device;
     SerialPort sp;
     PeripheralType peripheral_type;
 };
 
+/* Represents a driver */
 struct comm_assignment {
     const char* bin;
     bool started;
 };
 
+/* Cycle the DTR line on the given serial port */
 static void cycleDTR(SerialPort sp) {
-    /* Do NOT change this. It is *critical* and I don't know how the fuck it works. */
-    unsigned int base, copy;
-
-    Logging_log(DEBUG, "Cycling DTR");
-    
-    /* Copy out ioctl settings */
-    ioctl(sp, TIOCMGET, &base);
-
-    /* Assert DTR */
-    copy = base;
-    copy |= TIOCM_DTR;
-    ioctl(sp, TIOCMSET, &copy);
-
-    /* Sleep */
+    Serial_setDTR(sp, 1);
     Util_usleep(1.0);
-
-    /* Unassert DTR */
-    ioctl(sp, TIOCMSET, &base);
+    Serial_setDTR(sp, 0);
 }
 
 static int getPeripheralType(SerialPort sp) {
-    char buffer[64];
     char id[32];
-    char* c;
     int n;
 
     /* Set to IMU's baud rate */
