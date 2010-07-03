@@ -8,6 +8,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <termios.h>
+#include <asm/ioctls.h>
+#include <sys/ioctl.h>
 
 /** True if the serial component has been initialized */
 static bool initialized = false;
@@ -443,6 +445,31 @@ int Serial_send(SerialPort sp, void* buffer, size_t count) {
     }
 
     return 1;
+}
+
+/**
+ * \brief Control the DTR line
+ *
+ * Set the DTR line on the given serial port
+ *
+ * \param sp Handler for the devices to toggle DTR on
+ * \param value 0 to clear DTR. 1 to assert
+ */
+void Serial_setDTR(SerialPort sp, int value) {
+    unsigned int base;
+
+    /* Copy out ioctl settings */
+    ioctl(sp, TIOCMGET, &base);
+
+    if(value) {
+        /* Assert DTR */
+        base |= TIOCM_DTR;
+    } else {
+        /* Clear DTR */
+        base &= ~TIOCM_DTR;
+    }
+    
+    ioctl(sp, TIOCMSET, &base);
 }
 
 /**
