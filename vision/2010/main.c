@@ -73,6 +73,9 @@ int main(int argc, char** argv)
     results.frame = multicam_get_frame(FORWARD_CAM);
     mission_init(mission_order[mission_index], &results);
 
+    Var_set("ReferenceAngle", Var_get("SEA.Yaw"));
+    printf("Setting reference angle to: %f\n", Var_get("SEA.Yaw"));
+
     for (unsigned int frame_num=0; true; frame_num++)
     {
 
