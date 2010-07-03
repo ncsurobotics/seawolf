@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define DEPTH_ZERO (0.57)
+
 void manage(SerialPort sp);
 
 const char* app_name = "Serial : Depth";
@@ -22,7 +24,8 @@ void manage(SerialPort sp) {
             printf("Error reading serial!\n");
             Util_usleep(0.2);
         } else {
-            depth = atof(buffer);
+            depth = atof(buffer)-DEPTH_ZERO;
+            if (depth <= 0.0) depth=0.0;
             Var_set("Depth", depth);
         }
     }
