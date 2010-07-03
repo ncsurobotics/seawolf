@@ -5,11 +5,11 @@
 
 #include "seawolf.h"
 
+#include <asm/ioctls.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <termios.h>
-#include <asm/ioctls.h>
 #include <sys/ioctl.h>
+#include <termios.h>
 
 /** True if the serial component has been initialized */
 static bool initialized = false;
@@ -470,6 +470,24 @@ void Serial_setDTR(SerialPort sp, int value) {
     }
     
     ioctl(sp, TIOCMSET, &base);
+}
+
+/**
+ * \brief Checks for data
+ *
+ * Returns the number of bytes available in the serial buffer
+ *
+ * \param sp Handler for the device to check
+ * \return The number of bytes available to be read or -1 if an error occured
+ */
+int Serial_available(SerialPort sp) {
+    int available;
+
+    if(ioctl(sp, FIONREAD, &available)) {
+        return -1;
+    }
+
+    return available;
 }
 
 /**

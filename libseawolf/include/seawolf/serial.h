@@ -37,5 +37,6 @@ int Serial_sendByte(SerialPort sp, unsigned char b);
 int Serial_send(SerialPort sp, void* buffer, size_t count);
 
 void Serial_setDTR(SerialPort sp, int value);
+int Serial_available(SerialPort sp);
 
 #endif // #ifndef __SEAWOLF_SERIAL_INCLUDE_H
