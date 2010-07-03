@@ -12,7 +12,6 @@
 
 typedef enum{PT_UNMANAGED,
              PT_IMU,
-             PT_ALTIMETER,
              PT_DEPTH,
              PT_THRUSTER12,
              PT_THRUSTER3,
@@ -91,37 +90,26 @@ static int getPeripheralType(SerialPort sp) {
         Util_usleep(0.5);
     }
     
-    /* Attempt altimeter */
-    Serial_setBaud(sp, 4800);
-    n = Serial_get(sp, buffer, 63);
-    
-    if(n > 0) {
-        buffer[n] = 0;
-        if(((c = strchr(buffer, '$')) != NULL) && (c[1] == 'S' || c[1] == 'Y')) {
-            return PT_ALTIMETER;
-        }
-    }
-    
     /* Fallback to Arduino, get ID */
     Serial_setBaud(sp, 9600);
     cycleDTR(sp);
 
     for(int i = 0; i < 3; i++) {
         if(ArdComm_getId(sp, id) != -1) {
-            if(strcmp(id, "PressureSensor") == 0) {
-                return PT_DEPTH;
+            if(strcmp(id, "ThrusterBoard") == 0) {
+                return PT_THRUSTER_BOARD;
+            } else if(strcmp(id, "PeriphBoard") == 0) {
+                return PT_PERIPH_BOARD;
             } else if(strcmp(id, "Thruster12") == 0) {
                 return PT_THRUSTER12;
             } else if(strcmp(id, "Thruster3") == 0) {
                 return PT_THRUSTER3;
             } else if(strcmp(id, "Thruster45") == 0) {
                 return PT_THRUSTER45;
-            } else if(strcmp(id, "ThrusterBoard") == 0) {
-                return PT_THRUSTER_BOARD;
-            } else if(strcmp(id, "PeriphBoard") == 0) {
-                return PT_PERIPH_BOARD;
             } else if(strcmp(id, "MissionStatus") == 0) {
                 return PT_MISSIONSTATUS;
+            } else if(strcmp(id, "PressureSensor") == 0) {
+                return PT_DEPTH;
             } else {
                 Logging_log(ERROR, Util_format("Received unknown ID '%s'", id));
             }
@@ -164,7 +152,6 @@ int main(void) {
                                          [PT_THRUSTER45]     = {"./bin/thruster45-bin",   false},
                                          [PT_THRUSTER_BOARD] = {"./bin/thruster_board",   false},
                                          [PT_PERIPH_BOARD]   = {"./bin/peripheral_board", false},
-                                         [PT_ALTIMETER]      = {"./bin/altimeter",        false},
                                          [PT_IMU]            = {"./bin/imu",              false},
                                          [PT_MISSIONSTATUS]  = {"./bin/status",           false}};
     const int app_count = sizeof(app_pool) / sizeof(struct comm_assignment);
