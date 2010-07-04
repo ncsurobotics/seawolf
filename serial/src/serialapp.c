@@ -33,9 +33,10 @@ struct comm_assignment {
 
 /* Cycle the DTR line on the given serial port */
 static void cycleDTR(SerialPort sp) {
-    Serial_setDTR(sp, 1);
-    Util_usleep(1.0);
     Serial_setDTR(sp, 0);
+    Util_usleep(0.1);
+    Serial_setDTR(sp, 1);
+    Util_usleep(0.5);
 }
 
 static int getPeripheralType(SerialPort sp) {
@@ -44,12 +45,6 @@ static int getPeripheralType(SerialPort sp) {
 
     /* Set to IMU's baud rate */
     Serial_setBaud(sp, 38400);
-
-    /* Reset IMU to polling mode */
-    Serial_sendByte(sp, 0x10);
-    Serial_sendByte(sp, 0x00);
-    Serial_sendByte(sp, 0x00);
-    Util_usleep(0.5);
     Serial_flush(sp);
 
     /* Probe IMU by sending version number command */
@@ -59,23 +54,20 @@ static int getPeripheralType(SerialPort sp) {
         return -1;
     }
     
-    for(int i = 0; i < 3; i++) {
+    Util_usleep(0.1);
+    if(Serial_available(sp) > 0) {
         n = Serial_getByte(sp);
         if(n == 0xf0) {
             /* Received IMU response */
             Logging_log(DEBUG, "IMU Found");
             Serial_flush(sp);
             return PT_IMU;
-        } else if(n != -1) {
-            break;
         }
-
-        Serial_flush(sp);
-        Util_usleep(0.5);
     }
-    
+
     /* Fallback to Arduino, get ID */
     Serial_setBaud(sp, 9600);
+    Serial_flush(sp);
     cycleDTR(sp);
 
     for(int i = 0; i < 3; i++) {
