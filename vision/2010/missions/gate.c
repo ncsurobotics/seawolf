@@ -40,7 +40,7 @@ void mission_gate_init(IplImage* frame, double depth)
     right_pole = frame->width;
     seen_both_poles = 0;
     desired_depth = depth;
-    Var_set("ReferenceAngle", Var_get("SEA.Yaw"));
+    //Var_set("ReferenceAngle", Var_get("SEA.Yaw"));
 }
 
 struct mission_output mission_gate_step(struct mission_output result)
@@ -194,6 +194,6 @@ struct mission_output mission_gate_step(struct mission_output result)
         //cvRelease((void**) &lines);
         cvReleaseMemStorage(&(lines->storage));
     }
-
+    
     return result;
 }
