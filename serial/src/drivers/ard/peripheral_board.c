@@ -43,6 +43,19 @@ static int outgoing_data(void) {
     return 0;
 }
 
+static void sync_stream(void) {
+    int syncs = 0, n;
+    while(syncs < 3) {
+        n = Serial_getByte(sp);
+
+        if(n == 0xff) {
+            syncs++;
+        } else {
+            syncs = 0;
+        }
+    }
+}
+
 void manage(SerialPort _sp) {
     uint8_t data[3];
     short raw_depth;
@@ -54,6 +67,9 @@ void manage(SerialPort _sp) {
     /* Set blocking */
     Serial_setBlocking(sp);
 
+    /* Align data stream */
+    sync_stream();
+
     /* Start thread for outgoing data/requests */
     Task_background(outgoing_data);
 
@@ -64,7 +80,7 @@ void manage(SerialPort _sp) {
             Notify_send("MISSIONTRIGGER", "NULL");
         } else if(data[0] == 0x02) {
             /* Compute depth */
-            raw_depth = (data[1] * 256) + data[0];
+            raw_depth = (data[1] * 256) + data[2];
             voltage = raw_depth * (5.0/1024.0);
             psi = ((voltage - 0.5) * 100) / 4.0;  
             depth = (psi - AIR_PRESSURE) / PSI_PER_FOOT;
