@@ -54,9 +54,7 @@ void set_thrusters(int _n) {
 
     thruster_id = data[0];
     dir = GET_BIT(data[1], 6);
-    value = (data[1] & 0x3F) * 4; /* This was 8 in the old code, not sure why
-                                     but keep it in mind if there are any
-                                     problems */
+    value = (data[1] & 0x3F) * 8;
 
     /* Set local thruster values or forward request over I2C */
     switch(thruster_id) {

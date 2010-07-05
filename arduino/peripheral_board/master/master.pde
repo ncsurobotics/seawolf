@@ -17,7 +17,7 @@
 #define DEPTH_SLEEP 100
 
 #define RFID_EN 5
-#define DEPTH_PIN 0
+#define DEPTH_PIN 7
 
 /* Store data from RFID reader */
 unsigned long check = 0;
@@ -41,6 +41,18 @@ void setup(void) {
 
     /* Start I2C */
     Wire.begin();
+
+    /* Delay before starting */
+    delay(1000);
+
+    /* Send data sync */
+    wire_data[0] = 0xff;
+    wire_data[1] = 0xff;
+    wire_data[2] = 0xff;
+
+    Wire.beginTransmission(SLAVE);
+    Wire.send(wire_data, 3);
+    Wire.endTransmission();
 
     /* Enable RFID reader */
     digitalWrite(RFID_EN, LOW);
