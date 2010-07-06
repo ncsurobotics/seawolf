@@ -68,7 +68,7 @@ void manage(SerialPort sp) {
         }
 
         /* Set direction bit */
-        if(value < 0) {
+        if(value > 0) {
             data[1] |= (1 << 6);
         }
 
