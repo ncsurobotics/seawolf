@@ -2,6 +2,8 @@
 #include "seawolf.h"
 #include "seawolf3.h"
 
+#define THRUSTER_CAP 25
+
 static void dataOut(double mv) {
     Notify_send("THRUSTER_REQUEST", Util_format("Yaw %d %d", (int) mv, (int) -mv));
 }
@@ -100,7 +102,13 @@ int main(void) {
                 } else if (error < -180) {
                     error = 360+error;
                 }
+
                 mv = PID_update(angularpid, error);
+
+                // Don't let the motors run too fast
+                if (mv > THRUSTER_CAP) mv = THRUSTER_CAP;
+                else if(mv < -1*THRUSTER_CAP) mv = -1* THRUSTER_CAP;
+
 
             } else {
                 printf("Rot.Mode is incorrectly set to \"%f\"!!!!\n", Var_get("Rot.Mode"));
