@@ -5,7 +5,8 @@
 #include <string.h>
 
 /* Minimum value to turn thrusters on at */
-#define DEAD_BAND 8
+#define YAW_DEAD_BAND 4
+#define DEPTH_DEAD_BAND 8
 
 /* Thruster numbers */
 #define PORT_X 0
@@ -63,7 +64,9 @@ void manage(SerialPort sp) {
         data[1] = (int) fabs(value);
         
         /* Set to zero if less than dead band */
-        if(data[1] <= DEAD_BAND) {
+        if((data[0] < 2 && data[1] <= YAW_DEAD_BAND) ||
+           (data[0] > 1 && data[1] <= DEPTH_DEAD_BAND))
+        {
             data[1] = 0;
         }
 
