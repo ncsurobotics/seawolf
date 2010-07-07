@@ -3,7 +3,7 @@
 
 int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
-    Seawolf_init("Thruster Controller");
+    Seawolf_init("Thruster Zero");
 
     Notify_send("THRUSTER_REQUEST", Util_format("Forward %d %d", 0, 0));
 
@@ -22,6 +22,8 @@ int main(void) {
     float current_yaw = Var_get("SEA.Yaw");
     Var_set("Rot.Mode", 1.0);
     Var_set("Rot.Angular.Target", current_yaw);
+
+    Var_set("Strafe", 0.0);
 
     Seawolf_close();
     return 0;
