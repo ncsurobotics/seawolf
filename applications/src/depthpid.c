@@ -2,6 +2,8 @@
 #include "seawolf.h"
 #include "seawolf3.h"
 
+#define THRUSTER_CAP 30
+
 static void dataOut(double mv) {
     int out = Util_inRange(-THRUSTER_MAX, (int) mv, THRUSTER_MAX);
     int front = (int) out * 0.7;
@@ -46,6 +48,11 @@ int main(void) {
         if(pid->sp == 0){
              PID_resetIntegral(pid);
         }
+
+        // Don't let the motors run too fast
+        if (mv > THRUSTER_CAP) mv = THRUSTER_CAP;
+        else if(mv < -1*THRUSTER_CAP) mv = -1* THRUSTER_CAP;
+
         dataOut(mv);
     }
 
