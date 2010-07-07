@@ -37,6 +37,9 @@ static char* path_state_names[] = {
 // How many frames we must see a blob before we think we see the path.
 #define SEEN_BLOB_THRESHOLD 3
 
+// Amount of time we start going forward again if we haven't seen a blob.
+#define WAITING_AMOUNT 8
+
 // In order to think we see a blob, the blob has to contain a large enough
 // percentage of the total orange pixels we see.  This number is that
 // percentage.
@@ -68,7 +71,7 @@ static char* path_state_names[] = {
 #define ANGLE_DEVIATION_THRESHOLD 10
 
 // Threshold for our angle while aligning with the marker
-#define ALIGN_ANGLE_THRESHOLD 10
+#define ALIGN_ANGLE_THRESHOLD 5
 
 // The number of frames we must stay facing the correct direction before moving
 // on while alligning with path
@@ -79,6 +82,7 @@ static char* path_state_names[] = {
 // State Variables
 static int path_state = 0;
 static int frames_in_a_row_i_have_seen_a_line = 0;
+static int frames_in_a_row_i_have_not_seen_a_blob = 0;
 static int frames_in_a_row_i_have_seen_a_blob = 0;
 static double blob_angle;
 static int blob_correct_angle;
@@ -96,6 +100,7 @@ void mission_align_path_init(IplImage* frame, struct mission_output* results)
 {
     path_state = 0;
     frames_in_a_row_i_have_seen_a_line = 0;
+    frames_in_a_row_i_have_not_seen_a_blob = 0;
     frames_in_a_row_i_have_seen_a_blob = 0;
     path_centered = 0;
     if (stop_timer != NULL) {
@@ -113,8 +118,8 @@ void mission_align_path_init(IplImage* frame, struct mission_output* results)
 
     results->rho = SEARCHING_SPEED;
     results->yaw = 0;
-    results->depth_control = DEPTH_ABSOLUTE;
-    results->depth = 1.0;
+    //results->depth_control = DEPTH_ABSOLUTE;
+    //results->depth = 1.0;
 
 }
 
@@ -126,7 +131,7 @@ double get_absolute_angle(double theta) {
 
 struct mission_output mission_align_path_step(struct mission_output result)
 {
-    result.depth_control = DEPTH_RELATIVE;
+    //result.depth_control = DEPTH_RELATIVE;
 
     IplImage* grey;
     IplImage* edge;
@@ -142,7 +147,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
     result.frame = frame;
 
     // Color Filter
-    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 350, 2.25);
+    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 300, 1.0);
 
     // Blob Detection
     BLOB *blobs;
@@ -156,8 +161,10 @@ struct mission_output mission_align_path_step(struct mission_output result)
 
     // Keep track of how many frames in a row we've seen a blob
     if (see_blob) {
+        frames_in_a_row_i_have_not_seen_a_blob = 0;
         frames_in_a_row_i_have_seen_a_blob++;
     } else {
+        frames_in_a_row_i_have_not_seen_a_blob++;
         frames_in_a_row_i_have_seen_a_blob = 0;
     }
 
@@ -245,6 +252,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
                 }
             }
 
+            // If we have a desired direction, turn
             if (result.yaw != 0) {
                 current_yaw = Var_get("SEA.Yaw");
                 printf("Turning to Blob angle: %f / %f\n", current_yaw, blob_angle);
@@ -253,6 +261,8 @@ struct mission_output mission_align_path_step(struct mission_output result)
                 } else {
                     blob_correct_angle = 0;
                 }
+            } else if (frames_in_a_row_i_have_not_seen_a_blob >= WAITING_AMOUNT) {
+                result.rho = SEARCHING_SPEED;
             }
 
             // If we've been heading in the right direction for long enough, go
