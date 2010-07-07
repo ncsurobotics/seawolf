@@ -26,11 +26,11 @@ static int seen_both_poles = 0; // Increments every time we see both poles
 
 // Manual State Variables
 static int WHITE_GATE_FLAG = 1; // Set to zero to look for black gate
-static double desired_depth = 2.0; // desired depth
+static double desired_depth; // desired depth
 
-#define ONE_POLE_CORRECTION_DEGREES 5
+#define ONE_POLE_CORRECTION_DEGREES 10
 
-void mission_gate_init(IplImage* frame)
+void mission_hedge_init(IplImage* frame)
 {
     close_to_gate = 0;
     gate_width = 0;
@@ -39,11 +39,11 @@ void mission_gate_init(IplImage* frame)
     left_pole = 0;
     right_pole = frame->width;
     seen_both_poles = 0;
-    desired_depth = 2.0;
+    desired_depth = 1.5;
     //Var_set("ReferenceAngle", Var_get("SEA.Yaw"));
 }
 
-struct mission_output mission_gate_step(struct mission_output result)
+struct mission_output mission_hedge_step(struct mission_output result)
 {
     IplImage* grey;
     IplImage* edge;
@@ -169,9 +169,9 @@ struct mission_output mission_gate_step(struct mission_output result)
 
     // Determine rho
     if(close_to_gate > 3)
-        result.rho= 10; // Low rho
+        result.rho= 20; // Low rho
     else
-        result.rho = 11; // High rho
+        result.rho = 21; // High rho
 
     // Debugs:
     #ifdef VISION_SHOW_HEADING

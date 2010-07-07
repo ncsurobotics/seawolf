@@ -175,7 +175,7 @@ void mission_init(int current_mission, struct mission_output* results)
     switch (current_mission) {
 
         case MISSION_GATE:
-            mission_gate_init(results->frame, 1.0);
+            mission_gate_init(results->frame);
         break;
 
         case MISSION_ALIGN_PATH:
@@ -187,7 +187,7 @@ void mission_init(int current_mission, struct mission_output* results)
         break;
 
         case MISSION_HEDGE:
-            mission_gate_init(results->frame, 2.0);
+            mission_hedge_init(results->frame);
         break;
 
         case MISSION_WINDOW:
@@ -242,7 +242,7 @@ struct mission_output* mission_step(struct mission_output* results, int mission)
         break;
 
         case MISSION_HEDGE:
-            *results = mission_gate_step(*results);
+            *results = mission_hedge_step(*results);
         break;
 
         case MISSION_WINDOW:

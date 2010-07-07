@@ -91,6 +91,7 @@ static const int mission_order[] = {
     MISSION_BOUY,
     MISSION_ALIGN_PATH,
     MISSION_HEDGE,
+    MISSION_ALIGN_PATH,
     MISSION_WINDOW,
     MISSION_WEAPONS_RUN,
     MISSION_MACHETE,
@@ -101,7 +102,7 @@ static const int mission_order[] = {
 
 /*********** Mission Prototypes **************/
 /*** Gate ***/
-void mission_gate_init(IplImage* frame, double depth);
+void mission_gate_init(IplImage* frame);
 struct mission_output mission_gate_step(struct mission_output);
 
 /*** Bouy ***/
@@ -115,6 +116,11 @@ void bouy_bump_init(void);
 int bouy_bump(struct mission_output* result, int target_color);
 int find_closest_blob(int n, RGBPixel colors[], BLOB* blobs[], IplImage* image);
 int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int target_color);
+int determine_color(BLOB* blob, IplImage* frame);
+
+/*** Hedge ***/
+void mission_hedge_init(IplImage* frame);
+struct mission_output mission_hedge_step(struct mission_output);
 
 /*** Weapons Run ***/
 void mission_weapons_init(void);
