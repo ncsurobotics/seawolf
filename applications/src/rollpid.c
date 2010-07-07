@@ -61,7 +61,6 @@ int main(void) {
             mv=0;
         }
         
-        printf("sp=%f dir=%f amount=%f mv=%f\n", sp, strafe_direction, strafe_amount, mv);
         dataOut(mv);
     }
 
