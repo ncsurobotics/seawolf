@@ -24,21 +24,21 @@
 
 //order of bouys from left to right
 static int bouy_order[] = {
-    [RED_BOUY]    = 1,
-    [GREEN_BOUY]  = 2,
-    [YELLOW_BOUY] = 3
+    [RED_BOUY]    = 3,
+    [GREEN_BOUY]  = 1,
+    [YELLOW_BOUY] = 2
 };
 
 //depths of each bouy from the surface in feet
-static int bouy_depth[] = {
-    [RED_BOUY]    = 1.7,
-    [GREEN_BOUY]  = 2.5,
-    [YELLOW_BOUY] = 1.5
+static float bouy_depth[] = {
+    [RED_BOUY]    = 1.2,
+    [GREEN_BOUY]  = 3.0,
+    [YELLOW_BOUY] = 2.0
 };
 
 // The order to hit the bouys in
-#define BOUY_1 YELLOW_BOUY
-#define BOUY_2 RED_BOUY
+#define BOUY_1 RED_BOUY
+#define BOUY_2 YELLOW_BOUY
 
 // States for the bouy state machine
 #define BOUY_STATE_FIRST_APPROACH 0
@@ -80,7 +80,10 @@ static int bouy_depth[] = {
 #define BACK_UP_TIME_1 7
 
 // How Far to Turn When Looking for a Bouy
-#define TURNING_THRESHOLD 120
+#define TURNING_THRESHOLD_1 70
+
+// How Far to Turn When Looking for a Bouy
+#define TURNING_THRESHOLD_2 70
 
 // How long in SECONDS after we first saw a blob in bouy_bump before we give up and say we hit it.
 #define BOUY_BUMP_TIMER 7
@@ -102,10 +105,10 @@ static int bouy_depth[] = {
 #define SEEN_PATH_THRESHOLD 3
 
 // Bigger the number, the less we turn
-#define YAW_SCALE_FACTOR 1
+#define YAW_SCALE_FACTOR 4
 
 //how long each leg of the search should be
-#define SEARCH_PATTERN_TIME 6
+#define SEARCH_PATTERN_TIME 8
 
 //How well we have to see a blob to think it's the path
 #define PATH_FRACTION_THRESHOLD .75
@@ -158,7 +161,7 @@ static int saw_big_blob = 0;      //starts incrementing once we see a big enough
 static int hit_blob = 0;          //increments for every frame we think we've hit the blob
 static int bump_initialized = 0;  //flag to keep track of initializing bump routine
 static Timer* bouy_timer = NULL;      //time how long since we first saw the bouy
-
+static int turn_counter = 0;      //count # of times we've turned around looking for bouy
 // State Variables for Bouy - First Backing Up
 static Timer* backing_timer = NULL;      //times our backing up step for us
 
@@ -182,10 +185,10 @@ RGBPixel find_blob_avg_color(IplImage* img, BLOB* blob) {
     unsigned int avg_g = 0;
     unsigned int avg_b = 0;
     CvPoint* pixel = blob->pixels;
-    for (int i=0; i<blob->area; i++) {
-        avg_r += (unsigned int) img->imageData[img->width*pixel->y + img->height*pixel->x + 2];
-        avg_g += (unsigned int) img->imageData[img->width*pixel->y + img->height*pixel->x + 1];
-        avg_b += (unsigned int) img->imageData[img->width*pixel->y + img->height*pixel->x + 0];
+    for (int i=0; i<blob->area-1 && i < 50000; i++) {
+        avg_r += (unsigned int) img->imageData[img->widthStep*pixel->y + 3*pixel->x + 2];
+        avg_g += (unsigned int) img->imageData[img->widthStep*pixel->y + 3*pixel->x + 1];
+        avg_b += (unsigned int) img->imageData[img->widthStep*pixel->y + 3*pixel->x + 0];
         pixel++;
     }
     avg_r = avg_r / blob->area;
@@ -215,6 +218,7 @@ void mission_bouy_init(IplImage * frame, struct mission_output* result)
     passing_timer = NULL;
 
     initial_angle = Var_get("SEA.Yaw");
+
 }
 
 struct mission_output mission_bouy_step (struct mission_output result)
@@ -290,14 +294,21 @@ struct mission_output mission_bouy_step (struct mission_output result)
                 bouy_state++;
                 bump_initialized = 0;
                 printf("we finished bouy bump 1 \n");
+                turn_counter = 0;
             }else{
                 //grab angle data to check how far we have turned
                 double current_angle = Var_get("SEA.Yaw");
-                if(!(fabs(current_angle-starting_angle) < TURNING_THRESHOLD ||
-                    fabs(current_angle-starting_angle) > 360-TURNING_THRESHOLD)){
-                        //We have turned too far
+                if(!(fabs(current_angle-starting_angle) < TURNING_THRESHOLD_1 ||
+                    fabs(current_angle-starting_angle) > 360-TURNING_THRESHOLD_1)){
+                        //We have turned too fari
+                        turn_counter++;
                         result.yaw *= -1;
                         starting_angle = current_angle;
+                    if(turn_counter%2 == 0){
+                         result.rho = 5;
+                    }else{
+                        result.rho = 0;
+                    }
                 }
             }
             break;
@@ -364,8 +375,23 @@ struct mission_output mission_bouy_step (struct mission_output result)
             if( bouy_bump(&result, BOUY_2) == 1){
                 bouy_state++;
                 bump_initialized = 0;
+                turn_counter = 0;
                 printf("we finished bouy bump 2 \n");
             }else{
+                //grab angle data to check how far we have turned
+                double current_angle = Var_get("SEA.Yaw");
+                if(!(fabs(current_angle-starting_angle) < TURNING_THRESHOLD_2 ||
+                    fabs(current_angle-starting_angle) > 360-TURNING_THRESHOLD_2)){
+                        //We have turned too fari
+                        turn_counter++;
+                        result.yaw *= -1;
+                        starting_angle = current_angle;
+                    if(turn_counter%2 == 0){
+                         result.rho = 10;
+                    }else{
+                         result.rho = 0;
+                    }
+                }
                 break;
             }
         case BOUY_STATE_FINAL_ORIENTATION:
@@ -377,7 +403,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
             //stop forward motion
             result.rho = 0;
         
-            if(fabs(Var_get("SEA.yaw") - initial_angle) < 10){
+            if(fabs(Var_get("SEA.Yaw") - initial_angle) < 10){
                 //we are lined up
                 bouy_state++;
                 printf("pointing beyond the bouys\n");
@@ -410,18 +436,18 @@ struct mission_output mission_bouy_step (struct mission_output result)
 
             if(bouy_order[BOUY_2] == 1){
                 //turn right
-                result.yaw = initial_angle + 90;
-                search_direction = 1;
+                result.yaw = ((int)initial_angle + 60 +180)%360 - 180;
+                search_direction = -1;
                 printf("turning right\n");
             }else if(bouy_order[BOUY_2] == 2){
                 //arbitrarily turn right
-                result.yaw = initial_angle + 90;
-                search_direction = 1;
+                result.yaw = ((int)initial_angle + 60 +180)%360 - 180;
+                search_direction = -1;
                 printf("turning right\n");
             }else if(bouy_order[BOUY_2]== 3){
                 //turn left
-                result.yaw = initial_angle  - 90;
-                search_direction = -1;
+                result.yaw = ((int)initial_angle - 60 +180)%360 - 180;
+                search_direction = 1;
                 printf("turning left\n");
             }else{
                 printf("BOUY_2 DEFINED INCORRECTLY\n");
@@ -433,7 +459,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
             //if our heading is close enough to
             heading = Var_get("SEA.Yaw");
             target = Var_get("Rot.Angular.Target");
-            printf("orienting for search: heading = %f, target = %f \n",heading,target);
+            printf("orienting for search: heading = %f, target = %f, init angle = %f \n",heading,target,initial_angle);
             if(fabs(heading-target) < 10){
                 printf("FINISHED orienting for search pattern\n");
                 bouy_state++;
@@ -462,13 +488,15 @@ struct mission_output mission_bouy_step (struct mission_output result)
                 }
             }else if (search_pattern_turning == 1){
                 //initiate turn
-                result.yaw = (int)(initial_angle + 70 * search_direction+180)%360-180;
+                printf("initiating turn.  initial_angle = %f, first yaw = %f",initial_angle,result.yaw);
+                result.yaw = (int)(initial_angle + 75 * search_direction+180)%360-180;
+                printf("new yaw = %f\n",result.yaw);
                 search_direction *= -1;
                 search_pattern_turning = 2;
             }else{
                 printf("turning in search\n");
                 //continue turning
-                result.rho = 15;
+                result.rho = 0;
 
                 //if our heading is close enough, finish turn
                 heading = Var_get("SEA.Yaw");
@@ -485,7 +513,7 @@ struct mission_output mission_bouy_step (struct mission_output result)
             //frame = normalize_image(frame);
 
             IplImage* ipl_out = cvCreateImage(cvGetSize (frame), 8, 3);
-            int num_pixels = FindTargetColor(frame, ipl_out, &PathColor , 1, 110, 1.5);
+            int num_pixels = FindTargetColor(frame, ipl_out, &PathColor , 1, 310, 1.5);
 
             BLOB* path_blob;
             int blobs_found = blob(ipl_out, &path_blob, 4, MIN_BLOB_SIZE);
@@ -545,49 +573,49 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
 
     int found_bouy = 0;
 
-    IplImage* ipl_out[4];
+    IplImage* ipl_out[3];
     ipl_out[0] = cvCreateImage(cvGetSize (frame), 8, 3);
     ipl_out[1] = cvCreateImage(cvGetSize (frame), 8, 3);
     ipl_out[2] = cvCreateImage(cvGetSize (frame), 8, 3);
-    ipl_out[3] = cvCreateImage(cvGetSize (frame), 8, 3);
+    //ipl_out[3] = cvCreateImage(cvGetSize (frame), 8, 3);
 
-    int num_pixels[4];                                                 //color thresholds
-    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 280, 1.0);
+    int num_pixels[3];                                                 //color thresholds
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 250, 1.0);
     num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 300, 1.0);
-    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 270, 1);
-    num_pixels[3] = FindTargetColor(frame, ipl_out[3], &bouy_colors[SUNSPOT_BOUY], 1, 90, 2);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 220, 1);
+    //num_pixels[3] = FindTargetColor(frame, ipl_out[3], &bouy_colors[SUNSPOT_BOUY], 1, 90, 2);
 
     // Debugs
     cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
     cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
     cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("Sunspot White", CV_WINDOW_AUTOSIZE);
+    //cvNamedWindow("Sunspot White", CV_WINDOW_AUTOSIZE);
     cvMoveWindow("Yellow",0,150);
     cvMoveWindow("Red",300,150);
     cvMoveWindow("Green",600,150);
-    cvMoveWindow("Sunspot White",900,150);
+    //cvMoveWindow("Sunspot White",900,150);
     cvShowImage("Yellow", ipl_out[0]);
     cvShowImage("Red", ipl_out[1]);
     cvShowImage("Green", ipl_out[2]);
-    cvShowImage("Sunspot White", ipl_out[3]);
+    //cvShowImage("Sunspot White", ipl_out[3]);
 
     //Look for blobs
-    BLOB* blobs[4];
-    int blobs_found[4];
+    BLOB* blobs[3];
+    int blobs_found[3];
     blobs_found[0] = blob(ipl_out[0], &blobs[0], 4, MIN_BLOB_SIZE);
     blobs_found[1] = blob(ipl_out[1], &blobs[1], 4, MIN_BLOB_SIZE);
     blobs_found[2] = blob(ipl_out[2], &blobs[2], 4, MIN_BLOB_SIZE);
-    blobs_found[3] = blob(ipl_out[3], &blobs[3], 4, MIN_BLOB_SIZE);
+    //blobs_found[3] = blob(ipl_out[3], &blobs[3], 4, MIN_BLOB_SIZE);
 
     printf("Blobs found: y=%d r=%d g=%d\n", blobs_found[0], blobs_found[1], blobs_found[2]);
 
-    int seen_blob[4];
-    BLOB* blobs_seen[4];
-    RGBPixel colors_seen[4];
-    int indexes_seen[4];
+    int seen_blob[3];
+    BLOB* blobs_seen[3];
+    RGBPixel colors_seen[3];
+    int indexes_seen[3];
     int num_colors_seen = 0;
     static int max_blob_size = 1000000000;
-    for (int i=0; i<4; i++) {
+    for (int i=0; i<3; i++) {
         //printf("blobs[%d]->area = %ld\n", i, blobs[i]->area);
         if ((blobs_found[i] == 1 || blobs_found[i] == 2) &&
             blobs[i]->area < max_blob_size &&
@@ -605,6 +633,7 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
         }
     }
 
+    
 
     // Make a decision baised on how many colors we've seen:
     //  0) We saw nothing
@@ -639,8 +668,16 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
         found_bouy = 0;
     }
 
+    //NEW COLOR-DETERMINING CODE!!!
+    //if we see a blob with any of our color filters,
+    // send that blob and the frame off to be analyzed 
+    // for a final authoritative color analysis
+    if(found_bouy > 0){
+        found_bouy = determine_color(blobs[found_bouy-1],frame);
+    }
+
     //free resources
-    for (int i=0; i<4; i++) {
+    for (int i=0; i<3; i++) {
         if (i == found_bouy-1) {
             *found_blob = blobs[i];
             *blobs_found_arg = blobs_found[i];
@@ -648,6 +685,68 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
             blob_free(blobs[i], blobs_found[i]);
         }
         cvReleaseImage(&ipl_out[i]);
+    }
+
+    return found_bouy;
+}
+
+int determine_color(BLOB* blob, IplImage* frame){
+    int found_bouy = 0;
+    int i;
+
+    //determine averagae color of the frame
+    double imgAverage[3];
+    for(i=0;i<3;i++){
+        imgAverage[i]=0;
+    }
+    
+    for(i=frame->width*frame->height; i>=0;i--){ 
+        // Update the average color
+        RGBPixel tempPix;
+        tempPix.r = frame->imageData[3*i+2];
+        tempPix.g = frame->imageData[3*i+1];
+        tempPix.b = frame->imageData[3*i+0];
+        if(tempPix.r < 0) printf("negative value\n");
+        if(tempPix.g< 0) printf("negative value\n");
+        if(tempPix.b< 0) printf("negative value\n");
+        imgAverage[0] = (imgAverage[0]*(i)+tempPix.r)/(i+1);
+        imgAverage[1] = (imgAverage[1]*(i)+tempPix.g)/(i+1);
+        imgAverage[2] = (imgAverage[2]*(i)+tempPix.b)/(i+1); 
+    }
+
+    //determine average blob color
+    RGBPixel blobAverage;
+    blobAverage = find_blob_avg_color(frame,blob);
+
+    printf("blob.r = %d, blob.g = %d, blob.b = %d \n",blobAverage.r,blobAverage.g,blobAverage.b);
+    printf("img.r = %f, img.g = %f, img.b = %f \n",imgAverage[0],imgAverage[1],imgAverage[2]);
+
+    //determine which color the blob is based on average color of frame
+    if(blobAverage.r > imgAverage[0]){
+        //we this blob has more red then average, it's red or yellow
+        if(blobAverage.g > imgAverage[1]){
+            //this blob has more green then average, it is yellow
+            found_bouy = YELLOW_BOUY;
+            printf("determined yellow\n");
+        }else{
+            //this blob is red
+            found_bouy = RED_BOUY;
+            printf("determined red\n");
+        }
+    }else{
+        if(blobAverage.g > imgAverage[1]){
+            //this is teil or green, call it green
+            found_bouy = GREEN_BOUY;
+            printf("determined green\n");
+        }else if(imgAverage[1]-blobAverage.g >imgAverage[0]-blobAverage.r){
+            //this is slightly more red than green
+            found_bouy = RED_BOUY;
+            printf("determined red\n");
+        }else{
+            //this is slightly more green than red
+            found_bouy = GREEN_BOUY;
+            printf("determined green\n");
+        }
     }
 
     return found_bouy;
@@ -684,9 +783,9 @@ int bouy_first_approach(struct mission_output* result){
         //result->depth_control = DEPTH_RELATIVE;
         printf("FOUND GREEN\n");
         //result->depth = found_blob->mid.y * DEPTH_SCALE_FACTOR;
-    } else if (found_bouy == SUNSPOT_BOUY) {
-        printf("FOUND SUNSPOT\n");
-        approach_counter = 0;
+    //} else if (found_bouy == SUNSPOT_BOUY) {
+    //    printf("FOUND SUNSPOT\n");
+    //    approach_counter = 0;
     } else {
         approach_counter = 0;
     }
@@ -804,7 +903,7 @@ int bouy_bump(struct mission_output* result, int target_bouy){
             //Convert Pixels to Degrees
             result->yaw = PixToDeg(result->yaw);
 
-            // Start moving forward
+            // Start moving forward after having a chance to center blob
             if(tracking_counter > 6){
                 result->rho = FORWARD_SPEED;
             }
