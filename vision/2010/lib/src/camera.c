@@ -159,7 +159,7 @@ IplImage* get_frame(CvCapture* capture)
         // Record frame
         char pathname[50];
         sprintf(pathname, "capture/%d/%05d.jpg", record_dir_num, frame_number);
-        cvSaveImage(pathname, frame, 0);
+        cvSaveImage(pathname, frame);
     #endif
 
     frame_number++;
