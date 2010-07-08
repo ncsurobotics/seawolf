@@ -1,11 +1,14 @@
 /* camera.c
  * Handles camera
  */
+#define __USE_POSIX2
+#define __USE_MISC
 
 #include <time.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <dirent.h>
 
 #include "vision_lib.h"
 #include <highgui.h>
@@ -90,7 +93,9 @@ IplImage* multicam_get_frame(int camnumber)
     #ifdef VISION_LIB_IMAGE_RECORD
         if (record_dir_num == -1)
         {
-        char command[20];
+
+            /*
+            char command[20];
             while (1)
             {
                 record_dir_num++;
@@ -105,9 +110,22 @@ IplImage* multicam_get_frame(int camnumber)
                     break;
                 }
             }
-            printf("Directory is: %d\n",record_dir_num);
+            */
+
+            system("mkdir capture");
+            DIR* directory = opendir("capture/");
+            record_dir_num = -2; // Start here to account for . and ..
+            while (readdir(directory)) {
+                record_dir_num++;
+            }
+            closedir(directory);
+            char mkdir_command[20];
+            sprintf(mkdir_command, "mkdir capture/%d", record_dir_num);
+            system(mkdir_command);
+            printf("Capture directory is: %d\n",record_dir_num);
         }
     #endif
+
     // See if we have to switch cameras
     if (camnumber != current_cam_num)
     {
@@ -115,7 +133,7 @@ IplImage* multicam_get_frame(int camnumber)
             // Release current cam if there is one
             cvReleaseCapture(&current_capture);
         }
-        current_capture = init_camera_from_string(cameras[camnumber]); 
+        current_capture = init_camera_from_string(cameras[camnumber]);
     }
     current_cam_num = camnumber;
     IplImage* frame = get_frame(current_capture);
@@ -133,13 +151,16 @@ IplImage* get_frame(CvCapture* capture)
 
     IplImage* frame = cvQueryFrame(capture);
 
+    if (!frame) {
+        printf("Frame returned was not valid!\n");
+    }
+
     #ifdef VISION_LIB_IMAGE_RECORD
         // Record frame
         char pathname[50];
         sprintf(pathname, "capture/%d/%05d.jpg", record_dir_num, frame_number);
-        cvSaveImage(pathname, frame);
+        cvSaveImage(pathname, frame, 0);
     #endif
-
 
     frame_number++;
     return frame;
