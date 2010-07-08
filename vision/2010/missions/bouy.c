@@ -523,6 +523,8 @@ struct mission_output mission_bouy_step (struct mission_output result)
                 if(++seen_orange_blob > SEEN_PATH_THRESHOLD){
                     bouy_state++;
                 }
+            } else {
+                seen_orange_blob = 0;
             }
 
             //free blob resources
