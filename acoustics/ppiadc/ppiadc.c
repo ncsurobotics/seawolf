@@ -220,7 +220,7 @@ static int timers_init(void) {
 
     /* For the convst clock, use ADC_CONVST_PER_SEC and a 10% duty cycle */
     set_gptimer_period(TIMER1_id, adc_convst_period_sclk);
-    set_gptimer_pwidth(TIMER1_id, adc_convst_period_sclk / 10);
+    set_gptimer_pwidth(TIMER1_id, adc_convst_period_sclk / 4);
 
     /* For the PPI clock, set the period as given by PPI_CLK_FREQ and use a
        fixed 50% duty cycle */
@@ -334,6 +334,11 @@ static int __init ppi_adc_init(void) {
         return ret;
     }
 
+    /* Enable ADC */
+    gpio_request(GPIO_PG14, DRIVER_NAME);
+    gpio_direction_output(GPIO_PG14, 1);
+    gpio_set_value(GPIO_PG14, 1);
+
     SSYNC();
 
     return 0;
@@ -366,6 +371,8 @@ static void __exit ppi_adc_close(void) {
     ppi_close();
     dma_close();
     timers_close();
+
+    gpio_free(GPIO_PG14);
 }
 
 MODULE_LICENSE("BSD");

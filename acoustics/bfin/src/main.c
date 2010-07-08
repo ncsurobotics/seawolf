@@ -2,7 +2,7 @@
 #define ACOUSTICS_DEBUG
 #define ACOUSTICS_PROFILE
 //#define ACOUSTICS_CORRELATE
-//#define ACOUSTICS_DUMP
+#define ACOUSTICS_DUMP
 //#define USE_LIBSEAWOLF
 
 #include "seawolf.h"
@@ -173,6 +173,8 @@ static void record_ping(void) {
         cir_buff_offset = (cir_buff_offset + SAMPLES_PER_CHANNEL) % BUFFER_SIZE_CHANNEL;
         if(BUFFER_SIZE_CHANNEL == (EXTRA_READS * SAMPLES_PER_CHANNEL) + cir_buff_offset) {
             cir_buff_full = true;
+            /* PLS REMOVE LOL */
+            state = TRIGGERED;
         }
         
         /* Handle padding once triggered so that the signal will (hopefully) be
