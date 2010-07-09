@@ -39,3 +39,4 @@ StarY                          0.0        0          0
 Strafe                         0.0        0          0
 Strafe.Amount                  10.0       1          0
 VisionReset                    0.0        0          0
+StatusLight                    0.0        0          0
