@@ -57,7 +57,7 @@
 #define BUFFER_COUNT 2
 
 /* Frequency to run the PPI port at (PPI_CLK) */
-#define PPI_CLK_FREQ 1000000
+#define PPI_CLK_FREQ 30000000
 
 /* See Blackfin Hardware Reference Manual 3.2, page 7-27, "PPI Control Register" */
 #define PPI_MODE 0xe80c
@@ -199,10 +199,41 @@ static ssize_t ppi_chr_write(struct file* filp, const char __user* buffer, size_
 }
 
 static int ppi_chr_open(struct inode* i, struct file* filp) {
+    int s = 0;
+
+    /* Turn on ADC */
+    gpio_set_value(GPIO_PG14, 1);
+
+    /* -- timing loop -- */
+    while(s < 10000000) {
+        s++;
+    }
+
+    /* Enable DMA */
+    enable_dma(CH_PPI);
+
+    /* Enable PPI */
+    bfin_write_PPI_CONTROL(bfin_read_PPI_CONTROL() | PORT_EN);
+
+    /* Enable CONVST timer */
+    enable_gptimers(TIMER1bit);
+
     return 0;
 }
 
 static int ppi_chr_release(struct inode* i, struct file* filp) {
+    /* Turn off power */
+    gpio_set_value(GPIO_PG14, 0);
+
+    /* Disable CONVST clock */
+    disable_gptimers(TIMER1bit);
+
+    /* Disable PPI */
+    bfin_write_PPI_CONTROL(bfin_read_PPI_CONTROL() & (~PORT_EN));
+
+    /* Disable DMA */
+    disable_dma(CH_PPI);
+
     return 0;
 }
 
@@ -227,8 +258,8 @@ static int timers_init(void) {
     set_gptimer_period(TIMER2_id, ppi_clk_period_sclk);
     set_gptimer_pwidth(TIMER2_id, ppi_clk_period_sclk / 2);
 
-    /* Enable both timers simultaneously */
-    enable_gptimers(TIMER1bit|TIMER2bit);
+    /* Enable PPI clk timer */
+    enable_gptimers(TIMER2bit);
 
     return 0;
 }
@@ -238,7 +269,7 @@ static int ppi_init(void) {
     peripheral_request_list(ppi_pins, DRIVER_NAME);
 
     /* No delay between frame sync and read */
-    bfin_write_PPI_DELAY(0);
+    bfin_write_PPI_DELAY(2);
     
     /* Read one sample per frame sync (the number given for COUNT is always one
        less than the desired count) */
@@ -248,9 +279,6 @@ static int ppi_init(void) {
     /* PPI control mode (assert on falling edge, 14 data bits, general purpose
        rx with 1 frame sync */
     bfin_write_PPI_CONTROL(PPI_MODE);
-
-    /* Enable PPI */
-    bfin_write_PPI_CONTROL(bfin_read_PPI_CONTROL() | PORT_EN);
 
     return 0;
 }
@@ -290,9 +318,6 @@ static int dma_init(void) {
     set_dma_y_count(CH_PPI, BUFFER_COUNT);
     set_dma_y_modify(CH_PPI, BYTES_PER_SAMPLE);
     set_dma_callback(CH_PPI, &buffer_full_handler, NULL);
-
-    /* Enable DMA */
-    enable_dma(CH_PPI);
 
     return 0;
 }
@@ -334,10 +359,15 @@ static int __init ppi_adc_init(void) {
         return ret;
     }
 
-    /* Enable ADC */
+    /* Request IO pin */
     gpio_request(GPIO_PG14, DRIVER_NAME);
     gpio_direction_output(GPIO_PG14, 1);
-    gpio_set_value(GPIO_PG14, 1);
+
+    /* Disable everything */
+    gpio_set_value(GPIO_PG14, 0);
+    disable_gptimers(TIMER1bit);
+    disable_dma(CH_PPI);
+    bfin_write_PPI_CONTROL(bfin_read_PPI_CONTROL() & (~PORT_EN));
 
     SSYNC();
 
