@@ -2,7 +2,7 @@
 #define ACOUSTICS_DEBUG
 #define ACOUSTICS_PROFILE
 //#define ACOUSTICS_CORRELATE
-#define ACOUSTICS_DUMP
+//#define ACOUSTICS_DUMP
 //#define USE_LIBSEAWOLF
 
 #include "seawolf.h"
@@ -20,6 +20,8 @@
 #include <complex_bf.h>
 
 #include "acoustics.h"
+
+#define TRIGGER_CHANNEL D
 
 /* Circular buffer state */
 static adcsample* cir_buff[4];
@@ -114,8 +116,19 @@ static void init(char* coefs_file_name) {
     temp_buff = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL * 2);
 }
 
+/* Expand a 14 bit twos complement number to fill a 16 bits short */
+static inline short expand_complement(short v) {
+    if(v & (1 << 13)) {
+        /* Negative value */
+        return -(((1 << 14) - 1) & ((~v) + 1));
+    } else {
+        /* Already positive */
+        return v;
+    }
+}
+
 /* 
- * Interface with the PPI/ADC driver to collect a "ping" sample
+ * value with the PPI/ADC driver to collect a "ping" sample
  *
  * This function reads in sample blocks for each channel from the drive until
  * the circular buffer has been filled. Once the circular buffer has been filled
@@ -148,16 +161,16 @@ static void record_ping(void) {
         /* Copy data out of driver. The data stored by the driver has samples
            interleaved, so we must un-interleave them when copying them out */
         for(unsigned int i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHANNEL; i++, j++) {
-            cir_buff[A][j] = current_buffer[(i * CHANNELS) + (0 * sizeof(adcsample))];
-            cir_buff[B][j] = current_buffer[(i * CHANNELS) + (1 * sizeof(adcsample))];
-            cir_buff[C][j] = current_buffer[(i * CHANNELS) + (2 * sizeof(adcsample))];
-            cir_buff[D][j] = current_buffer[(i * CHANNELS) + (3 * sizeof(adcsample))];
+            cir_buff[A][j] = expand_complement(current_buffer[(i * CHANNELS) + 0]);
+            cir_buff[B][j] = expand_complement(current_buffer[(i * CHANNELS) + 1]);
+            cir_buff[C][j] = expand_complement(current_buffer[(i * CHANNELS) + 2]);
+            cir_buff[D][j] = expand_complement(current_buffer[(i * CHANNELS) + 3]);
         }
         
         /* Don't look for a trigger until the buffer has been filled */
         if(state == READING && cir_buff_full) {
             /* Run the FIR filter on the current sample from channel A */
-            fir_fr16(cir_buff[A] + cir_buff_offset, temp_buff, SAMPLES_PER_CHANNEL, &fir_state_trig);
+            fir_fr16(cir_buff[TRIGGER_CHANNEL] + cir_buff_offset, temp_buff, SAMPLES_PER_CHANNEL, &fir_state_trig);
             
             for(i = 0; i < SAMPLES_PER_CHANNEL; i++) {
                 if(temp_buff[i] > TRIGGER_VALUE ) {
@@ -173,8 +186,6 @@ static void record_ping(void) {
         cir_buff_offset = (cir_buff_offset + SAMPLES_PER_CHANNEL) % BUFFER_SIZE_CHANNEL;
         if(BUFFER_SIZE_CHANNEL == (EXTRA_READS * SAMPLES_PER_CHANNEL) + cir_buff_offset) {
             cir_buff_full = true;
-            /* PLS REMOVE LOL */
-            state = TRIGGERED;
         }
         
         /* Handle padding once triggered so that the signal will (hopefully) be
@@ -330,8 +341,8 @@ static void data_out(void) {
 }
 
 #ifdef ACOUSTICS_DUMP
-static void dump(int channel) {
-    FILE* f = fopen("dump.txt", "w");
+static void dump(int channel, const char* file) {
+    FILE* f = fopen(file, "w");
     for(int i = 0; i < BUFFER_SIZE_CHANNEL; i++) {
         fprintf(f, "%d\n", (signed short) cir_buff[channel][i]);
     }
@@ -340,6 +351,8 @@ static void dump(int channel) {
 #endif
 
 int main(int argc, char** argv) {
+    short* tmp;
+
 #ifdef USE_LIBSEAWOLF
     Seawolf_loadConfig("seawolf.conf");
     Seawolf_init("Blackfin");
@@ -359,13 +372,18 @@ int main(int argc, char** argv) {
     }
 
     /* Open driver connection */
+    TIME_PRE(t, "Opening device...");
     driver_f = open("/dev/ppiadc", O_RDWR);
     if(driver_f < 0) {
         perror("Could not open character device to communicate with PPI/ADC driver");
         fprintf(stderr, "Make sure the module is loaded and that the device node has been created at /dev/ppiadc\n");
         exit(1);
     }
-    
+    TIME_POST(t);
+
+    /* Do a fake ready to throw out the first data block as the ADC turns on */
+    read(driver_f, &tmp, sizeof(tmp));
+
     /* Initialize all data structures */
     init(argv[1]);
 
@@ -378,14 +396,17 @@ int main(int argc, char** argv) {
         linearize_buffers();
         TIME_POST(t);
 
+#ifdef ACOUSTICS_DUMP
+        dump(A, "dump_a.txt");
+        dump(B, "dump_b.txt");
+        dump(C, "dump_c.txt");
+        dump(D, "dump_d.txt");
+        break;
+#endif
+
         TIME_PRE(t, "Filtering buffers...");
         filter_buffers();
         TIME_POST(t);
-
-#ifdef ACOUSTICS_DUMP
-        dump(A);
-        break;
-#endif
 
 #ifdef ACOUSTICS_CORRELATE
         TIME_PRE(t, "Correlating buffers...");

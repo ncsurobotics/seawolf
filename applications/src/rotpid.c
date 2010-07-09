@@ -109,7 +109,6 @@ int main(void) {
                 if (mv > THRUSTER_CAP) mv = THRUSTER_CAP;
                 else if(mv < -1*THRUSTER_CAP) mv = -1* THRUSTER_CAP;
 
-
             } else {
                 printf("Rot.Mode is incorrectly set to \"%f\"!!!!\n", Var_get("Rot.Mode"));
             }
