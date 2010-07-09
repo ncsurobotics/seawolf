@@ -16,7 +16,7 @@
 /* Number of milliseconds between depth reads */
 #define DEPTH_SLEEP 100
 
-#define RFID_EN 5
+#define RFID_EN 2
 #define DEPTH_PIN 7
 
 /* Store data from RFID reader */
@@ -69,9 +69,7 @@ void loop() {
            notification will be sent to the PC for every MIN_WAIT_TIME
            milliseconds */
         if(data == 0x0A) {
-            if(check == 0) {
-                check = millis();
-            } else if(millis() - check < RECEIVE_THRESHOLD) {
+            if(millis() - check < RECEIVE_THRESHOLD) {
                 if(last_rfid == 0 || millis() - last_rfid > MIN_WAIT_TIME) {
                     last_rfid = millis();
                     check = 0;

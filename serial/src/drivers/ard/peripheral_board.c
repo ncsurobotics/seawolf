@@ -79,15 +79,22 @@ void manage(SerialPort _sp) {
         if(data[0] == 0x01) {
             /* RFID */
             Notify_send("MISSIONTRIGGER", "NULL");
+            Logging_log(DEBUG, "Got mission trigger!");
         } else if(data[0] == 0x02) {
             /* Compute depth */
             raw_depth = (data[1] * 256) + data[2];
             voltage = raw_depth * (5.0/1024.0);
             psi = ((voltage - 0.5) * 100) / 4.0;  
             depth = (psi - AIR_PRESSURE) / PSI_PER_FOOT - DEPTH_ZERO;
-            if (depth < 0.0) depth = 0.0;
+
+            /* Depth must be greater than 0 */
+            if (depth < 0.0) {
+                depth = 0.0;
+            }
 
             Var_set("Depth", depth);
+        } else {
+            Logging_log(ERROR, "Invalid data from peripheral board!");
         }
     }
 }
