@@ -8,9 +8,9 @@
 
 #define SLAVE 1
 
-#define DROPPER_PIN 5
-#define STATUS_PIN  6
-#define TORPEDO_PIN 7
+#define DROPPER_PIN 2
+#define STATUS_PIN  3
+#define TORPEDO_PIN 4
 
 /* Toggle the light every 300 milliseconds when blinking */
 #define BLINK_RATE 300
@@ -132,13 +132,13 @@ void run_torpedo(void) {
 void loop() {
     if(Serial.available() >= 3) {
         serial_data[0] = Serial.read();
-        serial_data[1] = Serial.read();
-        serial_data[2] = Serial.read();
 
         if(serial_data[0] != 0xFF) {
-            Serial.flush();
             return;
         }
+        
+        serial_data[1] = Serial.read();
+        serial_data[2] = Serial.read();
 
         switch(serial_data[1]) {
         case CTRL_LIGHTS:
