@@ -27,7 +27,7 @@ typedef fract16 adcsample;
 #define BUFFER_SIZE_CHANNEL (32 * 1024)
 
 /* FIR filter coefficient count */
-#define FIR_COEF_COUNT 613
+#define FIR_COEF_COUNT 614
 
 /* Minimum value to trigger on */
 #define TRIGGER_VALUE ((short)(500))

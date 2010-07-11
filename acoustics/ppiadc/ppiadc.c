@@ -161,6 +161,11 @@ static ssize_t ppi_chr_read(struct file* filp, char __user* buffer, size_t count
         return -EINTR;
     }
 
+    /* Check for backlog */
+    if(completion_done(&buffer_ready)) {
+        printk(KERN_WARNING DRIVER_NAME ": Missed data packet!\n", buffer_ready.done);
+    }
+
     /* Copy value of the pointer to the just filled buffer to the user buffer */
     if(copy_to_user(buffer, &current_buffer_pointer, count)) {
         return -EFAULT;
@@ -199,13 +204,18 @@ static ssize_t ppi_chr_write(struct file* filp, const char __user* buffer, size_
 }
 
 static int ppi_chr_open(struct inode* i, struct file* filp) {
-    int s = 0;
+    volatile unsigned long s = 0;
+    unsigned long n = get_sclk() / 30;
+
+    /* Reset global values */
+    current_buffer_index = 0;
+    current_buffer_pointer = 0;
 
     /* Turn on ADC */
     gpio_set_value(GPIO_PG14, 1);
 
     /* -- timing loop -- */
-    while(s < 10000000) {
+    while(s < n) {
         s++;
     }
 
@@ -304,10 +314,7 @@ static int dma_init(void) {
         return -ENOMEM;
     }
 
-    /* Invalid caching on the DMA buffer */    /* Enable PPI */
-    bfin_write_PPI_CONTROL(bfin_read_PPI_CONTROL() | PORT_EN);
-
-
+    /* Invalid caching on the DMA buffer */
     invalidate_dcache_range(dma_buffer, dma_buffer + (BUFFER_SIZE * BUFFER_COUNT));
 
     /* Set DMA configuration */
