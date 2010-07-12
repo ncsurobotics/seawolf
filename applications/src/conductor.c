@@ -18,6 +18,8 @@ static int spawn(char* path, char* args, ...) {
 
     /* Build arguments array */
     argv[0] = path;
+    argv[1] = NULL;
+
     va_start(ap, args);
     for(int i = 1; i < MAX_ARGS && args != NULL; i++) {
         argv[i] = args;
@@ -57,9 +59,9 @@ int main(int argc, char** argv) {
     char event[16];
     bool running = false;
 
-    Notify_filter(FILTER_MATCH, "MissionStart");
-    Notify_filter(FILTER_MATCH, "PowerKill");
-    Notify_filter(FILTER_MATCH, "SystemReset");
+    Notify_filter(FILTER_MATCH, "EVENT MissionStart");
+    Notify_filter(FILTER_MATCH, "EVENT PowerKill");
+    Notify_filter(FILTER_MATCH, "EVENT SystemReset");
 
     /* Clear VisionReset */
     Var_set("VisionReset", 0.0);
@@ -106,8 +108,12 @@ int main(int argc, char** argv) {
             while(Var_get("VisionReset") == 1.0) {
                 Util_usleep(0.05);
             }
+
+            running = false;
         } else if(strcmp(event, "SystemReset") == 0) {
-            /* Do nothing */
+            Logging_log(DEBUG, "System reset");
+        } else {
+            Logging_log(ERROR, Util_format("Received invalid event '%s'", event));
         }
     }
 
