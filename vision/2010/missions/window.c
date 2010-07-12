@@ -29,9 +29,9 @@
 // 1 2
 // 3 4
 static int window_order[] = {
-    [RED_WINDOW]    = 1,
+    [RED_WINDOW]    = 3,
     [BLUE_WINDOW]   = 2,
-    [GREEN_WINDOW]  = 3,
+    [GREEN_WINDOW]  = 1,
     [YELLOW_WINDOW] = 4
 }; 
 
@@ -43,8 +43,8 @@ static RGBPixel window_colors[] = {
 };
 
 //DEPTH OF THE WINDOW ROWS
-#define TOP_ROW_DEPTH 2
-#define BOTTOM_ROW_DEPTH 3.75
+#define TOP_ROW_DEPTH 1
+#define BOTTOM_ROW_DEPTH 2
 
 // Y value for where a blob is found is multiplied by this to get the relative
 // depth heading
@@ -54,7 +54,7 @@ static RGBPixel window_colors[] = {
 #define YAW_SCALE_FACTOR 5
 
 // How Long We Must See a Blob Durring Approach
-#define APPROACH_THRESHOLD 2
+#define APPROACH_THRESHOLD 1
 
 // How Long we must see a blob durring Lock on Target to think it's not noise
 #define TRACKING_THRESHOLD 2
@@ -67,7 +67,7 @@ static RGBPixel window_colors[] = {
 #define BLOB_COLOR_FRACTION (3.0/4.0)
 
 //what height to start the robot at
-#define INITIAL_DEPTH 3
+#define INITIAL_DEPTH 2
 
 //how fast to turn when alligning with a window
 #define TURN_RATE 5
@@ -80,6 +80,12 @@ static RGBPixel window_colors[] = {
 
 // How much of the frame a window must fill (horizontally) to be considered close enough to fire
 #define WINDOW_SCREEN_FRACTION 0.8
+
+// How long we must spend centering on target before moving forward
+#define TRACKING_PAUSE 5
+
+// How Long we must lose a window for before backing up to find it
+#define LOST_THRESHOLD 2
 
 //State variables for Window
 #define WINDOW_STATE_FIRST_APPROACH 0
@@ -95,6 +101,7 @@ static double initial_angle = 0; //tracks what angle we were at approaching the 
 //state variables for first approach
 static int approach_counter = 0;  //counts how many frames we've seen any blob
 static int window_found = 0; //tracks which window we've seen
+static int tracking_pause = 0;
 
 //state variable for orientation
 static double starting_angle;
@@ -103,6 +110,7 @@ static double starting_angle;
 static int lock_counter = 0;
 static int tracking_counter = 0;
 static int window_initialized = 0;
+static int lost_blob = 0;
 
 void mission_window_init(struct mission_output* result)
 {
@@ -125,7 +133,7 @@ struct mission_output mission_window_step(struct mission_output result)
 
         case WINDOW_STATE_FIRST_APPROACH:
             //drive forward
-            result.rho = 20;
+            result.rho = 10;
 
             //scan the image for any of the three bouys
             window_found = window_first_approach(&result);
@@ -183,6 +191,7 @@ struct mission_output mission_window_step(struct mission_output result)
 
         case WINDOW_STATE_LOCK_ON_TARGET:
             //initialize targeting function
+            printf("Locking on target\n");
             if(window_initialized == 0){
                 window_lock_on_target_init();
             }
@@ -207,6 +216,8 @@ struct mission_output mission_window_step(struct mission_output result)
 
         case FIRE_ZE_MISSILES: 
             //do it. do it now. 
+            printf("Firing Ze Missiles!\n");
+            Util_usleep(1);
         
         case WINDOW_STATE_COMPLETE:
             //I guess we are done
@@ -231,10 +242,10 @@ int find_window(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int ta
     ipl_out[3] = cvCreateImage(cvGetSize (frame), 8, 3);
 
     int num_pixels[4];                                                 //color thresholds
-    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &window_colors[YELLOW_WINDOW], 1, 230, 1); 
-    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &window_colors[RED_WINDOW], 1, 340, 1);
-    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &window_colors[GREEN_WINDOW], 1, 300, 1);
-    num_pixels[3] = FindTargetColor(frame, ipl_out[3], &window_colors[BLUE_WINDOW], 1, 150, 1);
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &window_colors[YELLOW_WINDOW], 1, 280, 2.0); 
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &window_colors[RED_WINDOW], 1, 400, 2.0);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &window_colors[GREEN_WINDOW], 1, 1, 1);
+    num_pixels[3] = FindTargetColor(frame, ipl_out[3], &window_colors[BLUE_WINDOW], 1, 1, 1);
 
     // Debugs
     cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
@@ -366,6 +377,7 @@ void window_lock_on_target_init(void) {
     lock_counter = 0;
     tracking_counter = 0;
     window_initialized = 1;
+    lost_blob = 0;
 }
 
 int window_lock_on_target(struct mission_output* result, RGBPixel* color) {
@@ -390,19 +402,27 @@ int window_lock_on_target(struct mission_output* result, RGBPixel* color) {
     if (blobs_found == 0 && tracking_counter < TRACKING_THRESHOLD) {
         // Keep turning, we didn't see anything
         tracking_counter = 0;
-    } else if (++tracking_counter > TRACKING_THRESHOLD) {
 
-        result->depth_control = DEPTH_RELATIVE;
+    } else if (blobs_found == 0 && lost_blob++ > LOST_THRESHOLD) {
+        printf("Lost blob, backing up\n");
+        //back up, try and find it again
+        result->rho = -1*TRACKING_SPEED;
+        tracking_pause = 0;
+    } else if (blobs_found == 0) {
+        printf("Lost blob\n");
+    } else if (++tracking_counter > TRACKING_THRESHOLD) {
+        lost_blob = 0;
+        //result->depth_control = DEPTH_RELATIVE;
         // Set thruster values to track
         printf("setting yaw to chase a blob\n");
         CvPoint heading = found_blob[0].mid;
         result->yaw = heading.x;
-        result->depth = heading.y;
+        //result->depth = heading.y;
         cvCircle(result->frame, cvPoint(result->yaw, result->depth), 5, cvScalar(0,0,0,255),1,8,0);
         //adjust to put the origin in the center of the frame
         result->yaw = result->yaw - frame_width / 2;
-        result->depth = result->depth - frame_height / 2;
-        result->depth *= DEPTH_SCALE_FACTOR; // Scaling factor
+        //result->depth = result->depth - frame_height / 2;
+        //result->depth *= DEPTH_SCALE_FACTOR; // Scaling factor
         //subjectively scale output !!!!!!!
         result->yaw = result->yaw / YAW_SCALE_FACTOR; // Scale Output
 
@@ -411,11 +431,15 @@ int window_lock_on_target(struct mission_output* result, RGBPixel* color) {
 
         //Check the size of the blob, and move forward (slowly) if neccessary
         if((float)(found_blob[0].right - found_blob[0].left)/frame_width > WINDOW_SCREEN_FRACTION){
-            //we are close enough, stop the robot.
-            result->rho = 0;
+            if(tracking_pause++ > TRACKING_PAUSE){
+                //we are close enough, stop the robot.
+                result->rho = 0;
+                printf("IN CORRECT POSITION");
+            }
         }else{
             //we should move forward slowly
             result->rho = TRACKING_SPEED;
+            printf("approaching window \n");
         }
 
         // See if we've centered
