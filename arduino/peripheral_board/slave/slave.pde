@@ -16,21 +16,21 @@
 #define BLINK_RATE 300
 
 /* How quickly to run the dropper (milliseconds) */
-#define DROPPER_RATE 500
+#define DROPPER_RATE 1000
 
 /* How long to keep the dropper in the down position */
-#define DROPPER_DOWN_TIME 300
+#define DROPPER_DOWN_TIME 2000
 
 /* Size in degrees of a dropper step */
-#define DROPPER_STEP 10
+#define DROPPER_STEPS 30
 
 /* Dropper servo angles for up and down */
-#define DROPPER_UP 0
-#define DROPPER_DOWN 180
+#define DROPPER_UP 180
+#define DROPPER_DOWN 0
 
 /* Computed values (not to be changed) */
-#define DROPPER_STEPS (((float)(DROPPER_DOWN - DROPPER_UP)) / DROPPER_STEP)
-#define DROPPER_STEP_DELAY ((int)(DROPPER_RATE / DROPPER_STEPS))
+#define DROPPER_STEP ((DROPPER_DOWN - DROPPER_UP) / DROPPER_STEPS)
+#define DROPPER_STEP_DELAY (DROPPER_RATE / DROPPER_STEPS)
 
 #define CTRL_LIGHTS  0x01
 #define CTRL_DROPPER 0x02
@@ -63,7 +63,7 @@ void setup(void) {
     pinMode(TORPEDO_PIN, OUTPUT);
 
     /* Attach servo */
-    dropper.attach(DROPPER_PIN);
+    dropper.attach(DROPPER_PIN, 900, 2100);
     dropper.write(DROPPER_UP);
 
     /* Setup torpedo pin */
@@ -109,18 +109,20 @@ void toggle_light(void) {
 }
 
 void run_dropper(void) {
-    while(dropper_pos < DROPPER_DOWN) {
+    for(i = 0; i < DROPPER_STEPS; i++) {
         dropper_pos += DROPPER_STEP;
-        if(dropper_pos > DROPPER_DOWN) {
-            dropper_pos = DROPPER_DOWN;
-        }
-
         dropper.write(dropper_pos);
+
         delay(DROPPER_STEP_DELAY);
     }
 
+    dropper_pos = DROPPER_DOWN;
+    dropper.write(dropper_pos);
+
     delay(DROPPER_DOWN_TIME);
-    dropper.write(DROPPER_UP);
+
+    dropper_pos = DROPPER_UP;
+    dropper.write(dropper_pos);
 }
 
 void run_torpedo(void) {

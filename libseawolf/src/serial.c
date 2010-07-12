@@ -7,6 +7,7 @@
 
 #include <asm/ioctls.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -275,7 +276,7 @@ void Serial_flush(SerialPort sp) {
  */
 void Serial_setBlocking(SerialPort sp) {
     /* Unset non-blocking */
-    fcntl(sp, F_SETFL, 0);
+    fcntl(sp, F_SETFL, fcntl(sp, F_GETFL) & (~O_NONBLOCK));
 }
 
 /**
@@ -286,8 +287,8 @@ void Serial_setBlocking(SerialPort sp) {
  * \param sp A handler for a serial port
  */
 void Serial_setNonBlocking(SerialPort sp) {
-    /* Unset non-blocking */
-    fcntl(sp, F_SETFL, O_NONBLOCK);
+    /* Set non-blocking */
+    fcntl(sp, F_SETFL, fcntl(sp, F_GETFL) | O_NONBLOCK);
 }
 
 /**
@@ -340,16 +341,13 @@ bool Serial_isReady(SerialPort sp) {
  * \return -1 in case of failure, otherwise the byte read
  */
 int Serial_getByte(SerialPort sp) {
-    int n = 0;
     unsigned char b;
 
     /* Get a byte */
-    while(n == 0) {
-        n = read(sp, &b, 1);
-        if(n == -1) {
-            return -1;
-        }
+    if(Serial_get(sp, &b, 1)) {
+        return -1;
     }
+
     return b;
 }
 
@@ -391,10 +389,16 @@ int Serial_getLine(SerialPort sp, char* buffer) {
  * \return -1 if an error occurs, 0 otherwise
  */
 int Serial_get(SerialPort sp, void* buffer, size_t count) {
+    struct pollfd fd = {.fd = sp, .events = POLLRDNORM};
+    int blocking = (~fcntl(sp, F_GETFL)) & O_NONBLOCK;
     unsigned char* buffer_c = (unsigned char*) buffer;
     size_t n; 
 
-    while(count) {
+    while(count > 0) {
+        if(blocking) {
+            poll(&fd, 1, -1);
+        }
+
         n = read(sp, buffer_c, count);
         if(n == -1) {
             return -1;
@@ -404,7 +408,7 @@ int Serial_get(SerialPort sp, void* buffer, size_t count) {
         buffer_c += n;
     }
     
-    return 1;
+    return 0;
 }
 
 /**
@@ -414,7 +418,7 @@ int Serial_get(SerialPort sp, void* buffer, size_t count) {
  *
  * \param sp Handler for the port to write to
  * \param b The byte to write
- * \return -1 if a write errors occurs, 1 otherwise
+ * \return -1 if a write errors occurs, 0 otherwise
  */
 int Serial_sendByte(SerialPort sp, unsigned char b) {
     return Serial_send(sp, &b, 1);
@@ -428,7 +432,7 @@ int Serial_sendByte(SerialPort sp, unsigned char b) {
  * \param sp Handler for the device to send data on
  * \param buffer The buffer to read from
  * \param count Number of bytes to write
- * \return -1 if a write error occurs, 1 otherwise
+ * \return -1 if a write error occurs, 0 otherwise
  */
 int Serial_send(SerialPort sp, void* buffer, size_t count) {
     unsigned char* buffer_c = (unsigned char*) buffer;
@@ -444,7 +448,7 @@ int Serial_send(SerialPort sp, void* buffer, size_t count) {
         buffer_c += n;
     }
 
-    return 1;
+    return 0;
 }
 
 /**

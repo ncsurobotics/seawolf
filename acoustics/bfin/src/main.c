@@ -2,7 +2,7 @@
 #define ACOUSTICS_DEBUG
 #define ACOUSTICS_PROFILE
 //#define ACOUSTICS_CORRELATE
-//#define ACOUSTICS_DUMP
+#define ACOUSTICS_DUMP
 //#define USE_LIBSEAWOLF
 
 #include "seawolf.h"
@@ -21,7 +21,7 @@
 
 #include "acoustics.h"
 
-#define TRIGGER_CHANNEL D
+#define TRIGGER_CHANNEL A
 
 /* Circular buffer state */
 static adcsample* cir_buff[4];
@@ -67,8 +67,12 @@ static int toa[4];
 
 #endif
 
+#ifdef ACOUSTICS_PROFILE
+Timer* t;
+#endif
+
 /* Misc */
-static unsigned int i;
+static unsigned int i, j;
 static adcsample* temp_buff;
 
 /* Allocate and initialize all data structures */
@@ -142,6 +146,7 @@ static void record_ping(void) {
     unsigned int extra_reads = EXTRA_READS;
     bool cir_buff_full = false;
     short* current_buffer = NULL;
+    short* current_buffer_copy;
 
     /* Place write offset back to beginning of the circular buffer */
     cir_buff_offset = 0x00;
@@ -160,31 +165,47 @@ static void record_ping(void) {
 
         /* Copy data out of driver. The data stored by the driver has samples
            interleaved, so we must un-interleave them when copying them out */
-        for(unsigned int i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHANNEL; i++, j++) {
-            cir_buff[A][j] = expand_complement(current_buffer[(i * CHANNELS) + 0]);
-            cir_buff[B][j] = expand_complement(current_buffer[(i * CHANNELS) + 1]);
-            cir_buff[C][j] = expand_complement(current_buffer[(i * CHANNELS) + 2]);
-            cir_buff[D][j] = expand_complement(current_buffer[(i * CHANNELS) + 3]);
+        current_buffer_copy = current_buffer + 0;
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHANNEL; i++, j++, current_buffer_copy += CHANNELS) {
+            cir_buff[A][j] = expand_complement(*current_buffer_copy);
         }
-        
+
+        current_buffer_copy = current_buffer + 1;
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHANNEL; i++, j++, current_buffer_copy += CHANNELS) {
+            cir_buff[B][j] = expand_complement(*current_buffer_copy);
+        }
+
+        current_buffer_copy = current_buffer + 2;
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHANNEL; i++, j++, current_buffer_copy += CHANNELS) {
+            cir_buff[C][j] = expand_complement(*current_buffer_copy);
+        }
+
+        current_buffer_copy = current_buffer + 3;
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHANNEL; i++, j++, current_buffer_copy += CHANNELS) {
+            cir_buff[D][j] = expand_complement(*current_buffer_copy);
+        }
+
         /* Don't look for a trigger until the buffer has been filled */
-        if(state == READING && cir_buff_full) {
+        if(state == READING) {
             /* Run the FIR filter on the current sample from channel A */
             fir_fr16(cir_buff[TRIGGER_CHANNEL] + cir_buff_offset, temp_buff, SAMPLES_PER_CHANNEL, &fir_state_trig);
-            
-            for(i = 0; i < SAMPLES_PER_CHANNEL; i++) {
-                if(temp_buff[i] > TRIGGER_VALUE ) {
-                    state = TRIGGERED;
-                    break;
+
+            /* If the circular buffer is full, check the current sample for the trigger */
+            if(cir_buff_full) {
+                for(i = 0; i < SAMPLES_PER_CHANNEL; i++) {
+                    if(temp_buff[i] > TRIGGER_VALUE ) {
+                        state = TRIGGERED;
+                        break;
+                    }
                 }
             }
-        }
+        }                
         
         /* Increment the offset into the circular buffer -- if we are going to
            be back to 0 within EXTRA_READS then set the buffer as filled to
            indicate that we have a full buffers worth of data */
         cir_buff_offset = (cir_buff_offset + SAMPLES_PER_CHANNEL) % BUFFER_SIZE_CHANNEL;
-        if(BUFFER_SIZE_CHANNEL == (EXTRA_READS * SAMPLES_PER_CHANNEL) + cir_buff_offset) {
+        if((cir_buff_offset + SAMPLES_PER_CHANNEL + (EXTRA_READS * SAMPLES_PER_CHANNEL)) % BUFFER_SIZE_CHANNEL == 0) {
             cir_buff_full = true;
         }
         
@@ -197,6 +218,7 @@ static void record_ping(void) {
                 state = DONE;
             }
         }
+
     }
 }
 
@@ -231,6 +253,11 @@ static void filter_buffers(void) {
     for(int channel = A; channel <= D; channel++) {
         fir_fr16(cir_buff[channel], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[channel]);
         memcpy(cir_buff[channel], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
+        
+        /* Remove invalid data points from when the FIR filter is ramping up */
+        for(int i = 0; i < FIR_COEF_COUNT; i++) {
+            cir_buff[channel][i] = 0;
+        }
     }
 }
 
@@ -362,7 +389,7 @@ int main(int argc, char** argv) {
 
 #ifdef ACOUSTICS_PROFILE
     /* Timer for profiling */
-    Timer* t = Timer_new();
+    t = Timer_new();
 #endif
 
     /* Missing coefficients file argument */
@@ -397,10 +424,12 @@ int main(int argc, char** argv) {
         TIME_POST(t);
 
 #ifdef ACOUSTICS_DUMP
+        TIME_PRE(t, "Dumping buffers...");
         dump(A, "dump_a.txt");
-        dump(B, "dump_b.txt");
-        dump(C, "dump_c.txt");
-        dump(D, "dump_d.txt");
+        //dump(B, "dump_b.txt");
+        //dump(C, "dump_c.txt");
+        //dump(D, "dump_d.txt");
+        TIME_POST(t);
         break;
 #endif
 
