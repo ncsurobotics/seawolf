@@ -54,39 +54,60 @@ int main(int argc, char** argv) {
 
     /* PIDs of all spawned applications */
     int pid[8];
+    char event[16];
+    bool running = false;
 
-    Notify_filter(FILTER_ACTION, "MISSIONTRIGGER");
+    Notify_filter(FILTER_MATCH, "MissionStart");
+    Notify_filter(FILTER_MATCH, "PowerKill");
+    Notify_filter(FILTER_MATCH, "SystemReset");
 
     /* Clear VisionReset */
     Var_set("VisionReset", 0.0);
     zero_thrusters();
 
     while(true) {
-        Notify_get(NULL, NULL);
-        for(int i = 3; i > 0; i--) {
-            Logging_log(DEBUG, Util_format("Preparing to start - %d", i));
-            Util_usleep(1);
-        }
-        
-        /* Start everthing */
-        Notify_send("GO", "Vision");
-        pid[1] = spawn("./bin/depthpid", NULL);
-        pid[2] = spawn("./bin/rotpid", NULL);
-        Util_usleep(0.5);
+        Notify_get(NULL, event);
 
-        pid[7] = spawn("./bin/mixer", NULL);
-        
-        Notify_get(NULL, NULL);
-        Logging_log(DEBUG, "Killing...");
-        kill(pid[1], SIGTERM);
-        kill(pid[2], SIGTERM);
-        kill(pid[7], SIGTERM);
-        
-        Var_set("VisionReset", 1.0);
-        zero_thrusters();
+        if(strcmp(event, "MissionStart") == 0) {
+            if(running == true) {
+                Logging_log(ERROR, "Received MissionStart while running");
+                continue;
+            }
 
-        while(Var_get("VisionReset") == 1.0) {
-            Util_usleep(0.05);
+            for(int i = 3; i > 0; i--) {
+                Logging_log(DEBUG, Util_format("Preparing to start - %d", i));
+                Util_usleep(1);
+            }
+            
+            /* Start everthing */
+            Notify_send("GO", "Vision");
+            pid[0] = spawn("./bin/depthpid", NULL);
+            pid[1] = spawn("./bin/rotpid", NULL);
+            Util_usleep(0.5);
+
+            pid[2] = spawn("./bin/mixer", NULL);
+            running = true;
+        } else if(strcmp(event, "PowerKill") == 0) {
+            if(running == false) {
+                Logging_log(ERROR, "Received PowerKill while not running!");
+                continue;
+            }
+
+            Logging_log(DEBUG, "Killing...");
+
+            kill(pid[0], SIGTERM);
+            kill(pid[1], SIGTERM);
+            kill(pid[2], SIGTERM);
+            
+            Var_set("VisionReset", 1.0);
+            zero_thrusters();
+
+            /* Wait for vision to acknowledge reset */
+            while(Var_get("VisionReset") == 1.0) {
+                Util_usleep(0.05);
+            }
+        } else if(strcmp(event, "SystemReset") == 0) {
+            /* Do nothing */
         }
     }
 
