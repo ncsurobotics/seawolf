@@ -56,7 +56,7 @@ static Timer* forward_timer;
 #define ANGLE_THRESHOLD 5
 
 // Amount we turn to the right after first seeing the path
-#define TURN_AMOUNT 90
+#define TURN_AMOUNT 60
 
 // Amount of time (seconds) we go forward after turning TURN_AMOUNT degrees
 #define FORWARD_TIME 5
@@ -189,7 +189,7 @@ struct mission_output mission_hedge_step(struct mission_output result)
                     int difference =  pt_gate[1] - left_pole;
                     right_pole = right_pole + difference;
                     left_pole = pt_gate[1];
-                    result.yaw =  ONE_POLE_CORRECTION_DEGREES;
+                    result.yaw = ONE_POLE_CORRECTION_DEGREES;
 
                     // Convert pixels to degrees
                     result.yaw = PixToDeg(result.yaw);
@@ -213,15 +213,15 @@ struct mission_output mission_hedge_step(struct mission_output result)
             
                 // Check to see if we could have passed through the gate
                 if (++frames_since_seen_gate > 20 && seen_gate > 10) {
-                    result.mission_done = true;
+                    hedge_state++;
                 }
             }
 
             // Determine rho
             if(close_to_gate > 3)
-                result.rho= 20; // Low rho
+                result.rho= 15; // Low rho
             else
-                result.rho = 21; // High rho
+                result.rho = 15; // High rho
 
             // Debugs:
             #ifdef VISION_SHOW_HEADING
@@ -245,12 +245,13 @@ struct mission_output mission_hedge_step(struct mission_output result)
 
         case HEDGE_STATE_LOOKING_FOR_ORANGE:
             // Go forward until we see orange
+            printf("Looking for Orange...\n");
 
             frame = multicam_get_frame(DOWN_CAM);
             result.frame = frame;
 
             IplImage* ipl_out = cvCreateImage(cvGetSize (frame), 8, 3);
-            int num_pixels = FindTargetColor(frame, ipl_out, &PathColor , 1, 310, 1.5);
+            int num_pixels = FindTargetColor(frame, ipl_out, &PathColor , 1, 310, 1.2);
             BLOB* path_blob;
             int blobs_found = blob(ipl_out, &path_blob, 4, MIN_BLOB_SIZE);
 
@@ -267,9 +268,11 @@ struct mission_output mission_hedge_step(struct mission_output result)
 
         case HEDGE_STATE_TURNING_1:
             // Turn ~90 degrees to the right
+            printf("Turning 1\n");
             result.yaw_control = ROT_MODE_ANGULAR;
             result.yaw = Var_get("ReferenceAngle") + TURN_AMOUNT;
             result.yaw = (((int)result.yaw+180) % 360) - 180; // Mod -180 to 180
+            result.rho = 0;
 
             // Have we turned far enough?
             heading = Var_get("SEA.Yaw");
@@ -283,6 +286,8 @@ struct mission_output mission_hedge_step(struct mission_output result)
 
         case HEDGE_STATE_FORWARD:
             // Go forward a set amount
+            printf("Going Forward...\n");
+            result.rho = 15;
             if (forward_timer == NULL) {
                 forward_timer = Timer_new();
             } else {
@@ -298,9 +303,11 @@ struct mission_output mission_hedge_step(struct mission_output result)
 
         case HEDGE_STATE_TURNING_2:
             // Turn 180 degrees, then go forward and switch to path mission
+            printf("Turning 2\n");
             result.yaw_control = ROT_MODE_ANGULAR;
             result.yaw = Var_get("ReferenceAngle") + TURN_AMOUNT - 180;
             result.yaw = (((int)result.yaw+180) % 360) - 180; // Mod -180 to 180
+            result.rho = 0;
 
             // Have we turned far enough?
             heading = Var_get("SEA.Yaw");
@@ -308,6 +315,7 @@ struct mission_output mission_hedge_step(struct mission_output result)
                 fabs(result.yaw - heading) > 360-ANGLE_THRESHOLD)
             {
                 result.mission_done = true;
+                result.rho = 10;
             }
             break;
 
