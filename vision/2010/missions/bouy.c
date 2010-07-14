@@ -79,6 +79,18 @@ static float bouy_depth[] = {
 // How Long To Back Up After 1st Bouy
 #define BACK_UP_TIME_1 7
 
+// How long we are chasing a bouy before we fix our heading
+#define FORWARD_TRACKING_AMOUNT 10
+
+// How many frames depth must be centered before moving forward
+#define DEPTH_CENTER_COUNT 4
+
+// How close to the center of the frame the bouy must be before we consider it in the center
+#define VERTICAL_THRESHOLD 25
+
+// How long we must track a bouy before activating depth control
+#define TRACKING_THRESHOLD 6
+
 // How Far to Turn When Looking for a Bouy
 #define TURNING_THRESHOLD_1 70
 
@@ -164,6 +176,8 @@ static Timer* bouy_timer = NULL;      //time how long since we first saw the bou
 static int turn_counter = 0;      //count # of times we've turned around looking for bouy
 // State Variables for Bouy - First Backing Up
 static Timer* backing_timer = NULL;      //times our backing up step for us
+static int depth_counter; // How long we've centered vertically
+static int forward_counter; // How long we've been going forward
 
 // State Variables for Dead Reakoning At End
 double heading;
@@ -210,6 +224,8 @@ void mission_bouy_init(IplImage * frame, struct mission_output* result)
     search_pattern_turning = 0;
     seen_orange_blob = 0;
     first_search_leg = 1;
+    depth_counter = 0;
+    forward_counter = 0;
 
     if (backing_timer != NULL) {
         Timer_destroy(backing_timer);
@@ -889,7 +905,6 @@ int bouy_bump(struct mission_output* result, int target_bouy){
     else if (++tracking_counter > 2)
     {
         //we do see a blob
-        //result->depth_control = DEPTH_RELATIVE;
         result->yaw_control = ROT_MODE_RELATIVE;
 
         //modify state variables
@@ -898,25 +913,36 @@ int bouy_bump(struct mission_output* result, int target_bouy){
 
         // Update heading
         // We do this only for a few frames to get a good heading
-        if (tracking_counter < 25) {
+        if (forward_counter < FORWARD_TRACKING_AMOUNT) {
             printf("setting yaw to chase a blob\n");
             heading = found_blob[0].mid;
             result->yaw = heading.x;
-            //result->depth = heading.y;
-            cvCircle(result->frame, cvPoint(result->yaw, result->depth), 5, cvScalar(0,0,0,255),1,8,0);
             //adjust to put the origin in the center of the frame
             result->yaw = result->yaw - frame_width / 2;
-            //result->depth = result->depth - frame_height / 2;
-            //result->depth *= DEPTH_SCALE_FACTOR; // Scaling factor
             //subjectively scale output !!!!!!!
             result->yaw = result->yaw / YAW_SCALE_FACTOR; // Scale Output
 
             //Convert Pixels to Degrees
             result->yaw = PixToDeg(result->yaw);
 
-            // Start moving forward after having a chance to center blob
-            if(tracking_counter > 6){
-                result->rho = FORWARD_SPEED;
+            // Start adjusting depth
+            if(tracking_counter > TRACKING_THRESHOLD){
+
+                // Depth control
+                result->depth_control = DEPTH_RELATIVE;
+                result->depth = heading.y;
+                cvCircle(result->frame, cvPoint(result->yaw, result->depth), 5, cvScalar(0,0,0,255),1,8,0);
+                result->depth = result->depth - frame_height / 2;
+                result->depth *= DEPTH_SCALE_FACTOR; // Scaling factor
+
+                if (fabs(heading.y - frame_height/2) < VERTICAL_THRESHOLD && ++depth_counter > DEPTH_CENTER_COUNT) {
+                    result->rho = FORWARD_SPEED;
+                    forward_counter++;
+                } else if (forward_counter) {
+                    forward_counter++;
+                } else {
+                    depth_counter = 0;
+                }
             }
 
             // Init timer
