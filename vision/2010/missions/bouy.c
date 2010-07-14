@@ -206,6 +206,15 @@ void mission_bouy_init(IplImage * frame, struct mission_output* result)
     bouy_first_approach_init();
     result->depth_control = DEPTH_ABSOLUTE;
     result->depth = 2.0;
+    bump_initialized = 0;
+    search_pattern_turning = 0;
+    seen_orange_blob = 0;
+    first_search_leg = 1;
+
+    if (backing_timer != NULL) {
+        Timer_destroy(backing_timer);
+    }
+    backing_timer = NULL;
 
     if (search_timer != NULL) {
         Timer_destroy(search_timer);
