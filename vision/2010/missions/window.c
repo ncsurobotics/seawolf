@@ -116,6 +116,8 @@ void mission_window_init(struct mission_output* result)
 {
 
     window_state = WINDOW_STATE_FIRST_APPROACH;
+    approach_counter = 0;
+    tracking_pause = 0;
     result->depth_control = DEPTH_ABSOLUTE;
     result->depth = INITIAL_DEPTH;
 

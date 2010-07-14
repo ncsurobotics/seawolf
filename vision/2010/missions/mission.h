@@ -1,4 +1,4 @@
-//header for mission-related files 
+//header for mission-related files
 #ifndef __SEAWOLF_VISION_MISSION_INCLUDE_H
 #define ___SEAWOLF_VISION_MISSION_INCLUDE_H
 
