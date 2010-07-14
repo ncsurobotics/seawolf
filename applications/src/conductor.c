@@ -1,5 +1,6 @@
 
 #include "seawolf.h"
+#include "seawolf3.h"
 
 #include <math.h>
 #include <stdarg.h>
@@ -66,6 +67,7 @@ int main(int argc, char** argv) {
     /* Clear VisionReset */
     Var_set("VisionReset", 0.0);
     zero_thrusters();
+    Var_set("StatusLight", STATUS_LIGHT_OFF);
 
     while(true) {
         Notify_get(NULL, event);
@@ -76,10 +78,12 @@ int main(int argc, char** argv) {
                 continue;
             }
 
+            Var_set("StatusLight", STATUS_LIGHT_BLINK);
             for(int i = 3; i > 0; i--) {
                 Logging_log(DEBUG, Util_format("Preparing to start - %d", i));
                 Util_usleep(1);
             }
+            Var_set("StatusLight", STATUS_LIGHT_ON);
             
             /* Start everthing */
             Notify_send("GO", "Vision");
@@ -103,6 +107,7 @@ int main(int argc, char** argv) {
             
             Var_set("VisionReset", 1.0);
             zero_thrusters();
+            Var_set("StatusLight", STATUS_LIGHT_OFF);
 
             /* Wait for vision to acknowledge reset */
             while(Var_get("VisionReset") == 1.0) {
