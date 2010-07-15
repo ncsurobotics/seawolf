@@ -24,21 +24,21 @@
 
 //order of bouys from left to right
 static int bouy_order[] = {
-    [RED_BOUY]    = 3,
-    [GREEN_BOUY]  = 1,
-    [YELLOW_BOUY] = 2
+    [RED_BOUY]    = 2,
+    [GREEN_BOUY]  = 3,
+    [YELLOW_BOUY] = 1
 };
 
 //depths of each bouy from the surface in feet
 static float bouy_depth[] = {
-    [RED_BOUY]    = 1.2,
-    [GREEN_BOUY]  = 3.0,
-    [YELLOW_BOUY] = 2.0
+    [RED_BOUY]    = 4.0,
+    [GREEN_BOUY]  = 4.0,
+    [YELLOW_BOUY] = 4.0
 };
 
 // The order to hit the bouys in
 #define BOUY_1 RED_BOUY
-#define BOUY_2 YELLOW_BOUY
+#define BOUY_2 GREEN_BOUY
 
 // States for the bouy state machine
 #define BOUY_STATE_FIRST_APPROACH 0
@@ -64,7 +64,7 @@ static float bouy_depth[] = {
 #define STARTUP_FRAMES 9
 
 // How Long We Must See a Blob Durring Approach
-#define APPROACH_THRESHOLD 2
+#define APPROACH_THRESHOLD 8
 
 // How large blobs must be
 #define MIN_BLOB_SIZE 200
@@ -136,25 +136,26 @@ static int bouy_state = 0;           //Keeps track of primary bouy state machine
 static int bouys_found = 0;          //turns to 1,2, or 3 when a bouy is found, # signifies color
 static RGBPixel bouy_colors[] = {    //holds the three colors of the bouys
 
+    // Competition measured
+    // Midday.  Competition side
+    // Background was about 72b7ff
+    // Red: san_diego_day1/62/00430.jpg
+    // Yellow: san_diego_day1/62/00465.jpg
+    //[YELLOW_BOUY]  = {0x9E, 0xE6, 0xFF },
+    //[RED_BOUY]     = {0xF4, 0xA8, 0xFF },
+    //[GREEN_BOUY]   = {0x5B, 0xE8, 0xFF },
+    //[SUNSPOT_BOUY] = {0xff, 0xff, 0xff },
+
+    // Pure white for yellow
+    //[YELLOW_BOUY]  = {0xFF, 0xFF, 0xFF },
+    // funny guess for yellow
+    [YELLOW_BOUY] = {0x80, 0xff, 0xff},
+
     // Ideal Colors
-    [YELLOW_BOUY]  = {0xff, 0xff, 0x00 },
+    //[YELLOW_BOUY]  = {0xff, 0xff, 0x00 },
     [RED_BOUY]     = {0xff, 0x00, 0x00 },
     [GREEN_BOUY]   = {0x00, 0xff, 0x00 },
-    [SUNSPOT_BOUY] = {0xff, 0xff, 0xff },
-
-    // Numbers from about as far away as it can see, taken from Jeff's pool on
-    // a very good visibility day.
-    //[YELLOW_BOUY] = {0x9C, 0xC8, 0xC7 },
-    //[RED_BOUY]    = {0xA3, 0xA3, 0xBB },
-    //[GREEN_BOUY]  = {0xD8, 0xCB, 0xCB },
-
-    // Numbers very close, taken from Jeff's pool on a very good visibility
-    // day.
-    //[YELLOW_BOUY] = {0xD7, 0xDE, 0xB2 },
-    //[RED_BOUY]    = {0xAE, 0x83, 0x94 },
-    //[GREEN_BOUY]  = {0xAE, 0xE4, 0xCA },
-
-    //[GREEN_BOUY]  = {0x96, 0xBB, 0xC4 },
+    //[SUNSPOT_BOUY] = {0xff, 0xff, 0xff },
 
 };
 
@@ -219,7 +220,7 @@ void mission_bouy_init(IplImage * frame, struct mission_output* result)
     bouy_bump_init();
     bouy_first_approach_init();
     result->depth_control = DEPTH_ABSOLUTE;
-    result->depth = 2.0;
+    result->depth = 4.0;
     bump_initialized = 0;
     search_pattern_turning = 0;
     seen_orange_blob = 0;
@@ -607,9 +608,9 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     //ipl_out[3] = cvCreateImage(cvGetSize (frame), 8, 3);
 
     int num_pixels[3];                                                 //color thresholds
-    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 250, 1.0);
-    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 300, 1.0);
-    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 220, 1);
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 280, 3.5);
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 360, 2.0);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 280, 2.5);
     //num_pixels[3] = FindTargetColor(frame, ipl_out[3], &bouy_colors[SUNSPOT_BOUY], 1, 90, 2);
 
     // Debugs
@@ -699,9 +700,9 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     //if we see a blob with any of our color filters,
     // send that blob and the frame off to be analyzed 
     // for a final authoritative color analysis
-    if(found_bouy > 0){
-        found_bouy = determine_color(blobs[found_bouy-1],frame);
-    }
+    //if(found_bouy > 0){
+        //found_bouy = determine_color(blobs[found_bouy-1],frame);
+    //}
 
     //free resources
     for (int i=0; i<3; i++) {
