@@ -84,7 +84,7 @@ int main(int argc, char** argv)
             Var_set("VisionReset", 0.0);
             // We actually set mission_index to 0 here, assuming that
             // MISSION_WAIT is the first mission executed.
-            mission_index = 0;
+            mission_index = VISION_INITIAL_MISSION;
             results.mission_done = false;
 
             // Reset mission structure also:
