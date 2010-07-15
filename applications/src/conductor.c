@@ -83,15 +83,18 @@ int main(int argc, char** argv) {
                 Logging_log(DEBUG, Util_format("Preparing to start - %d", i));
                 Util_usleep(1);
             }
-            Var_set("StatusLight", STATUS_LIGHT_ON);
             
             /* Start everthing */
-            Notify_send("GO", "Vision");
             pid[0] = spawn("./bin/depthpid", NULL);
             pid[1] = spawn("./bin/rotpid", NULL);
             Util_usleep(0.5);
 
             pid[2] = spawn("./bin/mixer", NULL);
+            Util_usleep(0.5);
+
+            Notify_send("GO", "Vision");
+
+            Var_set("StatusLight", STATUS_LIGHT_ON);
             running = true;
         } else if(strcmp(event, "PowerKill") == 0) {
             if(running == false) {
@@ -104,6 +107,9 @@ int main(int argc, char** argv) {
             kill(pid[0], SIGTERM);
             kill(pid[1], SIGTERM);
             kill(pid[2], SIGTERM);
+
+            zero_thrusters();
+            Util_usleep(1.0);
             
             Var_set("VisionReset", 1.0);
             zero_thrusters();
