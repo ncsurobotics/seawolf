@@ -29,7 +29,7 @@ static char* path_state_names[] = {
 /********* Tuning Values **********/
 
 // Speed we go while searching
-#define SEARCHING_SPEED 10
+#define SEARCHING_SPEED 20
 
 // Time it takes us to stop (in seconds)
 #define STOP_TIME 0.0
@@ -136,7 +136,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
     IplImage* grey;
     IplImage* edge;
     IplImage* ipl_out = NULL;
-    RGBPixel color = {0xff, 0x88, 0x00};
+    RGBPixel color = {0xff, 0xff, 0xff};
     CvSeq* lines;
     float* line;
     double current_yaw;
@@ -147,7 +147,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
     result.frame = frame;
 
     // Color Filter
-    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 300, 1.0);
+    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 50, 3.0);
 
     // Blob Detection
     BLOB *blobs;
