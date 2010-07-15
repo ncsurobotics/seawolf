@@ -26,7 +26,7 @@ static int seen_both_poles = 0; // Increments every time we see both poles
 
 // Manual State Variables
 static int WHITE_GATE_FLAG = 1; // Set to zero to look for black gate
-static double desired_depth = 2.0; // desired depth
+static double desired_depth; // desired depth
 
 #define ONE_POLE_CORRECTION_DEGREES 5
 
@@ -169,9 +169,9 @@ struct mission_output mission_gate_step(struct mission_output result)
 
     // Determine rho
     if(close_to_gate > 3)
-        result.rho= 10; // Low rho
+        result.rho= 20; // Low rho
     else
-        result.rho = 11; // High rho
+        result.rho = 20; // High rho
 
     // Debugs:
     #ifdef VISION_SHOW_HEADING
