@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
 
     while(true) {
         Notify_get(NULL, NULL);
-        fprintf(dump_file, "%5.2f %.2f\n", Timer_getDelta(time), Var_get(var));
+        fprintf(dump_file, "%5.2f %.2f\n", Timer_getTotal(time), Var_get(var));
     }
 
     fclose(dump_file);

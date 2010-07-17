@@ -5,7 +5,7 @@
 #include <string.h>
 
 /* Minimum value to turn thrusters on at */
-#define YAW_DEAD_BAND 4
+#define YAW_DEAD_BAND 3
 #define DEPTH_DEAD_BAND 8
 
 /* Thruster numbers */

@@ -98,6 +98,8 @@ int main(void) {
     count = 0;
     Task_background(rate);
 
+    Notify_send("GO", "Vision");
+
     while(true) {
         Notify_get(NULL, data);
         Util_split(data, ' ', requester, values);

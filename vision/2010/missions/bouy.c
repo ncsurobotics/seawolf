@@ -31,9 +31,9 @@ static int bouy_order[] = {
 
 //depths of each bouy from the surface in feet
 static float bouy_depth[] = {
-    [RED_BOUY]    = 4.0,
-    [GREEN_BOUY]  = 4.0,
-    [YELLOW_BOUY] = 4.0
+    [RED_BOUY]    = 5.5,
+    [GREEN_BOUY]  = 5.5,
+    [YELLOW_BOUY] = 5.5
 };
 
 // The order to hit the bouys in
@@ -55,16 +55,16 @@ static float bouy_depth[] = {
 #define BOUY_STATE_COMPLETE 11
 
 // How fast we go throughout most of the mission
-#define FORWARD_SPEED 15
+#define FORWARD_SPEED 30
 
 // How fast we back up.  Should be positive
-#define BACKING_SPEED 15
+#define BACKING_SPEED 25
 
 // How many frames we ignore at the beginning of the mission
 #define STARTUP_FRAMES 9
 
 // How Long We Must See a Blob Durring Approach
-#define APPROACH_THRESHOLD 8
+#define APPROACH_THRESHOLD 2
 
 // How large blobs must be
 #define MIN_BLOB_SIZE 200
@@ -86,7 +86,7 @@ static float bouy_depth[] = {
 #define DEPTH_CENTER_COUNT 4
 
 // How close to the center of the frame the bouy must be before we consider it in the center
-#define VERTICAL_THRESHOLD 25
+#define VERTICAL_THRESHOLD 50
 
 // How long we must track a bouy before activating depth control
 #define TRACKING_THRESHOLD 6
@@ -108,7 +108,7 @@ static float bouy_depth[] = {
 
 // Y value for where a blob is found is multiplied by this to get the relative
 // depth heading
-#define DEPTH_SCALE_FACTOR (1.0/200.0)
+#define DEPTH_SCALE_FACTOR (1.0/100.0)
 
 // How far to turn after bumping the second bouy in degrees
 #define TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP 70
@@ -220,7 +220,7 @@ void mission_bouy_init(IplImage * frame, struct mission_output* result)
     bouy_bump_init();
     bouy_first_approach_init();
     result->depth_control = DEPTH_ABSOLUTE;
-    result->depth = 4.0;
+    result->depth = 5.5;
     bump_initialized = 0;
     search_pattern_turning = 0;
     seen_orange_blob = 0;
@@ -608,24 +608,32 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     //ipl_out[3] = cvCreateImage(cvGetSize (frame), 8, 3);
 
     int num_pixels[3];                                                 //color thresholds
-    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 280, 3.5);
-    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 360, 2.0);
-    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 280, 2.5);
+    /*
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 1, 3.5);
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 200, 2.5);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 1, 2.0);
     //num_pixels[3] = FindTargetColor(frame, ipl_out[3], &bouy_colors[SUNSPOT_BOUY], 1, 90, 2);
+    */
+
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 1, 3.5);
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 320, 1.5);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 270, 2.0);
 
     // Debugs
-    cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
-    //cvNamedWindow("Sunspot White", CV_WINDOW_AUTOSIZE);
-    cvMoveWindow("Yellow",0,150);
-    cvMoveWindow("Red",300,150);
-    cvMoveWindow("Green",600,150);
-    //cvMoveWindow("Sunspot White",900,150);
-    cvShowImage("Yellow", ipl_out[0]);
-    cvShowImage("Red", ipl_out[1]);
-    cvShowImage("Green", ipl_out[2]);
-    //cvShowImage("Sunspot White", ipl_out[3]);
+    #ifdef VISION_GRAPHICAL
+        cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
+        cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
+        cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
+        //cvNamedWindow("Sunspot White", CV_WINDOW_AUTOSIZE);
+        cvMoveWindow("Yellow",0,150);
+        cvMoveWindow("Red",300,150);
+        cvMoveWindow("Green",600,150);
+        //cvMoveWindow("Sunspot White",900,150);
+        cvShowImage("Yellow", ipl_out[0]);
+        cvShowImage("Red", ipl_out[1]);
+        cvShowImage("Green", ipl_out[2]);
+        //cvShowImage("Sunspot White", ipl_out[3]);
+    #endif
 
     //Look for blobs
     BLOB* blobs[3];
@@ -875,7 +883,7 @@ int bouy_bump(struct mission_output* result, int target_bouy){
     if (blobs_found == 0 || blobs_found > 3) {
 
         // We don't think what we see is a blob
-        if (tracking_counter > 6)
+        if (tracking_counter > 15)
         {
             // We have seen the blob for long enough, we may have hit it
             if (++hit_blob > 4)
@@ -914,6 +922,7 @@ int bouy_bump(struct mission_output* result, int target_bouy){
 
         // Update heading
         // We do this only for a few frames to get a good heading
+        printf("Forward Counter: %d\n", forward_counter);
         if (forward_counter < FORWARD_TRACKING_AMOUNT) {
             printf("setting yaw to chase a blob\n");
             heading = found_blob[0].mid;
@@ -928,21 +937,30 @@ int bouy_bump(struct mission_output* result, int target_bouy){
 
             // Start adjusting depth
             if(tracking_counter > TRACKING_THRESHOLD){
+                printf("We're adjusting depth...\n");
 
                 // Depth control
                 result->depth_control = DEPTH_RELATIVE;
                 result->depth = heading.y;
-                cvCircle(result->frame, cvPoint(result->yaw, result->depth), 5, cvScalar(0,0,0,255),1,8,0);
+                //cvCircle(result->frame, cvPoint(result->yaw, result->depth), 5, cvScalar(0,0,0,255),1,8,0);
                 result->depth = result->depth - frame_height / 2;
                 result->depth *= DEPTH_SCALE_FACTOR; // Scaling factor
 
-                if (fabs(heading.y - frame_height/2) < VERTICAL_THRESHOLD && ++depth_counter > DEPTH_CENTER_COUNT) {
-                    result->rho = FORWARD_SPEED;
-                    forward_counter++;
-                } else if (forward_counter) {
-                    forward_counter++;
-                } else {
+                printf("heading.y=%d, frame_height/2=%d, depth_counter=%d\n", heading.y, frame_height/2, depth_counter);
+                if (abs(heading.y - frame_height/2) > VERTICAL_THRESHOLD){
+                    //we still need to center our depth
                     depth_counter = 0;
+                }else if(++depth_counter > DEPTH_CENTER_COUNT) {
+                    //we have centered our depth, move on
+                    result->rho = FORWARD_SPEED;
+                    if(forward_counter == 0){
+                        forward_counter++;
+                        tracking_counter = 0;
+                    }
+                }
+
+                if (forward_counter) {
+                    forward_counter++;
                 }
             }
 
@@ -971,7 +989,7 @@ int bouy_bump(struct mission_output* result, int target_bouy){
 
     //check big blob countdown
     if(saw_big_blob > 0){
-        if(++saw_big_blob > 5){
+        if(++saw_big_blob > BIG_BLOB_WAIT){
             result->yaw = 0;
             //result->depth = 0;
             result->rho = 0;

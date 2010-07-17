@@ -63,7 +63,9 @@ int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_a
     #ifdef VISION_LIB_BLOB
         IplImage* blob_pic = cvCreateImage(cvGetSize(Img),8,3);
         cvCopy(Img, blob_pic, 0);
-        cvNamedWindow("Blob", CV_WINDOW_AUTOSIZE);
+        #ifdef VISION_GRAPHICAL
+            cvNamedWindow("Blob", CV_WINDOW_AUTOSIZE);
+        #endif
         int x,y;
 
         // Bind the blobs
@@ -102,7 +104,9 @@ int blob(IplImage* Img, BLOB**  targets, int tracking_number, int minimum_blob_a
             }
         }
 
-        cvShowImage("Blob",blob_pic);
+        #ifdef VISION_GRAPHICAL
+            cvShowImage("Blob",blob_pic);
+        #endif
         cvReleaseImage(&blob_pic);
 
     #endif

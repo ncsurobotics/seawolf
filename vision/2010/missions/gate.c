@@ -82,8 +82,10 @@ struct mission_output mission_gate_step(struct mission_output result)
         lines = hough(edge, frame, 20, 2, 90,20, 10, 150, 150);
 
         #ifdef DEBUG_BLACK_GATE
-            cvNamedWindow("Black_Gate", CV_WINDOW_AUTOSIZE);
-            cvShowImage("Black_Gate", ipl_out);
+            #ifdef VISION_GRAPHICAL
+                cvNamedWindow("Black_Gate", CV_WINDOW_AUTOSIZE);
+                cvShowImage("Black_Gate", ipl_out);
+            #endif
         #endif
 
     }
@@ -162,16 +164,16 @@ struct mission_output mission_gate_step(struct mission_output result)
     } else { // We don't see anything
     
         // Check to see if we could have passed through the gate
-        if (++frames_since_seen_gate > 20 && seen_gate > 10) {
+        if (++frames_since_seen_gate > 5 && seen_gate > 10) {
             result.mission_done = true;
         }
     }
 
     // Determine rho
     if(close_to_gate > 3)
-        result.rho= 20; // Low rho
+        result.rho= 40; // Low rho
     else
-        result.rho = 20; // High rho
+        result.rho = 40; // High rho
 
     // Debugs:
     #ifdef VISION_SHOW_HEADING

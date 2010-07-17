@@ -268,12 +268,16 @@ CvSeq* hough(IplImage* img, IplImage* original, int threshold, int linesMax,int 
 
     // Display Debug
     #ifdef VISION_LIB_HOUGH_LINES
-        cvNamedWindow("Hough Lines", CV_WINDOW_AUTOSIZE);
+        #ifdef VISION_GRAPHICAL
+            cvNamedWindow("Hough Lines", CV_WINDOW_AUTOSIZE);
+        #endif
         IplImage* debug_image = cvCreateImage(cvGetSize(img), 8, 3);
         //cvCopy(img, debug_image, 0);
         cvConvertImage(img, debug_image, CV_GRAY2BGR);
         hough_draw_lines(debug_image, lines);
-        cvShowImage("Hough Lines", debug_image);
+        #ifdef VISION_GRAPHICAL
+            cvShowImage("Hough Lines", debug_image);
+        #endif
         cvReleaseImage(&debug_image);
     #endif
 

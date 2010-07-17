@@ -25,10 +25,12 @@ MISSION_OBJS=$(patsubst missions/%.c, \
 $(shell mkdir -p $(PWD)/bin)
 $(shell mkdir -p $(PWD)/missions/bin)
 
-all: vision_lib main
-
+all: vision_lib main 
 main: $(MISSION_OBJS) bin/control.o bin/util.o bin/main.o
 	$(CC) $(ALL_FLAGS) bin/*.o lib/vision_lib.o $(MISSION_OBJS) -o main
+
+#switcher: $(MISSION_OBJS) bin/switcher.o
+#	$(CC) $(ALL_FLAGS) lib/vision_lib.o bin/switcher.o -o switcher
 
 vision_lib:
 	$(MAKE) -C lib

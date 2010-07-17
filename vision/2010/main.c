@@ -59,8 +59,10 @@ int main(int argc, char** argv)
     set_yaw(results.yaw, results.yaw_control);
     set_rho(results.rho);
 
-    #ifdef VISION_SHOW_HEADING
-       cvNamedWindow("Heading", CV_WINDOW_AUTOSIZE);
+    #ifdef VISION_SHOW_HEADING 
+        #ifdef VISION_GRAPHICAL
+            cvNamedWindow("Heading", CV_WINDOW_AUTOSIZE);
+        #endif
     #endif
 
     // Determine mission_index

@@ -8,7 +8,7 @@
 /* Air and water pressure constants. Varies by location (calibration recommended) */
 #define PSI_PER_FOOT 0.4335
 #define AIR_PRESSURE 14.23
-#define DEPTH_ZERO 0.57
+#define DEPTH_ZERO 0.0
 
 void manage(SerialPort sp);
 
@@ -97,9 +97,9 @@ void manage(SerialPort _sp) {
             depth = (psi - AIR_PRESSURE) / PSI_PER_FOOT - DEPTH_ZERO;
 
             /* Depth must be greater than 0 */
-            if (depth < 0.0) {
-                depth = 0.0;
-            }
+            //if (depth < 0.0) {
+            //    depth = 0.0;
+            //}
 
             Var_set("Depth", depth);
         } else {

@@ -77,6 +77,9 @@ static char* path_state_names[] = {
 // on while alligning with path
 #define PATH_TURNING_ALLIGNMENT_FRAMES 10
 
+// When trying to align with the path, we will give up and go straight after this amount of time
+#define ALIGN_TIME 6
+
 /**********************************/
 
 // State Variables
@@ -93,6 +96,7 @@ static int align_correct_angle;
 static int path_centered;
 static bool recording;
 static int initial_angle;
+static Timer* align_timer;
 
 double get_absolute_angle(double theta);
 
@@ -121,6 +125,11 @@ void mission_align_path_init(IplImage* frame, struct mission_output* results)
     //results->depth_control = DEPTH_ABSOLUTE;
     //results->depth = 1.0;
 
+    if (align_timer != NULL) {
+        Timer_destroy(align_timer);
+    }
+    align_timer = NULL;
+
 }
 
 double get_absolute_angle(double theta) {
@@ -136,7 +145,7 @@ struct mission_output mission_align_path_step(struct mission_output result)
     IplImage* grey;
     IplImage* edge;
     IplImage* ipl_out = NULL;
-    RGBPixel color = {0xff, 0xff, 0xff};
+    RGBPixel color = {0xff, 0x00, 0x00};
     CvSeq* lines;
     float* line;
     double current_yaw;
@@ -146,8 +155,13 @@ struct mission_output mission_align_path_step(struct mission_output result)
     ipl_out = cvCreateImage(cvGetSize(frame),8,3);
     result.frame = frame;
 
-    // Color Filter
-    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 50, 3.0);
+    ///////////////// Color Filter///////////
+    int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 400, 1.5);
+
+    // Looking for white
+    //int num_pixels = FindTargetColor(frame, ipl_out, &color, 400, 50, 3.0);
+
+    //////////////////////////////////////////
 
     // Blob Detection
     BLOB *blobs;
@@ -474,11 +488,25 @@ struct mission_output mission_align_path_step(struct mission_output result)
             }
 
             // Determine if we've finished
-            if (align_correct_angle > PATH_TURNING_ALLIGNMENT_FRAMES) {
+
+            if (align_timer == NULL) {
+                align_timer = Timer_new();
+            } else if (align_correct_angle > PATH_TURNING_ALLIGNMENT_FRAMES ||
+                Timer_getTotal(align_timer) > ALIGN_TIME) {
+
+                if (align_correct_angle > PATH_TURNING_ALLIGNMENT_FRAMES) {
+                    printf("We're correctly alligned!\n");
+                } else if (Timer_getTotal(align_timer) > ALIGN_TIME) {
+                    printf("Haven't alligned correctly, but we've waited too long.\n");
+                } else {
+                    printf("WTF!  This should NEVER happen!\n");
+                }
 
                 // Mission is finished!!!
                 result.mission_done = true;
                 result.rho = 20;
+                Timer_destroy(align_timer);
+                align_timer = NULL;
 
             }
         break;

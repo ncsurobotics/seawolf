@@ -2,8 +2,8 @@
 #include "seawolf.h"
 #include "seawolf3.h"
 
-#define THRUSTER_CAP 30 // Thrusters capped at this unless panicing
-#define PANIC_DEPTH 10.0 // At what depth we panic and go up full force
+#define THRUSTER_CAP 50 // Thrusters capped at this unless panicing
+#define PANIC_DEPTH 12.0 // At what depth we panic and go up full force
 #define PANIC_TIME 10.0 // Time in seconds that we panic
 
 static Timer* panic_timer = NULL;
