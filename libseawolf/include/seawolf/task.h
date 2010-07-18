@@ -5,6 +5,7 @@
 #ifndef __SEAWOLF_TASK_INCLUDE_H
 #define __SEAWOLF_TASK_INCLUDE_H
 
+#include <unistd.h>
 #include <stdbool.h>
 #include <pthread.h>
 
@@ -113,6 +114,7 @@ void Task_destroy(Task* task);
 int Task_run(Task* task);
 int Task_watchdog(double timeout, int (*func)(void));
 Task_Handle Task_background(int (*func)(void));
+pid_t Task_spawnApplication(const char* path, char* args, ...);
 void Task_kill(Task_Handle task);
 void Task_wait(Task_Handle task);
 
