@@ -169,6 +169,10 @@ void Hub_Net_mainLoop(void) {
            in. Handle it */
         if(FD_ISSET(svr_sock, &fdset_mask_r)) {
             client_new = accept(svr_sock, NULL, 0);
+            if(client_new < 0) {
+                Hub_Logging_log(ERROR, "Error accepting new client connection");
+                client_new = 0;
+            }
         }
 
         /* Check for incoming data */
