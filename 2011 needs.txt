@@ -1,0 +1,66 @@
+
+
+Things for 2011
+David
+	JAUS
+	Laptop sun shield
+	Floating wireless tether (in addition to hardwire tether)
+	Pneumatics
+		tank + 100psi regulator + manifold
+		active grabber (pneumatic cylinders)
+		torpedo launcher
+		dropper
+	Kill switch box with kill switch (aluminum)
+	Strafing thrusters
+	Solidworks of entire craft
+	Smaller pelican case
+	Cameras
+			Camera Boxes
+	Motor board with ability to control 7 thrusters (2x,3y,2z)
+	Set up a presentation for NCSU faculty/advisors/department heads
+	Project management schedule
+	Contact NEST for admin and money raising
+	 
+Rabit
+	ENTIRELY isolated thruster power
+	laser distancing
+	active sonar
+	velocity, drift, direction feedback 
+	REALLY BAD ASS CAMERAS
+	
+Jeff: 
+	More advanced vision code (machine learning)
+	More Accurate Dead Reckoning
+	Fishers on bottom and smaller case
+	more time on control code 
+	more pattern detection code
+	more robuts color code
+	quick disconect robot parts (REALLY emphasize our modularity)
+	new torpedo design
+	
+Chris
+	Bug tracker
+	transdec model
+	seawolf plan B boards
+	
+Pen and paper list
+	FIT PC
+	Solidworks Model
+	GPU Offloading
+	Frame support
+	Deadline System
+	Opto Isolation (Solidstate Relay)
+	CAMERAS
+	Angled thrusters/better placement
+	Large outdoor pool
+	sensor booom for IMU
+	Female PR team
+	Female HR team
+	wireless tether (dedicate a small pelican box)
+	centered cameras
+	laser aided vision
+	Geda (open source PCB application for Linux)
+	
+
+	
+		
