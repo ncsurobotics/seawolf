@@ -24,10 +24,12 @@ void set_depth(float depth, float depth_control) {
 
 void set_depth_relative(float depth) {
     float current_depth = Var_get("Depth");
+    printf("Depth RELATIVE: %f + %f = %f\n", depth, current_depth, current_depth+depth);
     Var_set("DepthHeading", current_depth + depth);
 }
 
 void set_depth_absolute(float depth) {
+    printf("Depth ABSOLUTE: %f\n", depth);
     Var_set("DepthHeading", depth);
 }
 
@@ -68,5 +70,6 @@ void set_yaw_rate(float yaw) {
 /* Forward */
 void set_rho(float rho) {
     rho = Util_inRange(-THRUSTER_MAX, rho, THRUSTER_MAX);
+    printf("Forward: %f\n", rho);
     Notify_send("THRUSTER_REQUEST", Util_format("Forward %d %d", (int) rho, (int) rho));
 }

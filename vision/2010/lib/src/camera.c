@@ -77,8 +77,8 @@ CvCapture* init_camera_from_string(char* str) {
     fflush(NULL);
 
 //DO NOT UNCOMMENT THESE!
-    //cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 320);
-    //cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 240);
+    cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 320);
+    cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 240);
 
     return capture;
 }

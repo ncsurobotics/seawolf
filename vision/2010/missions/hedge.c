@@ -132,8 +132,10 @@ struct mission_output mission_hedge_step(struct mission_output result)
                 lines = hough(edge, frame, 20, 2, 90,20, 10, 150, 150);
 
                 #ifdef DEBUG_BLACK_GATE
-                    cvNamedWindow("Black_Gate", CV_WINDOW_AUTOSIZE);
-                    cvShowImage("Black_Gate", ipl_out);
+                    #ifdef VISION_GRAPHICAL
+                        cvNamedWindow("Black_Gate", CV_WINDOW_AUTOSIZE);
+                        cvShowImage("Black_Gate", ipl_out);
+                    #endif
                 #endif
 
             }

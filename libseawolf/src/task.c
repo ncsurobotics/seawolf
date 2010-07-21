@@ -5,7 +5,15 @@
 
 #include "seawolf.h"
 
+#include <stdarg.h>
 #include <pthread.h>
+#include <unistd.h>
+
+/**
+ * Maximum number of arguments to the Task_spawnApplication
+ * \private
+ */
+#define MAX_ARGS 31
 
 /**
  * Task completed successfully
@@ -160,6 +168,47 @@ Task_Handle Task_background(int (*func)(void)) {
 
     pthread_create(&func_th, NULL, Task_callWrapper, func_args);
     return func_th;
+}
+
+/**
+ * \brief Spawn an external program
+ *
+ * Spawn an external application and run asychronously with the current
+ * application i.e. it returns almost immediately
+ *
+ * \param path Application to be run
+ * \param args A NULL terminated list of program arguments
+ * \return -1 on failure, otherwise the PID of spawned application is returned
+ */
+pid_t Task_spawnApplication(const char* path, char* args, ...) {
+    int pid;
+    va_list ap;
+    char* argv[MAX_ARGS + 1];
+
+    /* Build arguments array */
+    argv[0] = path;
+    argv[1] = NULL;
+
+    va_start(ap, args);
+    for(int i = 1; i < MAX_ARGS && args != NULL; i++) {
+        argv[i] = args;
+        argv[i+1] = NULL;
+        args = va_arg(ap, char*);
+    }
+    va_end(ap);
+
+    /* Run program */
+    pid = fork();
+    if(pid == 0) {
+        /* Replace current process with the given application */
+        execv(path, argv);
+        
+        /* Should *not* happen */
+        fprintf(stderr, "Application %s failed to spawn!\n", path);
+        exit(EXIT_FAILURE);
+    }
+
+    return pid;
 }
 
 /**

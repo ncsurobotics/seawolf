@@ -75,8 +75,6 @@ int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("PID Mixer");
 
-    Var_set("DepthHeading", 0.5);
-
     /* Thruster values */
     short out[] = {0, 0, 0, 0, 0};
     
@@ -99,6 +97,8 @@ int main(void) {
     
     count = 0;
     Task_background(rate);
+
+    Notify_send("GO", "Vision");
 
     while(true) {
         Notify_get(NULL, data);

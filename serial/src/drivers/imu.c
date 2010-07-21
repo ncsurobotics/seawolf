@@ -8,6 +8,9 @@
 //#define STABILIZED_EULER
 #define SUM_SIZE 10
 
+/* How many consecutive errors before attempting to restart driver */
+#define PATIENCE 3
+
 #define BFIELD(buff, i)        (((uint8_t*)(buff))[(i)-1])
 #define SFIELD(buff, i)        ((int16_t)((((int16_t)BFIELD(buff, i)) << 8) | ((int16_t)BFIELD(buff, i+1))))
 #define USFIELD(buff, i)       ((uint16_t)SFIELD(buff, i))
@@ -23,6 +26,13 @@
 
 #define X 0
 #define Y 1
+
+static int restart_driver(SerialPort sp, char** argv) {
+    Logging_log(ERROR, "Error limit exceded. Restarting driver");
+    Seawolf_close();
+
+    return execl(argv[0], argv[0], argv[1], NULL); 
+}
 
 int main(int argc, char** argv) {
     Seawolf_loadConfig("../conf/seawolf.conf");
@@ -50,6 +60,9 @@ int main(int argc, char** argv) {
     /* Return values */
     int n;
 
+    /* Number of consecutive errors */
+    int error_count = 0;
+
     /* Zero arrays */
     memset(val_roll, 0, sizeof(int) * SUM_SIZE);
     memset(val_pitch, 0, sizeof(int) * SUM_SIZE);
@@ -64,29 +77,40 @@ int main(int argc, char** argv) {
 
     /* Set options */
     Serial_setBaud(sp, 38400);
-    
+
     /* Poke the IMU and then flush input buffers */
     Serial_sendByte(sp, 0xF0);
     Util_usleep(1.0);
     Serial_flush(sp);
     
     for(int i = 0; ; i = (i+1) % SUM_SIZE) {
+        /* Check error count */
+        if(error_count > PATIENCE) {
+            restart_driver(sp, argv);
+            Logging_log(ERROR, "Could not restart IMU driver!");
+        }
+
         /* Get data set from IMU */
         n = Serial_sendByte(sp, COMMAND_BYTE);
         if(n == -1) {
-            Logging_log(ERROR, "Can not send data to IMU! Retrying in 1 second.");
+            error_count++;
+            Logging_log(ERROR, "Can not send data to IMU! Retrying in 200 millisecond.");
             Serial_flush(sp);
-            Util_usleep(1.0);
+            Util_usleep(0.2);
             continue;
         }
-        
+
         n = Serial_get(sp, imu_buff, 11);
         if(n == -1) {
-            Logging_log(ERROR, "Error encountered while receive response from IMU! Retrying in 1 second.");
+            error_count++;
+            Logging_log(ERROR, "Error encountered while receive response from IMU! Retrying in 200 milli second.");
             Serial_flush(sp);
-            Util_usleep(0.1);
+            Util_usleep(0.2);
             continue;
         }
+
+        /* Reset error count */
+        error_count = 0;
 
         /* The first byte in the response should match the command byte sent to
            the IMU */

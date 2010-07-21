@@ -219,6 +219,7 @@ struct mission_output mission_window_step(struct mission_output result)
         case FIRE_ZE_MISSILES: 
             //do it. do it now. 
             printf("Firing Ze Missiles!\n");
+            Notify_send("RUN", "Torpedo");
             Util_usleep(1);
         
         case WINDOW_STATE_COMPLETE:
@@ -250,14 +251,16 @@ int find_window(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int ta
     num_pixels[3] = FindTargetColor(frame, ipl_out[3], &window_colors[BLUE_WINDOW], 1, 1, 1);
 
     // Debugs
-    cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("Blue", CV_WINDOW_AUTOSIZE); 
-    cvShowImage("Yellow", ipl_out[0]);
-    cvShowImage("Red", ipl_out[1]);
-    cvShowImage("Green", ipl_out[2]);
-    cvShowImage("Blue", ipl_out[3]);
+    #ifdef VISION_GRAPHICAL
+        cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
+        cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
+        cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
+        cvNamedWindow("Blue", CV_WINDOW_AUTOSIZE); 
+        cvShowImage("Yellow", ipl_out[0]);
+        cvShowImage("Red", ipl_out[1]);
+        cvShowImage("Green", ipl_out[2]);
+        cvShowImage("Blue", ipl_out[3]);
+    #endif
 
     //Look for blobs
     BLOB* blobs[4];

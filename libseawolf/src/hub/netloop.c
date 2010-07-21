@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
@@ -44,10 +45,19 @@ static Comm_Message* Hub_Net_receiveMessage(int comm_socket) {
 }
 
 static bool Hub_Net_sendPackedMessage(int comm_socket, Comm_PackedMessage* packed_message) {
+    struct pollfd fd = {.fd = comm_socket, .events = POLLOUT};
     int n;
 
-    /* Send data */
-    n = send(comm_socket, packed_message->data, packed_message->length, 0);
+    /* Check if data can be sent without blocking */
+    poll(&fd, 1, 0);
+    if(fd.revents & POLLOUT) {
+        /* Send data */
+        n = send(comm_socket, packed_message->data, packed_message->length, 0);
+    } else {
+        /* Socket not ready to accept data */
+        Hub_Logging_log(ERROR, "Unable to write data to full network socket");
+        return false;
+    }
 
     return (n != -1);
 }
@@ -159,6 +169,10 @@ void Hub_Net_mainLoop(void) {
            in. Handle it */
         if(FD_ISSET(svr_sock, &fdset_mask_r)) {
             client_new = accept(svr_sock, NULL, 0);
+            if(client_new < 0) {
+                Hub_Logging_log(ERROR, "Error accepting new client connection");
+                client_new = 0;
+            }
         }
 
         /* Check for incoming data */

@@ -103,6 +103,7 @@ int main(void) {
                     error = 360+error;
                 }
 
+                //printf("Error: %f\n", error);
                 mv = PID_update(angularpid, error);
 
                 // Don't let the motors run too fast

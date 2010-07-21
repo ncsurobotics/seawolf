@@ -20,6 +20,9 @@ DEBUG_FLAGS += -DVISION_SHOW_HEADING
 # mission.h).  Default=0   If undefined, it also defaults to 0
 DEBUG_FLAGS += -DVISION_INITIAL_MISSION=0
 
+# If this is off then we don't display any windows or graphical things
+DEBUG_FLAGS += -DVISION_GRAPHICAL
+
 ################ Image Lib Debugs #################
 
 # Check the type of images before performing transforms and filters

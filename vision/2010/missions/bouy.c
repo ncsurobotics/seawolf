@@ -24,21 +24,21 @@
 
 //order of bouys from left to right
 static int bouy_order[] = {
-    [RED_BOUY]    = 3,
-    [GREEN_BOUY]  = 1,
-    [YELLOW_BOUY] = 2
+    [RED_BOUY]    = 2,
+    [GREEN_BOUY]  = 3,
+    [YELLOW_BOUY] = 1
 };
 
 //depths of each bouy from the surface in feet
 static float bouy_depth[] = {
-    [RED_BOUY]    = 1.2,
-    [GREEN_BOUY]  = 3.0,
-    [YELLOW_BOUY] = 2.0
+    [RED_BOUY]    = 5.5,
+    [GREEN_BOUY]  = 5.5,
+    [YELLOW_BOUY] = 5.5
 };
 
 // The order to hit the bouys in
 #define BOUY_1 RED_BOUY
-#define BOUY_2 YELLOW_BOUY
+#define BOUY_2 GREEN_BOUY
 
 // States for the bouy state machine
 #define BOUY_STATE_FIRST_APPROACH 0
@@ -55,10 +55,10 @@ static float bouy_depth[] = {
 #define BOUY_STATE_COMPLETE 11
 
 // How fast we go throughout most of the mission
-#define FORWARD_SPEED 15
+#define FORWARD_SPEED 30
 
 // How fast we back up.  Should be positive
-#define BACKING_SPEED 15
+#define BACKING_SPEED 25
 
 // How many frames we ignore at the beginning of the mission
 #define STARTUP_FRAMES 9
@@ -79,6 +79,18 @@ static float bouy_depth[] = {
 // How Long To Back Up After 1st Bouy
 #define BACK_UP_TIME_1 7
 
+// How long we are chasing a bouy before we fix our heading
+#define FORWARD_TRACKING_AMOUNT 10
+
+// How many frames depth must be centered before moving forward
+#define DEPTH_CENTER_COUNT 4
+
+// How close to the center of the frame the bouy must be before we consider it in the center
+#define VERTICAL_THRESHOLD 50
+
+// How long we must track a bouy before activating depth control
+#define TRACKING_THRESHOLD 6
+
 // How Far to Turn When Looking for a Bouy
 #define TURNING_THRESHOLD_1 70
 
@@ -96,7 +108,7 @@ static float bouy_depth[] = {
 
 // Y value for where a blob is found is multiplied by this to get the relative
 // depth heading
-#define DEPTH_SCALE_FACTOR (1.0/200.0)
+#define DEPTH_SCALE_FACTOR (1.0/100.0)
 
 // How far to turn after bumping the second bouy in degrees
 #define TURN_AMOUNT_AFTER_SECOND_BOUY_BUMP 70
@@ -124,25 +136,26 @@ static int bouy_state = 0;           //Keeps track of primary bouy state machine
 static int bouys_found = 0;          //turns to 1,2, or 3 when a bouy is found, # signifies color
 static RGBPixel bouy_colors[] = {    //holds the three colors of the bouys
 
+    // Competition measured
+    // Midday.  Competition side
+    // Background was about 72b7ff
+    // Red: san_diego_day1/62/00430.jpg
+    // Yellow: san_diego_day1/62/00465.jpg
+    //[YELLOW_BOUY]  = {0x9E, 0xE6, 0xFF },
+    //[RED_BOUY]     = {0xF4, 0xA8, 0xFF },
+    //[GREEN_BOUY]   = {0x5B, 0xE8, 0xFF },
+    //[SUNSPOT_BOUY] = {0xff, 0xff, 0xff },
+
+    // Pure white for yellow
+    //[YELLOW_BOUY]  = {0xFF, 0xFF, 0xFF },
+    // funny guess for yellow
+    [YELLOW_BOUY] = {0x80, 0xff, 0xff},
+
     // Ideal Colors
-    [YELLOW_BOUY]  = {0xff, 0xff, 0x00 },
+    //[YELLOW_BOUY]  = {0xff, 0xff, 0x00 },
     [RED_BOUY]     = {0xff, 0x00, 0x00 },
     [GREEN_BOUY]   = {0x00, 0xff, 0x00 },
-    [SUNSPOT_BOUY] = {0xff, 0xff, 0xff },
-
-    // Numbers from about as far away as it can see, taken from Jeff's pool on
-    // a very good visibility day.
-    //[YELLOW_BOUY] = {0x9C, 0xC8, 0xC7 },
-    //[RED_BOUY]    = {0xA3, 0xA3, 0xBB },
-    //[GREEN_BOUY]  = {0xD8, 0xCB, 0xCB },
-
-    // Numbers very close, taken from Jeff's pool on a very good visibility
-    // day.
-    //[YELLOW_BOUY] = {0xD7, 0xDE, 0xB2 },
-    //[RED_BOUY]    = {0xAE, 0x83, 0x94 },
-    //[GREEN_BOUY]  = {0xAE, 0xE4, 0xCA },
-
-    //[GREEN_BOUY]  = {0x96, 0xBB, 0xC4 },
+    //[SUNSPOT_BOUY] = {0xff, 0xff, 0xff },
 
 };
 
@@ -164,6 +177,8 @@ static Timer* bouy_timer = NULL;      //time how long since we first saw the bou
 static int turn_counter = 0;      //count # of times we've turned around looking for bouy
 // State Variables for Bouy - First Backing Up
 static Timer* backing_timer = NULL;      //times our backing up step for us
+static int depth_counter; // How long we've centered vertically
+static int forward_counter; // How long we've been going forward
 
 // State Variables for Dead Reakoning At End
 double heading;
@@ -205,11 +220,13 @@ void mission_bouy_init(IplImage * frame, struct mission_output* result)
     bouy_bump_init();
     bouy_first_approach_init();
     result->depth_control = DEPTH_ABSOLUTE;
-    result->depth = 2.0;
+    result->depth = 5.5;
     bump_initialized = 0;
     search_pattern_turning = 0;
     seen_orange_blob = 0;
     first_search_leg = 1;
+    depth_counter = 0;
+    forward_counter = 0;
 
     if (backing_timer != NULL) {
         Timer_destroy(backing_timer);
@@ -591,24 +608,32 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     //ipl_out[3] = cvCreateImage(cvGetSize (frame), 8, 3);
 
     int num_pixels[3];                                                 //color thresholds
-    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 250, 1.0);
-    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 300, 1.0);
-    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 220, 1);
+    /*
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 1, 3.5);
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 200, 2.5);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 1, 2.0);
     //num_pixels[3] = FindTargetColor(frame, ipl_out[3], &bouy_colors[SUNSPOT_BOUY], 1, 90, 2);
+    */
+
+    num_pixels[0] = FindTargetColor(frame, ipl_out[0], &bouy_colors[YELLOW_BOUY], 1, 1, 3.5);
+    num_pixels[1] = FindTargetColor(frame, ipl_out[1], &bouy_colors[RED_BOUY], 1, 320, 1.5);
+    num_pixels[2] = FindTargetColor(frame, ipl_out[2], &bouy_colors[GREEN_BOUY], 1, 270, 2.0);
 
     // Debugs
-    cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
-    cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
-    //cvNamedWindow("Sunspot White", CV_WINDOW_AUTOSIZE);
-    cvMoveWindow("Yellow",0,150);
-    cvMoveWindow("Red",300,150);
-    cvMoveWindow("Green",600,150);
-    //cvMoveWindow("Sunspot White",900,150);
-    cvShowImage("Yellow", ipl_out[0]);
-    cvShowImage("Red", ipl_out[1]);
-    cvShowImage("Green", ipl_out[2]);
-    //cvShowImage("Sunspot White", ipl_out[3]);
+    #ifdef VISION_GRAPHICAL
+        cvNamedWindow("Yellow", CV_WINDOW_AUTOSIZE);
+        cvNamedWindow("Red", CV_WINDOW_AUTOSIZE);
+        cvNamedWindow("Green", CV_WINDOW_AUTOSIZE);
+        //cvNamedWindow("Sunspot White", CV_WINDOW_AUTOSIZE);
+        cvMoveWindow("Yellow",0,150);
+        cvMoveWindow("Red",300,150);
+        cvMoveWindow("Green",600,150);
+        //cvMoveWindow("Sunspot White",900,150);
+        cvShowImage("Yellow", ipl_out[0]);
+        cvShowImage("Red", ipl_out[1]);
+        cvShowImage("Green", ipl_out[2]);
+        //cvShowImage("Sunspot White", ipl_out[3]);
+    #endif
 
     //Look for blobs
     BLOB* blobs[3];
@@ -683,9 +708,9 @@ int find_bouy(IplImage* frame, BLOB** found_blob, int* blobs_found_arg, int targ
     //if we see a blob with any of our color filters,
     // send that blob and the frame off to be analyzed 
     // for a final authoritative color analysis
-    if(found_bouy > 0){
-        found_bouy = determine_color(blobs[found_bouy-1],frame);
-    }
+    //if(found_bouy > 0){
+        //found_bouy = determine_color(blobs[found_bouy-1],frame);
+    //}
 
     //free resources
     for (int i=0; i<3; i++) {
@@ -858,7 +883,7 @@ int bouy_bump(struct mission_output* result, int target_bouy){
     if (blobs_found == 0 || blobs_found > 3) {
 
         // We don't think what we see is a blob
-        if (tracking_counter > 6)
+        if (tracking_counter > 15)
         {
             // We have seen the blob for long enough, we may have hit it
             if (++hit_blob > 4)
@@ -889,7 +914,6 @@ int bouy_bump(struct mission_output* result, int target_bouy){
     else if (++tracking_counter > 2)
     {
         //we do see a blob
-        //result->depth_control = DEPTH_RELATIVE;
         result->yaw_control = ROT_MODE_RELATIVE;
 
         //modify state variables
@@ -898,25 +922,46 @@ int bouy_bump(struct mission_output* result, int target_bouy){
 
         // Update heading
         // We do this only for a few frames to get a good heading
-        if (tracking_counter < 25) {
+        printf("Forward Counter: %d\n", forward_counter);
+        if (forward_counter < FORWARD_TRACKING_AMOUNT) {
             printf("setting yaw to chase a blob\n");
             heading = found_blob[0].mid;
             result->yaw = heading.x;
-            //result->depth = heading.y;
-            cvCircle(result->frame, cvPoint(result->yaw, result->depth), 5, cvScalar(0,0,0,255),1,8,0);
             //adjust to put the origin in the center of the frame
             result->yaw = result->yaw - frame_width / 2;
-            //result->depth = result->depth - frame_height / 2;
-            //result->depth *= DEPTH_SCALE_FACTOR; // Scaling factor
             //subjectively scale output !!!!!!!
             result->yaw = result->yaw / YAW_SCALE_FACTOR; // Scale Output
 
             //Convert Pixels to Degrees
             result->yaw = PixToDeg(result->yaw);
 
-            // Start moving forward after having a chance to center blob
-            if(tracking_counter > 6){
-                result->rho = FORWARD_SPEED;
+            // Start adjusting depth
+            if(tracking_counter > TRACKING_THRESHOLD){
+                printf("We're adjusting depth...\n");
+
+                // Depth control
+                result->depth_control = DEPTH_RELATIVE;
+                result->depth = heading.y;
+                //cvCircle(result->frame, cvPoint(result->yaw, result->depth), 5, cvScalar(0,0,0,255),1,8,0);
+                result->depth = result->depth - frame_height / 2;
+                result->depth *= DEPTH_SCALE_FACTOR; // Scaling factor
+
+                printf("heading.y=%d, frame_height/2=%d, depth_counter=%d\n", heading.y, frame_height/2, depth_counter);
+                if (abs(heading.y - frame_height/2) > VERTICAL_THRESHOLD){
+                    //we still need to center our depth
+                    depth_counter = 0;
+                }else if(++depth_counter > DEPTH_CENTER_COUNT) {
+                    //we have centered our depth, move on
+                    result->rho = FORWARD_SPEED;
+                    if(forward_counter == 0){
+                        forward_counter++;
+                        tracking_counter = 0;
+                    }
+                }
+
+                if (forward_counter) {
+                    forward_counter++;
+                }
             }
 
             // Init timer
@@ -944,7 +989,7 @@ int bouy_bump(struct mission_output* result, int target_bouy){
 
     //check big blob countdown
     if(saw_big_blob > 0){
-        if(++saw_big_blob > 5){
+        if(++saw_big_blob > BIG_BLOB_WAIT){
             result->yaw = 0;
             //result->depth = 0;
             result->rho = 0;
