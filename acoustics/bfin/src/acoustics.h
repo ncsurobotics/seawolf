@@ -20,17 +20,34 @@ typedef fract16 adcsample;
 #define SAMPLES_PER_SECOND (96 * 1024)
 
 /* The ADC driver produces data in 8k sample chunks per channel */
-#define SAMPLES_PER_CHANNEL (8 * 1024) 
+#define SAMPLES_PER_CHUNK (8 * 1024) 
 
-/* Size of a circular buffer for a single channel. This must be a power of 2
-   multiple of SAMPLES_PER_CHANNEL */
-#define BUFFER_SIZE_CHANNEL (32 * 1024)
+/* Number of sample blocks in a circular buffer. Must be a power of 2 */
+#define BUFFER_CHUNK_COUNT 4
+
+/* Size of a circular buffer for a single channel */
+#define BUFFER_SIZE_CHANNEL (SAMPLES_PER_CHUNK * BUFFER_CHUNK_COUNT)
 
 /* FIR filter coefficient count */
 #define FIR_COEF_COUNT 151
 
 /* Minimum value to trigger on */
 #define TRIGGER_VALUE ((short)(80))
+
+/* Shift the trigger_point by this much to tune the placement of the ping within
+   the correlation blocks */
+#define TRIGGER_POINT_OFFSET 200
+
+/* Channel scanned to locating the ping coming in */
+#define TRIGGER_CHANNEL A
+
+/* Correlations are performed in a neighborhood of the trigger_point that
+   extends from trigger_point - CORR_RANGE to trigger_point + CORR_RANGE */
+#define CORR_RANGE 200
+
+/* The correlation block will consider possible lag value between -CORR_LAG_MAX
+   and CORR_LAG_MAX */
+#define CORR_LAG_MAX 100 
 
 /* To find the approximate mean of the signal average this many points at the
    beginning of the data set */

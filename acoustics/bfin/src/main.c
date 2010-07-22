@@ -1,9 +1,8 @@
 
-#define ACOUSTICS_DEBUG
-#define ACOUSTICS_PROFILE
-#define ACOUSTICS_CORRELATE
+//#define ACOUSTICS_DEBUG
+//#define ACOUSTICS_PROFILE
 //#define ACOUSTICS_DUMP
-//#define USE_LIBSEAWOLF
+#define USE_LIBSEAWOLF
 
 #include "seawolf.h"
 
@@ -21,8 +20,6 @@
 #include <stats.h>
 
 #include "acoustics.h"
-
-#define TRIGGER_CHANNEL A
 
 /* Circular buffer state */
 static adcsample* cir_buff[4];
@@ -45,31 +42,17 @@ static fir_state_fr16 fir_state_trig;
 static fract16* fir_delay[4];
 static fract16* fir_delay_trig;
 
+/* Compute the mean of the data on the trigger channel so that the data can be
+   normalized around 0 */
 static long int signal_mean = 0;
+
+/* Record the time value of the ping triggering so that the correlation can be
+   done on a neighborhood of this point */
 static int trigger_point = -1;
 
-#ifdef ACOUSTICS_CORRELATE
-
-/* Twiddle table for correlations */
-static complex_fract16* tt;
-
-/* FFT buffers for correlation */
-static complex_fract16* fft_ref;
-static complex_fract16* fft_temp;
-static complex_fract16* cmplx_buff;
-static int block_exponent;
-
 /* Signal delays */
-static int delay_AB;
 static int delay_AC;
-static int delay_AD;
-
-#else
-
-/* Time of arrival on each channel */
-static int toa[4];
-
-#endif
+static int delay_BD;
 
 #ifdef ACOUSTICS_PROFILE
 Timer* t;
@@ -78,6 +61,17 @@ Timer* t;
 /* Misc */
 static unsigned int i, j;
 static adcsample* temp_buff;
+
+/* Dump fract16 data to a flat file */
+#ifdef ACOUSTICS_DUMP
+static void dump(fract16* buff, int size, const char* file) {
+    FILE* f = fopen(file, "w");
+    for(int i = 0; i < size; i++) {
+        fprintf(f, "%d\n", (signed short) buff[i]);
+    }
+    fclose(f);
+}
+#endif
 
 /* Allocate and initialize all data structures */
 static void init(char* coefs_file_name) {
@@ -104,19 +98,6 @@ static void init(char* coefs_file_name) {
     cir_buff[B] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
     cir_buff[C] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
     cir_buff[D] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
-
-#ifdef ACOUSTICS_CORRELATE
-    /* Twiddle table for use in optimized correlation block */
-    tt = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL / 2);
-
-    /* Intialize twiddle table */
-    twidfftrad2_fr16(tt, BUFFER_SIZE_CHANNEL);
-
-    /* Initialize fft output buffers for use in correlation block */
-    fft_ref = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL);
-    fft_temp = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL);
-    cmplx_buff = calloc(sizeof(complex_fract16), BUFFER_SIZE_CHANNEL);
-#endif
 
     /* Temporary buffer used in linearization of circular buffers, to store
        output of the FIR filter applied to trigger samples, and to store the
@@ -170,29 +151,29 @@ static void record_ping(void) {
         /* Copy data out of driver. The data stored by the driver has samples
            interleaved, so we must un-interleave them when copying them out */
         current_buffer_copy = current_buffer + 0;
-        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHANNEL; i++, j++, current_buffer_copy += CHANNELS) {
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHUNK; i++, j++, current_buffer_copy += CHANNELS) {
             cir_buff[A][j] = expand_complement(*current_buffer_copy);
         }
 
         current_buffer_copy = current_buffer + 1;
-        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHANNEL; i++, j++, current_buffer_copy += CHANNELS) {
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHUNK; i++, j++, current_buffer_copy += CHANNELS) {
             cir_buff[B][j] = expand_complement(*current_buffer_copy);
         }
 
         current_buffer_copy = current_buffer + 2;
-        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHANNEL; i++, j++, current_buffer_copy += CHANNELS) {
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHUNK; i++, j++, current_buffer_copy += CHANNELS) {
             cir_buff[C][j] = expand_complement(*current_buffer_copy);
         }
 
         current_buffer_copy = current_buffer + 3;
-        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHANNEL; i++, j++, current_buffer_copy += CHANNELS) {
+        for(i = 0, j = cir_buff_offset; i < SAMPLES_PER_CHUNK; i++, j++, current_buffer_copy += CHANNELS) {
             cir_buff[D][j] = expand_complement(*current_buffer_copy);
         }
 
         /* Don't look for a trigger until the buffer has been filled */
         if(state == READING) {
             /* Run the FIR filter on the current sample from channel A */
-            fir_fr16(cir_buff[TRIGGER_CHANNEL] + cir_buff_offset, temp_buff, SAMPLES_PER_CHANNEL, &fir_state_trig);
+            fir_fr16(cir_buff[TRIGGER_CHANNEL] + cir_buff_offset, temp_buff, SAMPLES_PER_CHUNK, &fir_state_trig);
 
             for(i = 0; i < AVG_COUNT; i++) {
                 signal_mean += temp_buff[i];
@@ -201,9 +182,10 @@ static void record_ping(void) {
 
             /* If the circular buffer is full, check the current sample for the trigger */
             if(cir_buff_full) {
-                for(i = 0; i < SAMPLES_PER_CHANNEL; i++) {
+                for(i = 0; i < SAMPLES_PER_CHUNK; i++) {
                     if(temp_buff[i] - signal_mean > TRIGGER_VALUE) {
-                        trigger_point = (SAMPLES_PER_CHANNEL * ((BUFFER_SIZE_CHANNEL / SAMPLES_PER_CHANNEL) - (EXTRA_READS + 1))) + i + 200;
+                        /* Store the index of the trigger point as it will be once the buffers are linearized */
+                        trigger_point = (SAMPLES_PER_CHUNK * (BUFFER_CHUNK_COUNT - 1 - EXTRA_READS)) + i + TRIGGER_POINT_OFFSET;
                         state = TRIGGERED;
                         break;
                     }
@@ -214,8 +196,8 @@ static void record_ping(void) {
         /* Increment the offset into the circular buffer -- if we are going to
            be back to 0 within EXTRA_READS then set the buffer as filled to
            indicate that we have a full buffers worth of data */
-        cir_buff_offset = (cir_buff_offset + SAMPLES_PER_CHANNEL) % BUFFER_SIZE_CHANNEL;
-        if((cir_buff_offset + SAMPLES_PER_CHANNEL + (EXTRA_READS * SAMPLES_PER_CHANNEL)) % BUFFER_SIZE_CHANNEL == 0) {
+        cir_buff_offset = (cir_buff_offset + SAMPLES_PER_CHUNK) % BUFFER_SIZE_CHANNEL;
+        if((cir_buff_offset + SAMPLES_PER_CHUNK + (EXTRA_READS * SAMPLES_PER_CHUNK)) % BUFFER_SIZE_CHANNEL == 0) {
             cir_buff_full = true;
         }
         
@@ -276,24 +258,20 @@ static void filter_buffers(void) {
     }
 }
 
-static void dump(int channel, const char* file) {
-    FILE* f = fopen(file, "w");
-    for(int i = 0; i < BUFFER_SIZE_CHANNEL; i++) {
-        fprintf(f, "%d\n", (signed short) cir_buff[channel][i]);
-    }
-    fclose(f);
-}
-
-#ifdef ACOUSTICS_CORRELATE
-
-static void dump_corr(fract16* buff, int size, const char* file) {
-    FILE* f = fopen(file, "w");
-    for(int i = 0; i < size; i++) {
-        fprintf(f, "%d\n", (signed short) buff[i]);
-    }
-    fclose(f);
-}
-
+/**
+ * Perform a cross correlation and return the lag value resulting in the
+ * lagesting resulting correlation. Note that this algorithm is meant to be
+ * applied to subsets of existing buffers. Buffer 'a' must be accessible from
+ * a[0] to a[size]. Buffer 'b' must be accessible from b[min_lag] to b[size +
+ * max_lag];
+ *
+ * \param a The first buffer
+ * \param b The second buffer
+ * \param size The size of region to include from each buffer
+ * \param min_lag The smallest lag value to check
+ * \param max_lag The largest lag value to check
+ * \return The lag corresponding to the largest numerical correlation
+ */
 static int crosscor_max(fract16* a, fract16* b, int size, int min_lag, int max_lag) {
     fract16* c = malloc(sizeof(fract16) * (max_lag - min_lag));
     int max_x;
@@ -328,96 +306,22 @@ static int crosscor_max(fract16* a, fract16* b, int size, int min_lag, int max_l
 /*
  * Perform correlations and compute delays in the signals between the channels
  *
- * The correlation alogirthm below is based on the identity,
- *
- *    Correlation(f, g) = ifft( conj(fft(f)) * fft(g))
- *
- * Where conj(...) is the complex conjugate and '*' normal multiplication. As an
- * optimization, conj(fft(f)) is only computed once, and is reused in computing
- * the correlations and delays between each channel and a reference channel.
- * Channel A is the reference channel, and the delays AB, AC, and AD correspond
- * to the delay between A and B, A and C, and A and D respectively.
+ * This correlation block is optimized by only working on a subset of the
+ * buffers which all center around the trigger_point which is set when the ping
+ * is captured. It also differs from a standard correlation in that is checks
+ * negative and positive lag values in a single pass
  *
  * See http://en.wikipedia.org/wiki/Cross_correlation
  */
 static void correlate_buffers(void) {
-    delay_AB = crosscor_max(cir_buff[A] + trigger_point - 200, cir_buff[B] + trigger_point - 200, 400, -50, 50);
-    delay_AC = crosscor_max(cir_buff[A] + trigger_point - 200, cir_buff[C] + trigger_point - 200, 400, -50, 50);
-    delay_AD = crosscor_max(cir_buff[A] + trigger_point - 200, cir_buff[D] + trigger_point - 200, 400, -50, 50);
-    
-    dump(D, "dump_d.txt");
-    exit(1);
+    delay_AC = crosscor_max(cir_buff[A] + trigger_point - CORR_RANGE,
+                            cir_buff[C] + trigger_point - CORR_RANGE,
+                            CORR_RANGE * 2, -CORR_LAG_MAX, CORR_LAG_MAX);
 
-#if 0
-    crosscorr_fr16(cir_buff[A], cir_buff[B], BUFFER_SIZE_CHANNEL, 100, out_buffer);
-    max_y = out_buffer[0];
-    max_x = 0;
-    for(i = 1; i < 100; i++) {
-        if(out_buffer[i] > max_y) {
-            max_y = out_buffer[i];
-            max_x = i;
-        }
-    }
-    delay_AB = max_x;
-#endif
-   
-#if 0
-    /* Compute conjugate of the FFT of channel A */
-    rfft_fr16(cir_buff[A], fft_ref, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 2);
-    conjugate(fft_ref, BUFFER_SIZE_CHANNEL);
-    
-    /* Correlate and find the delay between channels A and B */
-    rfft_fr16(cir_buff[B], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 2);
-    multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
-    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 2);
-    delay_AB = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
-    
-    /* Correlate and find the delay between channels A and C */
-    rfft_fr16(cir_buff[C], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 2);
-    multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
-    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 2);
-    delay_AC = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
-    
-    /* Correlate and find the delay between channels A and D */
-    rfft_fr16(cir_buff[D], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
-    multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
-    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
-    delay_AD = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
-#endif
+    delay_BD = crosscor_max(cir_buff[B] + trigger_point - CORR_RANGE,
+                            cir_buff[D] + trigger_point - CORR_RANGE,
+                            CORR_RANGE * 2, -CORR_LAG_MAX, CORR_LAG_MAX);
 }
-
-#else
-
-/*
- * Compute time of arrival for the signal on each channel
- *
- * Locate the leading each of the ping in each channel and use this to create
- * times of arrival for the ping on each channel. The time are then rezeroed so
- * that the time of arrival on channel A is 0.
- */
-static void compute_toa(void) {
-    int temp_toa;
-
-    /* Compute time of arrival for all channels */
-    for(int channel = A; channel <= D; channel++) {
-        /* Default to 5000 (a bogus value) */
-        toa[channel] = 5000;
-        for(int i = 0; i < BUFFER_SIZE_CHANNEL; i++) {
-            if(cir_buff[channel][i] > TRIGGER_VALUE) {
-                toa[channel] = i;
-                printf("%d\n", i);
-                break;
-            }
-        }
-    }
-
-    /* Rezero all the TOA values */
-    temp_toa = toa[A];
-    for(int channel = A; channel <= D; channel++) {
-        toa[channel] -= temp_toa;
-    }
-}
-#endif
 
 /*
  * Output the delays
@@ -427,32 +331,15 @@ static void compute_toa(void) {
  */
 static void data_out(void) {
 #ifdef USE_LIBSEAWOLF
-# ifdef ACOUSTICS_CORRELATE
-    Var_set("Acoustics.Delays.AB", delay_AB);
     Var_set("Acoustics.Delays.AC", delay_AC);
-    Var_set("Acoustics.Delays.AD", delay_AD);
+    Var_set("Acoustics.Delays.BD", delay_BD);
     Notify_send("UPDATED", "Acoustics.Delays");
-# else
-    Var_set("Acoustics.TOA.A", toa[A]);
-    Var_set("Acoustics.TOA.B", toa[B]);
-    Var_set("Acoustics.TOA.C", toa[C]);
-    Var_set("Acoustics.TOA.D", toa[D]);
-    Notify_send("UPDATED", "Acoustics.TOA");
-# endif
 #endif
     
 #ifdef ACOUSTICS_DEBUG
-# ifdef ACOUSTICS_CORRELATE
-    /* Output pDelay values */
-    printf("delay_AB: %d \n", delay_AB);
+    /* Output delay values */
     printf("delay_AC: %d \n", delay_AC);
-    printf("delay_AD: %d \n", delay_AD);
-# else
-    printf("A: %d\n", toa[A]);
-    printf("B: %d\n", toa[B]);
-    printf("C: %d\n", toa[C]);
-    printf("D: %d\n", toa[D]);
-# endif
+    printf("delay_BD: %d \n", delay_BD);
 #endif
 }
 
@@ -504,11 +391,11 @@ int main(int argc, char** argv) {
         TIME_POST(t);
 
 #ifdef ACOUSTICS_DUMP
-        TIME_PRE(t, "Dumping buffers...");
-        dump(A, "dump_a_raw.txt");
-        dump(B, "dump_b_raw.txt");
-        //dump(C, "dump_c_raw.txt");
-        //dump(D, "dump_d_raw.txt");
+        TIME_PRE(t, "Dumping raw buffers...");
+        dump(cir_buff[A], BUFFER_SIZE_CHANNEL, "dump_a_raw.txt");
+        dump(cir_buff[B], BUFFER_SIZE_CHANNEL, "dump_b_raw.txt");
+        dump(cir_buff[C], BUFFER_SIZE_CHANNEL, "dump_c_raw.txt");
+        dump(cir_buff[D], BUFFER_SIZE_CHANNEL, "dump_d_raw.txt");
         TIME_POST(t);
 #endif
 
@@ -517,24 +404,20 @@ int main(int argc, char** argv) {
         TIME_POST(t);
 
 #ifdef ACOUSTICS_DUMP
-        TIME_PRE(t, "Dumping buffers...");
-        dump(A, "dump_a.txt");
-        dump(B, "dump_b.txt");
-        //dump(C, "dump_c.txt");
-        //dump(D, "dump_d.txt");
+        TIME_PRE(t, "Dumping filtered buffers...");
+        dump(cir_buff[A], BUFFER_SIZE_CHANNEL, "dump_a_filtered.txt");
+        dump(cir_buff[B], BUFFER_SIZE_CHANNEL, "dump_b_filtered.txt");
+        dump(cir_buff[C], BUFFER_SIZE_CHANNEL, "dump_c_filtered.txt");
+        dump(cir_buff[D], BUFFER_SIZE_CHANNEL, "dump_d_filtered.txt");
         TIME_POST(t);
+
+        /* Exit after dumping buffers */
         break;
 #endif
 
-#ifdef ACOUSTICS_CORRELATE
         TIME_PRE(t, "Correlating buffers...");
         correlate_buffers();
         TIME_POST(t);
-#else
-        TIME_PRE(t, "Computing times of arrival...");
-        compute_toa();
-        TIME_POST(t);
-#endif
 
         data_out();
     }
