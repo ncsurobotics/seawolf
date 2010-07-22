@@ -163,7 +163,7 @@ static ssize_t ppi_chr_read(struct file* filp, char __user* buffer, size_t count
 
     /* Check for backlog */
     if(completion_done(&buffer_ready)) {
-        printk(KERN_WARNING DRIVER_NAME ": Missed data packet!\n", buffer_ready.done);
+        printk(KERN_WARNING DRIVER_NAME ": Missed data packet!\n");
     }
 
     /* Copy value of the pointer to the just filled buffer to the user buffer */
