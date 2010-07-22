@@ -1,8 +1,8 @@
 
 #define ACOUSTICS_DEBUG
 #define ACOUSTICS_PROFILE
-//#define ACOUSTICS_CORRELATE
-#define ACOUSTICS_DUMP
+#define ACOUSTICS_CORRELATE
+//#define ACOUSTICS_DUMP
 //#define USE_LIBSEAWOLF
 
 #include "seawolf.h"
@@ -18,6 +18,7 @@
 #include <filter.h>
 #include <math_bf.h>
 #include <complex_bf.h>
+#include <stats.h>
 
 #include "acoustics.h"
 
@@ -43,6 +44,9 @@ static fir_state_fr16 fir_state_trig;
 /* FIR delay lines */
 static fract16* fir_delay[4];
 static fract16* fir_delay_trig;
+
+static long int signal_mean = 0;
+static int trigger_point = -1;
 
 #ifdef ACOUSTICS_CORRELATE
 
@@ -190,10 +194,16 @@ static void record_ping(void) {
             /* Run the FIR filter on the current sample from channel A */
             fir_fr16(cir_buff[TRIGGER_CHANNEL] + cir_buff_offset, temp_buff, SAMPLES_PER_CHANNEL, &fir_state_trig);
 
+            for(i = 0; i < AVG_COUNT; i++) {
+                signal_mean += temp_buff[i];
+            }
+            signal_mean /= AVG_COUNT;
+
             /* If the circular buffer is full, check the current sample for the trigger */
             if(cir_buff_full) {
                 for(i = 0; i < SAMPLES_PER_CHANNEL; i++) {
-                    if(temp_buff[i] > TRIGGER_VALUE ) {
+                    if(temp_buff[i] - signal_mean > TRIGGER_VALUE) {
+                        trigger_point = (SAMPLES_PER_CHANNEL * ((BUFFER_SIZE_CHANNEL / SAMPLES_PER_CHANNEL) - (EXTRA_READS + 1))) + i + 200;
                         state = TRIGGERED;
                         break;
                     }
@@ -254,14 +264,67 @@ static void filter_buffers(void) {
         fir_fr16(cir_buff[channel], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[channel]);
         memcpy(cir_buff[channel], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
         
+        for(int i = 0; i < BUFFER_SIZE_CHANNEL; i++) {
+            cir_buff[channel][i] -= signal_mean;
+            cir_buff[channel][i] *= 10;
+        }
+
         /* Remove invalid data points from when the FIR filter is ramping up */
-        for(int i = 0; i < FIR_COEF_COUNT; i++) {
-            cir_buff[channel][i] = 0;
+        for(int i = FIR_COEF_COUNT; i >= 0; i--) {
+            cir_buff[channel][i] = cir_buff[channel][FIR_COEF_COUNT];
         }
     }
 }
 
+static void dump(int channel, const char* file) {
+    FILE* f = fopen(file, "w");
+    for(int i = 0; i < BUFFER_SIZE_CHANNEL; i++) {
+        fprintf(f, "%d\n", (signed short) cir_buff[channel][i]);
+    }
+    fclose(f);
+}
+
 #ifdef ACOUSTICS_CORRELATE
+
+static void dump_corr(fract16* buff, int size, const char* file) {
+    FILE* f = fopen(file, "w");
+    for(int i = 0; i < size; i++) {
+        fprintf(f, "%d\n", (signed short) buff[i]);
+    }
+    fclose(f);
+}
+
+static int crosscor_max(fract16* a, fract16* b, int size, int min_lag, int max_lag) {
+    fract16* c = malloc(sizeof(fract16) * (max_lag - min_lag));
+    int max_x;
+    int max_y;
+    complex_fract16 s, t;
+
+    s.im = 0;
+    t.im = 0;
+
+    for(int lag = min_lag; lag < max_lag; lag++) {
+        c[lag - min_lag] = 0;
+        for(int n = 0; n < size; n++) {
+            s.re = a[n];
+            t.re = b[n + lag];
+            c[lag - min_lag] += cmlt_fr16(s, t).re;
+        }
+    }
+
+    max_x = 0;
+    max_y = c[0];
+    for(int i = 0; i < max_lag - min_lag; i++) {
+        if(c[i] > max_y) {
+            max_x = i;
+            max_y = c[i];
+        }
+    }
+
+    free(c);
+    return max_x + min_lag;
+}
+
 /*
  * Perform correlations and compute delays in the signals between the channels
  *
@@ -278,20 +341,41 @@ static void filter_buffers(void) {
  * See http://en.wikipedia.org/wiki/Cross_correlation
  */
 static void correlate_buffers(void) {
+    delay_AB = crosscor_max(cir_buff[A] + trigger_point - 200, cir_buff[B] + trigger_point - 200, 400, -50, 50);
+    delay_AC = crosscor_max(cir_buff[A] + trigger_point - 200, cir_buff[C] + trigger_point - 200, 400, -50, 50);
+    delay_AD = crosscor_max(cir_buff[A] + trigger_point - 200, cir_buff[D] + trigger_point - 200, 400, -50, 50);
+    
+    dump(D, "dump_d.txt");
+    exit(1);
+
+#if 0
+    crosscorr_fr16(cir_buff[A], cir_buff[B], BUFFER_SIZE_CHANNEL, 100, out_buffer);
+    max_y = out_buffer[0];
+    max_x = 0;
+    for(i = 1; i < 100; i++) {
+        if(out_buffer[i] > max_y) {
+            max_y = out_buffer[i];
+            max_x = i;
+        }
+    }
+    delay_AB = max_x;
+#endif
+   
+#if 0
     /* Compute conjugate of the FFT of channel A */
-    rfft_fr16(cir_buff[A], fft_ref, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
+    rfft_fr16(cir_buff[A], fft_ref, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 2);
     conjugate(fft_ref, BUFFER_SIZE_CHANNEL);
     
     /* Correlate and find the delay between channels A and B */
-    rfft_fr16(cir_buff[B], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
+    rfft_fr16(cir_buff[B], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 2);
     multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
-    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
+    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 2);
     delay_AB = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
     
     /* Correlate and find the delay between channels A and C */
-    rfft_fr16(cir_buff[C], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
+    rfft_fr16(cir_buff[C], fft_temp, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 2);
     multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
-    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
+    ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 2);
     delay_AC = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
     
     /* Correlate and find the delay between channels A and D */
@@ -299,6 +383,7 @@ static void correlate_buffers(void) {
     multiply(fft_ref, fft_temp, fft_temp, BUFFER_SIZE_CHANNEL);
     ifft_fr16(fft_temp, cmplx_buff, tt, 1, BUFFER_SIZE_CHANNEL, &block_exponent, 3);
     delay_AD = find_max_cmplx(cmplx_buff, BUFFER_SIZE_CHANNEL);
+#endif
 }
 
 #else
@@ -311,6 +396,8 @@ static void correlate_buffers(void) {
  * that the time of arrival on channel A is 0.
  */
 static void compute_toa(void) {
+    int temp_toa;
+
     /* Compute time of arrival for all channels */
     for(int channel = A; channel <= D; channel++) {
         /* Default to 5000 (a bogus value) */
@@ -318,14 +405,16 @@ static void compute_toa(void) {
         for(int i = 0; i < BUFFER_SIZE_CHANNEL; i++) {
             if(cir_buff[channel][i] > TRIGGER_VALUE) {
                 toa[channel] = i;
+                printf("%d\n", i);
                 break;
             }
         }
     }
 
     /* Rezero all the TOA values */
+    temp_toa = toa[A];
     for(int channel = A; channel <= D; channel++) {
-        toa[channel] -= toa[A];
+        toa[channel] -= temp_toa;
     }
 }
 #endif
@@ -367,16 +456,6 @@ static void data_out(void) {
 #endif
 }
 
-#ifdef ACOUSTICS_DUMP
-static void dump(int channel, const char* file) {
-    FILE* f = fopen(file, "w");
-    for(int i = 0; i < BUFFER_SIZE_CHANNEL; i++) {
-        fprintf(f, "%d\n", (signed short) cir_buff[channel][i]);
-    }
-    fclose(f);
-}
-#endif
-
 int main(int argc, char** argv) {
     short* tmp;
 
@@ -409,6 +488,7 @@ int main(int argc, char** argv) {
     TIME_POST(t);
 
     /* Do a fake ready to throw out the first data block as the ADC turns on */
+    write(driver_f, &RESET_FLAG, 1);
     read(driver_f, &tmp, sizeof(tmp));
 
     /* Initialize all data structures */
@@ -425,17 +505,26 @@ int main(int argc, char** argv) {
 
 #ifdef ACOUSTICS_DUMP
         TIME_PRE(t, "Dumping buffers...");
-        dump(A, "dump_a.txt");
-        //dump(B, "dump_b.txt");
-        //dump(C, "dump_c.txt");
-        //dump(D, "dump_d.txt");
+        dump(A, "dump_a_raw.txt");
+        dump(B, "dump_b_raw.txt");
+        //dump(C, "dump_c_raw.txt");
+        //dump(D, "dump_d_raw.txt");
         TIME_POST(t);
-        break;
 #endif
 
         TIME_PRE(t, "Filtering buffers...");
         filter_buffers();
         TIME_POST(t);
+
+#ifdef ACOUSTICS_DUMP
+        TIME_PRE(t, "Dumping buffers...");
+        dump(A, "dump_a.txt");
+        dump(B, "dump_b.txt");
+        //dump(C, "dump_c.txt");
+        //dump(D, "dump_d.txt");
+        TIME_POST(t);
+        break;
+#endif
 
 #ifdef ACOUSTICS_CORRELATE
         TIME_PRE(t, "Correlating buffers...");
