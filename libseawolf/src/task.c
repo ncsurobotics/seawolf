@@ -186,7 +186,7 @@ pid_t Task_spawnApplication(const char* path, char* args, ...) {
     char* argv[MAX_ARGS + 1];
 
     /* Build arguments array */
-    argv[0] = path;
+    argv[0] = (char*) path;
     argv[1] = NULL;
 
     va_start(ap, args);
