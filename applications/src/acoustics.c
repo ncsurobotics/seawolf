@@ -15,7 +15,7 @@ int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("Acoustics Controller");
 
-    PID pid = PID_new(SET_POINT, 1.0, 0.0, 0.0);
+    PID* pid = PID_new(SET_POINT, 1.0, 0.0, 0.0);
     int avg_delay;
     float out;
 
@@ -30,7 +30,7 @@ int main(void) {
 
         /* Update PID */
         out = PID_update(pid, avg_delay);
-        
+
         /* Set rotational PID target */
         Var_set("Rot.Angular.Target", Var_get("SEA.Yaw") + out);
     }
