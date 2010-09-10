@@ -10,8 +10,8 @@ DepthHeading                   0.0        0          0
 DepthPID.d                     0.0        1          0
 DepthPID.i                     0.0        1          0
 DepthPID.p                     0.0        1          0
-LogLevel                       0.0        0          1
-LogReplicateStdout             1.0        0          1
+LogLevel                       2.0        0          1
+LogReplicateStdout             2.0        0          1
 MissionStatus                  0.0        0          0
 PitchPID.d                     0.0        1          0
 PitchPID.i                     0.0        1          0
