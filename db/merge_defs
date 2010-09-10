@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+# Btw... "commands" is deprecated, maybe convert this to use subprocess
 import commands
 import sys
 import os
@@ -26,6 +27,9 @@ definitions_raw = [d.strip() for d in definitions_raw if not d.strip().startswit
 definitions_raw = [d.split() for d in definitions_raw]
 definitions = dict([(d[0], d) for d in definitions_raw])
 definitions_var_names = set(definitions.keys())
+
+if "seawolf.db" not in os.listdir("."):
+    commands.getoutput('sqlite3 seawolf.db < seawolf_db_init.sql')
 
 existing_raw = commands.getoutput('sqlite3 seawolf.db "select * from variable_definitions"')
 existing_raw = existing_raw.strip().split("\n")
