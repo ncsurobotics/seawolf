@@ -32,11 +32,14 @@ if "seawolf.db" not in os.listdir("."):
     commands.getoutput('sqlite3 seawolf.db < seawolf_db_init.sql')
 
 existing_raw = commands.getoutput('sqlite3 seawolf.db "select * from variable_definitions"')
-existing_raw = existing_raw.strip().split("\n")
-existing_raw = [d.strip().replace('|', ' ') for d in existing_raw]
-existing_raw = [d.split() for d in existing_raw]
-existing = dict([(d[0], d) for d in existing_raw])
-existing_var_names = set(existing.keys())
+if existing_raw:
+    existing_raw = existing_raw.strip().split("\n")
+    existing_raw = [d.strip().replace('|', ' ') for d in existing_raw]
+    existing_raw = [d.split() for d in existing_raw]
+    existing = dict([(d[0], d) for d in existing_raw])
+    existing_var_names = set(existing.keys())
+else:
+    existing_var_names = set()
 
 new_var_names = definitions_var_names - existing_var_names
 del_var_names = existing_var_names - definitions_var_names
