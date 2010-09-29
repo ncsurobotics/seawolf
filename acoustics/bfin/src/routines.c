@@ -1,3 +1,7 @@
+/**
+ * \file
+ * \brief Routines for user space acoustics code
+ */
 
 #include "acoustics.h"
 
@@ -7,7 +11,29 @@
 #include <math_bf.h>
 #include <complex_bf.h>
 
-/* Pull in coefficient values from a file */
+/**
+ * \ingroup userspace
+ * \defgroup routines Routines
+ * \brief Generic routines
+ * \{
+ */
+
+/**
+ * \brief Load FIR filter coefficients from a file
+ *
+ * Loads a list of FIR filter coefficents into the given array. Each line of the
+ * file should give a single signed, fract16 (i.e. short) coefficient.
+ *
+ * \param coefs Array to store the coefficients to
+ * \param coef_file_name File to read from
+ * \param num_coefs Number of coefficients to read
+ *
+ * \todo Replace this with something more flexible. The number of coefficients
+ *   shouldn't be hard coded even as a define and should probably just be a
+ *   paramater read from the file (i.e. the first line of the coefficients file
+ *   specifies the degree. If not enough, or too many coefficents are then read,
+ *   throw and error and bomb out
+ */
 void load_coefs(fract16* coefs, char* coef_file_name, int num_coefs) {
     FILE* f;
     char buff[256];
@@ -30,7 +56,17 @@ void load_coefs(fract16* coefs, char* coef_file_name, int num_coefs) {
     fclose(f);
 }
 
-/* Return the index of the real part maximum of the array */
+/**
+ * \brief Find a real part maximal complex number
+ *
+ * Scan the list of complex numbers and return the index of the one with the largest real part 
+ *
+ * \param w Pointer to the list of complex numbers
+ * \param size Number of elements in w
+ * \return Index of the maximum value in w
+ *
+ * \todo This should be renamed to reflect that it considers the real component
+ */
 int find_max_cmplx(complex_fract16* w, int size) {
     fract16 max_y = 0;
     int max_x = 0;
@@ -45,18 +81,35 @@ int find_max_cmplx(complex_fract16* w, int size) {
     return max_x;
 }
 
-/* Perform a pointwise product of the complex valued arrrays in1 and in2 storing
-   the result in out */
+/**
+ * \brief Perform a pair-wise, complex multiplication
+ *
+ * Pairwise multiply the two arrays, storing the result in a third
+ *
+ * \param in1 The first array of complex values
+ * \param in2 The second array of complex values
+ * \param out Array in which to store the products
+ * \param size Length of the array (in1, in2, and out must be at least this size)
+ */
 void multiply(complex_fract16* in1, complex_fract16* in2, complex_fract16* out, int size) {
     while(size--) {
         *out++ = cmlt_fr16(*in1++, *in2++);
     }
 }
 
-/* Conjugate every element in the given complex valued array */
+/**
+ * \brief Conjugate each element of the array
+ *
+ * Conjugate each element of the complex array in place
+ *
+ * \param w The array of complex values to conjugate
+ * \param size Number of elements in w
+ */
 void conjugate(complex_fract16* w, int size) {
     while(size--) {
         *w = conj_fr16(*w);
         w++;
     }
 }
+
+/** \} */

@@ -1,0 +1,156 @@
+/**
+
+\defgroup acoustics Acoustics
+
+\defgroup userspace User Space
+\ingroup acoustics
+
+\defgroup kernelspace Kernel Space
+\ingroup acoustics
+
+\mainpage
+
+\section intro Introduction
+
+All hope abandon ye who enter here.
+
+This is a work in progress and fair warning should be given: acoustics is a
+rather sprawling project. That's not to say it's a mess, only that it requires
+knowledge from a lot of different areas. In particular, be prepared to have to
+read a lot of documentation on the Blackfin architecture (more than you'd
+probably like to know). If you're handy with hardware and microcontrollers then
+the software might be the more daunting task (be prepared to read a lot about
+Linux kernel modules). If you are so fortunate to be handy with both, jump right
+in!
+
+\section overview Overview
+
+Acoustics looks a little something like this,
+
+\dot
+ digraph {
+   node [shape=Mrecord, style="filled", fillcolor="#aaddff", fontname="Sans"];
+   fontname="Sans";
+   root=hydro;
+
+
+   subgraph cluster_hydrophones {
+       node [fillcolor="#666666"];
+       style = "filled, rounded";
+       color = "#dddddd";
+       label = "Hydrophones";
+
+       hydro [label="<a> A | <b> B | <c> C | <d> D"];
+   }
+
+   adc [label="{{<a> A | <b> B | <c> C | <d> D} | <adc> ADC}"];
+
+
+   hydro:a -> adc:a;
+   hydro:b -> adc:b;
+   hydro:c -> adc:c;
+   hydro:d -> adc:d;
+
+   adc:adc:e -> dma:ppi:s;
+   timers -> adc:adc:se;
+
+   subgraph cluster_bfin {
+       rankdir=LR;
+       style = "filled, rounded";
+       color = "#dddddd";
+       label = "Blackfin";
+
+       timers [label="Timers/GPIO"];
+       dma [label="<ppi> PPI | DMA Engine"];
+       kernmod [label="Kernel Module",group="code"];
+       userspace [label="{<u> Userspace Code | <lib> libseawolf}",goup="code"];
+
+       kernmod:e -> userspace:n [dir=both];
+       kernmod -> dma;
+       kernmod -> dma:ppi;
+       kernmod -> timers;
+   }
+
+   lenovo [label="Netbook",group="code"];
+   userspace:lib -> lenovo;
+
+ }
+\enddot
+
+I know the diagram's a little messy, but I've already wasted far too much of my
+life trying to get it to look right. Moving on.
+
+\subsection adc ADC Description
+
+If a pictures says a thousand words, here's a few to try to make up for the
+picture. An analog signal is picked up and transmitted by the hydrophones (there
+are four of them labled A, B, C, and D). Each hydrophone is attached to an input
+on the Analog to Digital Converter (ADC). The current ADC board is a simple
+design built around an Analog Devices AD7865 4-channel, simulataneous sampling
+ADC. The AD7865 pushes out samples sequentially over a 14 bit parallel bus which
+is connected to the Blackfin's Parallel Perpipheral Interface (PPI).
+
+\subsection clock ADC Clocking
+
+The AD7865 is internally clocked, but needs an external trigger on its
+conversion start pin (CONVST) to initiate a conversion sequence, so one of the
+Blackfin's timers is configured to provide the ADC with a 96kHz clock to this
+pin (actually 96 * 1024 because it makes the numbers nicer). It's worth noting that the
+AD7865 performs a conversion on all four channels with each conversion trigger
+(the simultaneous part), so the chip is producing samples at close to 384,000
+per second.
+
+\subsection interface Data Input and Buffering
+
+The AD7865 has an end of conversion (EOC) pin that goes low at the end of a
+conversion (so four times per clock tick on CONVST) which is tied to one the PPI
+port's frame syncs (FS1). The Linux kernel module configures the DMA engine and
+the PPI port to copy data into a memory buffer from the bus on every frame
+sync. The DMA engine is configured to fill up alternating "ping-pong" buffers
+and produces an interrupt which is handled by the kernel module every time one
+of these two buffers is full.
+
+\subsection processing Signal Processing
+
+Past this point, the rest of the work is performed by what is respresented by
+"Userspace Code" in the lovely diagram above. This is a program which runs in
+userspace rather than kernel space (a.k.a. a normal program). It is the job of
+this program to receive data blocks from the kernel module (the same as the DMA
+buffers) and to do all the relevant digital signal processing on them to produce
+values giving the delay in arrival of the ping to each hydrophone. This
+program's operations are split roughly into the following steps
+
+ -# Read and buffer blocks from the kernel module into a circular buffer. There
+    is a circular buffer for each individual channel.
+ -# Once the circular buffer is full, continue to read in new blocks (overriding
+    old ones) but begin to a check of incoming data blocks from channel A to see
+    if they contain what looks like a "ping". This process boils down to running
+    a FIR filter on the single data block and then searching the block for a
+    data point exceeding some predefined threshold.
+ -# Once this trigger is found the program stops reading data from the kernel
+    module and begins processing the data it has. After linearizing the circular
+    buffers, the FIR filter is run over each channels data. The output from the
+    FIR filter is normalized to be centered about zero and have a reasonable
+    magnitude.
+ -# At this point a subset of the data from each channel, centered about the
+    trigger point, goes through a correlation block to produce the delay
+    values. Once these delay values are computed, they are stored by libseawolf
+    for use by control code running on the netbook.
+ -# At this point everything is reset and the program begins again at step 1.
+
+\subsection other Other Information
+
+Obviously what's here only touchs the surface of each component and interface
+and a lot of the more mundain details have been left out. This documentation
+will be growing steadily and more in depth treatments of each individual
+component will be created. 
+
+If you want to jump right into the code, you can click on the "Modules" tab at
+the top of the page. This will let you browse the API documentation for all the
+code that runs on the Blackfin. At the moment only the user space code has been
+fully documentated at the API level, but the kernel code should have some more
+documentation in the next few days. If you select the "Files" tab you can browse
+the code from here. All of this code is also available at
+http://hg.ncsurobotics.com/software/ under the acoustics folder.
+
+*/

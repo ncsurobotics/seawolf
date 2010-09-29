@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# This is a wrapper around the dot utility from the graphviz package that will
+# produce nicer looking PNG output by having dot produce SVG files and then
+# allowing imagemagick to convert the SVG to a PNG. This results in well
+# antialiased PNG output. If dot is not being called to produce a PNG then the
+# arguments are passed to the real dot without modification
+
+in=$1
+format=$2
+out=$4
+tmp=${out%.png}.svg
+
+if [ "$format" = "-Tpng" ]; then
+    dot $in -Tsvg -o $tmp
+    convert $tmp $out
+    rm $tmp
+else
+    dot $@
+fi

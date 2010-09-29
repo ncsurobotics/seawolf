@@ -1,8 +1,26 @@
+/**
+ * \file
+ * \brief Main user space program
+ */
 
-//#define ACOUSTICS_DEBUG
-//#define ACOUSTICS_PROFILE
-//#define ACOUSTICS_DUMP
+/**
+ * \addtogroup usermain
+ * \{
+ */
+
+/** If defined enable debugging code */
+#define ACOUSTICS_DEBUG
+
+/** If defined, enable profiling (prints timing information for blocks) */
+#define ACOUSTICS_PROFILE
+
+/** If defined, dump channel data pre and post filtering */
+#define ACOUSTICS_DUMP
+
+/** If defined, use libseawolf to store the computed delay values */
 #define USE_LIBSEAWOLF
+
+/** \} */
 
 #include "seawolf.h"
 
@@ -21,37 +39,60 @@
 
 #include "acoustics.h"
 
-/* Circular buffer state */
-static adcsample* cir_buff[4];
+/**
+ * \defgroup usermain Main
+ * \ingroup userspace
+ * \brief Main userspace routines
+ * \{
+ */
+
+/** Circular buffers for each channel */
+static adcsample* cir_buff[CHANNELS];
+
+/** Current (write) offset in the circular buffers */
 static unsigned int cir_buff_offset;
 
-/* FIR Coefficients */
+/** FIR Coefficients */
 static fract16* coefs;
 
-/* File handler associated with the opened device driver /dev/ppiadc */
+/** File handler associated with the opened device driver /dev/ppiadc */
 static int driver_f = -1;
 
-/* Flags to be written to the control device */
+/** Reset flag to be written to the kernel device driver */
 static const uint8_t RESET_FLAG = 1;
 
-/* FIR Filter States */
-static fir_state_fr16 fir_state[4];
+/** FIR filter state for each channel */
+static fir_state_fr16 fir_state[CHANNELS];
+
+/** State for the FIR filter used to detect the incoming ping (trigger) */
 static fir_state_fr16 fir_state_trig;
 
-/* FIR delay lines */
-static fract16* fir_delay[4];
+/** FIR delay lines for each channel */
+static fract16* fir_delay[CHANNELS];
+
+/** Delay line for the FIR filter used to detect the incoming ping (trigger) */
 static fract16* fir_delay_trig;
 
-/* Compute the mean of the data on the trigger channel so that the data can be
-   normalized around 0 */
+/**
+ * Computed mean of the signal. Used to centered filtered data about 0.
+ *
+ * \see AVG_COUNT
+ */
 static long int signal_mean = 0;
 
-/* Record the time value of the ping triggering so that the correlation can be
-   done on a neighborhood of this point */
+/**
+ * Time (in samples) at which the trigger (ping) is detected
+ *
+ * \see TRIGGER_VALUE
+ * \see TRIGGER_POINT_OFFSET
+ * \see TRIGGER_CHANNEL
+ */
 static int trigger_point = -1;
 
-/* Signal delays */
+/** Computed delay (in samples) of signal arrival from channel A to C */
 static int delay_AC;
+
+/** Computed delay (in samples) of signal arrival from channel B to D */
 static int delay_BD;
 
 #ifdef ACOUSTICS_PROFILE
@@ -64,6 +105,15 @@ static adcsample* temp_buff;
 
 /* Dump fract16 data to a flat file */
 #ifdef ACOUSTICS_DUMP
+/**
+ * \brief Dump data to flat file
+ *
+ * Dump a buffer to a file with each fract16 dumped as an integer, one per line.
+ *
+ * \param buff Buffer to dump
+ * \param size Size of the buffer
+ * \param file Name of file to dump to
+ */
 static void dump(fract16* buff, int size, const char* file) {
     FILE* f = fopen(file, "w");
     for(int i = 0; i < size; i++) {
@@ -73,7 +123,14 @@ static void dump(fract16* buff, int size, const char* file) {
 }
 #endif
 
-/* Allocate and initialize all data structures */
+/**
+ * \brief Allocate memory and initialize all data structures
+ *
+ * Allocates memory for buffers and filter delay lines, reads FIR filter
+ * coefficients from disk, and initilizes FIR filters
+ *
+ * \param coefs_file_name File to read FIR filter coefficients from
+ */
 static void init(char* coefs_file_name) {
     /* Load coefficients from .cof file */
     coefs = calloc(sizeof(adcsample), FIR_COEF_COUNT);
@@ -105,7 +162,14 @@ static void init(char* coefs_file_name) {
     temp_buff = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL * 2);
 }
 
-/* Expand a 14 bit twos complement number to fill a 16 bits short */
+/**
+ * \brief Convert a signed 14 value to a signed 16 bit value
+ *
+ * Convert a signed 14 value to a signed 16 bit value
+ *
+ * \param v The 14 bit signed value
+ * \return An 16 bit extended version of the given number
+ */
 static inline short expand_complement(short v) {
     if(v & (1 << 13)) {
         /* Negative value */
@@ -116,15 +180,15 @@ static inline short expand_complement(short v) {
     }
 }
 
-/* 
- * value with the PPI/ADC driver to collect a "ping" sample
+/**
+ * \brief Interact with the PPI/ADC driver to collect a "ping" sample
  *
- * This function reads in sample blocks for each channel from the drive until
+ * This function reads in sample blocks for each channel from the driver until
  * the circular buffer has been filled. Once the circular buffer has been filled
  * each new channel sample set is checked for the presence of the target
- * frequence. Once the signal is located the recording process is "triggered". A
- * few additional padding samples (specified by EXTRA_READS) are completed and
- * the function exits.
+ * frequence on the trigger channel (see \ref TRIGGER_CHANNEL). Once the signal
+ * is located the recording process is "triggered". A few additional padding
+ * samples (specified by \ref EXTRA_READS) are completed and the function exits.
  */
 static void record_ping(void) {
     int state = READING;
@@ -214,18 +278,20 @@ static void record_ping(void) {
     }
 }
 
-/*
+/**
+ * \brief Linearize the circular buffers
+ *
  * Linearize each circular buffer using a temporary buffer. Output is stored
  * back into the circular buffer space
  *
  * The linearization is done in three stages,
  *
- *  1. Data from the current write position to the end of the channel buffer
+ *  -# Data from the current write position to the end of the channel buffer
  *     (the oldest data) is written to the beginning of a temporary buffer
- *  2. Data from the beginning of the channel buffer to the current write
+ *  -# Data from the beginning of the channel buffer to the current write
  *     position (the newest data) in the channel buffer is placed at the end
  *     of the temporary buffer
- *  3. The temporary buffer's contents are copied back to the channel buffer
+ *  -# The temporary buffer's contents are copied back to the channel buffer
  */
 static void linearize_buffers(void) {
     for(int channel = A; channel <= D; channel++) {
@@ -235,17 +301,19 @@ static void linearize_buffers(void) {
     }
 }
 
-/* 
- * Filter each linearized buffer
+/** 
+ * \brief Filter each linearized buffer
  *
  * Each channel buffer is run through the FIR filter and the result is stored
- * back into the channel buffer.
+ * back into the channel buffer. Before returning, the output from the FIR
+ * filters is adjusted so that it is centered approximately at 0.
  */
 static void filter_buffers(void) {
     for(int channel = A; channel <= D; channel++) {
         fir_fr16(cir_buff[channel], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[channel]);
         memcpy(cir_buff[channel], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
         
+        /* Center and scale the signal */
         for(int i = 0; i < BUFFER_SIZE_CHANNEL; i++) {
             cir_buff[channel][i] -= signal_mean;
             cir_buff[channel][i] *= 10;
@@ -259,11 +327,12 @@ static void filter_buffers(void) {
 }
 
 /**
- * Perform a cross correlation and return the lag value resulting in the
- * lagesting resulting correlation. Note that this algorithm is meant to be
- * applied to subsets of existing buffers. Buffer 'a' must be accessible from
- * a[0] to a[size]. Buffer 'b' must be accessible from b[min_lag] to b[size +
- * max_lag];
+ * \brief Perform an optimized cross-correlation-like operation
+ * 
+ * Perform a cross correlation and return the lag value resulting in the largest
+ * resulting correlation. Note that this algorithm is meant to be applied to
+ * subsets of existing buffers. Buffer 'a' must be accessible from a[0] to
+ * a[size]. Buffer 'b' must be accessible from b[min_lag] to b[size + max_lag];
  *
  * \param a The first buffer
  * \param b The second buffer
@@ -303,13 +372,14 @@ static int crosscor_max(fract16* a, fract16* b, int size, int min_lag, int max_l
     return max_x + min_lag;
 }
 
-/*
- * Perform correlations and compute delays in the signals between the channels
+/**
+ * \brief Perform correlations and compute delays in the signals between the channels
  *
  * This correlation block is optimized by only working on a subset of the
  * buffers which all center around the trigger_point which is set when the ping
  * is captured. It also differs from a standard correlation in that is checks
- * negative and positive lag values in a single pass
+ * negative and positive lag values in a single pass. Most of the work here is
+ * done by \ref crosscor_max.
  *
  * See http://en.wikipedia.org/wiki/Cross_correlation
  */
@@ -323,11 +393,12 @@ static void correlate_buffers(void) {
                             CORR_RANGE * 2, -CORR_LAG_MAX, CORR_LAG_MAX);
 }
 
-/*
- * Output the delays
+/**
+ * \brief Output the delays
  *
  * The delays are output so that they can provide input to the acoustic's guided
- * controller running on the host system
+ * controller running on the host system. If \ref USE_LIBSEAWOLF is defined,
+ * then these values will be saved to their corresponding libseawolf variables.
  */
 static void data_out(void) {
 #ifdef USE_LIBSEAWOLF
@@ -343,6 +414,31 @@ static void data_out(void) {
 #endif
 }
 
+/**
+ * \brief Manage and process acoustics data
+ *
+ * This top-level function orchestrates the operation of the acoustics signal
+ * processing. Upon starting, data structures are initiliazed and a connection
+ * is opened to the kernel driver through the /dev/ppiadc device. Once this is
+ * established the standard processing loop is entered consisting of the
+ * following steps,
+ *
+ * -# \ref record_ping is called to capture a full ping. Once a full ping has
+ *    been captured and is stored in the circular buffers, record_ping will
+ *    return.
+ * -# \ref linearize_buffers is called to unroll (linearize) the circular
+ *    buffers so they can be manipulated
+ * -# \ref filter_buffers is called to apply the FIR filter inplace onto each
+ *    channel. The output from the FIR filters is normalized before returning.
+ * -# \ref correlate_buffers is called to perform a correlation on the filtered
+ *    buffers to generate delay values.
+ * -# \ref data_out is called to output the delay values
+ * -# Process begings again at step 1
+ *
+ * \param argc Argument count
+ * \param argv Arguments
+ * \return 0 on success
+ */
 int main(int argc, char** argv) {
     short* tmp;
 
@@ -444,3 +540,5 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
+/** \} */

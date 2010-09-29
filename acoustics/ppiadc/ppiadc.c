@@ -1,6 +1,6 @@
-
 /**
- * PPI ADC Kernel Module
+ * \file
+ * \brief PPI ADC Kernel Module
  */
 
 /*
@@ -33,6 +33,13 @@
 #include <linux/kernel.h>
 #include <linux/mm.h>
 #include <linux/module.h>
+
+/**
+ * \defgroup ppiadc PPI ADC Driver
+ * \ingroup kernelspace
+ * \brief Kernel module to interface with the PPI ADC
+ * \{
+ */
 
 #define DRIVER_NAME "ppi_adc"
 
@@ -415,3 +422,5 @@ static void __exit ppi_adc_close(void) {
 MODULE_LICENSE("BSD");
 module_init(ppi_adc_init);
 module_exit(ppi_adc_close);
+
+/** \} */
