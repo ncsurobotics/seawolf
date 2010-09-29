@@ -5,7 +5,6 @@
 
 #include "seawolf.h"
 
-#include <asm/ioctls.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>

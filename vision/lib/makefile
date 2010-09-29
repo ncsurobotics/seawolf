@@ -1,7 +1,7 @@
 SHELL = /bin/sh
 CC=gcc
 CFLAGS=-g --std=c99 -pedantic -Wmissing-prototypes -fPIC
-CFLAGS+=-Wall -Werror -Wno-unused
+CFLAGS+=-Wall -Werror -Wno-unused -fPIC
 OPENCV_FLAGS=$(shell pkg-config --libs --cflags opencv) \
              -DCV_NO_BACKWARD_COMPATIBILITY
 LIB_FLAGS=$(CFLAGS) --shared
