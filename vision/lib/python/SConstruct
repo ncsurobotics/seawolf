@@ -1,0 +1,15 @@
+
+import distutils.sysconfig
+env = Environment(
+    SWIGFLAGS=['-python'],
+)
+env.ParseConfig("pkg-config --cflags opencv")
+print env['CPPPATH']
+env.Library(
+    "_libvision.so",
+    ["interface.i", "../libvision.so"],
+    CPPPATH=[
+        "../include/",
+        distutils.sysconfig.get_python_inc(),
+    ] + env["CPPPATH"]
+)
