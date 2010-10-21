@@ -2,7 +2,16 @@
 env = Environment()
 env.ParseConfig("pkg-config --cflags --libs opencv")
 env.Append(
-    CFLAGS=["--std=c99"],
+    CFLAGS=[
+        "--std=c99",
+        "-DCV_NO_BACKWARD_COMPATIBILITY",
+        "-g",
+        "-pedantic",
+        "-Wmissing-prototypes",
+        "-Wall",
+        "-Werror",
+        "-Wno-unused",
+    ],
     CPPPATH=["include/"],
 )
 

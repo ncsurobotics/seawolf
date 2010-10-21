@@ -36,15 +36,11 @@ IplImage* colorfilter(IplImage* img, int rmin, int rmax, int bmin, int bmax, int
 IplImage* edge_opencv(IplImage* frame, int low_threshold, int high_threshold, int aperture);
 
 /* hough.h */
-/* void hough_init(void); */
-/* void houghMouseDraw(int event, int x, int y, int flags, void* param); */
 CvSeq* hough(IplImage* img, IplImage* original, int threshold, int linesMax,int targetAngle, int angleThreshold, int clusterSize, int clusterWidth, int clusterHeight);
 void hough_draw_lines(IplImage* image, CvSeq* lines);
 
 /* remove_edges.h */
-/* void remove_edges_init(void); */
 IplImage* remove_edges(IplImage* img, IplImage* edge, int rmin, int rmax, int bmin, int bmax, int gmin, int gmax);
-/* void remove_edges_free(void); */
 
 /* target_color.h */
 int FindTargetColor(IplImage* in, IplImage* out, RGBPixel* color, int min_blobsize, int dev_threshold, double precision_threshold);
