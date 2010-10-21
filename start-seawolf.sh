@@ -2,37 +2,28 @@
 screen -d -m -S seawolf
 sleep 1 #TODO: less hackish solution than sleeping
 
-# Hub
+# hub
 screen -dr seawolf -p 0 -X title hub
 sleep 0.5
 screen -dr seawolf -p hub -X stuff "cd libseawolf"
 screen -dr seawolf -p hub -X stuff "./hub"
 
-# Serialapp
+# serialapp
 screen -dr seawolf -X screen -t serialapp
 sleep 0.5
 screen -dr seawolf -p serialapp -X stuff "cd serial"
-screen -dr seawolf -p serialapp -X stuff "LD_LIBRARY_PATH=../libseawolf/ ./serialapp"
+screen -dr seawolf -p serialapp -X stuff "./bin/serialapp"
 
-# Mixer
-screen -dr seawolf -X screen -t mixer
+# suite.sh
+screen -dr seawolf -X screen -t suite
 sleep 0.5
-screen -dr seawolf -p mixer -X stuff "cd applications"
-screen -dr seawolf -p mixer -X stuff "LD_LIBRARY_PATH=../libseawolf/ ./bin/mixer"
+screen -dr seawolf -p suite -X stuff "cd applications"
+screen -dr seawolf -p suite -X stuff "./suite.sh"
 
-# PIDs
-
-# Tracker
-screen -dr seawolf -X screen -t tracker
+screen -dr seawolf -X screen -t bash
 sleep 0.5
-screen -dr seawolf -p tracker -X stuff "cd applications"
-screen -dr seawolf -p tracker -X stuff "LD_LIBRARY_PATH=../libseawolf/ ./bin/tracker"
+screen -dr seawolf -p bash -X stuff "cd applications"
+screen -dr seawolf -p bash -X stuff ""
 
-# Tracker Proxy
-screen -dr seawolf -X screen -t trackerproxy
-sleep 0.5
-screen -dr seawolf -p trackerproxy -X stuff "cd applications"
-screen -dr seawolf -p trackerproxy -X stuff "LD_LIBRARY_PATH=../libseawolf/ ./bin/trackerproxy"
-
-
+screen -x
 #screen -dr seawolf -X windowlist
