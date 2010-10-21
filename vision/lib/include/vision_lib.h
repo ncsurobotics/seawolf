@@ -43,7 +43,6 @@
 
 /* All Seawolf Vision Lib headers */
 #include "vision_lib/blob.h"
-#include "vision_lib/camera.h"
 #include "vision_lib/color_filter.h"
 #include "vision_lib/hough.h"
 #include "vision_lib/edge.h"
