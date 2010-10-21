@@ -3,12 +3,15 @@ import distutils.sysconfig
 env = Environment(
     SWIGFLAGS=['-python'],
 )
-env.ParseConfig("pkg-config --cflags opencv")
+env.ParseConfig("pkg-config --cflags --libs opencv")
 print env['CPPPATH']
-env.Library(
-    "_libvision.so",
-    ["interface.i", "../libvision.so"],
-    CPPPATH=[
+env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME']=True
+
+env.SharedLibrary(
+    target = "_libvision",
+    SHLIBPREFIX = "",
+    source = ["interface.i", "../libvision.so"],
+    CPPPATH = [
         "../include/",
         distutils.sysconfig.get_python_inc(),
     ] + env["CPPPATH"]
