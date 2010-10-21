@@ -9,7 +9,6 @@ LIB_FLAGS=$(CFLAGS) --shared $(OPENCV_FLAGS)
 LIB_OBJECTS = $(patsubst src/%.c, bin/%.o, $(wildcard src/*.c))
 LIB_NAME = libvision.so
 BIN_DIR = $(PWD)/bin
-CFLAGS += $(VISION_LIB_FLAGS) # Inherited from an upper level makefile
 
 $(shell mkdir -p $(BIN_DIR))
 

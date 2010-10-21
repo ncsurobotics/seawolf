@@ -1,0 +1,12 @@
+
+env = Environment()
+env.ParseConfig("pkg-config --cflags --libs opencv")
+env.Append(
+    CFLAGS=["--std=c99"],
+    CPPPATH=["include/"],
+)
+
+env.SharedLibrary(
+    target = "vision",
+    source = Glob("src/*.c"),
+)
