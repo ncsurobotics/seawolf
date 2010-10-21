@@ -1,3 +1,7 @@
+
+export SW_TOPDIR=$(PWD)/../..
+include $(SW_TOPDIR)/mk/common.mk
+
 SHELL = /bin/sh
 CC=gcc
 CFLAGS=-g --std=c99 -pedantic -Wmissing-prototypes
@@ -12,7 +16,7 @@ CFLAGS +=$(DEBUG_FLAGS)
 
 OPENCV_FLAGS=$(shell pkg-config --libs --cflags opencv) \
              -DCV_NO_BACKWARD_COMPATIBILITY
-SEAWOLF_FLAGS=-I../../libseawolf/include/ -lseawolf -L../../libseawolf/
+SEAWOLF_FLAGS=-I$(LIBSEAWOLF_INCLUDE_DIR) -lseawolf -L$(LIBSEAWOLF_LIB_DIR)
 VISION_LIB_IFLAGS=-Ilib/include/
 MISSION_FLAGS=$(CFLAGS) $(OPENCV_FLAGS) $(VISION_LIB_IFLAGS) $(DEBUG_FLAGS) $(SEAWOLF_FLAGS)
 ALL_FLAGS=$(CFLAGS) $(OPENCV_FLAGS) $(SEAWOLF_FLAGS) $(VISION_LIB_IFLAGS) \

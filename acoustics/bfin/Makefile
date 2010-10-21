@@ -1,11 +1,14 @@
 
+export SW_TOPDIR=$(PWD)/../..
+include $(SW_TOPDIR)/mk/common.mk
+
 CC= bfin-linux-uclibc-gcc
-CFLAGS= -g --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include
-LDFLAGS= -L$(PWD)/../../libseawolf/ -lseawolf-bfin -lbfdsp -lm
+CFLAGS= -g --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(LIBSEAWOLF_INCLUDE_DIR)
+LDFLAGS= -L$(LIBSEAWOLF_LIB_DIR) -lseawolf-bfin -lbfdsp -lm
 
 #CC= bfin-uclinux-gcc
-#CFLAGS= -static --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(PWD)/../../libseawolf/include -I$(PWD)/include
-#LDFLAGS= -L$(PWD)/../../libseawolf -lbfdsp -lm -Wl,-elf2flt
+#CFLAGS= -static --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(LIBSEAWOLF_INCLUDE_DIR)
+#LDFLAGS= -L$(LIBSEAWOLF_LIB_DIR) -lbfdsp -lm -Wl,-elf2flt
 
 # Enable the use of libseawolf (when not in testing)
 #CFLAGS+= -DUSE_LIBSEAWOLF
@@ -13,8 +16,6 @@ LDFLAGS= -L$(PWD)/../../libseawolf/ -lseawolf-bfin -lbfdsp -lm
 BIN_DIR= $(PWD)/bin
 BIN_NAME= acoustics-bfin
 
-#SRCS= src/acoustics_math.c src/main.c
-#INCLUDES= include/acoustics_math.h
 SRCS= src/main.c src/routines.c
 INCLUDES= src/acoustics.h
 
