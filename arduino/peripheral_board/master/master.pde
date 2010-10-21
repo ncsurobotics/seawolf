@@ -50,7 +50,7 @@ int last_sense_value = 0;
 unsigned long last_sense_change = 0;
 
 /* State */
-int state = STATE_RESET;
+int state = STATE_RUNNING;
 
 byte wire_data[3];
 
@@ -130,6 +130,9 @@ void loop() {
             }
         }
     } else if(state == STATE_RUNNING) {
+        /* Disable RFID Reader */
+        digitalWrite(RFID_EN, HIGH);
+
         /* Send new depth value */
         if(millis() - last_depth > DEPTH_SLEEP) {
             last_depth = millis();
