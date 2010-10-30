@@ -1,11 +1,11 @@
 
-%module libvision
+%module interface
 
 %{
 #include <cv.h>
 #include <highgui.h>
 
-#include "vision_lib.h"
+#include "include/vision_lib.h"
 %}
 
 %typemap(in) IplImage* {
@@ -19,7 +19,7 @@
  * corresponding .c file!
  */
 
-/* normalize.h */ 
+/* normalize.h */
 IplImage* normalize_image(IplImage* img);
 
 /* blob.h */
