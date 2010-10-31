@@ -24,6 +24,6 @@ syntax: regexp
 ^vision/2010/main$
 ^vision/2010/debug.mk$
 ^vision/2010/lib/doc/
-^vision/lib/doc/
-^vision/lib/c/interface.py$
-^vision/lib/c/interface_wrap.c$
+^vision/libvision/doc/
+^vision/libvision/c/interface.py$
+^vision/libvision/c/interface_wrap.c$
