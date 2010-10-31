@@ -29,6 +29,9 @@ int checkPixel(IplImage* Img, int x, int y, unsigned int** pixlog, BLOB* blob, i
 void blob_copy(BLOB* dest, BLOB* src);
 void blob_free(BLOB* blobs, int blobs_found);
 
+/* capture.h */
+CvCapture* capture_from_string(char* str);
+
 /* color_filter.h */
 IplImage* colorfilter(IplImage* img, int rmin, int rmax, int bmin, int bmax, int gmin, int gmax);
 
