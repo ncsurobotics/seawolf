@@ -44,13 +44,11 @@ IplImage* edge_opencv(IplImage* frame, int low_threshold, int high_threshold, in
 {
 
     IplImage* ret = cvCreateImage(cvGetSize(frame), 8, 1);
-    #ifdef VISION_LIB_IMAGE_TYPECHECK
-        if (frame->nChannels != 1)
-        {
-          printf("edgeDetect() must take in a single channel image.\nYou probably want to use:\ncvCvtColor(original, modified, CV_BGR2GRAY);\n");
-          exit(-1);
-        }
-    #endif
+    if (frame->nChannels != 1)
+    {
+      printf("edgeDetect() must take in a single channel image.\nYou probably want to use:\ncvCvtColor(original, modified, CV_BGR2GRAY);\n");
+      exit(-1);
+    }
     cvCanny(frame, ret, low_threshold, high_threshold, aperture);
 
     for (int i = ret->height * ret->width - 1; i >= ret->height*(ret->width - 10); i--) {
