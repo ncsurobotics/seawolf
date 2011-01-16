@@ -32,8 +32,7 @@ def get_depth():
 
 def set_depth(depth, depth_control):
     '''
-    Sets depth relatively or absolutely
-    accordingly.
+    Sets depth relatively or absolutely accordingly.
     '''
 
     if depth_control is DEPTH_ABSOLUTE:
