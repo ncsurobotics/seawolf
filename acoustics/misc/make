@@ -1,7 +1,0 @@
-#!/bin/bash
-CFLAGS="--std=c99 -Wall -lm"
-gcc $CFLAGS -o csv_fft csv_io.c acoustics_math.c csv_fft.c -lfftw3
-gcc $CFLAGS -o csv_ifft csv_io.c acoustics_math.c csv_ifft.c -lfftw3
-gcc $CFLAGS -o csv_flip csv_io.c acoustics_math.c csv_flip.c -lfftw3
-gcc $CFLAGS -o csv_mult csv_io.c acoustics_math.c csv_mult.c -lfftw3
-gcc $CFLAGS -o csv_correlate csv_io.c acoustics_math.c csv_correlate.c -lfftw3

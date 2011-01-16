@@ -1,9 +1,0 @@
-MO fifo8k NULL fifo8k.v vlg1F/fifo8k.bin 1241309579
-MO bitflip NULL bitflip.v vlg3A/bitflip.bin 1241052461
-MO dec NULL ./dec.v vlg20/dec.bin 1241063242
-MO spi_write_8b NULL spi_write_8b.v vlg13/spi__write__8b.bin 1241309579
-MO Top NULL Top.v vlg4F/_top.bin 1241309579
-MO fifo8k_by_2 NULL fifo8k_by_2.v vlg12/fifo8k__by__2.bin 1241309579
-MO storage NULL storage.v vlg19/storage.bin 1241309579
-MO decimate NULL decimate.v vlg54/decimate.bin 1241060062
-MO capture NULL capture.v vlg30/capture.bin 1241309579
