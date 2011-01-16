@@ -2,16 +2,13 @@
 #include "seawolf.h"
 #include "seawolf3.h"
 
-#define THRUSTER_CAP 50 // Thrusters capped at this unless panicing
-#define PANIC_DEPTH 12.0 // At what depth we panic and go up full force
-#define PANIC_TIME 10.0 // Time in seconds that we panic
-
-static Timer* panic_timer = NULL;
+#define THRUSTER_CAP 50   // Thrusters capped at this unless panicing
+#define PANIC_DEPTH  12.0 // At what depth we panic and go up full force
+#define PANIC_TIME   10.0 // Time in seconds that we panic
 
 static void dataOut(double mv) {
     int out = Util_inRange(-THRUSTER_MAX, (int) mv, THRUSTER_MAX);
-    int front = (int) out * 0.7;
-    Notify_send("THRUSTER_REQUEST", Util_format("Depth %d %d %d", front, front, out));
+    Notify_send("THRUSTER_REQUEST", Util_format("Depth %d %d", out, out));
 }
 
 int main(void) {
@@ -54,23 +51,16 @@ int main(void) {
              PID_resetIntegral(pid);
         }
 
-        // Don't let the motors run too fast
-        if (mv > THRUSTER_CAP) mv = THRUSTER_CAP;
-        else if(mv < -1*THRUSTER_CAP) mv = -1* THRUSTER_CAP;
+        /* Under ordinary circumstances limit thruster values */
+        mv = Util_inRange(-THRUSTER_CAP, mv, THRUSTER_CAP);
 
-        if (panic_timer != NULL &&
-            Timer_getTotal(panic_timer) > PANIC_TIME)
-        {
-            printf("Done panicing.  Hope I'm still not really deep...\n");
-            Timer_destroy(panic_timer);
-            panic_timer = NULL;
-        } else if (panic_timer == NULL && depth > PANIC_DEPTH) {
-            printf("Depth: %f\n", depth);
-            printf("Oh Em Geez!  I'm too freekin deep, rising full force!\n");
-            Notify_send("THRUSTER_REQUEST", Util_format("Depth %d %d %d", (int)(-1*THRUSTER_MAX), (int)(-1*THRUSTER_MAX), (int)(-1*THRUSTER_MAX)));
-            panic_timer = Timer_new();
-        } else if (panic_timer != NULL) {
-            // We're panicing, keep thrusters on
+        /* If we're too deep attempt to surface at all costs immediately */
+        if(depth > PANIC_DEPTH) {
+            Logging_log(CRITICAL, Util_format("Depth: %f\n", depth));
+            Logging_log(CRITICAL, "Oh Em Geez!  I'm too freekin deep, rising full force!\n");
+
+            Notify_send("THRUSTER_REQUEST", Util_format("Depth %d %d", -THRUSTER_MAX, -THRUSTER_MAX));
+            Util_usleep(PANIC_TIME);
         } else {
             dataOut(mv);
         }

@@ -11,9 +11,9 @@
 /* Thruster numbers */
 #define PORT_X 0
 #define STAR_X 1
-#define PORT_Y 2
-#define STAR_Y 3
-#define AFT    4
+#define STRAFE 2 // (old PORT_Y)
+#define BOW    3 // (old STAR_Y)
+#define FORE   4 // (renamed from AFT)
 
 void manage(SerialPort sp);
 
@@ -24,12 +24,12 @@ static int get_thruster_number(const char* name) {
         return PORT_X;
     } else if(strcmp(name, "StarX") == 0) {
         return STAR_X;
-    } else if(strcmp(name, "PortY") == 0) {
-        return PORT_Y;
-    } else if(strcmp(name, "StarY") == 0) {
-        return STAR_Y;
-    } else if(strcmp(name, "Aft") == 0) {
-        return AFT;
+    } else if(strcmp(name, "Strafe") == 0) {
+        return STRAFE;
+    } else if(strcmp(name, "Bow") == 0) {
+        return BOW;
+    } else if(strcmp(name, "Fore") == 0) {
+        return FORE;
     }
 
     return -1;
@@ -46,9 +46,9 @@ void manage(SerialPort sp) {
     /* Receive all thruster update notifications */
     Notify_filter(FILTER_MATCH, "UPDATED PortX");
     Notify_filter(FILTER_MATCH, "UPDATED StarX");
-    Notify_filter(FILTER_MATCH, "UPDATED PortY");
-    Notify_filter(FILTER_MATCH, "UPDATED StarY");
-    Notify_filter(FILTER_MATCH, "UPDATED Aft");
+    Notify_filter(FILTER_MATCH, "UPDATED Strafe");
+    Notify_filter(FILTER_MATCH, "UPDATED Bow");
+    Notify_filter(FILTER_MATCH, "UPDATED Fore");
 
     /* Main loop */
     while(true) {
@@ -64,9 +64,8 @@ void manage(SerialPort sp) {
         data[1] = (int) fabs(value);
         
         /* Set to zero if less than dead band */
-        if((data[0] < 2 && data[1] <= YAW_DEAD_BAND) ||
-           (data[0] > 1 && data[1] <= DEPTH_DEAD_BAND))
-        {
+        if(((data[0] == STAR_X || data[0] == PORT_X) && data[1] <= YAW_DEAD_BAND) ||
+           ((data[0] == FORE || data[0] == BOW) && data[1] <= DEPTH_DEAD_BAND)) {
             data[1] = 0;
         }
 
