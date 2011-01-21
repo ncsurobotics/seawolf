@@ -2,13 +2,13 @@
 #include "seawolf.h"
 #include "seawolf3.h"
 
-#define THRUSTER_CAP 50   // Thrusters capped at this unless panicing
+#define THRUSTER_CAP 0.8  // Thrusters capped at this unless panicing
 #define PANIC_DEPTH  12.0 // At what depth we panic and go up full force
 #define PANIC_TIME   10.0 // Time in seconds that we panic
 
 static void dataOut(double mv) {
-    int out = Util_inRange(-THRUSTER_MAX, (int) mv, THRUSTER_MAX);
-    Notify_send("THRUSTER_REQUEST", Util_format("Depth %d %d", out, out));
+    float out = Util_inRange(-1.0, mv, 1.0);
+    Notify_send("THRUSTER_REQUEST", Util_format("Depth %.4f", out));
 }
 
 int main(void) {
@@ -18,39 +18,47 @@ int main(void) {
     PID* pid;
     char data[64];
     double mv;
+    bool paused = Var_get("DepthPID.Paused");
 
-    Notify_filter(FILTER_MATCH, "UPDATED DepthPID");
-    Notify_filter(FILTER_MATCH, "UPDATED DepthHeading");
+    Notify_filter(FILTER_MATCH, "UPDATED DepthPID.Coefficients");
+    Notify_filter(FILTER_MATCH, "UPDATED DepthPID.Heading");
+    Notify_filter(FILTER_MATCH, "UPDATED DepthPID.Paused");
     Notify_filter(FILTER_MATCH, "UPDATED Depth");
 
     pid = PID_new(Var_get("DepthHeading"),
                   Var_get("DepthPID.p"),
                   Var_get("DepthPID.i"),
                   Var_get("DepthPID.d"));
+    dataOut(0.0);
 
-    mv = PID_start(pid, Var_get("Depth"));
-    dataOut(mv);
     while(true) {
         Notify_get(NULL, data);
 
         double depth = Var_get("Depth");
-        if(strcmp(data, "DepthPID") == 0) {
+        if(strcmp(data, "DepthPID.Coefficients") == 0) {
             PID_setCoefficients(pid,
                                 Var_get("DepthPID.p"),
                                 Var_get("DepthPID.i"),
                                 Var_get("DepthPID.d"));
             PID_resetIntegral(pid);
-        } else if(strcmp(data, "DepthHeading") == 0) {
-            PID_setSetPoint(pid, Var_get("DepthHeading"));
+        } else if(strcmp(data, "DepthPID.Heading") == 0) {
+            PID_setSetPoint(pid, Var_get("DepthPID.Heading"));
             mv = PID_update(pid, depth);
-        } else {
+        } else if(strcmp(data, "DepthPID.Paused") == 0) {
+            bool p = Var_get("DepthPID.Paused");
+            if(p == paused) {
+                continue;
+            }
+
+            paused = p;
+            if(paused) {
+                dataOut(0.0);
+                Notify_send("PIDPAUSED", "Depth");
+            }
+        } else if(paused == false) {
             mv = PID_update(pid, depth);
         }
        
-        if(pid->sp == 0){
-             PID_resetIntegral(pid);
-        }
-
         /* Under ordinary circumstances limit thruster values */
         mv = Util_inRange(-THRUSTER_CAP, mv, THRUSTER_CAP);
 
@@ -59,7 +67,7 @@ int main(void) {
             Logging_log(CRITICAL, Util_format("Depth: %f\n", depth));
             Logging_log(CRITICAL, "Oh Em Geez!  I'm too freekin deep, rising full force!\n");
 
-            Notify_send("THRUSTER_REQUEST", Util_format("Depth %d %d", -THRUSTER_MAX, -THRUSTER_MAX));
+            dataOut(-1.0);
             Util_usleep(PANIC_TIME);
         } else {
             dataOut(mv);
