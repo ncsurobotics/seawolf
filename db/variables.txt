@@ -1,42 +1,44 @@
 #
-# Varible definitions file. Edit this file then run ./merge_defs to update the local database
-# Each line of this file defines a variable, comments begin with a ';'
+# Varible definitions file. 
+# Each line of this file defines a variable, comments begin with a '#'
 #
-# NAME                       = DEAFULT    PERSIST    READONLY
-Aft                          = 0.0,       0,         0
-CountDownStatus              = 0.0,       0,         0
-Depth                        = 0.0,       0,         0
-DepthHeading                 = 0.0,       0,         0
-DepthPID.d                   = 0.0,       1,         0
-DepthPID.i                   = 0.0,       1,         0
-DepthPID.p                   = 0.0,       1,         0
-LogLevel                     = 2.0,       0,         1
-LogReplicateStdout           = 2.0,       0,         1
-MissionStatus                = 0.0,       0,         0
-PitchPID.d                   = 0.0,       1,         0
-PitchPID.i                   = 0.0,       1,         0
-PitchPID.p                   = 0.0,       1,         0
-PortX                        = 0.0,       0,         0
-PortY                        = 0.0,       0,         0
-ReferenceAngle               = 0.0,       0,         0
-RollPID.d                    = 0.0,       1,         0
-RollPID.i                    = 0.0,       1,         0
-RollPID.p                    = 0.0,       1,         0
-Rot.Mode                     = 1.0,       0,         0
-Rot.Angular.Target           = 0.0,       0,         0
-Rot.Angular.p                = 0.0,       1,         0
-Rot.Angular.i                = 0.0,       1,         0
-Rot.Angular.d                = 0.0,       1,         0
-Rot.Rate.Target              = 0.0,       0,         0
-Rot.Rate.p                   = 0.0,       1,         0
-Rot.Rate.i                   = 0.0,       1,         0
-Rot.Rate.d                   = 0.0,       1,         0
-SEA.Pitch                    = 0.0,       0,         0
-SEA.Roll                     = 0.0,       0,         0
-SEA.Yaw                      = 0.0,       0,         0
-StarX                        = 0.0,       0,         0
-StarY                        = 0.0,       0,         0
-Strafe                       = 0.0,       0,         0
-Strafe.Amount                = 10.0,      1,         0
-VisionReset                  = 0.0,       0,         0
-StatusLight                  = 0.0,       0,         0
+# NAME               = DEAFULT, PERSIST, READONLY
+Bow                  = 0.0,  0,  0
+Stern                = 0.0,  0,  0
+Strafe               = 0.0,  0,  0
+Port                 = 0.0,  0,  0
+Stern                = 0.0,  0,  0
+
+Depth                = 0.0,  0,  0
+
+DepthPID.Heading     = 0.0,  0,  0
+DepthPID.Paused      = 0.0,  0,  1
+DepthPID.d           = 0.0,  1,  0
+DepthPID.i           = 0.0,  1,  0
+DepthPID.p           = 0.0,  1,  0
+
+PitchPID.Heading     = 0.0,  0,  0
+PitchPID.Paused      = 0.0,  0,  1
+PitchPID.d           = 0.0,  1,  0
+PitchPID.i           = 0.0,  1,  0
+PitchPID.p           = 0.0,  1,  0
+
+YawPID.Heading       = 0.0,  0,  0
+YawPID.Paused        = 0.0,  0,  1
+YawPID.d             = 0.0,  1,  0
+YawPID.i             = 0.0,  1,  0
+YawPID.p             = 0.0,  1,  0
+
+RotatePID.Heading    = 0.0,  0,  0
+RotatePID.Paused     = 0.0,  0,  1
+RotatePID.d          = 0.0,  1,  0
+RotatePID.i          = 0.0,  1,  0
+RotatePID.p          = 0.0,  1,  0
+
+CountDownStatus      = 0.0,  0,  0
+MissionStatus        = 0.0,  0,  0
+StatusLight          = 0.0,  0,  0
+
+SEA.Pitch            = 0.0,  0,  0
+SEA.Roll             = 0.0,  0,  0
+SEA.Yaw              = 0.0,  0,  0
