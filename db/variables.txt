@@ -7,7 +7,7 @@ Bow                  = 0.0,  0,  0
 Stern                = 0.0,  0,  0
 Strafe               = 0.0,  0,  0
 Port                 = 0.0,  0,  0
-Stern                = 0.0,  0,  0
+Star                 = 0.0,  0,  0
 
 Depth                = 0.0,  0,  0
 
