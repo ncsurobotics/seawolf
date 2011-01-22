@@ -22,31 +22,31 @@ class PIDInterface(object):
     def pause(self):
         sw.var.set(self.namespace + ".Paused", 1.0)
 
-def set_yaw(self, value):
-    if -180.0 <= value <= 180:
+def set_yaw(value):
+    if -180.0 <= value <= 180.0:
         sw.var.set("RotatePID.Paused", 1.0)
         sw.var.set("YawPID.Heading", value)
     else:
         raise ValueError("Value for yaw heading out of range!")
 
-def set_pitch(self, value):
+def set_pitch(value):
     if -15.0 <= value <= 15.0:
         sw.var.set("PitchPID.Heading", value)
     else:
         raise ValueError("That sort of pitch is total suicide!")
 
-def set_rotate(self, value):
-    if -20.0 <= value <= 20:
+def set_rotate(value):
+    if -20.0 <= value <= 20.0:
         sw.var.set("YawPID.Paused", 1.0)
         sw.var.set("RotatePID.Heading", value)
     else:
         raise ValueError("Value for rotate heading complete senseless you silly baffoon!")
 
-def set_depth(self, value):
-    if 0 <= depth <= 20:
+def set_depth(value):
+    if 0.0 <= value <= 20.0:
         sw.var.set("DepthPID.Heading", value)
     else:
-        raise ValueError("Cowardly refusing to dive so far!")
+        raise ValueError("Cowardly refusing to dive so far! (%.4f)" % (value,))
 
 yaw = PIDInterface("Yaw", set_yaw)
 pitch = PIDInterface("Pitch", set_pitch)

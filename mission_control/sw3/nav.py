@@ -14,7 +14,7 @@ interactions = ("Yaw",
 
 current_routine = None
 nav_queue = queue.Queue()
-nav_lock = threading.Lock()
+nav_lock = threading.RLock()
 
 # Idle when not given anything else to do
 idle = False
@@ -27,13 +27,15 @@ def next_routine():
             if idle:
                 set_idle(False)
             current_routine = nav_queue.get()
-            current_routine.on_cancel(current_routine)
+            current_routine.on_done(next_routine)
             current_routine.start()
         else:
             set_idle(True)
             current_routine = None
 
 def set_idle(do_idle):
+    global idle
+
     if do_idle:
         idle = True
         idle_routine.reset()
@@ -42,13 +44,16 @@ def set_idle(do_idle):
         idle = False
         idle_routine.cancel()
 
-def init(self):
+def init():
     """ Initialze navigation by having the robot idle """
     set_idle(True)
 
 def do(routine):
-    """ Equivalent to a call to clear() followed by a call to append() """
-    clear()
+    """ Clear the nav queue and begin executing the given routine """
+    with nav_lock:
+        nav_queue = queue.Queue()
+        if current_routine != None:
+            current_routine.cancel()
     return append(routine)
 
 def append(routine):
@@ -62,7 +67,6 @@ def append(routine):
 
 def clear():
     """ Clear the navigation queue and set the robot to idle """
-
     with nav_lock:
         nav_queue = queue.Queue()
         if current_routine != None:

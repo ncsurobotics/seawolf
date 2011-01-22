@@ -1,0 +1,2 @@
+#!/bin/sh
+python -i sw3_cmd.py

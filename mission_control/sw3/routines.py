@@ -1,6 +1,8 @@
 
 import threading
 
+import traceback
+
 import seawolf as sw
 
 import pid
@@ -11,11 +13,11 @@ class NavRoutine(object):
     interactions = []
 
     def __init__(self, timeout=-1):
-        self.cleared = False
-        self.routine_lock = threading.Lock()
+        self.canceled = False
+        self.routine_lock = threading.RLock()
         self.running = False
         self.timeout = timeout
-        self.on_cancel_callback = None
+        self.on_done_callback = None
         
     def run(self):
         """ Provided by implementation """
@@ -27,34 +29,38 @@ class NavRoutine(object):
 
     def start(self):
         with self.routine_lock:
-            if self.cleared:
-                return
+            if self.canceled:
+                if self.on_done_callback:
+                    self.on_done_callback()
             else:
                 self.running = True
                 if self.timeout > 0:
-                    timer.Timer(self.timeout, self.cancel)
+                    threading.Timer(self.timeout, self.cancel).start()
                 self.run()
 
     def cancel(self):
         with self.routine_lock:
-            if self.running:
-                self.stop()
-                if self.on_cancel_callback:
-                    self.on_cancel_callback()
-            self.cleared = True
+            self.canceled = True
+            if not self.running:
+                return
+
             self.running = False
+            self.stop()
+
+            if self.on_done_callback:
+                self.on_done_callback()
 
     def reset(self):
         with self.routine_lock:
             if self.running:
                 self.cancel()
-            self.cleared = False
+            self.canceled = False
 
     def get_interactions(self):
         return set(self.interactions)
 
-    def on_cancel(self, callback):
-        self.on_cancel_callback = callback
+    def on_done(self, callback):
+        self.on_done_callback = callback
 
 class CompoundInterferenceException(Exception):
     pass
@@ -97,7 +103,7 @@ class SetDepth(NavRoutine):
         super(SetDepth, self).__init__(timeout)
         self.depth = depth
 
-    def start(self):
+    def run(self):
         pid.depth.heading = self.depth
 
 class RelativeDepth(NavRoutine):
@@ -107,7 +113,7 @@ class RelativeDepth(NavRoutine):
         super(RelativeDepth, self).__init__(timeout)
         self.amount = amount
 
-    def start(self):
+    def run(self):
         pid.depth.heading = max(data.depth + self.amount, 0)
 
 def HoldDepth():
@@ -120,7 +126,7 @@ class SetYaw(NavRoutine):
         super(SetYaw, self).__init__(timeout)
         self.angle = angle
 
-    def start(self):
+    def run(self):
         pid.yaw.heading = self.angle
 
 class RelativeYaw(NavRoutine):
@@ -132,7 +138,7 @@ class RelativeYaw(NavRoutine):
         if amount > 180 or amount < -180:
             raise ValueError("Invalid relative yaw value of %.2f" % (amount,))
         
-    def start(self):
+    def run(self):
         new_yaw = data.imu.yaw + self.amount
         if new_yaw > 180:
             new_yaw = (new_yaw - 360)
@@ -150,7 +156,7 @@ class Forward(NavRoutine):
         super(Forward, self).__init__(timeout)
         self.rate = rate
 
-    def start(self):
+    def run(self):
         mixer.forward = self.rate
 
     def stop(self):
@@ -163,7 +169,7 @@ class Strafe(NavRoutine):
         super(Strafe, self).__init__(timeout)
         self.rate = rate
 
-    def start(self):
+    def run(self):
         mixer.strafe = self.rate
 
     def stop(self):
