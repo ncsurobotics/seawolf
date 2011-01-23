@@ -172,9 +172,10 @@ class SetDepth(NavRoutine):
 class RelativeDepth(NavRoutine):
     interactions = ("Depth",)
 
-    def __init__(self, amount, timeout=-1):
+    def __init__(self, amount, timeout=-1, tolerance=0.5):
         super(RelativeDepth, self).__init__(timeout)
         self.amount = amount
+        self.tolerance = tolerance
         self.target_depth = None
 
     def _poll(self):
@@ -221,9 +222,10 @@ class SetYaw(NavRoutine):
 class RelativeYaw(NavRoutine):
     interactions = ("Yaw",)
 
-    def __init__(self, amount, timeout=-1):
+    def __init__(self, amount, timeout=-1, tolerance=5):
         super(RelativeYaw, self).__init__(timeout)
         self.amount = amount
+        self.tolerance = tolerance
         if amount > 180 or amount < -180:
             raise ValueError("Invalid relative yaw value of %.2f" % (amount,))
         
