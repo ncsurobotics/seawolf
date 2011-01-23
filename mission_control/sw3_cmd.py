@@ -12,13 +12,7 @@ def zero_thrusters():
     mixer.forward = 0
     mixer.strafe = 0
 
-EB = emergency_breech
-ZT = zero_thrusters
-
-nav.clear()
-nav.idle()
-
-def square(self):
+def square():
     nav.clear()
     nav.append(Forward(0.6, timeout=5))
     nav.append(TurnRight())
@@ -28,3 +22,9 @@ def square(self):
     nav.append(TurnRight())
     nav.append(Forward(0.6, timeout=5))
     return nav.append(TurnRight())
+
+EB = emergency_breech
+ZT = zero_thrusters
+
+nav.clear()
+nav.idle()

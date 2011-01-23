@@ -230,7 +230,7 @@ class RelativeYaw(NavRoutine):
             raise ValueError("Invalid relative yaw value of %.2f" % (amount,))
         
     def _poll(self):
-        target_yaw = self.angle + 180
+        target_yaw = self.target_yaw + 180
         current_yaw = data.imu.yaw + 180
 
         diff = abs(target_yaw - current_yaw)
