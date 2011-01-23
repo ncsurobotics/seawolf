@@ -21,7 +21,7 @@ int main(void) {
     Notify_filter(FILTER_MATCH, "UPDATED YawPID.Paused");
     Notify_filter(FILTER_MATCH, "UPDATED IMU");
 
-    pid = PID_new(Var_get("YawPID.SetPoint"),
+    pid = PID_new(Var_get("YawPID.Heading"),
                   Var_get("YawPID.p"),
                   Var_get("YawPID.i"),
                   Var_get("YawPID.d"));
@@ -40,6 +40,9 @@ int main(void) {
         } else if(strcmp(data, "YawPID.SetPoint") == 0) {
             PID_setSetPoint(pid, Var_get("YawPID.SetPoint"));
             mv = PID_update(pid, yaw);
+            if(paused) {
+                Var_set("YawPID.Paused", 0.0);
+            }
         } else if(strcmp(data, "YawPID.Paused") == 0) {
             bool p = Var_get("YawPID.Paused");
             if(p == paused) {

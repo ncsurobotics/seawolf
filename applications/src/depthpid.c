@@ -25,7 +25,7 @@ int main(void) {
     Notify_filter(FILTER_MATCH, "UPDATED DepthPID.Paused");
     Notify_filter(FILTER_MATCH, "UPDATED Depth");
 
-    pid = PID_new(Var_get("DepthHeading"),
+    pid = PID_new(Var_get("DepthPID.Heading"),
                   Var_get("DepthPID.p"),
                   Var_get("DepthPID.i"),
                   Var_get("DepthPID.d"));
@@ -44,6 +44,9 @@ int main(void) {
         } else if(strcmp(data, "DepthPID.Heading") == 0) {
             PID_setSetPoint(pid, Var_get("DepthPID.Heading"));
             mv = PID_update(pid, depth);
+            if(paused) {
+                Var_set("DepthPID.Paused", 0.0);
+            }
         } else if(strcmp(data, "DepthPID.Paused") == 0) {
             bool p = Var_get("DepthPID.Paused");
             if(p == paused) {

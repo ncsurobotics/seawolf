@@ -21,7 +21,7 @@ int main(void) {
     Notify_filter(FILTER_MATCH, "UPDATED PitchPID.Paused");
     Notify_filter(FILTER_MATCH, "UPDATED IMU");
 
-    pid = PID_new(Var_get("PitchPID.SetPoint"),
+    pid = PID_new(Var_get("PitchPID.Heading"),
                   Var_get("PitchPID.p"),
                   Var_get("PitchPID.i"),
                   Var_get("PitchPID.d"));
@@ -40,6 +40,9 @@ int main(void) {
         } else if(strcmp(data, "PitchPID.SetPoint") == 0) {
             PID_setSetPoint(pid, Var_get("PitchPID.SetPoint"));
             mv = PID_update(pid, pitch);
+            if(paused) {
+                Var_set("PitchPID.Paused", 0.0);
+            }
         } else if(strcmp(data, "PitchPID.Paused") == 0) {
             bool p = Var_get("PitchPID.Paused");
             if(p == paused) {
