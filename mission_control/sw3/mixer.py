@@ -19,10 +19,10 @@ class Mixer(object):
     def set_pitch(self, rate):
         sw.notify.send("THRUSTER_REQUEST", "Pitch %.4f" % (rate,))
                         
-    forward = property(lambda: 0, set_forward)
-    strafe = property(lambda: 0, set_strafe)
-    yaw = property(lambda: 0, set_yaw)
-    depth = property(lambda: 0, set_depth)
-    pitch = property(lambda: 0, set_pitch)
+    forward = property(lambda self: 0, set_forward)
+    strafe = property(lambda self: 0, set_strafe)
+    yaw = property(lambda self: 0, set_yaw)
+    depth = property(lambda self: 0, set_depth)
+    pitch = property(lambda self: 0, set_pitch)
 
 mixer = Mixer()

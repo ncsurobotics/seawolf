@@ -48,7 +48,7 @@ def set_depth(value):
     else:
         raise ValueError("Cowardly refusing to dive so far! (%.4f)" % (value,))
 
-yaw = PIDInterface("Yaw", set_yaw)
-pitch = PIDInterface("Pitch", set_pitch)
-rotate = PIDInterface("Rotate", set_rotate)
-depth = PIDInterface("Depth", set_depth)
+yaw = PIDInterface("YawPID", set_yaw)
+pitch = PIDInterface("PitchPID", set_pitch)
+rotate = PIDInterface("RotatePID", set_rotate)
+depth = PIDInterface("DepthPID", set_depth)
