@@ -1,8 +1,10 @@
-from objects.base import VisionEntity
+from entities.base import VisionEntity
 
 class Path(VisionEntity):
 
-    def find(self, frames):
+    camera_name = "down"
+
+    def find(self, frame):
 
         # Randomised test code
         import time # imports are here so I don't forget to take them out
