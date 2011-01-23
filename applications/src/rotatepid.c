@@ -35,7 +35,7 @@ int main(void) {
     bool paused = Var_get("RotatePID.Paused");
 
     Notify_filter(FILTER_MATCH, "UPDATED RotatePID.Coefficients");
-    Notify_filter(FILTER_MATCH, "UPDATED RotatePID.SetPoint");
+    Notify_filter(FILTER_MATCH, "UPDATED RotatePID.Heading");
     Notify_filter(FILTER_MATCH, "UPDATED RotatePID.Paused");
     Notify_filter(FILTER_MATCH, "UPDATED IMU");
 
@@ -55,8 +55,8 @@ int main(void) {
                                 Var_get("RotatePID.i"),
                                 Var_get("RotatePID.d"));
             PID_resetIntegral(pid);
-        } else if(strcmp(data, "RotatePID.SetPoint") == 0) {
-            PID_setSetPoint(pid, Var_get("RotatePID.SetPoint"));
+        } else if(strcmp(data, "RotatePID.Heading") == 0) {
+            PID_setSetPoint(pid, Var_get("RotatePID.Heading"));
             mv += PID_update(pid, rate);
             if(paused) {
                 Var_set("RotatePID.Paused", 0.0);

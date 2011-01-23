@@ -17,7 +17,7 @@ int main(void) {
     bool paused = Var_get("PitchPID.Paused");
 
     Notify_filter(FILTER_MATCH, "UPDATED PitchPID.Coefficients");
-    Notify_filter(FILTER_MATCH, "UPDATED PitchPID.SetPoint");
+    Notify_filter(FILTER_MATCH, "UPDATED PitchPID.Heading");
     Notify_filter(FILTER_MATCH, "UPDATED PitchPID.Paused");
     Notify_filter(FILTER_MATCH, "UPDATED IMU");
 
@@ -37,8 +37,8 @@ int main(void) {
                                 Var_get("PitchPID.i"),
                                 Var_get("PitchPID.d"));
             PID_resetIntegral(pid);
-        } else if(strcmp(data, "PitchPID.SetPoint") == 0) {
-            PID_setSetPoint(pid, Var_get("PitchPID.SetPoint"));
+        } else if(strcmp(data, "PitchPID.Heading") == 0) {
+            PID_setSetPoint(pid, Var_get("PitchPID.Heading"));
             mv = PID_update(pid, pitch);
             if(paused) {
                 Var_set("PitchPID.Paused", 0.0);
