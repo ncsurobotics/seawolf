@@ -72,11 +72,13 @@ int main(void) {
                 dataOut(0.0);
                 Notify_send("PIDPAUSED", "Rotate");
             }
-        } else if(paused == true) {
+        } else if(strcmp(data, "IMU") == 0 && paused == false) {
             mv += PID_update(pid, rate);
         }
-        
-        dataOut(mv);
+
+        if(paused == false) {
+            dataOut(mv);
+        }
     }
 
     Seawolf_close();

@@ -14,7 +14,7 @@ int main(void) {
     PID* pid;
     char data[64];
     double mv;
-    bool paused = Var_get("YawPID.Paused");
+    bool paused = (Var_get("YawPID.Paused") != 0.0);
 
     Notify_filter(FILTER_MATCH, "UPDATED YawPID.Coefficients");
     Notify_filter(FILTER_MATCH, "UPDATED YawPID.Heading");
@@ -44,7 +44,7 @@ int main(void) {
                 Var_set("YawPID.Paused", 0.0);
             }
         } else if(strcmp(data, "YawPID.Paused") == 0) {
-            bool p = Var_get("YawPID.Paused");
+            bool p = (Var_get("YawPID.Paused") != 0.0);
             if(p == paused) {
                 continue;
             }
@@ -54,11 +54,13 @@ int main(void) {
                 dataOut(0.0);
                 Notify_send("PIDPAUSED", "Yaw");
             }
-        } else if(paused == true) {
+        } else if(strcmp(data, "IMU") == 0 && paused == false) {
             mv = PID_update(pid, yaw);
         }
         
-        dataOut(mv);
+        if(paused == false) {
+            dataOut(mv);
+        }
     }
 
     Seawolf_close();

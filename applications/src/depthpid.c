@@ -58,7 +58,7 @@ int main(void) {
                 dataOut(0.0);
                 Notify_send("PIDPAUSED", "Depth");
             }
-        } else if(paused == false) {
+        } else if(strcmp(data, "Depth") == 0 && paused == false) {
             mv = PID_update(pid, depth);
         }
        
@@ -72,7 +72,7 @@ int main(void) {
 
             dataOut(-1.0);
             Util_usleep(PANIC_TIME);
-        } else {
+        } else if(paused == false) {
             dataOut(mv);
         }
     }
