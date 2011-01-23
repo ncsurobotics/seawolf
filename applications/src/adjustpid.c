@@ -3,7 +3,7 @@
 
 int main(int argc, char** argv) {
     if(!(argc == 3 || argc == 4)) {
-        printf("Usage: %s <depth|alt|roll|pitch|yaw|rot.angular|rot.rate> <p|i|d> [<value>]\n", argv[0]);
+        printf("Usage: %s <depth|pitch|yaw|rot> <p|i|d> [<value>]\n", argv[0]);
         exit(0);
     }
 
@@ -45,28 +45,7 @@ int main(int argc, char** argv) {
                 printf("%.2f\n", Var_get("DepthPID.d"));
             }
         }
-        Notify_send("UPDATED", "DepthPID");
-    } else if(strcmp(sensor, "alt") == 0) {
-        if(var == 'p') {
-            if(action == SET) {
-                Var_set("AltitudePID.p", value);
-            } else {
-                printf("%.2f\n", Var_get("AltitudePID.p"));
-            }
-        } else if(var == 'i') {
-            if(action == SET) {
-                Var_set("AltitudePID.i", value);
-            } else {
-                printf("%.2f\n", Var_get("AltitudePID.i"));
-            }
-        } else if(var == 'd') {
-            if(action == SET) {
-                Var_set("AltitudePID.d", value);
-            } else {
-                printf("%.2f\n", Var_get("AltitudePID.d"));
-            }
-        }
-        Notify_send("UPDATED", "AltitudePID");
+        Notify_send("UPDATED", "DepthPID.Coefficients");
     } else if(strcmp(sensor, "yaw") == 0) {
         if(var == 'p') {
             if(action == SET) {
@@ -87,28 +66,7 @@ int main(int argc, char** argv) {
                 printf("%.2f\n", Var_get("YawPID.d"));
             }
         }
-        Notify_send("UPDATED", "YawPID");
-    } else if(strcmp(sensor, "roll") == 0) {
-        if(var == 'p') {
-            if(action == SET) {
-                Var_set("RollPID.p", value);
-            } else {
-                printf("%.2f\n", Var_get("RollPID.p"));
-            }
-        } else if(var == 'i') {
-            if(action == SET) {
-                Var_set("RollPID.i", value);
-            } else {
-                printf("%.2f\n", Var_get("RollPID.i"));
-            }
-        } else if(var == 'd') {
-            if(action == SET) {
-                Var_set("RollPID.d", value);
-            } else {
-                printf("%.2f\n", Var_get("RollPID.d"));
-            }
-        }
-        Notify_send("UPDATED", "RollPID");
+        Notify_send("UPDATED", "YawPID.Coefficients");
      } else if(strcmp(sensor, "pitch") == 0) {
         if(var == 'p') {
             if(action == SET) {
@@ -129,49 +87,28 @@ int main(int argc, char** argv) {
                 printf("%.2f\n", Var_get("PitchPID.d"));
             }
         }
-        Notify_send("UPDATED", "PitchPID");
-     } else if(strcmp(sensor, "rot.rate") == 0) {
+        Notify_send("UPDATED", "PitchPID.Coefficients");
+     } else if(strcmp(sensor, "rot") == 0) {
         if(var == 'p') {
             if(action == SET) {
-                Var_set("Rot.Rate.p", value);
+                Var_set("RotPID.p", value);
             } else {
-                printf("%.2f\n", Var_get("Rot.Rate.p"));
+                printf("%.2f\n", Var_get("RotPID.p"));
             }
         } else if(var == 'i') {
             if(action == SET) {
                 Var_set("Rot.Rate.i", value);
             } else {
-                printf("%.2f\n", Var_get("Rot.Rate.i"));
+                printf("%.2f\n", Var_get("RotPID.i"));
             }
         } else if(var == 'd') {
             if(action == SET) {
                 Var_set("Rot.Rate.d", value);
             } else {
-                printf("%.2f\n", Var_get("Rot.Rate.d"));
+                printf("%.2f\n", Var_get("RotPID.d"));
             }
         }
-        Notify_send("UPDATED", "Rot.Rate");
-     } else if(strcmp(sensor, "rot.angular") == 0) {
-        if(var == 'p') {
-            if(action == SET) {
-                Var_set("Rot.Angular.p", value);
-            } else {
-                printf("%.2f\n", Var_get("Rot.Angular.p"));
-            }
-        } else if(var == 'i') {
-            if(action == SET) {
-                Var_set("Rot.Angular.i", value);
-            } else {
-                printf("%.2f\n", Var_get("Rot.Angular.i"));
-            }
-        } else if(var == 'd') {
-            if(action == SET) {
-                Var_set("Rot.Angular.d", value);
-            } else {
-                printf("%.2f\n", Var_get("Rot.Angular.d"));
-            }
-        }
-        Notify_send("UPDATED", "Rot.Angular");
+        Notify_send("UPDATED", "RotPID.Coefficients");
     } else {
         printf("Invalid arguments\n");
     }
