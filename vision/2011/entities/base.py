@@ -27,6 +27,9 @@ class VisionEntity(object):
         Returns true when the entity is seen.  When the entity is seen, find()
         also records information in the object about where the entity was seen.  
 
+        See test.py for a simple, well documented example of how to write a
+        vision entity.
+
         '''
         raise NotImplementedError("This subclass must be implemented!")
 
