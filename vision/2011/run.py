@@ -72,7 +72,7 @@ def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True):
     # Initialize all cameras
     cameras = {}
     for name, index in camera_indexes.iteritems():
-        cameras[name] = Camera(index, display=is_graphical, record=record)
+        cameras[name] = Camera(index, display=False, record=record)
 
     while True:
 
@@ -87,7 +87,7 @@ def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True):
         # Get timestamp
         #TODO
 
-        # Grab Frame
+        # Grab Frames
         frames = {} # Maps camera names to a frame from that camera
         for entity in entities:
             if entity.camera_name not in cameras:
@@ -97,11 +97,26 @@ def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True):
             frame = camera.get_frame()
             frames[entity.camera_name] = frame
 
-        # Search for each entity
         for entity in entities:
-            if entity.find(frames[entity.camera_name]):
+
+            if is_graphical:
+                frame = cv.CloneImage(frames[entity.camera_name])
+            else:
+                # No need to copy frame.  VisionEntity.find() is not allowed to
+                # edit the frame if we give it debug=False.
+                frame = frames[entity.camera_name]
+
+            # Search for each entity
+            if entity.find(frame, debug=is_graphical):
                 #TODO: Timestamp the object
                 pipe.send(entity)
+
+            # Debug window for this entity
+            if is_graphical:
+                #TODO: Would be cleaner to not create the window every frame.
+                #TODO: Destroy windows when entity list changes. (if we care)
+                cv.NamedWindow("%s" %entity.name)
+                cv.ShowImage("%s" % entity.name, frame)
 
         key = cv.WaitKey(10)
         if key == 27:
