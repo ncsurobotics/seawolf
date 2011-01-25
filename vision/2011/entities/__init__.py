@@ -2,12 +2,12 @@
 from base import VisionEntity
 
 # Entities
-from path import Path
-from test import Test
+from path import PathEntity
+from test import TestEntity
 
 entity_classes = {
-    "path": Path,
-    "test": Test,
+    "path": PathEntity,
+    "test": TestEntity,
 }
 
 def get_all_used_cameras():
