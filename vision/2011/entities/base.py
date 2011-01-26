@@ -1,4 +1,6 @@
 
+import cv
+
 class VisionEntity(object):
     '''Defines an entity, or object that can be located.'''
 
@@ -11,22 +13,22 @@ class VisionEntity(object):
     # The camera name should be a string.
     camera_name = None
 
-    def find(self, frame, debug=False):
+    def find(self, frame, debug=True):
         '''Find the VisionEntity in the given frame.
 
-        Whenever find() returns True, the entity's object is sent to mission logic.
+        Whenever find() returns True, the entity's object is sent to mission
+        logic.
 
         Arguments:
             frame - The image from the camera specified in
                 VisionEntity.camera_name that may or may not contain the entity
                 being searched for.
             debug - If True, debugging information may be written to the given
-                frame.  The frame will be displayed after the function completes.
-                If False, find() is NOT allowed to edit frame!!!
+                frame.  The frame will be displayed after the function
+                completes.  If False, find() is NOT allowed to edit frame!!!
 
         Returns true when the entity is seen.  When the entity is seen, find()
         also records information in the object about where the entity was seen.  
-
         See test.py for a simple, well documented example of how to write a
         vision entity.
 
@@ -35,3 +37,32 @@ class VisionEntity(object):
 
     def __repr__(self):
         return "<%s>" % self.name
+
+    def create_trackbar(self, var, max=255):
+        '''Function to create trackbar for a variable.
+
+        Arguments:
+            var - The variable name to create a trackbar for.  The variable
+                name must be already defined as self.<variable name> and
+                initialized to some value.
+            max - The maximum value the trackbar can slide to.  Min is always
+                zero.
+
+        '''
+        cv.CreateTrackbar("%s" % var, self.name, getattr(self, var), max,
+            lambda value: setattr(self, var, value))
+
+    def initialize_non_pickleable(self, debug=True):
+        '''Called once after the object is created.
+
+        __init__() cannot be used to initialize non-pickleable data, since the
+        object is usually pickled and sent to a subprocess before use.  This
+        function is for doing things such as opening file handles, initializing
+        graphics, and other things that don't transfer when the object is
+        pickled.
+
+        Arguments:
+            debug - If True, no graphical windows should be displayed.
+
+        '''
+        pass

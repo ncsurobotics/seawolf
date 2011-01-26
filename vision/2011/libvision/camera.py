@@ -1,4 +1,6 @@
 
+import os
+
 import cv
 
 class Camera(object):
@@ -8,7 +10,7 @@ class Camera(object):
 
     '''
 
-    def __init__(self, identifier, display=True, record=True):
+    def __init__(self, identifier, display=True, window_name=None, record=True):
         '''
         Arguments:
 
@@ -22,6 +24,9 @@ class Camera(object):
             from this camera.  cv.WaitKey must be called at some point for the
             image to be displayed.
 
+        window_name - Name of the window to be created if display=True.  If
+            None, the identifier will be used.
+
         record - If True, all images captured will be recorded.  If the
             identifier given is a filename, this is overwritten to false.
 
@@ -29,15 +34,24 @@ class Camera(object):
 
         self.identifier = identifier
         self.display = display
+        self.window_name = window_name
         self.record = record
         self.image = None # Stored image, if identifier is an image filename
         self.capture = None # Underlying opencv capture object
+        self.frame_count = 0
 
         if display:
-            cv.NamedWindow("Camera %s" % identifier)
+            cv.NamedWindow(self.get_window_name())
+
+    def get_window_name(self):
+        if self.window_name:
+            return "Camera: %s" % self.window_name
+        else:
+            return "Camera: %s" % self.identifier
 
     def get_frame(self):
         '''Gets a frame from the camera.'''
+        self.frame_count += 1
 
         if not self.capture and not self.image:
             self.open_capture()
@@ -50,16 +64,36 @@ class Camera(object):
 
         frame = cv.QueryFrame(self.capture)
         if self.display:
-            cv.ShowImage("Camera %s" % self.identifier, frame)
+            cv.ShowImage(self.get_window_name(), frame)
 
+        # If the capture device doesn't work, OpenCV might not complain, but
+        # just returns None when grabbing a frame.  Here we check for errors,
+        # and see if it was actualy an image, not a video that we're opening
         if not frame:
 
             # See if file is an image, not video
-            self.image = cv.LoadImage(self.identifier)
-            if self.image: return cv.CloneImage(self.image)
+            if isinstance(self.identifier, basestring):
+                try:
+                    self.image = cv.LoadImage(self.identifier)
+                except IOError:
+                    if self.frame_count > 1:
+                        raise self.CaptureError("The video has run out of frames.")
+                    else:
+                        raise self.CaptureError("Either a read error occured "
+                            "with the file, or the file is not a valid video "
+                            "or image file.")
+                if self.image:
+                    return cv.CloneImage(self.image)
+                else:
+                    raise self.CaptureError("This shouldn't happen.  Please "
+                        " report a bug!  Include this traceback!!")
+            else:
+                raise self.CaptureError("Could not capture frame from "
+                    'identifier "%s"' % self.identifier)
 
-            raise self.CaptureError('Could not capture frame from identifier '
-                '"%s"' % self.identifier)
+            #TODO: Weird GStreamer error occured when a folder is incorrectly
+            #      specified as a video file, or when the user doesn't have
+            #      permissions for the file.
 
         return frame
 
@@ -75,8 +109,12 @@ class Camera(object):
         except ValueError:
             pass
         if isinstance(self.identifier, basestring):
-            self.capture = cv.CaptureFromFile(self.identifier)
-            self.record = False
+            if os.path.exists(self.identifier):
+                self.capture = cv.CaptureFromFile(self.identifier)
+                self.record = False # Don't re-record avi files
+            else:
+                raise self.CaptureError('Could not open file ' ' "%s".' %
+                                        self.identifier)
         else:
             self.capture = cv.CaptureFromCAM(self.identifier)
 

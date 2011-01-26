@@ -6,8 +6,8 @@ import cv
 
 from entities.base import VisionEntity
 
-class TestEntity(VisionEntity):
-    '''A test entity for reference, education, and debugging.
+class ExampleEntity(VisionEntity):
+    '''An example entity for reference, education, and debugging.
 
     If you want to learn how to write a vision entity, you should read the
     documentation in the VisionEntity class (in base.py).  Then, if everything
@@ -15,7 +15,7 @@ class TestEntity(VisionEntity):
 
     '''
 
-    name = "Test"
+    name = "Example"
 
     # camera_name is the name of the camera you want to look through to search
     # for this entity (must be a string).  The name can actually be any string
@@ -35,7 +35,12 @@ class TestEntity(VisionEntity):
         # the entity is seen.
         self.position = None
 
-    def find(self, frame, debug=False):
+        # Note that __init__ should only be used to initialize pickleable data.
+        # The object will be initialized, pickled, then used, so anything such
+        # as graphics initialization should not be done in __init__.  Instead,
+        # you should define a self.initialize_non_pickleable() function.
+
+    def find(self, frame, debug=True):
 
         # Process the frame
         # We just sleep and act like we're processing.
@@ -67,4 +72,4 @@ class TestEntity(VisionEntity):
         orientation information the object stores.
 
         '''
-        return "<TestEntity position=%s>" % self.position
+        return "<ExampleEntity position=%s>" % self.position

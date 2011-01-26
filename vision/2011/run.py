@@ -35,7 +35,7 @@ Error: Could not import library "seawolf".
 ''')
 
 import entities
-from camera import Camera
+from libvision import Camera
 
 
 def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True):
@@ -72,7 +72,8 @@ def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True):
     # Initialize all cameras
     cameras = {}
     for name, index in camera_indexes.iteritems():
-        cameras[name] = Camera(index, display=False, record=record)
+        cameras[name] = Camera(index, display=True, window_name=name,
+                               record=record)
 
     while True:
 
@@ -87,9 +88,10 @@ def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True):
         # Get timestamp
         #TODO
 
-        # Grab Frames
         frames = {} # Maps camera names to a frame from that camera
         for entity in entities:
+
+            # Grab Frames
             if entity.camera_name not in cameras:
                 raise IndexError('Camera "%s" needed for entity "%s", but no '
                 'camera index specified.' % (entity.camera_name, entity))
@@ -100,11 +102,17 @@ def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True):
         for entity in entities:
 
             if is_graphical:
+                cv.NamedWindow("%s" %entity.name)
                 frame = cv.CloneImage(frames[entity.camera_name])
             else:
                 # No need to copy frame.  VisionEntity.find() is not allowed to
                 # edit the frame if we give it debug=False.
                 frame = frames[entity.camera_name]
+
+            # Initialize nonpickleable if object is new
+            if not hasattr(entity, "non_pickleable_initialized"):
+                entity.initialize_non_pickleable(is_graphical)
+                entity.non_pickleable_initialized = True
 
             # Search for each entity
             if entity.find(frame, debug=is_graphical):
@@ -115,7 +123,6 @@ def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True):
             if is_graphical:
                 #TODO: Would be cleaner to not create the window every frame.
                 #TODO: Destroy windows when entity list changes. (if we care)
-                cv.NamedWindow("%s" %entity.name)
                 cv.ShowImage("%s" % entity.name, frame)
 
         key = cv.WaitKey(10)
@@ -180,6 +187,7 @@ def main():
         help="Specifies that the camera given should use the given index or "
             "file to capture its frames.  Camera names should be one of: %s" %
             entities.get_all_used_cameras())
+    #TODO: Option for delay time
     options, args = opt_parser.parse_args()
     if len(args) < 1:
         opt_parser.error("At least one entity must be specified.")
@@ -188,8 +196,8 @@ def main():
     entities_to_search_for = []
     for arg in args:
         if arg not in entities.entity_classes.keys():
-            opt_parser.error('Given entity "%s" is not one of: %s' %
-            (arg, entities.entity_classes.keys()))
+            opt_parser.error('Given entity "%s" is not one of the defined '
+                    'entities: %s' % (arg, entities.entity_classes.keys()))
         EntityClass = entities.entity_classes[arg]
         entities_to_search_for.append(EntityClass())
 
