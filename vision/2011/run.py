@@ -191,6 +191,8 @@ def main():
     options, args = opt_parser.parse_args()
     if len(args) < 1:
         opt_parser.error("At least one entity must be specified.")
+    if not options.cameras:
+        opt_parser.error("Use the -c option to specify at least one camera.")
 
     # Get entities to search for
     entities_to_search_for = []
