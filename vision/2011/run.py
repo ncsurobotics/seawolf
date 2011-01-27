@@ -38,7 +38,7 @@ import entities
 from libvision import Camera
 
 
-def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True):
+def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True, delay=10):
     '''Searches for entities until killed.
 
     This is meant to be used via the python multiprocessing module.
@@ -64,6 +64,9 @@ def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True):
 
     record - If this evaluates to True, all images grabbed from cameras will be
         recorded.
+
+    delay - The delay between frames, in milliseconds.  If -1, it waits for a
+        keypress between frames.
 
     '''
 
@@ -125,7 +128,7 @@ def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True):
                 #TODO: Destroy windows when entity list changes. (if we care)
                 cv.ShowImage("%s" % entity.name, frame)
 
-        key = cv.WaitKey(10)
+        key = cv.WaitKey(delay)
         if key == 27:
             break
 
@@ -187,7 +190,11 @@ def main():
         help="Specifies that the camera given should use the given index or "
             "file to capture its frames.  Camera names should be one of: %s" %
             entities.get_all_used_cameras())
-    #TODO: Option for delay time
+    opt_parser.add_option("-d", "--delay", type="int",
+        dest="delay", default=10,
+        help="Delay between frames, in milliseconds, or -1 to wait for "
+            "keypress")
+
     options, args = opt_parser.parse_args()
     if len(args) < 1:
         opt_parser.error("At least one entity must be specified.")
@@ -213,6 +220,7 @@ def main():
         camera_indexes=camera_dict,
         is_graphical=options.graphical,
         record=options.record,
+        delay=options.delay,
     )
 
     # Send a list of entities for search_forever() to look for
