@@ -75,7 +75,7 @@ def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True, dela
     # Initialize all cameras
     cameras = {}
     for name, index in camera_indexes.iteritems():
-        cameras[name] = Camera(index, display=True, window_name=name,
+        cameras[name] = Camera(index, display=is_graphical, window_name=name,
                                record=record)
 
     while True:
