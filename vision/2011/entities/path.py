@@ -18,10 +18,11 @@ class PathEntity(VisionEntity):
         self.max_hue = 360
         self.min_saturation = 0
         self.max_saturation = 110
-        self.min_value = 0
+        self.min_value = 220
         self.max_value = 255
         self.theta_threshold = 0.1
-        self.hough_threshold = 20
+        self.hough_threshold = 15
+        self.lines_to_consider = 4 # Only consider the strongest so many lines
 
         # Position/orientation
         self.theta = None
@@ -40,7 +41,7 @@ class PathEntity(VisionEntity):
     def find(self, frame, debug=True):
         found_path = False
 
-        # Color Filter
+        # HSV Color Filter
         binary = libvision.filters.hsv_filter(frame,
             self.min_hue,
             self.max_hue,
@@ -49,12 +50,12 @@ class PathEntity(VisionEntity):
             self.min_value,
             self.max_value,
         )
-        color_filtered = cv.CloneImage(binary) #XXX
 
         # Morphology
-        kernel = cv.CreateStructuringElementEx(5, 5, 2, 2, cv.CV_SHAPE_ELLIPSE)
-        cv.Dilate(binary, binary, kernel, 2)
-        cv.Erode(binary, binary, kernel, 2)
+        # We size the kernel to about the width of a path.
+        kernel = cv.CreateStructuringElementEx(15, 15, 7, 7, cv.CV_SHAPE_ELLIPSE)
+        cv.Erode(binary, binary, kernel, 1)
+        cv.Dilate(binary, binary, kernel, 1)
 
         # Get Edges
         cv.Canny(binary, binary, 30, 40)
@@ -68,29 +69,42 @@ class PathEntity(VisionEntity):
             param1=0,
             param2=0
         )
+        lines = lines[:self.lines_to_consider] # Limit number of lines
 
-        # If there are at least 2 lines and they don't varry much... There's a
-        # path!
-        #for rho, theta in lines:
-            #print theta,
-        #print
+        # If there are at least 2 lines and they are close to parallel...
+        # There's a path!
         if len(lines) >= 2:
-            max_theta = lines[0][1]
-            min_theta = lines[0][1]
+
+            # Find: min, max, average
+            theta_max = lines[0][1]
+            theta_min = lines[0][1]
             total_theta = 0
             for rho, theta in lines:
                 total_theta += theta
-                if max_theta < theta:
-                    max_theta = theta
-                if min_theta < theta:
-                    min_theta = theta
-            if max_theta - min_theta < self.theta_threshold:
+                if theta_max < theta:
+                    theta_max = theta
+                if theta_min > theta:
+                    theta_min = theta
+
+            theta_range = theta_max - theta_min
+            # Near verticle angles will wrap around from pi to 0.  If the range
+            # crosses this verticle line, the range will be way too large.  To
+            # correct for this, we always take the smallest angle between the
+            # min and max.
+            if theta_range > math.pi/2:
+                theta_range = math.pi - theta_range
+
+            if theta_range < self.theta_threshold:
                 found_path = True
-                self.theta = total_theta / len(lines) # Average
+                #TODO: Implement circular angle averaging!  The average will be
+                #      flat out WRONG if the angles are near verticle!
+                self.theta = total_theta / len(lines)
+
+        #TODO: If path is found, find the center
 
         if debug:
             cv.CvtColor(binary, frame, cv.CV_GRAY2RGB)
-            libvision.misc.draw_lines(frame, lines, 3)
+            libvision.misc.draw_lines(frame, lines)
 
         return found_path
 
