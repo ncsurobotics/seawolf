@@ -78,12 +78,31 @@ def search_forever(pipe, camera_indexes={}, is_graphical=True, record=True, dela
         cameras[name] = Camera(index, display=is_graphical, window_name=name,
                                record=record)
 
+        # This is specific to seawolf's IMI-Tech camera.  OpenCV sets the
+        # capture mode to greyscale, and this line sets the mode back to color
+        # if the camera index is firewire (indexes 300-400).
+        cameras[name].open_capture()
+        if isinstance(cameras[name].identifier, int) and \
+           cameras[name].identifier >= 300 and cameras[name].identifier < 400:
+
+            cameras[name].open_capture()
+            # The cap prop mode 67 comes from a libdc1394 enumeration.  You can
+            # find a list of possible values inside the libdc1394 source code.
+            # See file "dc1394/types.h" and enumeration "dc1394video_mode_t"
+            # (version 2 of dc1394).  Remember that if a number is not
+            # specified in an enumeration, ANSI C specifies that it takes on
+            # the value of the previous value plus one.
+            DC1394_VIDEO_MODE_640x480_YUV422 = 67
+            cv.SetCaptureProperty(cameras[name].capture, cv.CV_CAP_PROP_MODE,
+                DC1394_VIDEO_MODE_640x480_YUV422
+            )
+
     while True:
 
         # Recieve entitiy list
         if pipe.poll():
             entities = pipe.recv()
-        
+
         if not entities:
             pipe.poll(None) # Wait for entity list
             continue
