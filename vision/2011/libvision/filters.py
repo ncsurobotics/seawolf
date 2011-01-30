@@ -19,21 +19,24 @@ def hsv_filter(src, min_h, max_h, min_s, max_s, min_v, max_v):
     
     hsv = cv.CreateImage(cv.GetSize(src), 8, 3)
     binary = cv.CreateImage(cv.GetSize(src), 8, 1)
+    cv.SetZero(binary)
     cv.CvtColor(src, hsv, cv.CV_RGB2HSV)
 
-    for y in xrange(hsv.height):
-        for x in xrange(hsv.width):
-
-            pixel = cv.Get2D(hsv, y, x)
-            if pixel[0] >= min_h and \
-               pixel[0] <= max_h and \
-               pixel[1] >= min_s and \
-               pixel[1] <= max_s and \
-               pixel[2] >= min_v and \
-               pixel[2] <= max_v:
+    data = hsv.tostring()
+    print len(data), hsv.width, hsv.height
+    for y in xrange(0, hsv.height):
+        for x in xrange(0, hsv.width):
+            index = y*hsv.width*3 + x*3
+            h = ord(data[0+index])
+            s = ord(data[1+index])
+            v = ord(data[2+index])
+            if h >= min_h and \
+               h <= max_h and \
+               s >= min_s and \
+               s <= max_s and \
+               v >= min_v and \
+               v <= max_v:
 
                 cv.Set2D(binary, y, x, (255,))
-            else:
-                cv.Set2D(binary, y, x, (0,))
 
     return binary
