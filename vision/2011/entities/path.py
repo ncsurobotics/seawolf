@@ -21,11 +21,12 @@ class PathEntity(VisionEntity):
         self.min_value = 220
         self.max_value = 255
         self.theta_threshold = 0.1
-        self.hough_threshold = 15
+        self.hough_threshold = 20
         self.lines_to_consider = 4 # Only consider the strongest so many lines
 
         # Position/orientation
         self.theta = None
+        self.center = None
 
     def initialize_non_pickleable(self, debug=True):
 
@@ -100,13 +101,21 @@ class PathEntity(VisionEntity):
                 #      flat out WRONG if the angles are near verticle!
                 self.theta = total_theta / len(lines)
 
-        #TODO: If path is found, find the center
+        if found_path:
+            #TODO: Add a kalman filter (or something) to the center reading
+            self.center = self.find_centroid(binary)
 
         if debug:
             cv.CvtColor(binary, frame, cv.CV_GRAY2RGB)
             libvision.misc.draw_lines(frame, lines)
+            if found_path:
+                cv.Circle(frame, self.center, 5, (0,255,0))
 
         return found_path
 
+    def find_centroid(self, binary):
+        moments = cv.Moments(cv.GetMat(binary))
+        return (moments.m10/moments.m00, moments.m01/moments.m00)
+
     def __repr__(self):
-        return "<PathEntity theta=%s>" % self.theta
+        return "<PathEntity center=%s theta=%s>" % (self.center, self.theta)
