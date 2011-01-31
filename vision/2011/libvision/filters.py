@@ -23,7 +23,6 @@ def hsv_filter(src, min_h, max_h, min_s, max_s, min_v, max_v):
     cv.CvtColor(src, hsv, cv.CV_RGB2HSV)
 
     data = hsv.tostring()
-    print len(data), hsv.width, hsv.height
     for y in xrange(0, hsv.height):
         for x in xrange(0, hsv.width):
             index = y*hsv.width*3 + x*3
