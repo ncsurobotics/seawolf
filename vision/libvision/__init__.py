@@ -1,2 +1,4 @@
 
-from c import *
+from camera import Camera
+import filters
+import misc

@@ -1,1 +1,0 @@
-watch -n 0.1 "ps -eo \"%c %y %x %t %z\" | grep main "
