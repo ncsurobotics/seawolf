@@ -26,14 +26,6 @@ Error: Could not import library "cv" (opencv).
     interface).
 ''')
 
-try:
-    import seawolf
-except ImportError:
-    raise ImportError('''\n
-Error: Could not import library "seawolf".
-    Make sure the libseawolf python bindings are installed.
-''')
-
 import entities
 from libvision import Camera
 
