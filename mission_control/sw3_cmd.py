@@ -6,6 +6,11 @@ sw.loadConfig("../conf/seawolf.conf")
 sw.init("SW3 Command Line Interface")
 
 def zero_thrusters():
+    pid.yaw.pause()
+    pid.rotate.pause()
+    pid.pitch.pause()
+    pid.depth.pause()
+
     mixer.depth = 0
     mixer.pitch = 0
     mixer.yaw = 0
