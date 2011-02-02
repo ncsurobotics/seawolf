@@ -12,6 +12,8 @@
 #define BOW    3
 #define STERN  4
 
+#define UPDATE_TOLERANCE 0.01
+
 /* Simple summing mixing algorithm */
 static void mix(float req_pitch, float req_depth, float req_forward, float req_yaw, float req_strafe, float out[5]) {
     out[BOW] = req_pitch + req_depth;
@@ -22,12 +24,33 @@ static void mix(float req_pitch, float req_depth, float req_forward, float req_y
 }
 
 static void setThrusters(float out[5]) {
+    static float old_out[] = {2.0, 2.0, 2.0, 2.0, 2.0};
+
     /* Set all thurster values */
-    Var_set("Bow", out[BOW]);
-    Var_set("Stern", out[STERN]);
-    Var_set("Port", out[PORT]);
-    Var_set("Star", out[STAR]);
-    Var_set("Strafe", out[STRAFE]);
+    if(fabs(old_out[BOW] - out[BOW]) > UPDATE_TOLERANCE) {
+        old_out[BOW] = out[BOW];
+        Var_set("Bow", out[BOW]);
+    }
+
+    if(fabs(old_out[STERN] - out[STERN]) > UPDATE_TOLERANCE) {
+        old_out[STERN] = out[STERN];
+        Var_set("Stern", out[STERN]);
+    }
+
+    if(fabs(old_out[PORT] - out[PORT]) > UPDATE_TOLERANCE) {
+        old_out[PORT] = out[PORT];
+        Var_set("Port", out[PORT]);
+    }
+
+    if(fabs(old_out[STAR] - out[STAR]) > UPDATE_TOLERANCE) {
+        old_out[STAR] = out[STAR];
+        Var_set("Star", out[STAR]);
+    }
+
+    if(fabs(old_out[STRAFE] - out[STRAFE]) > UPDATE_TOLERANCE) {
+        old_out[STRAFE] = out[STRAFE];
+        Var_set("Strafe", out[STRAFE]);
+    }
 }
 
 static int count;
