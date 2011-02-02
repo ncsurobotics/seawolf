@@ -144,7 +144,7 @@ class CompoundRoutine(NavRoutine):
             
     def _cleanup(self):
         for routine in self.routines:
-            routine.cancel()
+            routine.reset()
 
 class NullRoutine(NavRoutine):
     """ The Null routine does nothing """

@@ -34,8 +34,7 @@ class NavQueue(object):
                 self.current_routine.start()
             else:
                 self.current_routine = None
-                self.idle_routine.reset()
-                self.idle_routine.start()
+                self.idle()
 
     def idle(self):
         """ Clear the queue and run the idle routine """
