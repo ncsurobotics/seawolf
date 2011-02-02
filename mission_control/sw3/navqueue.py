@@ -34,6 +34,7 @@ class NavQueue(object):
                 self.current_routine.start()
             else:
                 self.current_routine = None
+                self.idle_routine.reset()
                 self.idle_routine.start()
 
     def idle(self):
