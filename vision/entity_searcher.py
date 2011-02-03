@@ -241,7 +241,7 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
                 #      care)
                 cv.ShowImage("%s" % entity.name, frame)
 
-        if delay >= 0:
+        if delay >= 1:
             key = cv.WaitKey(delay)
         else:
             key = cv.WaitKey(10)

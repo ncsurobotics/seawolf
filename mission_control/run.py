@@ -39,14 +39,27 @@ if __name__ == "__main__":
         dest="wait_for_go",
         help="Do not wait fo the go signal.")
     opt_parser.add_option("-d", "--delay", type="int",
-        dest="delay", default=0.1,
-        help="Delay between steps, in seconds.")
+        dest="delay", default=10,
+        help="Delay between frames, in milliseconds, or -1 to wait for "
+            "keypress")
     opt_parser.add_option("-c", "--camera", nargs=2, action="append",
         type="string", metavar="<camera> <index/filename>",
         dest="cameras", default=[],
         help="Specifies that the camera given should use the given index or "
             "file to capture its frames.  Camera names should be one of: %s" %
-            get_all_used_cameras())
+            vision.entities.get_all_used_cameras())
+    opt_parser.add_option("-r", "--record", action="store_true",
+        default="true", dest="record",
+        help="All images captured from cameras will be recorded.")
+    opt_parser.add_option("-R", "--not-record", action="store_false",
+        dest="record",
+        help="Images captured from cameras will not be recorded.")
+    opt_parser.add_option("-g", "--graphical", action="store_true",
+        dest="graphical",
+        help="Indicates that graphical windows can be displayed.")
+    opt_parser.add_option("-G", "--non-graphical", action="store_false",
+        default="true", dest="graphical",
+        help="Indicates that no graphical windows will be displayed.")
     options, args = opt_parser.parse_args(sys.argv)
 
     # Put camera option into dictionary format
@@ -58,8 +71,9 @@ if __name__ == "__main__":
 
     entity_searcher = vision.EntitySearcher(
         camera_indexes=camera_dict,
-        #is_graphical=options.graphical, #TODO
-        #record=options.record, #TODO
+        is_graphical=options.graphical,
+        record=options.record,
+        delay=options.delay,
     )
 
     mission_controller = MissionController(entity_searcher)
