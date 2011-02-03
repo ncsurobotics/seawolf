@@ -1,13 +1,19 @@
 
+import sys
+if sys.version_info < (2, 6):
+    raise RuntimeError("Python version 2.6 or greater required.")
+
 import multiprocessing
+from time import time
 
 try:
     import cv
 except ImportError:
     raise ImportError('''\n
 Error: Could not import library "cv" (opencv).
-    Make sure the new OpenCV Python interface is installed (not the old SWIG
-    interface).
+    Make sure the new OpenCV Python interface is installed.  The path where it
+    was installed must be inside sys.path, or else you will need to add the
+    directory to the PYTHONPATH environment variable.
 ''')
 
 
@@ -23,16 +29,16 @@ class EntitySearcher(object):
 
     >>> searcher = EntitySearcher()
     >>> searcher.start_search(ExampleEntity())
-    >>> while searcher.is_alive():
+    >>> while True:
     >>>     entity = searcher.get_entity()
-    >>>     if entity:
-    >>>         print "Found Entity:", entity
+    >>>     print "Found Entity:", entity
 
-    EntitySearcher works by starting a subprocess that does the work.  Note
-    that in the example, is_alive is called periodically to make sure the
-    subprocess is still alive.
-
+    EntitySearcher works by starting a subprocess that does the work.
     '''
+
+    # Ping and panic intervals for the ProcessPinger objects.
+    ping_interval = 1
+    panic_interval = 3
 
     def __init__(self, **kwargs):
         '''
@@ -52,19 +58,26 @@ class EntitySearcher(object):
             a keypress between frames.
         '''
 
-        # Setup Pipe
-        parent_connection, child_connection = multiprocessing.Pipe()
+        # Setup Pipes
+        parent_entity_connection, child_entity_connection = multiprocessing.Pipe()
+        parent_ping_connection, child_ping_connection = multiprocessing.Pipe()
+        self.entity_pipe = parent_entity_connection
+        self.ping_pipe = parent_ping_connection
+
+        # Set up ProcessPinger
+        if "delay" in kwargs and \
+           kwargs["delay"] > EntitySearcher.ping_interval*1000:
+            raise ValueError("delay must be less than the ping interval.")
+        self.pinger = ProcessPinger(self.ping_pipe,
+            EntitySearcher.ping_interval, EntitySearcher.panic_interval)
 
         # Start Search Process
-        subprocess = multiprocessing.Process(
-            target = EntitySearcher._search_forever_subprocess,
-            args = (child_connection,),
+        self.subprocess = multiprocessing.Process(
+            target = _search_forever_subprocess,
+            args = (child_entity_connection, child_ping_connection),
             kwargs = kwargs,
         )
-        subprocess.start()
-
-        self.pipe = parent_connection
-        self.subprocess = subprocess
+        self.subprocess.start()
 
     def start_search(self, entity_list):
         ''' Begins searching for the entities given in entity_list.
@@ -72,9 +85,20 @@ class EntitySearcher(object):
         Any previous entities that were being searched for are forgotten.
 
         '''
-        self.pipe.send(entity_list)
+        self.entity_pipe.send(entity_list)
 
-    def get_entity(self, timeout=0):
+    def ping(self):
+        '''Pings the subprocess.
+
+        Either this or get_entity() must be called every ping_interval seconds,
+        or the subprocess could think that this process has died.
+
+        Returns True if the other process is ok, False otherwise.
+        
+        '''
+        return self.pinger.ping()
+
+    def get_entity(self, timeout=None):
         '''
         Returns an entity that has been found, if any has been found since
         the last call to get_entity.
@@ -82,142 +106,244 @@ class EntitySearcher(object):
         When an entity is found, it is queued up.  get_entity will pop an item
         from that queue, or return None if the queue is empty.
 
+        Either this or get_entity() must be called every ping_interval seconds,
+        or the subprocess could think that this process has died.
+
+        Arguments:
+
+        timeout - If None (default) then get_entity() blocks until an entity is
+            available.  Otherwise timeout should be a number that specifies how
+            many seconds to wait for an entity to be available.  If no entity
+            is found, None is returned.
+
         '''
-        if self.pipe.poll(timeout):
-            return self.pipe.recv()
-        return None
+
+        if timeout is None:
+
+            while True:
+                if not self.ping() or not self.is_alive():
+                    self.panic()
+                if self.entity_pipe.poll(0.2):
+                    return self.entity_pipe.recv()
+
+        else:
+
+            if not self.ping() or not self.is_alive():
+                self.panic()
+
+            #TODO: Must keep pinging if timeout > self.ping_interval.  This
+            #      isn't a huge deal because get_entity isn't actually used
+            #      like that.
+            if self.entity_pipe.poll(timeout):
+                return self.entity_pipe.recv()
+            return None
 
     def is_alive(self):
         '''
         Returns False if the EntitySearcher's subprocess has died, True
         otherwise.
 
-        This should be called periodically if you want to make sure work is
-        still being done.
+        get_entity() automatically checks this whenever it is called.
         '''
         return self.subprocess.is_alive()
 
-    @staticmethod
-    def _search_forever_subprocess(pipe, camera_indexes={}, is_graphical=True,
-        record=True, delay=10):
-        '''Searches for entities until killed.
+    def panic(self):
+        raise IOError("EntitySearcher superprocess lost connection with subprocess!")
 
-        Positional Arguments:
 
-        pipe - A bidirectional pipe.  The pipe is used to recieve and send:
-            Recieve - A list of VisionEntity subclass objects are sent to
-                this pipe.  Each time a list is sent, the objects that were
-                previously being searched for are erased and replaced by the
-                sent
-                objects.
-            Send - When one of the VisionEntity objects is found, it is sent
-                into the pipe.  The VisionEntity object will be timestamped and
-                information about the entity's sighting will be included.
+def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
+    is_graphical=True, record=True, delay=10):
+    '''Searches for entities until killed.
 
-        Keyword Arguments:
-            All keyward arguments are passed straight from __init__().  They
-            are documented in __init__'s documentation.
-        '''
+    Positional Arguments:
 
-        entities = None
+    entity_pipe - A bidirectional pipe used to send entities:
+        Recieve - A list of VisionEntity subclass objects are sent to
+            this pipe.  Each time a list is sent, the objects that were
+            previously being searched for are erased and replaced by the
+            sent
+            objects.
+        Send - When one of the VisionEntity objects is found, it is sent
+            into the pipe.  The VisionEntity object will be timestamped and
+            information about the entity's sighting will be included.
 
-        cameras = EntitySearcher._initialize_cameras(camera_indexes,
-            is_graphical, record)
+    ping_pipe - TODO
 
-        while True:
+    Keyword Arguments:
+        All keyward arguments are passed straight from
+        EntitySearcher.__init__().  They are documented in
+        EntitySearcher.__init__'s documentation.
+    '''
 
-            # Recieve entitiy list
-            if pipe.poll():
-                entities = pipe.recv()
+    entities = None
 
-            if not entities:
-                pipe.poll(None) # Wait for entity list
-                continue
+    cameras = _initialize_cameras(camera_indexes,
+        is_graphical, record)
 
-            # Get timestamp
-            #TODO
+    pinger = ProcessPinger(ping_pipe, EntitySearcher.ping_interval,
+        EntitySearcher.panic_interval)
 
-            frames = {} # Maps camera names to a frame from that camera
-            for entity in entities:
+    while True:
+        if not pinger.ping():
+            raise IOError("EntitySearcher subprocess lost connection with superprocess!")
 
-                # Grab Frames
-                if entity.camera_name not in cameras:
-                    raise IndexError(
-                        'Camera "%s" needed for entity "%s", but no camera '
-                        'index specified.' % (entity.camera_name, entity))
-                camera = cameras[entity.camera_name]
-                frame = camera.get_frame()
-                frames[entity.camera_name] = frame
+        # Recieve entitiy list
+        if entities:
+            timeout = 0
+        else:
+            timeout = EntitySearcher.ping_interval
+        if entity_pipe.poll(timeout):
+            entities = entity_pipe.recv()
 
-            for entity in entities:
+        # Get timestamp
+        #TODO
 
-                if is_graphical:
-                    cv.NamedWindow("%s" %entity.name)
-                    frame = cv.CloneImage(frames[entity.camera_name])
-                else:
-                    # No need to copy frame.  VisionEntity.find() is not
-                    # allowed to edit the frame if we give it debug=False.
-                    frame = frames[entity.camera_name]
+        # Grab Frames
+        frames = {} # Maps camera names to a frame from that camera
+        for entity in entities:
+            if entity.camera_name not in cameras:
+                raise IndexError(
+                    'Camera "%s" needed for entity "%s", but no camera '
+                    'index specified.' % (entity.camera_name, entity))
+            camera = cameras[entity.camera_name]
+            frame = camera.get_frame()
+            frames[entity.camera_name] = frame
 
-                # Initialize nonpickleable if object is new
-                if not hasattr(entity, "non_pickleable_initialized"):
-                    entity.initialize_non_pickleable(is_graphical)
-                    entity.non_pickleable_initialized = True
+        for entity in entities:
 
-                # Search for each entity
-                if entity.find(frame, debug=is_graphical):
-                    #TODO: Timestamp the object
-                    pipe.send(entity)
+            if is_graphical:
+                cv.NamedWindow("%s" %entity.name)
+                frame = cv.CloneImage(frames[entity.camera_name])
+            else:
+                # No need to copy frame.  VisionEntity.find() is not
+                # allowed to edit the frame if we give it debug=False.
+                frame = frames[entity.camera_name]
 
-                # Debug window for this entity
-                if is_graphical:
-                    #TODO: Would be cleaner to not create the window every
-                    #      frame.
-                    #TODO: Destroy windows when entity list changes. (if we
-                    #      care)
-                    cv.ShowImage("%s" % entity.name, frame)
+            # Initialize nonpickleable if object is new
+            if not hasattr(entity, "non_pickleable_initialized"):
+                entity.initialize_non_pickleable(is_graphical)
+                entity.non_pickleable_initialized = True
 
-            key = cv.WaitKey(delay)
-            if key == 27:
-                break
+            # Search for each entity
+            if entity.find(frame, debug=is_graphical):
+                #TODO: Timestamp the object
+                entity_pipe.send(entity)
 
-    @staticmethod
-    def _initialize_cameras(camera_indexes, display, record):
-        '''
-        Returns a dictionary mapping camera names to libvision.Camera objects.
+            # Debug window for this entity
+            if is_graphical:
+                #TODO: Would be cleaner to not create the window every
+                #      frame.
+                #TODO: Destroy windows when entity list changes. (if we
+                #      care)
+                cv.ShowImage("%s" % entity.name, frame)
 
-        Arguments:
-            camera_indexes - A dictionary mapping camera names to camera
-                identifiers
-            display - If True, displays a window for each camera when a frame
-                is grabbed.
-            record - If True, records every frame grabbed from a camera.
-        '''
+        key = cv.WaitKey(delay)
+        if key == 27:
+            break
 
-        cameras = {}
-        for name, index in camera_indexes.iteritems():
-            cameras[name] = Camera(index, display=display,
-                window_name=name, record=record)
+def _initialize_cameras(camera_indexes, display, record):
+    '''
+    Returns a dictionary mapping camera names to libvision.Camera objects.
 
-            # This is specific to seawolf's IMI-Tech camera.  OpenCV sets the
-            # capture mode to greyscale, and this line sets the mode back to
-            # color if the camera index is firewire (indexes 300-400).
+    Arguments:
+        camera_indexes - A dictionary mapping camera names to camera
+            identifiers
+        display - If True, displays a window for each camera when a frame
+            is grabbed.
+        record - If True, records every frame grabbed from a camera.
+    '''
+
+    cameras = {}
+    for name, index in camera_indexes.iteritems():
+        cameras[name] = Camera(index, display=display,
+            window_name=name, record=record)
+
+        # This is specific to seawolf's IMI-Tech camera.  OpenCV sets the
+        # capture mode to greyscale, and this line sets the mode back to
+        # color if the camera index is firewire (indexes 300-400).
+        cameras[name].open_capture()
+        if isinstance(cameras[name].identifier, int) and \
+           cameras[name].identifier >= 300 and \
+           cameras[name].identifier < 400:
+
             cameras[name].open_capture()
-            if isinstance(cameras[name].identifier, int) and \
-               cameras[name].identifier >= 300 and \
-               cameras[name].identifier < 400:
+            # The cap prop mode 67 comes from a libdc1394 enumeration.  You
+            # can find a list of possible values inside the libdc1394
+            # source code.  See file "dc1394/types.h" and enumeration
+            # "dc1394video_mode_t" (version 2 of dc1394).  Remember that if
+            # a number is not specified in an enumeration, ANSI C specifies
+            # that it takes on the value of the previous value plus one.
+            DC1394_VIDEO_MODE_640x480_YUV422 = 67
+            cv.SetCaptureProperty(cameras[name].capture,
+                cv.CV_CAP_PROP_MODE,
+                DC1394_VIDEO_MODE_640x480_YUV422
+            )
 
-                cameras[name].open_capture()
-                # The cap prop mode 67 comes from a libdc1394 enumeration.  You
-                # can find a list of possible values inside the libdc1394
-                # source code.  See file "dc1394/types.h" and enumeration
-                # "dc1394video_mode_t" (version 2 of dc1394).  Remember that if
-                # a number is not specified in an enumeration, ANSI C specifies
-                # that it takes on the value of the previous value plus one.
-                DC1394_VIDEO_MODE_640x480_YUV422 = 67
-                cv.SetCaptureProperty(cameras[name].capture,
-                    cv.CV_CAP_PROP_MODE,
-                    DC1394_VIDEO_MODE_640x480_YUV422
-                )
+    return cameras
 
-        return cameras
+
+class ProcessPinger(object):
+    '''
+    Sends and receives pings to make sure the process on the other side of a
+    pipe is alive.
+    
+    There should be one ProcessPinger object on each side of the pipe for this
+    process to work.  Timestamps are sent through the pipe and if a timestamp
+    is not received on one end of the pipe within panic_interval seconds of the
+    last sent timestamp, ping() will return False.
+
+    ping() assumes that the ping_interval of both sides is the same.  For this
+    reason, it is probably better for both ProcessPingers to have the same
+    ping_interval.  Having a consistent panic_interval however is not as
+    important.
+    
+    '''
+
+    def __init__(self, pipe, ping_interval, panic_interval):
+        '''
+        Arguments:
+
+        pipe - The pipe which pings will be sent and received.
+        ping_interval - Only ping this often (in seconds)
+        panic_interval - If no pings have been received for this long (in
+            seconds), ping() will return False.
+
+        '''
+
+        self.pipe = pipe
+        self.ping_interval = ping_interval
+        self.panic_interval = panic_interval
+
+        t = time()
+        self.last_ping_sent = t
+        self.last_ping_received = t
+
+        self.ping()
+
+    def ping(self):
+        '''Sends and receives a ping, but only if the ping_interval has passed.
+
+        Returns True if the other end of the pipe is ok, False otherwise.
+
+        This should be called about every ping_interval seconds or so.  If this
+        function is not called every panic_interval seconds, the other end of
+        the pipe may panic.
+
+        '''
+        t = time()
+
+        # Send if ping_interval has passed
+        if t - self.last_ping_sent > self.ping_interval:
+            self.pipe.send(t)
+            self.last_ping_sent = t
+
+        # Receive if ping_interval has passed
+        if t - self.last_ping_received > self.ping_interval:
+            while self.pipe.poll():
+                self.last_ping_received = self.pipe.recv()
+
+            # Panic if panic_interval has passed
+            if t - self.last_ping_received > self.panic_interval:
+                return False
+
+        return True

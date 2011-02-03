@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 '''
 Provides the subprocess framework for searching for vision entities.
 
@@ -91,11 +93,9 @@ def main():
 
     # Print entity when subprocess sees it
     while True:
-        entity = entity_searcher.get_entity(0.1)
+        entity = entity_searcher.get_entity()
         if entity:
             print "Found Entity:", entity
-        elif not entity_searcher.is_alive():
-            break
 
 if __name__ == "__main__":
     main()
