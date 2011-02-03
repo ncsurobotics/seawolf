@@ -33,7 +33,10 @@ class EntitySearcher(object):
     >>>     entity = searcher.get_entity()
     >>>     print "Found Entity:", entity
 
-    EntitySearcher works by starting a subprocess that does the work.
+    EntitySearcher works by starting a subprocess that does the work.  If the
+    subprocess exits it can cause an ExitSignal to be raised inside the
+    get_entity() or ping() methods.  If the subprocess loses contact
+    unexpectedly, an IOError is raised in get_entity() or ping().
     '''
 
     # Ping and panic intervals for the ProcessPinger objects.
@@ -67,7 +70,7 @@ class EntitySearcher(object):
         # Set up ProcessPinger
         if "delay" in kwargs and \
            kwargs["delay"] > EntitySearcher.ping_interval*1000:
-            raise ValueError("delay must be less than the ping interval.")
+            raise ValueError("Delay must be less than the ping interval.")
         self.pinger = ProcessPinger(self.ping_pipe,
             EntitySearcher.ping_interval, EntitySearcher.panic_interval)
 
@@ -80,7 +83,7 @@ class EntitySearcher(object):
         self.subprocess.start()
 
     def start_search(self, entity_list):
-        ''' Begins searching for the entities given in entity_list.
+        '''Begins searching for the entities given in entity_list.
 
         Any previous entities that were being searched for are forgotten.
 
@@ -96,12 +99,17 @@ class EntitySearcher(object):
         Returns True if the other process is ok, False otherwise.
         
         '''
-        return self.pinger.ping()
+        if not self.pinger.ping() or not self.is_alive():
+
+            # Check for ExitSignals before throwing an IOError
+            self.pinger.flush()
+
+            raise IOError("EntitySearcher superprocess lost connection with subprocess!")
 
     def get_entity(self, timeout=None):
         '''
-        Returns an entity that has been found, if any has been found since
-        the last call to get_entity.
+        Returns an entity that has been found, if any has been found since the
+        last call to get_entity.
 
         When an entity is found, it is queued up.  get_entity will pop an item
         from that queue, or return None if the queue is empty.
@@ -121,15 +129,13 @@ class EntitySearcher(object):
         if timeout is None:
 
             while True:
-                if not self.ping() or not self.is_alive():
-                    self.panic()
+                self.ping()
                 if self.entity_pipe.poll(0.2):
                     return self.entity_pipe.recv()
 
         else:
 
-            if not self.ping() or not self.is_alive():
-                self.panic()
+            self.ping()
 
             #TODO: Must keep pinging if timeout > self.ping_interval.  This
             #      isn't a huge deal because get_entity isn't actually used
@@ -146,9 +152,6 @@ class EntitySearcher(object):
         get_entity() automatically checks this whenever it is called.
         '''
         return self.subprocess.is_alive()
-
-    def panic(self):
-        raise IOError("EntitySearcher superprocess lost connection with subprocess!")
 
 
 def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
@@ -237,8 +240,15 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
                 #      care)
                 cv.ShowImage("%s" % entity.name, frame)
 
-        key = cv.WaitKey(delay)
+        if delay >= 0:
+            key = cv.WaitKey(delay)
+        else:
+            key = cv.WaitKey(10)
+            while key == -1:
+                key = cv.WaitKey(100)
+                pinger.ping()
         if key == 27:
+            pinger.send_exit_signal()
             break
 
 def _initialize_cameras(camera_indexes, display, record):
@@ -294,7 +304,7 @@ class ProcessPinger(object):
 
     ping() assumes that the ping_interval of both sides is the same.  For this
     reason, it is probably better for both ProcessPingers to have the same
-    ping_interval.  Having a consistent panic_interval however is not as
+    ping_interval.  Having a consistent panic_interval however is not
     important.
     
     '''
@@ -320,6 +330,20 @@ class ProcessPinger(object):
 
         self.ping()
 
+    def send_exit_signal(self):
+        '''Sends an ExitSignal which will be raised on the other process.'''
+        self.pipe.send(ExitSignal())
+
+    def flush(self):
+        '''Handles all objects waiting in the pipe.'''
+
+        while self.pipe.poll():
+            self.last_ping_received = self.pipe.recv()
+
+            # Handle special signals
+            if isinstance(self.last_ping_received, ExitSignal):
+                raise self.last_ping_received
+
     def ping(self):
         '''Sends and receives a ping, but only if the ping_interval has passed.
 
@@ -339,11 +363,21 @@ class ProcessPinger(object):
 
         # Receive if ping_interval has passed
         if t - self.last_ping_received > self.ping_interval:
-            while self.pipe.poll():
-                self.last_ping_received = self.pipe.recv()
+
+            self.flush() # <-- Sets self.last_ping_received
 
             # Panic if panic_interval has passed
             if t - self.last_ping_received > self.panic_interval:
                 return False
 
         return True
+
+class ExitSignal(Exception):
+    '''
+    This is a special signal that can be sent from a process "A" through the
+    pipe to tell process "B" that process "A" exited cleanly.  When this
+    happens, the next call to ping() on process "B" raises this ExitSignal
+    exception.  This signal is sent through the pipe by calling
+    ProcessPinger.send_exit_signal().
+    '''
+    pass

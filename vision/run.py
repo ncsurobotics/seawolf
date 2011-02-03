@@ -18,7 +18,7 @@ if sys.version_info < (2, 6):
 from optparse import OptionParser
 
 import entities
-from entity_searcher import EntitySearcher
+from entity_searcher import EntitySearcher, ExitSignal
 
 
 def main():
@@ -92,10 +92,13 @@ def main():
     entity_searcher.start_search(entities_to_search_for)
 
     # Print entity when subprocess sees it
-    while True:
-        entity = entity_searcher.get_entity()
-        if entity:
-            print "Found Entity:", entity
+    try:
+        while True:
+            entity = entity_searcher.get_entity()
+            if entity:
+                print "Found Entity:", entity
+    except ExitSignal:
+        pass
 
 if __name__ == "__main__":
     main()
