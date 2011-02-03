@@ -22,7 +22,7 @@ import missions
 from mission_controller import MissionController
 
 MISSION_ORDER = [
-    missions.TestMission(),
+    missions.PathMission(),
 ]
 
 if __name__ == "__main__":
@@ -83,3 +83,4 @@ if __name__ == "__main__":
         mission_controller.append_mission(mission)
 
     mission_controller.execute_all()
+    mission_controller.kill()

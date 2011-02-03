@@ -16,7 +16,7 @@ Error: Could not import library "cv" (opencv).
 ''')
 
 from libvision import Camera
-from process_watchdog import ProcessWatchdog
+from process_watchdog import ProcessWatchdog, ExitSignal
 
 class EntitySearcher(object):
     '''
@@ -152,6 +152,10 @@ class EntitySearcher(object):
         '''
         return self.subprocess.is_alive()
 
+    def kill(self):
+        self.watchdog.send_exit_signal()
+    __del__ = kill
+
 
 def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
     is_graphical=True, record=True, delay=10):
@@ -188,8 +192,11 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
         EntitySearcher.panic_interval)
 
     while True:
-        if not watchdog.ping():
-            raise IOError("EntitySearcher subprocess lost connection with superprocess!")
+        try:
+            if not watchdog.ping():
+                raise IOError("EntitySearcher subprocess lost connection with superprocess!")
+        except ExitSignal:
+            break
 
         # Recieve entitiy list
         if entities:
@@ -247,7 +254,10 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
             key = cv.WaitKey(10)
             while key == -1:
                 key = cv.WaitKey(100)
-                watchdog.ping()
+                try:
+                    watchdog.ping()
+                except ExitSignal:
+                    break
         if key == 27:
             watchdog.send_exit_signal()
             break

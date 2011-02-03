@@ -38,8 +38,10 @@ class MissionController(object):
         # Set Reference Angle
         self.reference_angle = None #TODO
 
-    def __del__(self):
+    def kill(self):
+        self.entity_searcher.kill()
         seawolf.close()
+    __del__ = kill
 
     def execute_all(self):
         '''Runs all missions in the queue.'''
@@ -65,10 +67,11 @@ class MissionController(object):
             self.current_mission = self.mission_queue.popleft()
         except IndexError: # deque raises IndexError when it is empty
             return False
-        #print "Starting mission:", self.current_mission.__name__
+        #print "Starting mission:", self.current_mission.__name__ #TODO
         self.current_mission.init()
         try:
             self.current_mission.execute()
         except ExitSignal:
             return False
+        self.entity_searcher.start_search([])
         return True
