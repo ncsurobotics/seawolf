@@ -18,7 +18,8 @@ if sys.version_info < (2, 6):
 from optparse import OptionParser
 
 import entities
-from entity_searcher import EntitySearcher, ExitSignal
+from entity_searcher import EntitySearcher
+from process_watchdog import ExitSignal
 
 
 def main():

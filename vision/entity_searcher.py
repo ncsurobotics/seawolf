@@ -4,7 +4,6 @@ if sys.version_info < (2, 6):
     raise RuntimeError("Python version 2.6 or greater required.")
 
 import multiprocessing
-from time import time
 
 try:
     import cv
@@ -16,8 +15,8 @@ Error: Could not import library "cv" (opencv).
     directory to the PYTHONPATH environment variable.
 ''')
 
-
 from libvision import Camera
+from process_watchdog import ProcessWatchdog
 
 class EntitySearcher(object):
     '''
@@ -39,7 +38,7 @@ class EntitySearcher(object):
     unexpectedly, an IOError is raised in get_entity() or ping().
     '''
 
-    # Ping and panic intervals for the ProcessPinger objects.
+    # Ping and panic intervals for the ProcessWatchdog objects.
     ping_interval = 1
     panic_interval = 3
 
@@ -67,11 +66,11 @@ class EntitySearcher(object):
         self.entity_pipe = parent_entity_connection
         self.ping_pipe = parent_ping_connection
 
-        # Set up ProcessPinger
+        # Set up ProcessWatchdog
         if "delay" in kwargs and \
            kwargs["delay"] > EntitySearcher.ping_interval*1000:
             raise ValueError("Delay must be less than the ping interval.")
-        self.pinger = ProcessPinger(self.ping_pipe,
+        self.watchdog = ProcessWatchdog(self.ping_pipe,
             EntitySearcher.ping_interval, EntitySearcher.panic_interval)
 
         # Start Search Process
@@ -99,10 +98,10 @@ class EntitySearcher(object):
         Returns True if the other process is ok, False otherwise.
         
         '''
-        if not self.pinger.ping() or not self.is_alive():
+        if not self.watchdog.ping() or not self.is_alive():
 
             # Check for ExitSignals before throwing an IOError
-            self.pinger.flush()
+            self.watchdog.flush()
 
             raise IOError("EntitySearcher superprocess lost connection with subprocess!")
 
@@ -158,6 +157,8 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
     is_graphical=True, record=True, delay=10):
     '''Searches for entities until killed.
 
+    This is the main loop for vision that runs as a subprocess.
+
     Positional Arguments:
 
     entity_pipe - A bidirectional pipe used to send entities:
@@ -183,11 +184,11 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
     cameras = _initialize_cameras(camera_indexes,
         is_graphical, record)
 
-    pinger = ProcessPinger(ping_pipe, EntitySearcher.ping_interval,
+    watchdog = ProcessWatchdog(ping_pipe, EntitySearcher.ping_interval,
         EntitySearcher.panic_interval)
 
     while True:
-        if not pinger.ping():
+        if not watchdog.ping():
             raise IOError("EntitySearcher subprocess lost connection with superprocess!")
 
         # Recieve entitiy list
@@ -246,9 +247,9 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
             key = cv.WaitKey(10)
             while key == -1:
                 key = cv.WaitKey(100)
-                pinger.ping()
+                watchdog.ping()
         if key == 27:
-            pinger.send_exit_signal()
+            watchdog.send_exit_signal()
             break
 
 def _initialize_cameras(camera_indexes, display, record):
@@ -290,94 +291,3 @@ def _initialize_cameras(camera_indexes, display, record):
             )
 
     return cameras
-
-
-class ProcessPinger(object):
-    '''
-    Sends and receives pings to make sure the process on the other side of a
-    pipe is alive.
-    
-    There should be one ProcessPinger object on each side of the pipe for this
-    process to work.  Timestamps are sent through the pipe and if a timestamp
-    is not received on one end of the pipe within panic_interval seconds of the
-    last sent timestamp, ping() will return False.
-
-    ping() assumes that the ping_interval of both sides is the same.  For this
-    reason, it is probably better for both ProcessPingers to have the same
-    ping_interval.  Having a consistent panic_interval however is not
-    important.
-    
-    '''
-
-    def __init__(self, pipe, ping_interval, panic_interval):
-        '''
-        Arguments:
-
-        pipe - The pipe which pings will be sent and received.
-        ping_interval - Only ping this often (in seconds)
-        panic_interval - If no pings have been received for this long (in
-            seconds), ping() will return False.
-
-        '''
-
-        self.pipe = pipe
-        self.ping_interval = ping_interval
-        self.panic_interval = panic_interval
-
-        t = time()
-        self.last_ping_sent = t
-        self.last_ping_received = t
-
-        self.ping()
-
-    def send_exit_signal(self):
-        '''Sends an ExitSignal which will be raised on the other process.'''
-        self.pipe.send(ExitSignal())
-
-    def flush(self):
-        '''Handles all objects waiting in the pipe.'''
-
-        while self.pipe.poll():
-            self.last_ping_received = self.pipe.recv()
-
-            # Handle special signals
-            if isinstance(self.last_ping_received, ExitSignal):
-                raise self.last_ping_received
-
-    def ping(self):
-        '''Sends and receives a ping, but only if the ping_interval has passed.
-
-        Returns True if the other end of the pipe is ok, False otherwise.
-
-        This should be called about every ping_interval seconds or so.  If this
-        function is not called every panic_interval seconds, the other end of
-        the pipe may panic.
-
-        '''
-        t = time()
-
-        # Send if ping_interval has passed
-        if t - self.last_ping_sent > self.ping_interval:
-            self.pipe.send(t)
-            self.last_ping_sent = t
-
-        # Receive if ping_interval has passed
-        if t - self.last_ping_received > self.ping_interval:
-
-            self.flush() # <-- Sets self.last_ping_received
-
-            # Panic if panic_interval has passed
-            if t - self.last_ping_received > self.panic_interval:
-                return False
-
-        return True
-
-class ExitSignal(Exception):
-    '''
-    This is a special signal that can be sent from a process "A" through the
-    pipe to tell process "B" that process "A" exited cleanly.  When this
-    happens, the next call to ping() on process "B" raises this ExitSignal
-    exception.  This signal is sent through the pipe by calling
-    ProcessPinger.send_exit_signal().
-    '''
-    pass
