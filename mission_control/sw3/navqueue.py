@@ -16,12 +16,12 @@ class NavQueue(object):
         self.current_routine = None
         self.nav_queue = queue.Queue()
         self.nav_lock = threading.RLock()
-        
+
         # The idle routine is run when NavStackManager.idle() is called and is
         # also called any time the navigation queue is exhausted
         self.idle_routine = idle_routine
 
-    def __next_routine(self):
+    def __next_routine(self, prev_routine_state):
         """ Start the next routine on the navigation queue. This function is
         registered with each routine to be run on completion """
         with self.nav_lock:
@@ -40,7 +40,7 @@ class NavQueue(object):
         """ Clear the queue and run the idle routine """
         if self.idle_routine:
             self.idle_routine.reset()
-            self.idle_routine.start()        
+            self.idle_routine.start()
 
     def do(self, routine):
         """ Equivalent to a called to clear() followed by append() """
@@ -53,8 +53,8 @@ class NavQueue(object):
         the queue the robot will idle """
         with self.nav_lock:
             self.nav_queue.put(routine)
-            if self.current_routine == None:
-                self.__next_routine()
+            if self.current_routine is None:
+                self.__next_routine(None)
         return routine
 
     def clear(self):
@@ -62,6 +62,6 @@ class NavQueue(object):
         with self.nav_lock:
             self.nav_queue = queue.Queue()
             if self.current_routine != None:
-                self.current_routine.on_done(None)
+                self.current_routine.on_done_clear_callbacks()
                 self.current_routine.cancel()
                 self.current_routine = None

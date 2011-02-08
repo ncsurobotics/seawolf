@@ -24,7 +24,7 @@ class NavRoutine(object):
 
         self.routine_lock = threading.RLock()
 
-        self.on_done_callback = None
+        self.on_done_callbacks = []
         self.done_event = threading.Event()
 
         self.polling_thread = None
@@ -76,8 +76,8 @@ class NavRoutine(object):
             if self.state == NavRoutine.RUNNING:
                 self._cleanup()
 
-            if self.on_done_callback:
-                self.on_done_callback()
+            for callback in self.on_done_callbacks:
+                callback(new_state)
 
             self.state = new_state
             self.done_event.set()
@@ -109,7 +109,10 @@ class NavRoutine(object):
         self.done_event.wait()
 
     def on_done(self, callback):
-        self.on_done_callback = callback
+        self.on_done_callbacks.append(callback)
+
+    def on_done_clear_callbacks(self):
+        self.on_done_callbacks = []
 
 class CompoundInterferenceException(Exception):
     pass
