@@ -1,7 +1,8 @@
 
 import cv
 
-def hsv_filter(src, min_h, max_h, min_s, max_s, min_v, max_v):
+def hsv_filter(src, low_h, high_h, min_s, max_s, min_v, max_v,
+    hue_bandstop=False):
     '''Takes an 8-bit bgr src image and does simple hsv thresholding.
 
     A binary image of the same size will be returned.  HSV values have the
@@ -10,13 +11,16 @@ def hsv_filter(src, min_h, max_h, min_s, max_s, min_v, max_v):
     Saturation - 0 to 255
          Value - 0 to 255
 
+    If hue_bandstop is True, the low_h and high_h will act as a band stop
+    filter on hue, otherwise hue will be a band pass filter.
+
     '''
 
     # OpenCV expects hue to be ranged from 0-180, since 0-360 wouldn't fit
-    # inside a byte.  
-    max_h /= 2
-    min_h /= 2
-    
+    # inside a byte.
+    high_h /= 2
+    low_h /= 2
+
     hsv = cv.CreateImage(cv.GetSize(src), 8, 3)
     binary = cv.CreateImage(cv.GetSize(src), 8, 1)
     cv.SetZero(binary)
@@ -29,13 +33,24 @@ def hsv_filter(src, min_h, max_h, min_s, max_s, min_v, max_v):
             h = ord(data[0+index])
             s = ord(data[1+index])
             v = ord(data[2+index])
-            if h >= min_h and \
-               h <= max_h and \
-               s >= min_s and \
-               s <= max_s and \
-               v >= min_v and \
-               v <= max_v:
 
-                cv.Set2D(binary, y, x, (255,))
+            if hue_bandstop:
+                if (h <= low_h or h >= high_h) and \
+                   s >= min_s and \
+                   s <= max_s and \
+                   v >= min_v and \
+                   v <= max_v:
+
+                    cv.Set2D(binary, y, x, (255,))
+
+            else:
+                if h >= low_h and \
+                   h <= high_h and \
+                   s >= min_s and \
+                   s <= max_s and \
+                   v >= min_v and \
+                   v <= max_v:
+
+                    cv.Set2D(binary, y, x, (255,))
 
     return binary

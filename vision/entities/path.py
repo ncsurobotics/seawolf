@@ -14,8 +14,9 @@ class PathEntity(VisionEntity):
     def __init__(self):
 
         # Thresholds
-        self.min_hue = 200
-        self.max_hue = 360
+        self.lower_hue = 200
+        self.upper_hue = 360
+        self.hue_bandstop = 0
         self.min_saturation = 0
         self.max_saturation = 110
         self.min_value = 220
@@ -34,26 +35,31 @@ class PathEntity(VisionEntity):
     def initialize_non_pickleable(self, debug=True):
 
         if debug:
-            self.create_trackbar("min_hue", 360)
-            self.create_trackbar("max_hue", 360)
+            self.create_trackbar("lower_hue", 360)
+            self.create_trackbar("upper_hue", 360)
+            self.create_trackbar("hue_bandstop", 1)
             self.create_trackbar("min_saturation")
             self.create_trackbar("max_saturation")
             self.create_trackbar("min_value")
             self.create_trackbar("max_value")
-            self.create_trackbar("hough_threshold")
+            self.create_trackbar("hough_threshold", 100)
+            self.create_trackbar("lines_to_consider", 10)
 
     def find(self, frame, debug=True):
         found_path = False
 
         # HSV Color Filter
         binary = libvision.filters.hsv_filter(frame,
-            self.min_hue,
-            self.max_hue,
+            self.lower_hue,
+            self.upper_hue,
             self.min_saturation,
             self.max_saturation,
             self.min_value,
             self.max_value,
+            self.hue_bandstop,
         )
+        if debug:
+            color_filtered = cv.CloneImage(binary)
 
         # Morphology
         # We size the kernel to about the width of a path.
@@ -108,8 +114,28 @@ class PathEntity(VisionEntity):
             #TODO: Add a kalman filter (or something) to the center reading
             self.center = self.find_centroid(binary)
 
+            # Move the origin to the center of the image (and round)
+            self.center = (
+                cv.Round(self.center[0] - frame.width),
+                cv.Round(self.center[1] - frame.height)
+            )
+
         if debug:
-            cv.CvtColor(binary, frame, cv.CV_GRAY2RGB)
+
+            # Show color filtered
+            color_filtered_rgb = cv.CreateImage(cv.GetSize(frame), 8, 3)
+            cv.CvtColor(color_filtered, color_filtered_rgb, cv.CV_GRAY2RGB)
+            cv.SubS(color_filtered_rgb, (255, 0, 0), color_filtered_rgb)
+            cv.Sub(frame, color_filtered_rgb, frame)
+
+            # Show edges
+            binary_rgb = cv.CreateImage(cv.GetSize(frame), 8, 3)
+            cv.CvtColor(binary, binary_rgb, cv.CV_GRAY2RGB)
+            cv.Add(frame, binary_rgb, frame)  # Add white to edge pixels
+            cv.SubS(binary_rgb, (0, 0, 255), binary_rgb)
+            cv.Sub(frame, binary_rgb, frame)  # Remove all but Red
+
+            # Show lines
             libvision.misc.draw_lines(frame, lines)
             if found_path:
                 cv.Circle(frame, self.center, 5, (0,255,0))
@@ -117,7 +143,9 @@ class PathEntity(VisionEntity):
         return found_path
 
     def find_centroid(self, binary):
-        moments = cv.Moments(cv.GetMat(binary))
+        mat = cv.GetMat(binary)
+        print mat
+        moments = cv.Moments(mat)
         return (moments.m10/moments.m00, moments.m01/moments.m00)
 
     def __repr__(self):
