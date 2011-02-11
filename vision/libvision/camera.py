@@ -10,7 +10,8 @@ class Camera(object):
 
     '''
 
-    def __init__(self, identifier, display=True, window_name=None, record=True):
+    def __init__(self, identifier, display=True, window_name=None,
+        record_path=True):
         '''
         Arguments:
 
@@ -27,15 +28,17 @@ class Camera(object):
         window_name - Name of the window to be created if display=True.  If
             None, the identifier will be used.
 
-        record - If True, all images captured will be recorded.  If the
-            identifier given is a filename, this is overwritten to false.
+        record_path - If False, nothing will be recorded.  Otherwise a path to a
+            directory to record video in should be given.  Video will be
+            recorded into jpg files in the following format:
+            "<record_path>/%d.jpg".
 
         '''
 
         self.identifier = identifier
         self.display = display
         self.window_name = window_name
-        self.record = record
+        self.record_path = record_path
         self.image = None # Stored image, if identifier is an image filename
         self.capture = None # Underlying opencv capture object
         self.frame_count = 0
@@ -58,9 +61,6 @@ class Camera(object):
 
         if self.image:
             return cv.CloneImage(self.image)
-
-        if self.record:
-            pass #TODO
 
         frame = cv.QueryFrame(self.capture)
         if self.display:
@@ -95,6 +95,11 @@ class Camera(object):
             #      specified as a video file, or when the user doesn't have
             #      permissions for the file.
 
+
+        if self.record_path:
+            filename = os.path.join(self.record_path, "%s.jpg" % self.frame_count)
+            cv.SaveImage(filename, frame)
+
         return frame
 
     def open_capture(self):
@@ -110,9 +115,12 @@ class Camera(object):
             pass
         if isinstance(self.identifier, basestring):
             self.capture = cv.CaptureFromFile(self.identifier)
-            self.record = False # Don't re-record avi files
+            self.record_path = False # Don't re-record avi files
         else:
             self.capture = cv.CaptureFromCAM(self.identifier)
+
+        if self.record_path and not os.path.exists(self.record_path):
+            os.mkdir(self.record_path)
 
     def close(self):
         '''Close the camera.

@@ -4,6 +4,7 @@ if sys.version_info < (2, 6):
     raise RuntimeError("Python version 2.6 or greater required.")
 
 import multiprocessing
+import os
 
 try:
     import cv
@@ -54,7 +55,7 @@ class EntitySearcher(object):
             displayed with debugging information.
 
         record - If this evaluates to True, all images grabbed from cameras
-            will be recorded.
+            will be recorded in the capture/ directory.
 
         delay - The delay between frames, in milliseconds.  If -1, it waits for
             a keypress between frames.
@@ -185,8 +186,22 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
 
     entities = None
 
+    # Derive capture directory
+    if record:
+        if not os.path.exists("capture"):
+            os.mkdir("capture")
+        # Find the next index inside capture/ that isn't taken
+        i = 0
+        while True:
+            record_path = os.path.join("capture", str(i))
+            if not os.path.exists(record_path):
+                break
+            i += 1
+    else:
+        record_path = False
+
     cameras = _initialize_cameras(camera_indexes,
-        is_graphical, record)
+        is_graphical, record_path)
 
     watchdog = ProcessWatchdog(ping_pipe, EntitySearcher.ping_interval,
         EntitySearcher.panic_interval)
@@ -262,7 +277,7 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
             watchdog.send_exit_signal()
             break
 
-def _initialize_cameras(camera_indexes, display, record):
+def _initialize_cameras(camera_indexes, display, record_path):
     '''
     Returns a dictionary mapping camera names to libvision.Camera objects.
 
@@ -271,13 +286,28 @@ def _initialize_cameras(camera_indexes, display, record):
             identifiers
         display - If True, displays a window for each camera when a frame
             is grabbed.
-        record - If True, records every frame grabbed from a camera.
+        record_path - False if nothing should be recorded.  A path to a
+            recording directory if every image should be recorded.
+            Subdirectories will be created for each camera name, unless only
+            one camera is specified.
     '''
+
+    if record_path and not os.path.exists(record_path):
+        os.mkdir(record_path)
 
     cameras = {}
     for name, index in camera_indexes.iteritems():
-        cameras[name] = Camera(index, display=display,
-            window_name=name, record=record)
+
+        # Find record path for this camera, if any
+        if record_path and len(camera_indexes) > 1:
+            this_camera_record_path = os.path.join(record_path, name)
+        elif not record_path:
+            this_camera_record_path = False
+        else:
+            this_camera_record_path = record_path  # Only one camera
+
+        cameras[name] = Camera(index, display=display, window_name=name,
+            record_path=this_camera_record_path)
 
         # This is specific to seawolf's IMI-Tech camera.  OpenCV sets the
         # capture mode to greyscale, and this line sets the mode back to

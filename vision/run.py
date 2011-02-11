@@ -46,7 +46,8 @@ def main():
         help="Indicates that no graphical windows will be displayed.")
     opt_parser.add_option("-r", "--record", action="store_true",
         default="true", dest="record",
-        help="All images captured from cameras will be recorded.")
+        help="All images captured from cameras will be recorded in the "
+            "capture/ directory.")
     opt_parser.add_option("-R", "--not-record", action="store_false",
         dest="record",
         help="Images captured from cameras will not be recorded.")
