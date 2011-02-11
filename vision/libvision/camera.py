@@ -109,12 +109,8 @@ class Camera(object):
         except ValueError:
             pass
         if isinstance(self.identifier, basestring):
-            if os.path.exists(self.identifier):
-                self.capture = cv.CaptureFromFile(self.identifier)
-                self.record = False # Don't re-record avi files
-            else:
-                raise self.CaptureError('Could not open file ' ' "%s".' %
-                                        self.identifier)
+            self.capture = cv.CaptureFromFile(self.identifier)
+            self.record = False # Don't re-record avi files
         else:
             self.capture = cv.CaptureFromCAM(self.identifier)
 
