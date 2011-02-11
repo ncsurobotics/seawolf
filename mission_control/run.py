@@ -22,7 +22,7 @@ import missions
 from mission_controller import MissionController
 
 MISSION_ORDER = [
-    missions.PathMission(),
+    missions.TestMission(),
 ]
 
 if __name__ == "__main__":

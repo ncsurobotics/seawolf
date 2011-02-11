@@ -204,6 +204,7 @@ class SetYaw(NavRoutine):
         super(SetYaw, self).__init__(timeout)
         self.angle = angle
         self.tolerance = tolerance
+        self.i = 0
 
     def _poll(self):
         target_yaw = self.angle + 180
@@ -216,6 +217,11 @@ class SetYaw(NavRoutine):
             diff = abs(target_yaw - current_yaw)
             
         if diff <= self.tolerance:
+            self.i += 1
+        else:
+            self.i = 0
+
+        if self.i >= 10:
             return NavRoutine.COMPLETED
         return NavRoutine.RUNNING
 

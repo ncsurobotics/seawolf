@@ -6,6 +6,8 @@ sw.loadConfig("../conf/seawolf.conf")
 sw.init("SW3 Command Line Interface")
 
 def zero_thrusters():
+    nav.clear()
+
     pid.yaw.pause()
     pid.rotate.pause()
     pid.pitch.pause()
@@ -19,17 +21,19 @@ def zero_thrusters():
 
 def square():
     nav.clear()
+    a = data.imu.yaw
     nav.append(Forward(0.6, timeout=5))
-    nav.append(TurnRight())
+    nav.append(SetYaw(util.add_angle(a, 90)))
     nav.append(Forward(0.6, timeout=5))
-    nav.append(TurnRight())
+    nav.append(SetYaw(util.add_angle(a, 180)))
     nav.append(Forward(0.6, timeout=5))
-    nav.append(TurnRight())
+    nav.append(SetYaw(util.add_angle(a, 270)))
     nav.append(Forward(0.6, timeout=5))
-    return nav.append(TurnRight())
+    return nav.append(SetYaw(a))
 
 EB = emergency_breech
 ZT = zero_thrusters
+zt = ZT
 
 nav.clear()
 nav.idle()
