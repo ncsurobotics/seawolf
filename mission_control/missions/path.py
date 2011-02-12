@@ -9,10 +9,12 @@ import sw3
 
 # If the path's position is off by more than this much, turn towards it
 RHO_CENTERING_THRESHOLD = 20  # pixel distance
-THETA_CENTERING_THRESHOLD = 100 * (math.pi/180)  # radians
+THETA_CENTERING_THRESHOLD = 50 * (math.pi/180)  # radians
 
 THETA_RECORD_LENGTH = 5  # How many path orientations to keep track of
 
+
+CENTERED_THRESHOLD = 20
 # The range of our angle measurements must be less than this to
 # start orienting ourselves.
 ORIENTATION_RANGE_THRESHOLD = 10 * (math.pi/180)
@@ -45,12 +47,13 @@ class PathMission(MissionBase):
     def __init__(self):
         self.orientation_measurements = deque(maxlen=THETA_RECORD_LENGTH)
         self.orienting = False
+        self.centered_count = 0
 
     def init(self):
         self.entity_searcher.start_search([
             entities.PathEntity(),
         ])
-        sw3.nav.do(sw3.Forward(0.3))
+        sw3.nav.do(sw3.Forward(0.2))
 
     def step(self, entity_found):
         if self.orienting: return
@@ -59,33 +62,63 @@ class PathMission(MissionBase):
         y = entity_found.center[1]
         position_rho = math.sqrt(x**2 + y**2)
         position_theta = math.atan2(x, y)
+        position_theta = -(position_theta+math.pi/2)
+        if position_theta > math.pi:
+            position_theta -= math.pi
 
-        if position_rho > RHO_CENTERING_THRESHOLD and \
+        yaw_routine = None
+        forward_routine = None
+
+        '''
+        if abs(y) >= CENTERED_THRESHOLD and \
             abs(position_theta) > THETA_CENTERING_THRESHOLD:
 
             # Point robot toward path, then go forward
-            sw3.nav.do(sw3.RelativeYaw(position_theta * (math.pi/180)))
-            sw3.nav.append(sw3.Forward(0.3))
+            yaw_routine = sw3.RelativeYaw(position_theta * (180/math.pi))
+            forward_routine = sw3.Forward(0.1)
+            print "Correcting Yaw", position_theta * (180/math.pi)
+        '''
 
-        else:
-            if y > 0:
-                sw3.nav.do(sw3.Forward(0.2))
+        if not yaw_routine:
+            if y > CENTERED_THRESHOLD:
+                forward_routine = sw3.Forward(0.1)
+                self.centered_count = 0
+                print "Forward"
+            elif y < -1*CENTERED_THRESHOLD:
+                forward_routine = sw3.Forward(-0.1)
+                self.centered_count = 0
+                print "Backward"
             else:
-                sw3.nav.do(sw3.Forward(-0.2))
+                self.centered_count += 1
+                forward_routine = sw3.Forward(0.1*y/CENTERED_THRESHOLD)
+                print "CENTERED!!!!!!", 0.1*y/CENTERED_THRESHOLD
 
         # Collect angle data
+        #print "Path at theta:", entity_found.theta*(180/math.pi) + sw3.data.imu.yaw
         self.orientation_measurements.append(entity_found.theta + sw3.data.imu.yaw * (math.pi/180))
 
-        if len(self.orientation_measurements) == THETA_RECORD_LENGTH and \
+        if self.centered_count >= 4 and \
+            len(self.orientation_measurements) == THETA_RECORD_LENGTH and \
             angle_range(self.orientation_measurements) < ORIENTATION_RANGE_THRESHOLD:
 
             self.start_orientation()
 
+        else:
+            if yaw_routine and forward_routine:
+                sw3.nav.do(yaw_routine)
+                sw3.nav.append(forward_routine)
+            elif yaw_routine:
+                sw3.nav.do(yaw_routine)
+            elif forward_routine:
+                sw3.nav.do(forward_routine)
+
     def start_orientation(self):
         self.entity_searcher.start_search([])
-        turn_routine = sw3.SetYaw(angle_average(self.orientation_measurements))
+
+        turn_routine = sw3.SetYaw((180/math.pi)*angle_average(self.orientation_measurements))
         turn_routine.on_done(self.finish_mission)
         sw3.nav.do(turn_routine)
-        print "Orienting!"
-        print "Angles:", self.orientation_measurements
+        sw3.nav.append(sw3.HoldYaw())
+
+        print "Orienting to", angle_average(self.orientation_measurements) *(180/math.pi)
         self.orienting = True

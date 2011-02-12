@@ -38,11 +38,13 @@ class MissionBase(object):
 
             if entity:
                 time_since_last_entity = time()
-                self._mission_done = self.step(entity)
+                if self.step(entity):
+                    break
 
             elif time_since_last_entity > self._entity_timeout:
                 time_since_last_entity = time()
-                self._mission_done = self.step(None)
+                if self.step(None):
+                    break
 
     def finish_mission(self, *args, **kwargs):
         '''Marks the mission complete so self.execute() will return.
@@ -52,6 +54,7 @@ class MissionBase(object):
         register this function as a callback for anything, such as a nav
         routine.
         '''
+        print "MISSION FINISHED"
         self._mission_done = True
 
     def step(self, entity_found):
