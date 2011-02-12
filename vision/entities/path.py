@@ -14,12 +14,12 @@ class PathEntity(VisionEntity):
     def __init__(self):
 
         # Thresholds
-        self.lower_hue = 200
-        self.upper_hue = 360
-        self.hue_bandstop = 0
+        self.lower_hue = 20
+        self.upper_hue = 200
+        self.hue_bandstop = 1
         self.min_saturation = 0
         self.max_saturation = 110
-        self.min_value = 220
+        self.min_value = 180
         self.max_value = 255
         self.theta_threshold = 0.1
         self.hough_threshold = 20
@@ -47,6 +47,7 @@ class PathEntity(VisionEntity):
 
     def find(self, frame, debug=True):
         found_path = False
+        cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         # HSV Color Filter
         binary = libvision.filters.hsv_filter(frame,
@@ -63,7 +64,7 @@ class PathEntity(VisionEntity):
 
         # Morphology
         # We size the kernel to about the width of a path.
-        kernel = cv.CreateStructuringElementEx(15, 15, 7, 7, cv.CV_SHAPE_ELLIPSE)
+        kernel = cv.CreateStructuringElementEx(7, 7, 3, 3, cv.CV_SHAPE_ELLIPSE)
         cv.Erode(binary, binary, kernel, 1)
         cv.Dilate(binary, binary, kernel, 1)
 
@@ -144,7 +145,6 @@ class PathEntity(VisionEntity):
 
     def find_centroid(self, binary):
         mat = cv.GetMat(binary)
-        print mat
         moments = cv.Moments(mat)
         return (moments.m10/moments.m00, moments.m01/moments.m00)
 
