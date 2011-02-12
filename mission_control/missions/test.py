@@ -9,5 +9,5 @@ class TestMission(MissionBase):
             entities.PathEntity(),
         ])
 
-    def step(self, object_found):
-        print "Found Object: %s" % object_found
+    def step(self, entity_found):
+        print "Found Object: %s" % entity_found
