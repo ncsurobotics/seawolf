@@ -226,14 +226,27 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
 
         # Grab Frames
         frames = {} # Maps camera names to a frame from that camera
+        breakflag = False
         for entity in entities:
             if entity.camera_name not in cameras:
                 raise IndexError(
                     'Camera "%s" needed for entity "%s", but no camera '
                     'index specified.' % (entity.camera_name, entity))
             camera = cameras[entity.camera_name]
-            frame = camera.get_frame()
+            try:
+                frame = camera.get_frame()
+            except camera.CaptureError as e:
+                # Exit other process cleanly
+                watchdog.send_exit_signal()
+                print "Error in", entity.camera_name, "camera:"
+                for arg in e.args:
+                    print arg
+                breakflag = True
+                break
             frames[entity.camera_name] = frame
+
+        if breakflag:
+            break
 
         for entity in entities:
 
