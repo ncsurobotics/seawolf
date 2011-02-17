@@ -20,6 +20,8 @@ CENTERED_THRESHOLD = 20
 ORIENTATION_RANGE_THRESHOLD = 10 * (math.pi/180)
 
 def angle_range(angles):
+    '''Find the range of the given angles (must be given in radians).'''
+
     angle_max = angles[0]
     angle_min = angles[0]
     for angle in angles:
@@ -35,6 +37,12 @@ def angle_range(angles):
     return range
 
 def angle_average(angles):
+    '''Average of the angles given in radians.
+
+    This function works by averaging the x,y coordinates of where the angles
+    lie on the unit circle.
+
+    '''
     total_x = 0
     total_y = 0
     for angle in angles:

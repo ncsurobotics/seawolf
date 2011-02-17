@@ -7,12 +7,13 @@ from entities.base import VisionEntity
 import libvision
 
 def angle_average(angles):
+    '''Averages angles given from a hough transform (range 0 to pi).'''
     total_x = 0
     total_y = 0
     for angle in angles:
-        total_x += math.sin(angle)
-        total_y += math.cos(angle)
-    return math.atan2(total_x, total_y)
+        total_x += math.sin(angle*2)
+        total_y += math.cos(angle*2)
+    return math.atan2(total_x, total_y)/2
 
 class PathEntity(VisionEntity):
 
@@ -33,9 +34,6 @@ class PathEntity(VisionEntity):
         self.hough_threshold = 20
         self.lines_to_consider = 4 # Only consider the strongest so many lines
         self.seen_in_a_row_threshold = 2 # Must see path this many times in a row before reporting it
-
-        #TODO: Add a number of times in a row the path has to be seen in order
-        #      for it to be considered reliable.
 
         # Position/orientation
         self.theta = None
@@ -132,11 +130,11 @@ class PathEntity(VisionEntity):
             self.seen_in_a_row = 0
 
         if self.seen_in_a_row >= self.seen_in_a_row_threshold:
-            self.center = self.find_centroid(binary)
-            # Move the origin to the center of the image (and round)
+            self.image_coordinate_center = self.find_centroid(binary)
+            # Move the origin to the center of the image
             self.center = (
-                cv.Round(-self.center[0] + frame.width/2),
-                cv.Round(-self.center[1] + frame.height/2)
+                self.image_coordinate_center[0] - frame.width/2,
+                self.image_coordinate_center[1]*-1 + frame.height/2
             )
 
         if debug:
@@ -157,14 +155,22 @@ class PathEntity(VisionEntity):
             # Show lines
             libvision.misc.draw_lines(frame, lines)
             if self.seen_in_a_row >= self.seen_in_a_row_threshold:
-                cv.Circle(frame, self.center, 5, (0,255,0))
+                rounded_center = (
+                    round(self.image_coordinate_center[0]),
+                    round(self.image_coordinate_center[1]),
+                )
+                cv.Circle(frame, rounded_center, 5, (0,255,0))
 
         return self.seen_in_a_row >= self.seen_in_a_row_threshold
 
     def find_centroid(self, binary):
         mat = cv.GetMat(binary)
         moments = cv.Moments(mat)
-        return (moments.m10/moments.m00, moments.m01/moments.m00)
+        return (
+            int(moments.m10/moments.m00),
+            int(moments.m01/moments.m00)
+        )
 
     def __repr__(self):
-        return "<PathEntity center=%s theta=%s>" % (self.center, (180/math.pi)*self.theta)
+        return "<PathEntity center=%s theta=%s>" % \
+            (self.center, round((180/math.pi)*self.theta, 2))
