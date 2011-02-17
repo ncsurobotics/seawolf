@@ -2,7 +2,16 @@
 import cv
 
 class VisionEntity(object):
-    '''Defines an entity, or object that can be located.'''
+    '''Defines an entity, or object that can be located.
+    
+    Subclasses must:
+        - Implement a find() method.
+    Subclasses should:
+        - Implement a __repr__() method.
+        - Implement a initialize_non_pickleable() method.
+        - Contain useful information about the entity's location.
+        
+    '''
 
     # A human readable name for this entity
     name = "VisionEntity"
@@ -23,9 +32,8 @@ class VisionEntity(object):
             frame - The image from the camera specified in
                 VisionEntity.camera_name that may or may not contain the entity
                 being searched for.
-            debug - If True, debugging information may be written to the given
-                frame.  The frame will be displayed after the function
-                completes.  If False, find() is NOT allowed to edit frame!!!
+            debug - If True, debugging information should be written to the
+                frame.
 
         Returns true when the entity is seen.  When the entity is seen, find()
         also records information in the object about where the entity was seen.  

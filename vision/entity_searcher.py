@@ -252,10 +252,11 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
 
             if is_graphical:
                 cv.NamedWindow("%s" %entity.name)
+
+            if len(entities) > 1:
                 frame = cv.CloneImage(frames[entity.camera_name])
             else:
-                # No need to copy frame.  VisionEntity.find() is not
-                # allowed to edit the frame if we give it debug=False.
+                # No need to copy frame, only one entity.
                 frame = frames[entity.camera_name]
 
             # Initialize nonpickleable if object is new

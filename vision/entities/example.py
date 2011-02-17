@@ -46,9 +46,8 @@ class ExampleEntity(VisionEntity):
         # We just sleep and act like we're processing.
         time.sleep(0.1)
 
-        # Debug info is written to the frame and displayed, but ONLY if
-        # debug=True.  Do NOT modify the frame if debug=False, because the
-        # frame could be reused elsewhere.
+        # Debug info is written to the frame and displayed, but only if
+        # debug=True.
         if debug:
             font = cv.InitFont(cv.CV_FONT_HERSHEY_COMPLEX, .5, .5)
             cv.PutText(frame, "Debug info goes here!", (0, frame.height-100), font, (0,0,0))
