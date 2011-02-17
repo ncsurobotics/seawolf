@@ -4,10 +4,12 @@ from base import VisionEntity
 # Entities
 from path import PathEntity
 from example import ExampleEntity
+from gate import GateEntity, GATE_BLACK, GATE_WHITE
 
 entity_classes = {
     "path": PathEntity,
     "example": ExampleEntity,
+    "gate": GateEntity,
 }
 
 def get_all_used_cameras():
