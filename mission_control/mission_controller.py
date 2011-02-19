@@ -67,7 +67,7 @@ class MissionController(object):
             self.current_mission = self.mission_queue.popleft()
         except IndexError: # deque raises IndexError when it is empty
             return False
-        #print "Starting mission:", self.current_mission.__name__ #TODO
+        print "Starting mission:", self.current_mission
         self.current_mission.init()
         try:
             self.current_mission.execute()

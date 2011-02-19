@@ -19,7 +19,9 @@ class GateMission(MissionBase):
         self.entity_searcher.start_search([
             entities.GateEntity(self.gate_type),
         ])
-        sw3.nav.do(sw3.Forward(0.1))
+        sw3.nav.do(sw3.CompoundRoutine([
+            sw3.Forward(0.1), sw3.SetDepth(2)
+        ]))
 
     def step(self, entity_found):
 

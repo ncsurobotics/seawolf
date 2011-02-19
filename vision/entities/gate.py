@@ -50,6 +50,7 @@ class GateEntity(VisionEntity):
 
         self.left_pole = None
         self.right_pole = None
+        self.seen_crossbar = False
 
     def initialize_non_pickleable(self, debug=True):
 

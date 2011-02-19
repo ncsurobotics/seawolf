@@ -31,7 +31,9 @@ class PathMission(MissionBase):
         self.entity_searcher.start_search([
             entities.PathEntity(),
         ])
-        sw3.nav.do(sw3.Forward(0.2))
+        sw3.nav.do(sw3.CompoundRoutine([
+            sw3.Forward(0.2), sw3.SetDepth(2)
+        ]))
 
         self.reference_angle = sw3.data.imu.yaw*(pi/180)
         if self.reference_angle < 0:
@@ -43,8 +45,9 @@ class PathMission(MissionBase):
         x = entity_found.center[0]
         y = entity_found.center[1]
         position_rho = math.sqrt(x**2 + y**2)
+
         position_theta = math.atan2(x, y)
-        position_theta = -(position_theta+pi/2)
+        position_theta = pi/2-position_theta
         if position_theta > pi:
             position_theta -= pi
 

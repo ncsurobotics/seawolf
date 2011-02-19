@@ -68,8 +68,6 @@ if __name__ == "__main__":
     for camera_name, camera_index in options.cameras:
         camera_dict[camera_name] = camera_index
 
-    mission_index = options.initial_mission
-
     entity_searcher = vision.EntitySearcher(
         camera_indexes=camera_dict,
         is_graphical=options.graphical,
@@ -80,7 +78,7 @@ if __name__ == "__main__":
     mission_controller = MissionController(entity_searcher)
 
     # Add missions
-    for mission in MISSION_ORDER:
+    for mission in MISSION_ORDER[options.initial_mission:]:
         mission_controller.append_mission(mission)
 
     mission_controller.execute_all()
