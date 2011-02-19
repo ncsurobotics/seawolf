@@ -5,6 +5,7 @@ import cv
 
 from entities.base import VisionEntity
 import libvision
+from sw3.util import circular_average
 
 class PathEntity(VisionEntity):
 

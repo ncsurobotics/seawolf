@@ -13,7 +13,7 @@ class MissionBase(object):
         '''Called once right before the mission is executed.'''
         pass
 
-    def set_entity_timeout(self, timout):
+    def set_entity_timeout(self, timeout):
         '''Gives the time to wait for an entity before calling step() anyways.
 
         The execute function will look at the timeout given and call step(None)
@@ -29,20 +29,20 @@ class MissionBase(object):
         This is a blocking call that returns when the mission completes.
         '''
 
-        self._entity_timeout = getattr(self, "_entity_timout", None)
+        self._entity_timeout = getattr(self, "_entity_timeout", None)
         self._mission_done = getattr(self, "_mission_done", False)
-        time_since_last_entity = time()
+        last_entity_timestamp = time()
 
         while not self._mission_done:
-            entity = self.entity_searcher.get_entity()
+            entity = self.entity_searcher.get_entity(0.1)
 
             if entity:
-                time_since_last_entity = time()
+                last_entity_timestamp = time()
                 if self.step(entity):
                     break
 
-            elif time_since_last_entity > self._entity_timeout:
-                time_since_last_entity = time()
+            elif self._entity_timeout and time()-last_entity_timestamp > self._entity_timeout:
+                last_entity_timestamp = time()
                 if self.step(None):
                     break
 

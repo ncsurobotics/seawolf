@@ -6,7 +6,6 @@ import cv
 
 from entities.base import VisionEntity
 import libvision
-from sw3 import util #XXX
 from sw3.util import circular_average
 
 GATE_BLACK = 0
@@ -38,6 +37,7 @@ class GateEntity(VisionEntity):
 
         # Thresholds
         self.vertical_threshold = 0.2  # How close to verticle lines must be
+        self.horizontal_threshold = 0.2  # How close to horizontal lines must be
         self.hough_threshold = 30
         self.adaptive_thresh_blocksize = 19
         if color is GATE_WHITE:
@@ -108,48 +108,83 @@ class GateEntity(VisionEntity):
             param2=0
         )
 
-        # Filter lines
-        lines = []
+        # Get vertical lines
+        vertical_lines = []
         for line in raw_lines:
             if line[1] < self.vertical_threshold or \
                 line[1] > math.pi-self.vertical_threshold:
 
-                lines.append( (abs(line[0]), line[1]) )
+                vertical_lines.append( (abs(line[0]), line[1]) )
 
-        # Group Lines
-        line_groups = []  # A list of line groups which are each a line list
-        for line in lines:
+        # Group vertical lines
+        vertical_line_groups = []  # A list of line groups which are each a line list
+        for line in vertical_lines:
             group_found = False
-            for line_group in line_groups:
+            for line_group in vertical_line_groups:
 
                 if line_group_accept_test(line_group, line, self.max_range):
                     line_group.append(line)
                     group_found = True
 
             if not group_found:
-                line_groups.append([line])
+                vertical_line_groups.append([line])
 
         # Average line groups into lines
-        lines = []
-        for line_group in line_groups:
+        vertical_lines = []
+        for line_group in vertical_line_groups:
             rhos = map(lambda line: line[0], line_group)
             angles = map(lambda line: line[1], line_group)
             line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
-            lines.append(line)
+            vertical_lines.append(line)
+
+        # Get horizontal lines
+        horizontal_lines = []
+        for line in raw_lines:
+            dist_from_horizontal = (math.pi/2 + line[1]) % math.pi
+            if dist_from_horizontal < self.horizontal_threshold or \
+                dist_from_horizontal > math.pi-self.horizontal_threshold:
+
+                horizontal_lines.append( (abs(line[0]), line[1]) )
+
+        # Group horizontal lines
+        horizontal_line_groups = []  # A list of line groups which are each a line list
+        for line in horizontal_lines:
+            group_found = False
+            for line_group in horizontal_line_groups:
+
+                if line_group_accept_test(line_group, line, self.max_range):
+                    line_group.append(line)
+                    group_found = True
+
+            if not group_found:
+                horizontal_line_groups.append([line])
+
+        if len(horizontal_line_groups) is 1:
+            self.seen_crossbar = True
+            if debug:
+                rhos = map(lambda line: line[0], line_group)
+                angles = map(lambda line: line[1], line_group)
+                line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
+                horizontal_lines = [line]
+        else:
+            self.seen_crossbar = False
+            horizontal_lines = []
 
         self.left_pole = None
         self.right_pole = None
-        if len(lines) is 2:
-            self.left_pole = round(min(lines[0][0], lines[1][0]), 2) - frame.width/2
-            self.right_pole = round(max(lines[0][0], lines[1][0]), 2) - frame.width/2
+        if len(vertical_lines) is 2:
+            self.left_pole = round(min(vertical_lines[0][0], vertical_lines[1][0]), 2) - frame.width/2
+            self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - frame.width/2
+        #TODO: If one pole is seen, is it left or right pole?
 
         if debug:
             cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
-            libvision.misc.draw_lines(frame, lines)
+            libvision.misc.draw_lines(frame, vertical_lines)
+            libvision.misc.draw_lines(frame, horizontal_lines)
 
-        if self.left_pole or self.right_pole:
+        if self.left_pole or self.right_pole or self.seen_crossbar:
             return True
 
     def __repr__(self):
-        return "<GateEntity left_pole=%s right_pole=%s>" % \
-            (self.left_pole, self.right_pole)
+        return "<GateEntity left_pole=%s right_pole=%s seen_crossbar=%s>" % \
+            (self.left_pole, self.right_pole, self.seen_crossbar)

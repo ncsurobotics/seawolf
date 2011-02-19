@@ -286,7 +286,7 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
                 try:
                     watchdog.ping()
                 except ExitSignal:
-                    break
+                    sys.exit()
         if key == 27:
             watchdog.send_exit_signal()
             break

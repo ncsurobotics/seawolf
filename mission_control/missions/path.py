@@ -34,7 +34,7 @@ class PathMission(MissionBase):
         sw3.nav.do(sw3.Forward(0.2))
 
         self.reference_angle = sw3.data.imu.yaw*(pi/180)
-        if self.reference_angle < 0;
+        if self.reference_angle < 0:
             self.reference_angle = pi - self.reference_angle
 
     def step(self, entity_found):
@@ -75,7 +75,7 @@ class PathMission(MissionBase):
 
         # Collect angle data
         current_yaw = sw3.data.imu.yaw*(pi/180)
-        if current_yaw < 0;
+        if current_yaw < 0:
             current_yaw = pi - current_yaw
         self.orientation_measurements.append((entity_found.theta + current_yaw) % (2*pi))
 
