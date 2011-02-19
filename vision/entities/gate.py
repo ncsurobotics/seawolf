@@ -6,14 +6,11 @@ import cv
 
 from entities.base import VisionEntity
 import libvision
+from sw3 import util #XXX
+from sw3.util import circular_average
 
-def angle_average(angles):
-    total_x = 0
-    total_y = 0
-    for angle in angles:
-        total_x += math.sin(angle*2)
-        total_y += math.cos(angle*2)
-    return math.atan2(total_x, total_y)/2
+GATE_BLACK = 0
+GATE_WHITE = 1
 
 def line_group_accept_test(line_group, line, max_range):
     '''
@@ -31,9 +28,6 @@ def line_group_accept_test(line_group, line, max_range):
         if l[0] < min_rho:
             min_rho = l[0]
     return max_rho - min_rho < max_range
-
-GATE_BLACK = 0
-GATE_WHITE = 1
 
 class GateEntity(VisionEntity):
 
@@ -140,14 +134,14 @@ class GateEntity(VisionEntity):
         for line_group in line_groups:
             rhos = map(lambda line: line[0], line_group)
             angles = map(lambda line: line[1], line_group)
-            line = (sum(rhos)/len(rhos), angle_average(angles))
+            line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
             lines.append(line)
 
         self.left_pole = None
         self.right_pole = None
         if len(lines) is 2:
-            self.left_pole = round(min(lines[0][0], lines[1][0]), 2)
-            self.right_pole = round(max(lines[0][0], lines[1][0]), 2)
+            self.left_pole = round(min(lines[0][0], lines[1][0]), 2) - frame.width/2
+            self.right_pole = round(max(lines[0][0], lines[1][0]), 2) - frame.width/2
 
         if debug:
             cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)

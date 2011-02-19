@@ -1,4 +1,12 @@
 
+import sys
+import os
+mission_control_directory = os.path.realpath(os.path.join(
+    os.path.abspath(__file__),
+    "../../../mission_control/"
+))
+sys.path.append(mission_control_directory)
+
 from base import VisionEntity
 
 # Entities

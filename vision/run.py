@@ -21,7 +21,6 @@ import entities
 from entity_searcher import EntitySearcher
 from process_watchdog import ExitSignal
 
-
 def main():
     '''A simple look for interacting with a search_forever() process.
 

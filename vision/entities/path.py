@@ -6,15 +6,6 @@ import cv
 from entities.base import VisionEntity
 import libvision
 
-def angle_average(angles):
-    '''Averages angles given from a hough transform (range 0 to pi).'''
-    total_x = 0
-    total_y = 0
-    for angle in angles:
-        total_x += math.sin(angle*2)
-        total_y += math.cos(angle*2)
-    return math.atan2(total_x, total_y)/2
-
 class PathEntity(VisionEntity):
 
     name = "PathEntity"
@@ -116,13 +107,9 @@ class PathEntity(VisionEntity):
 
             if theta_range < self.theta_threshold:
                 found_path = True
-                '''
-                print "Lines:",
-                for line in lines:
-                    print line[1],
-                print
-                '''
-                self.theta = angle_average(map(lambda line: line[1], lines))
+
+                angles = map(lambda line: line[1], lines)
+                self.theta = circular_average(angles, math.pi)
 
         if found_path:
             self.seen_in_a_row += 1
