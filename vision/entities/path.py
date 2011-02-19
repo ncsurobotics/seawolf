@@ -160,5 +160,9 @@ class PathEntity(VisionEntity):
         )
 
     def __repr__(self):
+        if self.theta is None:
+            theta = None
+        else:
+            theta = round((180/math.pi)*self.theta, 2)
         return "<PathEntity center=%s theta=%s>" % \
-            (self.center, round((180/math.pi)*self.theta, 2))
+            (self.center, theta)

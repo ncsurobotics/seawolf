@@ -183,7 +183,7 @@ class GateEntity(VisionEntity):
             libvision.misc.draw_lines(frame, vertical_lines)
             libvision.misc.draw_lines(frame, horizontal_lines)
 
-        if self.left_pole or self.right_pole or self.seen_crossbar:
+        if vertical_lines or self.seen_crossbar:
             return True
 
     def __repr__(self):

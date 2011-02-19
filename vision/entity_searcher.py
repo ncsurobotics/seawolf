@@ -41,7 +41,7 @@ class EntitySearcher(object):
 
     # Ping and panic intervals for the ProcessWatchdog objects.
     ping_interval = 1
-    panic_interval = 3
+    panic_interval = 6
 
     def __init__(self, **kwargs):
         '''
@@ -345,8 +345,8 @@ def _initialize_cameras(camera_indexes, display, record_path):
             # Logitech Quickcam Pro 4000
             # These settings should be persistent on the Logitechs, but they
             # might occasionally need to be reset.
-            #cv.SetCaptureProperty(cameras[name].capture, cv.CV_CAP_PROP_FRAME_WIDTH, 320);
-            #cv.SetCaptureProperty(cameras[name].capture, cv.CV_CAP_PROP_FRAME_HEIGHT, 240);
+            cv.SetCaptureProperty(cameras[name].capture, cv.CV_CAP_PROP_FRAME_WIDTH, 320);
+            cv.SetCaptureProperty(cameras[name].capture, cv.CV_CAP_PROP_FRAME_HEIGHT, 240);
             pass
 
     return cameras

@@ -44,7 +44,7 @@ class ExampleEntity(VisionEntity):
 
         # Process the frame
         # We just sleep and act like we're processing.
-        time.sleep(0.1)
+        #time.sleep(0.1)
 
         # Debug info is written to the frame and displayed, but only if
         # debug=True.
