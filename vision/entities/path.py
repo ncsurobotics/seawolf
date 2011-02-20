@@ -20,7 +20,7 @@ class PathEntity(VisionEntity):
         self.hue_bandstop = 1
         self.min_saturation = 0
         self.max_saturation = 110
-        self.min_value = 180
+        self.min_value = 100
         self.max_value = 255
         self.theta_threshold = 0.1
         self.hough_threshold = 20

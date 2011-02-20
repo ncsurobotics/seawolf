@@ -41,7 +41,7 @@ class GateEntity(VisionEntity):
         self.hough_threshold = 30
         self.adaptive_thresh_blocksize = 19
         if color is GATE_WHITE:
-            self.adaptive_thresh = 10
+            self.adaptive_thresh = 7
         else:
             self.adaptive_thresh = 4
         self.max_range = 60
@@ -163,8 +163,8 @@ class GateEntity(VisionEntity):
         if len(horizontal_line_groups) is 1:
             self.seen_crossbar = True
             if debug:
-                rhos = map(lambda line: line[0], line_group)
-                angles = map(lambda line: line[1], line_group)
+                rhos = map(lambda line: line[0], horizontal_line_groups[0])
+                angles = map(lambda line: line[1], horizontal_line_groups[0])
                 line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
                 horizontal_lines = [line]
         else:
