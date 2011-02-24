@@ -7,6 +7,40 @@ import sw3
 import sw3.joystick as joystick
 import sw3.ratelimit as ratelimit
 
+def update_axis(event):
+    angle = event.angle
+
+    forward = max(-1.0, min((-event.y) / 32767.0, 1.0))
+    rate = angle / 9
+
+    if abs(rate) < 3:
+        sw3.nav.do(sw3.CompoundRoutine((sw3.HoldYaw(), sw3.Forward(forward))))
+    else:
+        sw3.nav.do(sw3.CompoundRoutine((sw3.SetRotate(rate), sw3.Forward(forward))))
+
+def print_table(headings, *values):
+    max_widths = [max(len(heading), 4) + 1 for heading in headings]
+    for vs in values:
+        widths = [max(len(v), 4) + 1 for v in vs]
+        for i in range(0, len(max_widths)):
+            max_widths[i] = max(widths[i], max_widths[i])
+        
+    format = "%-*s" * len(headings)
+    heading_l = reduce(lambda x, y: x + list(y), zip(max_widths, headings), [])
+
+    print format % tuple(heading_l)
+    for vs in values:
+        vs_l = reduce(lambda x, y: x + list(y), zip(max_widths, vs), [])
+        print format % tuple(vs_l)
+
+def print_help():
+    print "R1: Depth up   R2: Depth down"
+    print "Button1: Zero thrusters   Button3: Print variables"
+    print "Button4: Emergency breech (requires confirmation)"
+    print "Left Joystick: Navigate"
+    print "Button9: Help   Button10: Quit"
+    print
+
 sw.loadConfig("../conf/seawolf.conf")
 sw.init("Joystick Controller")
 
@@ -16,43 +50,14 @@ if len(devices) == 0:
     sys.exit(1)
 
 depth_heading = 0
-yaw_heading = sw3.data.imu.yaw
-
-def update_axis(event):
-    angle = event.angle
-
-    forward = max(-1.0, min((-event.y) / 32767.0, 1.0))
-    rate = angle / 9
-
-    if abs(rate) < 5:
-        sw3.nav.do(sw3.CompoundRoutine((sw3.HoldYaw(), sw3.Forward(foward))))
-    else:
-        sw3.nav.do(sw3.CompoundRoutine((sw3.SetRotate(rate), sw3.Forward(forward))))
-    print "%.2f %4d" % (mag, int(angle))
-
-def zero_thrusters():
-    print "Zeroing thrusters"
-    sw3.pid.yaw.pause()
-    sw3.pid.rotate.pause()
-    sw3.pid.pitch.pause()
-    sw3.pid.depth.pause()
-    
-    sw3.mixer.depth = 0
-    sw3.mixer.pitch = 0
-    sw3.mixer.yaw = 0
-    sw3.mixer.forward = 0
-    sw3.mixer.strafe = 0
-    
-    for v in ("Port", "Star", "Bow", "Stern", "Strafe"):
-        sw.var.set(v, 0)
-
 rate_limiter = ratelimit.RateLimiter(10, update_axis)
-js = joystick.Joystick(devices[0], joystick.logitech)
+js = joystick.Joystick(devices[0], joystick.LOGITECH)
 
-breech_count = 1
+print_help()
 
 while True:
     event = js.poll()
+ 
     if isinstance(event, joystick.Axis):
         if event.name == "leftStick":
             rate_limiter.provide(event)
@@ -66,21 +71,33 @@ while True:
             depth_heading = max(0, depth_heading - 0.50)
             sw3.pid.depth.heading = depth_heading
 
-        elif event.name == "button9":
-            zero_thrusters()
+        elif event.name == "button1":
+            print "Zeroing thrusters"
+            sw3.nav.do(sw3.ZeroThrusters())
 
         elif event.name == "button4":
-            if breech_count == 0:
+            while js.poll().name != "button4":
+                pass
+            print "Press again to confirm breech"
+            if js.poll().name == "button4":
                 print "Breeching!"
-                # breech()
+                sw3.nav.do(sw3.EmergencyBreech())
             else:
-                breech_count -= 1
-                print "Press again to confirm emergency breech"
-                continue
+                print "Canceled."
 
-        breech_count = 1
+        elif event.name == "button9":
+            print_help()
+
+        elif event.name == "button3":
+            variables = "Depth", "DepthPID.Heading", "SEA.Yaw", "YawPID.Heading"
+            print_table(variables, ["%.2f" % sw.var.get(v) for v in variables])
+            print
+
+            variables = "Port", "Star", "Bow", "Stern", "Strafe"
+            print_table(variables, ["%.2f" % sw.var.get(v) for v in variables])
+            print
             
-    elif event.name == "button10" and event.value == 0:
-        print "Quiting"
-        zero_thrusters()
-        break
+        elif event.name == "button10":
+            print "Quiting"
+            sw3.nav.do(sw3.ZeroThrusters())
+            break

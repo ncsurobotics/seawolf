@@ -156,6 +156,27 @@ class NullRoutine(NavRoutine):
 def HoldPosition():
     return CompoundRoutine((HoldDepth(), HoldYaw(), Forward(0), Strafe(0)))
 
+class ZeroThrusters(NavRoutine):
+    interactions = ("Depth", "Yaw", "Stafe", "Forward")
+
+    def _start(self):
+        # Pause the PIDs
+        pid.yaw.pause()
+        pid.rotate.pause()
+        pid.pitch.pause()
+        pid.depth.pause()
+        
+        # Zero the mixer
+        mixer.depth = 0
+        mixer.pitch = 0
+        mixer.yaw = 0
+        mixer.forward = 0
+        mixer.strafe = 0
+        
+        # Zero the thrusters
+        for v in ("Port", "Star", "Bow", "Stern", "Strafe"):
+            sw.var.set(v, 0)
+
 class SetDepth(NavRoutine):
     interactions = ("Depth",)
 
@@ -309,16 +330,19 @@ class Strafe(NavRoutine):
     def _cleanup(self):
         mixer.strafe = 0.0
 
-class EmergencyBreech(NavRoutine):
+class EmergencyBreech(ZeroThrusters):
     def _start(self):
-        # Pause the depth and pitch PIDs
-        pid.depth.pause()
-        pid.pitch.pause()
+        # Zero the thrusters by calling to the super class
+        super(EmergencyBreech, self)._start()
 
-        time.sleep(0.5)
-
-        # Instruct mixer to max out depth thrusters
         mixer.depth = 1.0
+        
+    def _poll(self):
+        # Set the mixer depth value each time polled incase a rogue program puts
+        # it back
+        mixer.depth = 1.0
+        return NavRoutine.RUNNING
 
     def _stop(self):
+        # Zero depth thrusters
         mixer.depth = 0.0;
