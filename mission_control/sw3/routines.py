@@ -197,6 +197,16 @@ class HoldDepth(RelativeDepth):
     def _poll(self):
         self.wait()
 
+class SetRotate(NavRoutine):
+    interactions = ("Yaw",)
+
+    def __init__(self, rate, timeout=-1):
+        super(SetRotate, self).__init__(timeout)
+        self.rate = rate
+
+    def _start(self):
+        pid.rotate.heading = self.rate
+
 class SetYaw(NavRoutine):
     interactions = ("Yaw",)
 
