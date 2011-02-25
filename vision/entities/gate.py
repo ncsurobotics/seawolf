@@ -67,17 +67,17 @@ class GateEntity(VisionEntity):
         # gate.  The black gate is based on the red channel, the white gate is
         # based on saturation.
         if self.color is GATE_BLACK:
-            # Set binary image to have red channel
+            # Set binary image to have green channel
             binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
-            cv.SetImageCOI(frame, 2)  # Saturation Channel of Interest
+            cv.SetImageCOI(frame, 2)  # Green Channel of Interest
             cv.Copy(frame, binary)  # Binary image now contains green channel
             cv.SetImageCOI(frame, 0)
         else:
             # Set binary image to have saturation channel
             hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
             binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
-            cv.CvtColor(frame, hsv, cv.CV_RGB2HSV)
-            cv.SetImageCOI(hsv, 2)  # Saturation Channel of Interest
+            cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
+            cv.SetImageCOI(hsv, 2)
             cv.Copy(hsv, binary)  # Binary image now contains saturation channel
             cv.SetImageCOI(hsv, 0)
 

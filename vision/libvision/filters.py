@@ -24,7 +24,7 @@ def hsv_filter(src, low_h, high_h, min_s, max_s, min_v, max_v,
     hsv = cv.CreateImage(cv.GetSize(src), 8, 3)
     binary = cv.CreateImage(cv.GetSize(src), 8, 1)
     cv.SetZero(binary)
-    cv.CvtColor(src, hsv, cv.CV_RGB2HSV)
+    cv.CvtColor(src, hsv, cv.CV_BGR2HSV)
 
     data = hsv.tostring()
     for y in xrange(0, hsv.height):

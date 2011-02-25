@@ -15,9 +15,9 @@ class PathEntity(VisionEntity):
     def __init__(self):
 
         # Thresholds
-        self.lower_hue = 20
-        self.upper_hue = 200
-        self.hue_bandstop = 1
+        self.lower_hue = 220
+        self.upper_hue = 300
+        self.hue_bandstop = 0
         self.min_saturation = 0
         self.max_saturation = 110
         self.min_value = 100
