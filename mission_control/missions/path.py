@@ -10,20 +10,12 @@ import sw3
 from sw3 import util
 
 # If the path's position is off by more than this much, turn towards it
-RHO_CENTERING_THRESHOLD = 20  # pixel distance
-THETA_CENTERING_THRESHOLD = 50 * (pi/180)  # radians
-
-THETA_RECORD_LENGTH = 5  # How many path orientations to keep track of
-
 CENTERED_THRESHOLD = 60
-# The range of our angle measurements must be less than this to
-# start orienting ourselves.
-ORIENTATION_RANGE_THRESHOLD = 10 * (pi/180)
+THETA_CENTERING_THRESHOLD = 50 * (pi/180)  # radians
 
 class PathMission(MissionBase):
 
     def __init__(self):
-        self.orientation_measurements = deque(maxlen=THETA_RECORD_LENGTH)
         self.orienting = False
         self.centered_count = 0
 
@@ -46,9 +38,7 @@ class PathMission(MissionBase):
         x = entity_found.center[0]
         y = entity_found.center[1]
         position_rho = math.sqrt(x**2 + y**2)
-
         position_theta = math.atan2(x, y)
-        print position_theta * 180/math.pi
 
         yaw_routine = None
         forward_routine = None
@@ -73,28 +63,15 @@ class PathMission(MissionBase):
             else:
                 self.centered_count += 1
                 forward_routine = sw3.Forward(0.1*y/CENTERED_THRESHOLD)
-                print "CENTERED!!!!!!", 0.1*y/CENTERED_THRESHOLD
+                print "Centered for:", self.centered_count
 
-        # Collect angle data
-        current_yaw = sw3.data.imu.yaw*(pi/180)
-        if current_yaw < 0:
-            current_yaw = pi - current_yaw
-        #self.orientation_measurements.append((entity_found.theta + current_yaw) % (pi))
+        if self.centered_count >= 3:
 
-        wrong_direction = True
-        if self.centered_count >= 1:
-            #len(self.orientation_measurements) == THETA_RECORD_LENGTH and \
-            #util.circular_range(self.orientation_measurements, pi) < ORIENTATION_RANGE_THRESHOLD:
+            # Get current yaw
+            current_yaw = (sw3.data.imu.yaw*(pi/180)) % (2*pi)
 
-            #self.start_orientation()
-            opposite_direction = (pi + entity_found.theta) % (2*pi)
-            if (opposite_direction - self.reference_angle) % pi < (entity_found.theta - self.reference_angle) % pi:
-                entity_found.theta = opposite_direction
-            else:
-                wrong_direction = False
-
-            yaw_routine = sw3.RelativeYaw((180/pi)*entity_found.theta)
-            print "Orienting", (180/pi)*entity_found.theta
+            absolute_path_angle = (entity_found.theta + current_yaw) % pi
+            self.start_orientation(absolute_path_angle)
 
         if yaw_routine and forward_routine:
             sw3.nav.do(yaw_routine)
@@ -104,28 +81,20 @@ class PathMission(MissionBase):
         elif forward_routine:
             sw3.nav.do(forward_routine)
 
-        if not wrong_direction and abs(entity_found.theta) < 0.1:
-            print "Oriented for", self.oriented
-            self.oriented += 1
-            if self.oriented > 4:
-                return True
-        else:
-            self.oriented = 0
-
-    def start_orientation(self):
+    def start_orientation(self, path_direction):
         #self.entity_searcher.start_search([])
 
-        path_direction = util.circular_average(self.orientation_measurements, pi)
-
-        # Flip direction it will make path_direction closer to the reference angle.
+        # Flip direction if it will make path_direction closer to the reference angle.
         opposite_direction = (pi + path_direction) % (2*pi)
-        if (opposite_direction - self.reference_angle) % pi < (path_direction - self.reference_angle) % pi:
+        if util.circular_distance(self.reference_angle, opposite_direction) < util.circular_distance(self.reference_angle, path_direction):
             path_direction = opposite_direction
+        if path_direction > math.pi:  # convert to range -pi to pi
+            path_direction = path_direction - 2*pi
 
+        print "Orienting to", (180/pi)*path_direction
         turn_routine = sw3.SetYaw((180/pi)*path_direction)
         turn_routine.on_done(self.finish_mission)
         sw3.nav.do(turn_routine)
         sw3.nav.append(sw3.HoldYaw())
-        print "Orienting to", (180/pi)*path_direction
 
         self.orienting = True

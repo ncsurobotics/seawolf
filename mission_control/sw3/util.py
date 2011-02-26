@@ -58,3 +58,21 @@ def circular_range(numbers, high=2*math.pi, low=0):
             highest_range = range
 
     return highest_range
+
+def circular_distance(a, b, high=2*math.pi, low=0):
+    '''Finds the distance between a and b in a circular fashion.
+
+    high and low are the ends of the wraparound point.  Going any higher than
+    high wraps around to low.
+
+    '''
+
+    a += low
+    b += low
+    high += low
+
+    distance = abs(a-b)
+    if distance > high/2:
+        distance = high - distance
+
+    return distance
