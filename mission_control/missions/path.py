@@ -10,8 +10,9 @@ import sw3
 from sw3 import util
 
 # If the path's position is off by more than this much, turn towards it
-CENTERED_THRESHOLD = 60
-THETA_CENTERING_THRESHOLD = 50 * (pi/180)  # radians
+CENTERED_THRESHOLD = 60  # pixel distance
+THETA_CENTERING_THRESHOLD = 30 * (pi/180)  # radians
+CENTERED_FRAMES_THRESHOLD = 3  # Center for this many frames before orientation
 
 class PathMission(MissionBase):
 
@@ -65,13 +66,14 @@ class PathMission(MissionBase):
                 forward_routine = sw3.Forward(0.1*y/CENTERED_THRESHOLD)
                 print "Centered for:", self.centered_count
 
-        if self.centered_count >= 3:
+        if self.centered_count >= CENTERED_FRAMES_THRESHOLD:
 
             # Get current yaw
             current_yaw = (sw3.data.imu.yaw*(pi/180)) % (2*pi)
 
             absolute_path_angle = (entity_found.theta + current_yaw) % pi
             self.start_orientation(absolute_path_angle)
+            return False
 
         if yaw_routine and forward_routine:
             sw3.nav.do(yaw_routine)
@@ -95,6 +97,5 @@ class PathMission(MissionBase):
         turn_routine = sw3.SetYaw((180/pi)*path_direction)
         turn_routine.on_done(self.finish_mission)
         sw3.nav.do(turn_routine)
-        sw3.nav.append(sw3.HoldYaw())
 
         self.orienting = True
