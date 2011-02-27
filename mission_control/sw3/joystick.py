@@ -39,6 +39,14 @@ class Axis(object):
         return (self.x**2 + self.y**2)**0.5 * scalar
 
     @property
+    def math_angle(self):
+        x, y = self.x, -self.y
+
+        if x == 0:
+            return (math.pi / 2) if y > 0 else (- math.pi / 2)
+        return math.atan2(y, x)
+
+    @property
     def angle(self):
         x, y = self.x, -self.y
 

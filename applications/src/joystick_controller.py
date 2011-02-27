@@ -2,22 +2,39 @@
 import sys
 sys.path.append("../mission_control")
 
+from math import sin, cos, pi, sqrt
+
 import seawolf as sw
 import sw3
 import sw3.joystick as joystick
 import sw3.ratelimit as ratelimit
 
+yaw_heading = 0
+
 def update_axis(event):
-    angle = event.angle
+    global yaw_heading
+    angle = event.math_angle
 
-    forward = max(-1.0, min((-event.y) / 32767.0, 1.0))
-    rate = angle / 9
+    mag = max(min(event.mag, 1.0), -1.0)
 
-    if abs(rate) < 3:
-        sw3.nav.do(sw3.CompoundRoutine((sw3.HoldYaw(), sw3.Forward(forward))))
-    else:
+    forward = (mag * sin(angle))
+    rate = (mag * cos(angle))
+
+    total = abs(forward) + abs(rate)
+
+    if total == 0:
+        yaw_heading = sw3.data.imu.yaw
+        sw3.nav.do(sw3.CompoundRoutine((sw3.SetYaw(yaw_heading), sw3.Forward(forward))))
+    else:        
+        for_p = forward / total
+        rate_p = rate / total
+        
+        total = min(total, 1.0)
+        forward = for_p * total
+        rate = rate_p * total
+        
         sw3.nav.do(sw3.CompoundRoutine((sw3.SetRotate(rate), sw3.Forward(forward))))
-
+        
 def print_table(headings, *values):
     max_widths = [max(len(heading), 4) + 1 for heading in headings]
     for vs in values:
@@ -44,6 +61,8 @@ def print_help():
 sw.loadConfig("../conf/seawolf.conf")
 sw.init("Joystick Controller")
 
+yaw_heading = sw3.data.imu.yaw
+
 devices = joystick.get_devices()
 if len(devices) == 0:
     sys.stderr.write("No joysticks found\n")
@@ -61,6 +80,12 @@ while True:
     if isinstance(event, joystick.Axis):
         if event.name == "leftStick":
             rate_limiter.provide(event)
+        elif event.name == "hat":
+            if event.x < 0:
+                yaw_heading = sw3.util.add_angle(yaw_heading, -5)
+            elif event.x > 0:
+                yaw_heading = sw3.util.add_angle(yaw_heading, 5)
+            sw3.pid.yaw.heading = yaw_heading
 
     elif event.value == 1:
         if event.name == "button8":

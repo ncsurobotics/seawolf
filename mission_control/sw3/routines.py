@@ -55,14 +55,13 @@ class NavRoutine(object):
     def __poller(self):
         """ Polling thread. Will call self._poll every self.polling_interval
         seconds until self._poll indicates the routine has been completed """
-        while not self.done_event.is_set():
+        while not self.done_event.is_set() and self.state == self.RUNNING:
             new_state = self._poll()
 
             if new_state == NavRoutine.COMPLETED:
                 self.completed()
             elif new_state == NavRoutine.CANCELED:
                 self.cancel()
-
             self.done_event.wait(self.polling_interval)
 
     def __start_poller(self):
@@ -134,7 +133,8 @@ class CompoundRoutine(NavRoutine):
         # A CompoundRoutine is completed when all its constituent parts have
         # finished and it has not been canceled
         for routine in self.routines:
-            routine.wait()
+            if routine.state == NavRoutine.RUNNING:
+                return self.state
 
         if self.state == NavRoutine.RUNNING:
             return self.COMPLETED
@@ -226,7 +226,10 @@ class SetRotate(NavRoutine):
         self.rate = rate
 
     def _start(self):
-        pid.rotate.heading = self.rate
+        # lol, this doesn't really work
+        #pid.rotate.heading = self.rate
+        pid.yaw.pause()
+        sw.notify.send("THRUSTER_REQUEST", "Yaw %.2f" % (self.rate,))
 
 class SetYaw(NavRoutine):
     interactions = ("Yaw",)
@@ -334,13 +337,12 @@ class EmergencyBreech(ZeroThrusters):
     def _start(self):
         # Zero the thrusters by calling to the super class
         super(EmergencyBreech, self)._start()
-
-        mixer.depth = 1.0
+        mixer.depth = -1.0
         
     def _poll(self):
         # Set the mixer depth value each time polled incase a rogue program puts
         # it back
-        mixer.depth = 1.0
+        mixer.depth = -1.0
         return NavRoutine.RUNNING
 
     def _stop(self):

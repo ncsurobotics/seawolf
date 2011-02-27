@@ -91,24 +91,24 @@ int main(int argc, char** argv) {
      } else if(strcmp(sensor, "rot") == 0) {
         if(var == 'p') {
             if(action == SET) {
-                Var_set("RotPID.p", value);
+                Var_set("RotatePID.p", value);
             } else {
-                printf("%.2f\n", Var_get("RotPID.p"));
+                printf("%.2f\n", Var_get("RotatePID.p"));
             }
         } else if(var == 'i') {
             if(action == SET) {
-                Var_set("Rot.Rate.i", value);
+                Var_set("RotatePID.i", value);
             } else {
-                printf("%.2f\n", Var_get("RotPID.i"));
+                printf("%.2f\n", Var_get("RotatePID.i"));
             }
         } else if(var == 'd') {
             if(action == SET) {
-                Var_set("Rot.Rate.d", value);
+                Var_set("RotPID.d", value);
             } else {
-                printf("%.2f\n", Var_get("RotPID.d"));
+                printf("%.2f\n", Var_get("RotatePID.d"));
             }
         }
-        Notify_send("UPDATED", "RotPID.Coefficients");
+        Notify_send("UPDATED", "RotatePID.Coefficients");
     } else {
         printf("Invalid arguments\n");
     }
