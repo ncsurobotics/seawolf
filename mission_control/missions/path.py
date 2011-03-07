@@ -28,9 +28,7 @@ class PathMission(MissionBase):
             sw3.Forward(0.4), sw3.SetDepth(2)
         ]))
 
-        self.reference_angle = sw3.data.imu.yaw*(pi/180)
-        if self.reference_angle < 0:
-            self.reference_angle = pi - self.reference_angle
+        self.reference_angle = sw3.data.imu.yaw*(pi/180) % (2*pi)
         self.oriented = 0
 
     def step(self, entity_found):
