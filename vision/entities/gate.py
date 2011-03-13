@@ -38,7 +38,7 @@ class GateEntity(VisionEntity):
         # Thresholds
         self.vertical_threshold = 0.2  # How close to verticle lines must be
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 30
+        self.hough_threshold = 51
         self.adaptive_thresh_blocksize = 19
         if color is GATE_WHITE:
             self.adaptive_thresh = 7
@@ -59,7 +59,15 @@ class GateEntity(VisionEntity):
             self.create_trackbar("hough_threshold", 100)
 
     def find(self, frame, debug=True):
+
+        # Resize image to 320x240
+        copy = cv.CreateImage(cv.GetSize(frame), 8, 3)
+        cv.Copy(frame, copy)
+        cv.SetImageROI(frame, (0, 0, 320, 240))
+        cv.Resize(copy, frame, cv.CV_INTER_NN)
+
         found_gate = False
+
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         # Adaptive Filter
@@ -174,8 +182,11 @@ class GateEntity(VisionEntity):
         self.left_pole = None
         self.right_pole = None
         if len(vertical_lines) is 2:
-            self.left_pole = round(min(vertical_lines[0][0], vertical_lines[1][0]), 2) - frame.width/2
-            self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - frame.width/2
+            roi = cv.GetImageROI(frame)
+            width = roi[2]
+            height = roi[3]
+            self.left_pole = round(min(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
+            self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
         #TODO: If one pole is seen, is it left or right pole?
 
         if debug:
@@ -183,7 +194,8 @@ class GateEntity(VisionEntity):
             libvision.misc.draw_lines(frame, vertical_lines)
             libvision.misc.draw_lines(frame, horizontal_lines)
 
-        if vertical_lines or self.seen_crossbar:
+        if vertical_lines:
+        #if vertical_lines or self.seen_crossbar:
             return True
 
     def __repr__(self):
