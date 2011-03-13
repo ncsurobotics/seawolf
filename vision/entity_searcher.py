@@ -61,6 +61,8 @@ class EntitySearcher(object):
             a keypress between frames.
         '''
 
+        self.current_searching_entities = []
+
         # Setup Pipes
         parent_entity_connection, child_entity_connection = multiprocessing.Pipe()
         parent_ping_connection, child_ping_connection = multiprocessing.Pipe()
@@ -88,6 +90,7 @@ class EntitySearcher(object):
         Any previous entities that were being searched for are forgotten.
 
         '''
+        self.current_searching_entities = entity_list
         self.entity_pipe.send(entity_list)
 
     def ping(self):
@@ -105,6 +108,13 @@ class EntitySearcher(object):
             self.watchdog.flush()
 
             raise IOError("EntitySearcher superprocess lost connection with subprocess!")
+
+    def check_entity_type(self, entity):
+        '''Makes sure the entity is one of the types we are searching for.'''
+        for desired_entity in self.current_searching_entities:
+            if type(entity) is type(desired_entity):
+                return True
+        return False
 
     def get_entity(self, timeout=None):
         '''
@@ -131,7 +141,9 @@ class EntitySearcher(object):
             while True:
                 self.ping()
                 if self.entity_pipe.poll(0.2):
-                    return self.entity_pipe.recv()
+                    entity = self.entity_pipe.recv()
+                    if self.check_entity_type(entity):
+                        return entity
 
         else:
 
@@ -141,7 +153,9 @@ class EntitySearcher(object):
             #      isn't a huge deal because get_entity isn't actually used
             #      like that.
             if self.entity_pipe.poll(timeout):
-                return self.entity_pipe.recv()
+                entity = self.entity_pipe.recv()
+                if self.check_entity_type(entity):
+                    return entity
             return None
 
     def is_alive(self):
