@@ -334,28 +334,17 @@ def _initialize_cameras(camera_indexes, display, record_path):
         else:
             this_camera_record_path = record_path  # Only one camera
 
+        # 0-100 implies that we want V4L2, which in the 200 range
+        if index < 100:
+            index += 200
+
         cameras[name] = Camera(index, display=display, window_name=name,
             record_path=this_camera_record_path)
 
         # This is specific to firewire cameras (indexes 300-400).
         cameras[name].open_capture()
-        if isinstance(cameras[name].identifier, int) and \
-           cameras[name].identifier >= 300 and \
-           cameras[name].identifier < 400:
 
-            # These are magic values that tell OpenCV not to touch the camera's
-            # settings at all.  The values came from looking at the OpenCV 2.2
-            # source code.  You should set the camera's settings in the
-            # Coriander program, where the settings should be persistent unless
-            # OpenCV opens the cameras without these magic values.
-            cv.SetCaptureProperty(cameras[name].capture,
-                cv.CV_CAP_PROP_MODE,
-                -2
-            )
-            cv.SetCaptureProperty(cameras[name].capture, cv.CV_CAP_PROP_FPS,
-                -1)
-
-        elif isinstance(cameras[name].identifier, int):
+        if isinstance(cameras[name].identifier, int) and cameras[name].identifier < 300:
             # Logitech Quickcam Pro 4000
             # These settings should be persistent on the Logitechs, but they
             # might occasionally need to be reset.

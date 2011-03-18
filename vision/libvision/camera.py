@@ -3,6 +3,8 @@ import os
 
 import cv
 
+from dc1394 import DC1394Camera
+
 class Camera(object):
     '''An wrapper for OpenCV's camera functionality.
 
@@ -42,6 +44,7 @@ class Camera(object):
         self.image = None # Stored image, if identifier is an image filename
         self.capture = None # Underlying opencv capture object
         self.frame_count = 0
+        self.dc1394_capture = None
 
         if display:
             cv.NamedWindow(self.get_window_name())
@@ -56,13 +59,16 @@ class Camera(object):
         '''Gets a frame from the camera.'''
         self.frame_count += 1
 
-        if not self.capture and not self.image:
+        if not self.capture and not self.image and not self.dc1394_capture:
             self.open_capture()
 
         if self.image:
             return cv.CloneImage(self.image)
 
-        frame = cv.QueryFrame(self.capture)
+        if self.dc1394_capture:
+            frame = self.dc1394_capture.get_frame()
+        else:
+            frame = cv.QueryFrame(self.capture)
         if self.display:
             cv.ShowImage(self.get_window_name(), frame)
 
@@ -116,6 +122,8 @@ class Camera(object):
         if isinstance(self.identifier, basestring):
             self.capture = cv.CaptureFromFile(self.identifier)
             self.record_path = False # Don't re-record avi files
+        elif self.identifier >= 300 and self.identifier < 400:
+            self.dc1394_capture = DC1394Camera(self.identifier - 300)
         else:
             self.capture = cv.CaptureFromCAM(self.identifier)
 
@@ -131,6 +139,9 @@ class Camera(object):
         if self.capture:
             del self.capture
         self.capture = None
+        if self.dc1394_capture:
+            self.dc1394_capture.close()
+            self.dc1394_capture = None
 
     __del__ = close
 
