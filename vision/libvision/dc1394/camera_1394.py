@@ -1,11 +1,16 @@
 
 from time import time
+from os import path
 
 import cv
 import ctypes
 
+libvision_dc1394_directory = path.abspath(__file__)
+dc1394_so_file = path.realpath(
+    path.join(libvision_dc1394_directory, "../dc1394.so")
+)
 try:
-    dc = ctypes.cdll.LoadLibrary("./libvision/dc1394/dc1394.so")
+    dc = ctypes.cdll.LoadLibrary(dc1394_so_file)
 except OSError:
     raise OSError('Could not find "dc1394.so". Did you forget to compile libvision?')
 dc.grab_frame.restype = ctypes.POINTER( ctypes.c_char )
