@@ -178,6 +178,22 @@ dc1394camera_t* open_camera(int index) {
         return NULL;
     }
 
+    // Set auto gain
+    err = dc1394_feature_set_mode(camera, DC1394_FEATURE_GAIN, DC1394_FEATURE_MODE_AUTO);
+    if (err != DC1394_SUCCESS) {
+        printf("Error: Could not set auto gain (error code %d)\n", err);
+        close_camera(camera);
+        return NULL;
+    }
+
+    // Set auto shutter
+    err = dc1394_feature_set_mode(camera, DC1394_FEATURE_SHUTTER, DC1394_FEATURE_MODE_AUTO);
+    if (err != DC1394_SUCCESS) {
+        printf("Error: Could not set auto shutter (error code %d)\n", err);
+        close_camera(camera);
+        return NULL;
+    }
+
     // Setup camera
     err=dc1394_capture_setup(camera,4, DC1394_CAPTURE_FLAGS_DEFAULT);
     if (err != DC1394_SUCCESS) {
