@@ -54,3 +54,67 @@ def hsv_filter(src, low_h, high_h, min_s, max_s, min_v, max_v,
                     cv.Set2D(binary, y, x, (255,))
 
     return binary
+
+def otsu_get_threshold(src):
+    '''
+    Find the optimal threshold value for a grey level image using Otsu's
+    method.
+
+    This is baised on Otsu's original paper published in IEEE Xplore: "A
+    Threshold Selection Method from Gray-Level Histograms"
+
+    '''
+
+    if src.nChannels != 1:
+        raise ValueError("Image must have one channel.")
+
+    # Compute Histogram
+    hist = cv.CreateHist([256], cv.CV_HIST_ARRAY, [[0,255]], 1)
+    cv.CalcHist([src], hist)
+
+    # Convert to Probability Histogram
+    cv.NormalizeHist(hist, 1)
+
+    overall_moment = 0
+    for t in xrange(256):
+        overall_moment += t * cv.QueryHistValue_1D(hist, t)
+
+    # Find the threshold t that gives the highest variance
+    # Suffixes _b and _f mean background and foreground
+    num_pixels = src.width * src.height
+    weight_b = 0
+    moment_b = 0
+    highest_variance = 0
+    best_threshold = 0
+    for t in xrange(256):
+
+        hist_value = cv.QueryHistValue_1D(hist, t)
+
+        weight_b += hist_value
+        weight_f = 1 - weight_b
+        if weight_b == 0:
+            continue
+        if weight_f == 0:
+            break
+
+        moment_b += t * hist_value
+        moment_f = overall_moment - moment_b
+
+        mean_b = moment_b / weight_b
+        mean_f = moment_f / weight_f
+
+        variance_between = weight_b * weight_f * \
+            (mean_b - mean_f)**2
+
+        if variance_between >= highest_variance:
+            highest_variance = variance_between
+            best_threshold = t
+
+    return best_threshold
+
+def otsu_threshold(src, max_value=255, threshold_type=cv.CV_THRESH_BINARY):
+    #TODO: Documentation
+    threshold = otsu_get_threshold(src)
+    dst = cv.CreateImage((src.width, src.height), 8, 1)
+    cv.Threshold(src, dst, threshold, max_value, threshold_type)
+    return dst
