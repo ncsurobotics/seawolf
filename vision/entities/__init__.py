@@ -13,11 +13,13 @@ from base import VisionEntity
 from path import PathEntity
 from example import ExampleEntity
 from gate import GateEntity, GATE_BLACK, GATE_WHITE
+from buoys import BuoysEntity, BUOY_GREEN, BUOY_RED, BUOY_YELLOW
 
 entity_classes = {
     "path": PathEntity,
     "example": ExampleEntity,
     "gate": GateEntity,
+    "buoys": BuoysEntity,
 }
 
 def get_all_used_cameras():
