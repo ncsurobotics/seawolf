@@ -1,5 +1,6 @@
 
 from camera import Camera
+import cmodules
 import filters
-import misc
 import hist
+import misc

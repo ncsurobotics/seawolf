@@ -61,12 +61,34 @@ TODO
 #TODO: Write Limitations section
 #TODO: Where does documentation for modules go?
 
+import ctypes
+
 from cmodule import CModule, CFunction
-from cvtypes import IplImage, IplImage_p
+from cvtypes import IplImage, IplImage_p, CvPoint
 
 
-# Instantiate CModule objects here:
+# Instantiate CModule objects below:
 
 test = CModule("test.so", [
     CFunction("test_function", IplImage_p, [IplImage_p]),
+])
+
+# blob module
+class BlobStruct(ctypes.Structure):
+    _fields_ = [
+        ("top", ctypes.c_int),
+        ("left", ctypes.c_int),
+        ("right", ctypes.c_int),
+        ("bottom", ctypes.c_int),
+        ("area", ctypes.c_long),
+        ("cent_x", ctypes.c_double),
+        ("cent_y", ctypes.c_double),
+        ("mid", CvPoint),
+        ("pixels", ctypes.POINTER(CvPoint)),
+    ]
+BlobStruct_p = ctypes.POINTER(BlobStruct)
+BlobStruct_p_p = ctypes.POINTER(BlobStruct_p)
+blob = CModule("blob.so", [
+    CFunction("find_blobs", ctypes.c_int, [IplImage_p, BlobStruct_p_p, ctypes.c_int, ctypes.c_int]),
+    CFunction("blob_free", None, [BlobStruct_p, ctypes.c_int]),
 ])

@@ -151,7 +151,7 @@ class CModule(object):
         try:
             name, return_type, argument_types = self.functions[function_name]
         except KeyError:
-            raise AttributeError()
+            raise AttributeError("Function not found in module.")
 
         func = getattr(self.ctypes_object, name)
 

@@ -37,3 +37,9 @@ class IplImage(ctypes.Structure):
         ("imageDataOrigin", c_char_p),
     ]
 IplImage_p = ctypes.POINTER(IplImage)
+
+class CvPoint(ctypes.Structure):
+    _fields_ = [
+        ("x", ctypes.c_int),
+        ("y", ctypes.c_int),
+    ]
