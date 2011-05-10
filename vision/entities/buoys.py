@@ -1,6 +1,7 @@
 
 from __future__ import division
 import math
+import ctypes
 
 import cv
 
@@ -11,19 +12,10 @@ BUOY_GREEN = 0
 BUOY_RED = 1
 BUOY_YELLOW = 2
 
-def get_channel(frame, channel):
-    '''
-    Returns a single channel image containing the specified channel from frame.
-
-    The channel given is 0-indexed.
-
-    '''
-    result = cv.CreateImage(cv.GetSize(frame), 8, 1)
-    previous_coi = cv.GetImageCOI(frame)
-    cv.SetImageCOI(frame, channel+1)  # COI is 1-indexed
-    cv.Copy(frame, result)
-    cv.SetImageCOI(frame, previous_coi)
-    return result
+# Tuning Values
+FILTER_TYPE = cv.CV_GAUSSIAN
+FILTER_SIZE = 11
+MIN_BLOB_SIZE = 200
 
 class BuoysEntity(VisionEntity):
 
@@ -33,173 +25,108 @@ class BuoysEntity(VisionEntity):
     def __init__(self, color_of_interest=BUOY_RED):
         self.color_of_interest = color_of_interest
 
-        self.saturation_adaptive_thresh_blocksize = 51
-        self.saturation_adaptive_thresh = 15
-        self.red_adaptive_thresh_blocksize = 51
-        self.red_adaptive_thresh = 15
-        self.green_adaptive_thresh_blocksize = 51
-        self.green_adaptive_thresh = 20
-        self.blue_adaptive_thresh_blocksize = 51
-        self.blue_adaptive_thresh = 20
-
-        #XXX
-        #self.canny_low = 70
-        #self.canny_high = 190
-        self.canny_low = 30
-        self.canny_high = 40
-
     def initialize_non_pickleable(self, debug=True):
 
         if debug:
-            self.create_trackbar("saturation_adaptive_thresh", 50)
-            self.create_trackbar("saturation_adaptive_thresh_blocksize", 50)
-            self.create_trackbar("red_adaptive_thresh", 50)
-            self.create_trackbar("red_adaptive_thresh_blocksize", 50)
-            self.create_trackbar("green_adaptive_thresh", 50)
-            self.create_trackbar("green_adaptive_thresh_blocksize", 50)
-            self.create_trackbar("blue_adaptive_thresh", 50)
-            self.create_trackbar("blue_adaptive_thresh_blocksize", 50)
-
-            #XXX
-            self.create_trackbar("canny_low")
-            self.create_trackbar("canny_high")
+            cv.NamedWindow("Hist")
 
     def find(self, frame, debug=True):
 
-        hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
+        blobs = find_blobs(frame, debug)
 
-        high_red_filter = get_channel(frame, 2)
-        high_green_filter = get_channel(frame, 1)
-        low_blue_filter = get_channel(frame, 0)
-        low_sat_filter = get_channel(hsv, 1)
+        # Filter blobs
+        #TODO
 
-        cv.AdaptiveThreshold(high_red_filter, high_red_filter,
-            255,
-            cv.CV_ADAPTIVE_THRESH_MEAN_C,
-            cv.CV_THRESH_BINARY,
-            self.red_adaptive_thresh_blocksize - self.red_adaptive_thresh_blocksize%2 + 1,
-            -1*self.red_adaptive_thresh,
-        )
-        cv.AdaptiveThreshold(high_green_filter, high_green_filter,
-            255,
-            cv.CV_ADAPTIVE_THRESH_MEAN_C,
-            cv.CV_THRESH_BINARY,
-            self.green_adaptive_thresh_blocksize - self.green_adaptive_thresh_blocksize%2 + 1,
-            -1*self.green_adaptive_thresh,
-        )
-        cv.AdaptiveThreshold(low_blue_filter, low_blue_filter,
-            255,
-            cv.CV_ADAPTIVE_THRESH_MEAN_C,
-            cv.CV_THRESH_BINARY,
-            self.blue_adaptive_thresh_blocksize - self.blue_adaptive_thresh_blocksize%2 + 1,
-            -1*self.blue_adaptive_thresh,
-        )
-        cv.AdaptiveThreshold(low_sat_filter, low_sat_filter,
-            255,
-            cv.CV_ADAPTIVE_THRESH_MEAN_C,
-            cv.CV_THRESH_BINARY_INV,
-            self.saturation_adaptive_thresh_blocksize - self.saturation_adaptive_thresh_blocksize%2 + 1,
-            self.saturation_adaptive_thresh,
-        )
-
-        # Red:     red - High
-        #        green - Neither
-        #   saturation - Low
-        # Low saturation but not high green.
-        #
-        # Green:   red - Low
-        #        green - High
-        #   saturation - Neither
-        # High green but not high red.
-        #
-        # Yellow:  red - High
-        #        green - High
-        #   saturation - Low
-        # Low saturation and high green but not high red.
-        #
-        # Filters needed:
-        #  - Low saturation
-        #  - High green
-        #  - High red
-
-        kernel = cv.CreateStructuringElementEx(9, 9, 4, 4, cv.CV_SHAPE_ELLIPSE)
-
-        cv.Erode(high_red_filter, high_red_filter, kernel, 1)
-        cv.Dilate(high_red_filter, high_red_filter, kernel, 1)
-
-        cv.Erode(high_green_filter, high_green_filter, kernel, 1)
-        cv.Dilate(high_green_filter, high_green_filter, kernel, 1)
-
-        cv.Erode(low_blue_filter, low_blue_filter, kernel, 1)
-        cv.Dilate(low_blue_filter, low_blue_filter, kernel, 1)
-
-        cv.Erode(low_sat_filter, low_sat_filter, kernel, 1)
-        cv.Dilate(low_sat_filter, low_sat_filter, kernel, 1)
-
-        all_buoys_filter = cv.CreateImage(cv.GetSize(frame), 8, 1)
-        cv.Or(low_sat_filter, high_red_filter, all_buoys_filter)
-        cv.Or(all_buoys_filter, low_blue_filter, all_buoys_filter)
-        cv.Or(all_buoys_filter, high_green_filter, all_buoys_filter)
-
-        red_buoy = cv.CreateImage(cv.GetSize(frame), 8, 1)
-        green_buoy = cv.CreateImage(cv.GetSize(frame), 8, 1)
-        yellow_buoy = cv.CreateImage(cv.GetSize(frame), 8, 1)
-
-        not_high_green_filter = cv.CreateImage(cv.GetSize(frame), 8, 1)
-        not_high_red_filter = cv.CreateImage(cv.GetSize(frame), 8, 1)
-
-        cv.Not(high_green_filter, not_high_green_filter)
-        cv.Not(high_red_filter, not_high_red_filter)
-
-        cv.Erode(not_high_green_filter, not_high_green_filter, kernel, 1)
-        cv.Erode(not_high_red_filter, not_high_red_filter, kernel, 1)
-
-        cv.And(low_sat_filter, not_high_green_filter, red_buoy)
-        cv.And(red_buoy, high_red_filter, red_buoy)
-
-        cv.And(high_green_filter, not_high_red_filter, green_buoy)
-
-        cv.And(low_sat_filter, high_red_filter, yellow_buoy)
-        cv.And(yellow_buoy, high_green_filter, yellow_buoy)
-
-        cv.Erode(red_buoy, red_buoy, kernel, 1)
-        cv.Dilate(red_buoy, red_buoy, kernel, 1)
-
-        cv.Erode(green_buoy, green_buoy, kernel, 1)
-        cv.Dilate(green_buoy, green_buoy, kernel, 1)
-
-        cv.Erode(yellow_buoy, yellow_buoy, kernel, 1)
-        cv.Dilate(yellow_buoy, yellow_buoy, kernel, 1)
+        # Track blobs
+        #TODO
 
         if debug:
 
-            #XXX
-            edge_detect = get_channel(hsv, 0)
-            cv.Canny(edge_detect, edge_detect, self.canny_low, self.canny_high)
-            cv.NamedWindow("canny")
-            cv.ShowImage("canny", edge_detect)
+            # Draw blobs and centers
+            for blob in blobs:
+                cv.Rectangle(frame, (blob.left, blob.top), (blob.right, blob.bottom), (0,0,255))
+                #cv.Circle(frame, (int(blob.cent_x),int(blob.cent_y)), 3, (0,0,255))
 
-            cv.NamedWindow("high_red_filter")
-            cv.NamedWindow("high_green_filter")
-            cv.NamedWindow("low_blue_filter")
-            cv.NamedWindow("low_sat_filter")
-
-            cv.NamedWindow("red_buoy")
-            cv.NamedWindow("green_buoy")
-            cv.NamedWindow("yellow_buoy")
-
-            cv.ShowImage("high_red_filter", high_red_filter)
-            cv.ShowImage("high_green_filter", high_green_filter)
-            cv.ShowImage("low_blue_filter", low_blue_filter)
-            cv.ShowImage("low_sat_filter", low_sat_filter)
-
-            cv.ShowImage("red_buoy", red_buoy)
-            cv.ShowImage("green_buoy", green_buoy)
-            cv.ShowImage("yellow_buoy", yellow_buoy)
-
-            cv.CvtColor(all_buoys_filter, frame, cv.CV_GRAY2BGR)
-            #cv.CvtColor(red_buoy, frame, cv.CV_GRAY2BGR)
+        return len(blobs) > 0
 
     def __repr__(self):
         return "<BuoysEntity>"
+
+
+def find_blobs(frame, debug=True):
+    '''Find blobs in an image.
+
+    Hopefully this gets blobs that correspond with
+    buoys, but any intelligent checking is done outside of this function.
+
+    How it works
+    ------------
+    This function sums the laplacian of gaussian of some of the channels that
+    should distinguish the buoys best.  The total laplacian is then scaled from
+    0-255 and an otsu threshold is performed.  A blob detection is then
+    performed on the resulting binary image.
+
+    '''
+
+    # Filter
+    filtered = cv.CreateImage(cv.GetSize(frame), 8, 3)
+    cv.Smooth(frame, filtered, FILTER_TYPE, FILTER_SIZE, FILTER_SIZE)
+
+    # Grab hue, saturation, red and green channels
+    #TODO: Possibly not all of these channels are needed
+    filtered_hsv = cv.CreateImage(cv.GetSize(filtered), 8, 3)
+    cv.CvtColor(filtered, filtered_hsv, cv.CV_BGR2HSV)
+    channels = [libvision.misc.get_channel(filtered_hsv, i) for i in xrange(2)]+\
+        [libvision.misc.get_channel(filtered, i) for i in xrange(1,3)]
+
+    # Sum the laplacian from each channel
+    total_laplace = cv.CreateImage((filtered.width,filtered.height), cv.IPL_DEPTH_32F, 1)
+    cv.SetZero(total_laplace)
+    for i, channel in enumerate(channels):
+        channel_laplace = cv.CreateImage((channel.width,channel.height), cv.IPL_DEPTH_32F, 1)
+        #cv.Sobel(channel, channel_laplace, 1, 1, 11)
+        cv.Laplace(channel, channel_laplace, 19)
+        cv.AbsDiffS(channel_laplace, channel_laplace, 0)
+        cv.Add(channel_laplace, total_laplace, total_laplace)
+
+    # Scale total_laplace 0-255 and store in result
+    result = cv.CreateImage((channel.width,channel.height), 8, 1)
+    cv.SetZero(result)
+    max_value = cv.MinMaxLoc(total_laplace)[1]
+    cv.ConvertScaleAbs(total_laplace, result, 255/max_value)
+
+    # Get otsu threshold of total_laplace
+    hist = cv.CreateHist([256], cv.CV_HIST_ARRAY, [[0,255]], 1)
+    cv.CalcHist([result], hist)
+    threshold = libvision.filters.otsu_get_threshold(result)
+    max_value = int(cv.GetMinMaxHistValue(hist)[1])
+
+    # Show histogram
+    if debug:
+        hist_image = libvision.hist.histogram_image(hist, color=(0,255,0))
+        cv.Line(hist_image, (threshold,0), (threshold,255), (255,255,255))
+        cv.ShowImage("Hist", hist_image)
+
+    # Threshold
+    cv.Threshold(result, result, threshold, max_value, cv.CV_THRESH_BINARY)
+    # There will be a giant spike on the very left of the histogram if we
+    # see something, because max_value will be much greater than most
+    # pixels.  If there isn't a large enough spike, ignore the image.
+    # The reason for this becomes more clear if you study the histogram on
+    # test footage.
+    if cv.QueryHistValue_1D(hist, threshold)/max_value >= 0.01:
+        return []
+
+    # Get blobs
+    blobs_p = libvision.cmodules.BlobStruct_p()
+    num_blobs = libvision.cmodules.blob.find_blobs(result, ctypes.pointer(blobs_p), 10, MIN_BLOB_SIZE)
+    # The blobs are coppied here because we want to free the memory allocated
+    # for them in C.  In the future libvision should do this for us.
+    blobs = []
+    for i in xrange(num_blobs):
+        blob = libvision.cmodules.BlobStruct()
+        ctypes.pointer(blob)[0] = blobs_p[i]
+        blobs.append(blob)
+    libvision.cmodules.blob.blob_free(blobs_p, num_blobs)
+
+    return blobs
