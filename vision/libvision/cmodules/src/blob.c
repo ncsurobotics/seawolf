@@ -8,9 +8,6 @@
 #include <cv.h>
 #include <highgui.h>
 
-#define VISION_LIB_BLOB
-#define VISION_GRAPHICAL
-
 typedef struct {
     int top; /**< Upper most pixel in the blob. */
     int left; /**< Left most pixel in the blob. */
@@ -67,8 +64,8 @@ void blob_free(BLOB* blobs, int blobs_found);
  *
  */
 int find_blobs(IplImage* Img, BLOB** targets, int tracking_number, int minimum_blob_area) {
-    if (Img->nChannels != 3) {
-        printf("Error: find_blobs only accepts 3 channel char type images.\n");
+    if (Img->depth != 8) {
+        printf("Error: find_blobs only accepts char type images.\n");
         return -1;
     }
 
@@ -98,33 +95,33 @@ int find_blobs(IplImage* Img, BLOB** targets, int tracking_number, int minimum_b
             // Draw the top of the binding box
             uchar* ptr = (uchar*) (blob_pic->imageData + (*targets)[i].top * blob_pic->widthStep);
             for(x=(*targets)[i].left; x<=(*targets)[i].right;x++){
-                ptr[3*x+0] = 0;
-                ptr[3*x+1] = 254;
-                ptr[3*x+2] = 0;
+                ptr[Img->nChannels*x+0] = 0;
+                ptr[Img->nChannels*x+1] = 254;
+                ptr[Img->nChannels*x+2] = 0;
             }
             // Draw the bottom of the binding box
             ptr = (uchar*) (blob_pic->imageData + (*targets)[i].bottom * blob_pic->widthStep);
             for(x=(*targets)[i].left; x<=(*targets)[i].right;x++){
-                ptr[3*x+0] = 0;
-                ptr[3*x+1] = 254;
-                ptr[3*x+2] = 0;
+                ptr[Img->nChannels*x+0] = 0;
+                ptr[Img->nChannels*x+1] = 254;
+                ptr[Img->nChannels*x+2] = 0;
             }
             // Draw the left of the box
             for(y = (*targets)[i].top; y>= (*targets)[i].bottom; y--){
                 ptr = (uchar*) (blob_pic->imageData + y * blob_pic->widthStep);
                 x = (*targets)[i].left;
-                ptr[3*x+0] = 0;
-                ptr[3*x+1] = 254;
-                ptr[3*x+2] = 0;
+                ptr[Img->nChannels*x+0] = 0;
+                ptr[Img->nChannels*x+1] = 254;
+                ptr[Img->nChannels*x+2] = 0;
             }
 
             // Draw the left of the box
             for(y = (*targets)[i].top; y>= (*targets)[i].bottom; y--){
                 ptr = (uchar*) (blob_pic->imageData + y * blob_pic->widthStep);
                 x = (*targets)[i].right;
-                ptr[3*x+0] = 0;
-                ptr[3*x+1] = 254;
-                ptr[3*x+2] = 0;
+                ptr[Img->nChannels*x+0] = 0;
+                ptr[Img->nChannels*x+1] = 254;
+                ptr[Img->nChannels*x+2] = 0;
             }
         }
 
@@ -190,7 +187,7 @@ BLOB* findPrimary(IplImage* Img, int tracking_number, int minimum_blob_area, int
         uchar* ptr = (uchar*) (Img->imageData + y * Img->widthStep);
         for(x=0; x<width-3; x+=4 ) {
             //if the pixel hasn't been blacked out as the wrong color AND has not yet been checked
-            if((ptr[3*x+0]||ptr[3*x+1]||ptr[3*x+2])&& pixlog[x][y]==0){
+            if((ptr[Img->nChannels*x+0]||ptr[Img->nChannels*x+1]||ptr[Img->nChannels*x+2])&& pixlog[x][y]==0){
                 //we've found a new blob, so let's initialize it's values
                 blobs[*blobnumber].area = 0;
                 blobs[*blobnumber].top = 0;
@@ -278,7 +275,7 @@ int checkPixel(IplImage* Img, int x, int y, unsigned int** pixlog, BLOB* blob, i
 
     //check too see if the pixel is part of the blob
     uchar* ptr = (uchar*) (Img->imageData + y * Img->widthStep);
-    if((ptr[3*x+0] || ptr[3*x+1] || ptr[3*x+2]) == 0){
+    if((ptr[Img->nChannels*x+0] || ptr[Img->nChannels*x+1] || ptr[Img->nChannels*x+2]) == 0){
         return 2; //the pixel has been blacked out and shouldn't be used
     }
 
