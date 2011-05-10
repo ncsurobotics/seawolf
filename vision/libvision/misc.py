@@ -25,3 +25,17 @@ def draw_lines(src, lines, limit=None):
         pt1 = (cv.Round(x0 + 1000*(-b)), cv.Round(y0 + 1000*(a)))
         pt2 = (cv.Round(x0 - 1000*(-b)), cv.Round(y0 - 1000*(a)))
         cv.Line(src, pt1, pt2, cv.RGB(255, 0, 0), 1, cv.CV_AA, 0)
+
+def get_channel(frame, channel):
+    '''
+    Returns a single channel image containing the specified channel from frame.
+
+    The channel given is 0-indexed.
+
+    '''
+    result = cv.CreateImage(cv.GetSize(frame), 8, 1)
+    previous_coi = cv.GetImageCOI(frame)
+    cv.SetImageCOI(frame, channel+1)  # COI is 1-indexed
+    cv.Copy(frame, result)
+    cv.SetImageCOI(frame, previous_coi)
+    return result
