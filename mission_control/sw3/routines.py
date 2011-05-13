@@ -317,9 +317,6 @@ class Forward(NavRoutine):
     def _start(self):
         mixer.forward = self.rate
 
-    def _cleanup(self):
-        mixer.forward = 0.0
-
 class Strafe(NavRoutine):
     interactions = ("Strafe",)
     
