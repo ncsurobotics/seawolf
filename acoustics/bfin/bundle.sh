@@ -1,5 +1,7 @@
 #!/bin/sh
 
+make
+
 if [ -d acoustics ]; then
     echo "The acoustics directory already exists. I need that as a temporary directory";
 else
@@ -8,11 +10,11 @@ else
     mkdir acoustics;
     mkdir acoustics/coefs;
 
-    cp bin/acoustics-bfin ../ppiadc/ppiadc.ko ../../libseawolf/libseawolf-bfin.so acoustics/;
+    cp bin/acoustics-bfin ../ppiadc/ppiadc.ko ../libseawolf-bfin.so acoustics/;
 
     cat <<EOF > acoustics/seawolf.conf
-Comm_server = 10.17.0.2
-Comm_password = 
+comm_server = 10.17.0.2
+comm_password = 
 EOF
 
     cat <<EOF > acoustics/update
@@ -22,7 +24,7 @@ EOF
 
     cat <<EOF > acoustics/init
 #!/bin/sh
-cp /root/acoustics/libseawolf-bfin.so /lib
+cp /root/acoustics/libseawolf-bfin.so /lib/libseawolf-bfin.so.0
 modprobe gptimers
 if cat /proc/modules | grep ppiadc > /dev/null 2>&1; then
   rmmod ppiadc
