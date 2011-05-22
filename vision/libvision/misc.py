@@ -39,3 +39,24 @@ def get_channel(frame, channel):
     cv.Copy(frame, result)
     cv.SetImageCOI(frame, previous_coi)
     return result
+
+def scale_32f_image(image):
+
+    result = cv.CreateImage(cv.GetSize(image), 8, image.channels)
+    channel_image = cv.CreateImage(cv.GetSize(image), cv.IPL_DEPTH_32F, 1)
+    channel_scaled = cv.CreateImage(cv.GetSize(image), 8, 1)
+    print "CHANNELS:", image.channels
+    for channel_num in xrange(1, image.channels+1):
+
+        cv.SetImageCOI(image, channel_num)
+        cv.Copy(image, channel_image)
+        maximum = cv.MinMaxLoc(channel_image)[1]
+        print "MAXIMUM:", maximum
+        cv.ConvertScale(channel_image, channel_scaled, 255/maximum)
+
+        cv.SetImageCOI(result, channel_num)
+        cv.Copy(channel_scaled, result)
+
+    cv.SetImageCOI(image, 0)
+    cv.SetImageCOI(result, 0)
+    return result
