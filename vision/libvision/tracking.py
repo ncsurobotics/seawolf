@@ -35,7 +35,7 @@ class Tracker(object):
     '''
 
     def __init__(self, frame, center, size, search_size, alpha=0.2,
-        match_method=DEFAULT_MATCH_METHOD, debug=False):
+        min_z_score=5.0, match_method=DEFAULT_MATCH_METHOD, debug=False):
         '''
         Arguments:
 
@@ -59,6 +59,10 @@ class Tracker(object):
                 that was just found.  A value of 0 will keep the initial
                 template.
 
+            min_z_score - The number of standard deviations from the average
+                the template matching max/min must be for it to be considered a
+                valid match.
+
             match_method - The distance calculation that is used for template
                 matching.  Must be one of the OpenCV method constants defined
                 for OpenCV's MatchTemplate function (cv.CV_TM_*).
@@ -72,6 +76,7 @@ class Tracker(object):
         self.size = size
         self.match_method = match_method
         self.alpha = alpha
+        self.min_z_score = min_z_score
         self.search_size = search_size
         self.debug = debug
 
@@ -132,6 +137,11 @@ class Tracker(object):
         '''
         Finds the object in the given frame based on information from previous
         frames.
+
+        The object location as a tuple (x,y) within the given image is
+        returned.  If the object is not found, False is returned.
+        Tracker.object_center will always contain the last known object
+        location.
         '''
 
         search_rect = clip_rectangle((
@@ -159,32 +169,44 @@ class Tracker(object):
             match_in_result[1] + self._template.height/2,
         )
         self.object_center = (
-            match_in_search_region[0] + self.object_center[0] - self.search_size[0]/2,
-            match_in_search_region[1] + self.object_center[1] - self.search_size[1]/2,
+            match_in_search_region[0] + search_rect[0],
+            match_in_search_region[1] + search_rect[1],
         )
         self.object_center = (
             int(in_range(0, self.object_center[0], frame.width-1)),
             int(in_range(0, self.object_center[1], frame.height-1)),
         )
 
+        # Determine if the max/min is significant.
+        hist = cv.CreateHist([256], cv.CV_HIST_ARRAY, [[0,255]], 1)
+        cv.CalcHist([scale_32f_image(result)], hist)
+        #XXX stddevs from mean should be calculated from either 0 or 255
+        #    depending on min or max
+        distance = abs(libvision.hist.num_stddev_from_mean(hist, 255))
+        if distance < self.min_z_score:
+            object_found = False
+        else:
+            object_found = True
+            self._update_template(search_image, match_in_search_region)
+
         if self.debug:
 
             result_8bit = scale_32f_image(result)
-            cv.Circle(result_8bit, match_in_result, 5, (0,255,0))
+            if object_found:
+                cv.Circle(result_8bit, match_in_result, 5, (0,255,0))
+                cv.Circle(search_image, match_in_search_region, 5, (0,255,0))
+            hist_image = libvision.hist.histogram_image(hist)
+
             cv.ShowImage("match", result_8bit)
-
             cv.ShowImage("template", scale_32f_image(self._template))
-
-            cv.Circle(search_image, match_in_search_region, 5, (0,255,0))
             cv.ShowImage("search region", scale_32f_image(search_image))
+            cv.ShowImage("Histogram", hist_image)
 
-            hist = cv.CreateHist([256], cv.CV_HIST_ARRAY, [[0,255]], 1)
-            cv.CalcHist([scale_32f_image(result)], hist)
-            cv.ShowImage("Histogram", libvision.hist.histogram_image(hist))
-
-        self._update_template(search_image, match_in_search_region)
-
-        return self.object_center
+        # Update Template
+        if object_found:
+            return self.object_center
+        else:
+            return False
 
 
 def scale_32f_image(image):
