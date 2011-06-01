@@ -13,7 +13,7 @@ class Camera(object):
     '''
 
     def __init__(self, identifier, display=True, window_name=None,
-        record_path=True):
+        record_path=False):
         '''
         Arguments:
 
