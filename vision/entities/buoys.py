@@ -15,6 +15,9 @@ BUOY_YELLOW = 2
 # Tuning Values
 FILTER_TYPE = cv.CV_GAUSSIAN
 FILTER_SIZE = 11
+# If we want to see buoys from far away, 50 is a good value for MIN_BLOB_SIZE.
+# However, if we align with the path first, the buoys will be much closer, and
+# this can be raised to 200.
 MIN_BLOB_SIZE = 200
 
 class BuoysEntity(VisionEntity):
@@ -24,33 +27,144 @@ class BuoysEntity(VisionEntity):
 
     def __init__(self, color_of_interest=BUOY_RED):
         self.color_of_interest = color_of_interest
+        self.state = "searching"
+        self.trackers = []
+        self.buoy_locations = []
 
     def initialize_non_pickleable(self, debug=True):
 
         if debug:
-            cv.NamedWindow("Hist")
+            pass
+            #cv.NamedWindow("Hist")
 
     def find(self, frame, debug=True):
 
-        blobs = find_blobs(frame, debug)
+        blobs = None
+        if self.state == "searching":
 
-        # Filter blobs
-        #TODO
+            blobs = find_blobs(frame, debug)
 
-        # Track blobs
-        #TODO
+            buoy_blobs = extract_buoys_from_blobs(blobs)
+            if buoy_blobs:
 
-        if debug:
+                # Initialize Tracking
+                self.state = "tracking"
+                self.trackers = []
+                for blob in buoy_blobs:
+                    size = (blob.right-blob.left, blob.top-blob.bottom)
+                    tracker = libvision.Tracker(
+                        frame,
+                        (blob.cent_x, blob.cent_y),
+                        size,
+                        (size[0]*5, size[1]*5),
+                    )
+                    self.trackers.append(tracker)
 
-            # Draw blobs and centers
+        locations = []
+        if self.state == "tracking":
+
+            locations = []
+            for tracker in self.trackers:
+                location = tracker.locate_object(frame)
+                locations.append(location)
+
+                if debug and location:
+                    cv.Circle(frame, location, 5, (0,255,0))
+
+        if debug and blobs:
             for blob in blobs:
-                cv.Rectangle(frame, (blob.left, blob.top), (blob.right, blob.bottom), (0,0,255))
-                #cv.Circle(frame, (int(blob.cent_x),int(blob.cent_y)), 3, (0,0,255))
+                cv.Rectangle(frame, (blob.left, blob.top),
+                         (blob.right, blob.bottom), (0,0,255))
 
-        return len(blobs) > 0
+        self.buoy_locations = locations
+        return locations
 
     def __repr__(self):
-        return "<BuoysEntity>"
+        return "<BuoysEntity buoy_locations=%s>" % self.buoy_locations
+
+
+def blob_filter(blob):
+    height = blob.top - blob.bottom
+    width = blob.right - blob.left
+
+    if blob.area/(height*width) < 0.7:
+        return False
+
+    return True
+
+def blobs_overlap_vert(a, b):
+    if (b.top > a.bottom and b.bottom < a.top) and \
+        (a.top > b.bottom and a.bottom < b.top):
+
+        return True
+    else:
+        return False
+
+def list_union(*args):
+    union = []
+    for l in args:
+        for item in l:
+            if item not in union:
+                union.append(item)
+    return union
+
+def extract_buoys_from_blobs(blobs):
+
+    '''
+    # Find 3 blobs that all overlap vertically
+    overlapping_triplets = []
+    for i, a in enumerate(blobs):
+        for j, b in enumerate(blobs[i+1:]):
+            for c in blobs[i+j+1:]:
+                if blobs_overlap_vert(a,b) and \
+                   blobs_overlap_vert(a,c) and \
+                   blobs_overlap_vert(b,c):
+
+                    overlapping_triplets.append((a,b,c))
+
+    for triplet in overlapping_triplets:
+
+        # Find smallest and largest
+        smallest = triplet[0]
+        largest = triplet[0]
+        for blob in triplet[1:]:
+            if blob.area > largest:
+                largest = blob
+            elif blob.area < smallest:
+                smallest = blob
+
+        if largest.area / smallest.area > 2:
+            continue
+
+        #TODO: Return middle buoy, not an arbitrary one
+        return triplet[0]
+    '''
+
+    pairs = []
+    for i, a in enumerate(blobs):
+        for b in blobs[i+1:]:
+            if blobs_overlap_vert(a,b):
+                pairs.append([a,b])
+
+    if len(pairs) == 1:
+        return pairs[0]
+
+    elif len(pairs) == 2:
+        union = list_union(pairs[0], pairs[1])
+        if len(union) == 3:
+            return union
+        else:
+            return False
+
+    elif len(pairs) == 3:
+        union = list_union(pairs[0], pairs[1], pairs[2])
+        if len(union) == 3:
+            return union
+        else:
+            return False
+
+    else:
+        return False
 
 
 def find_blobs(frame, debug=True):
@@ -69,6 +183,10 @@ def find_blobs(frame, debug=True):
     '''
 
     # Filter
+    # TODO: This can be sped up tremendously because the laplacian and gaussian
+    #       can be combined into a single pass filter.  Better yet, separate
+    #       the filter into 2 1D convolutions (isn't the difference of gaussian
+    #       filter separatable?)
     filtered = cv.CreateImage(cv.GetSize(frame), 8, 3)
     cv.Smooth(frame, filtered, FILTER_TYPE, FILTER_SIZE, FILTER_SIZE)
 
@@ -84,7 +202,6 @@ def find_blobs(frame, debug=True):
     cv.SetZero(total_laplace)
     for i, channel in enumerate(channels):
         channel_laplace = cv.CreateImage((channel.width,channel.height), cv.IPL_DEPTH_32F, 1)
-        #cv.Sobel(channel, channel_laplace, 1, 1, 11)
         cv.Laplace(channel, channel_laplace, 19)
         cv.AbsDiffS(channel_laplace, channel_laplace, 0)
         cv.Add(channel_laplace, total_laplace, total_laplace)
@@ -103,9 +220,10 @@ def find_blobs(frame, debug=True):
 
     # Show histogram
     if debug:
-        hist_image = libvision.hist.histogram_image(hist, color=(0,255,0))
-        cv.Line(hist_image, (threshold,0), (threshold,255), (255,255,255))
-        cv.ShowImage("Hist", hist_image)
+        pass
+        #hist_image = libvision.hist.histogram_image(hist, color=(0,255,0))
+        #cv.Line(hist_image, (threshold,0), (threshold,255), (255,255,255))
+        #cv.ShowImage("Hist", hist_image)
 
     # Threshold
     cv.Threshold(result, result, threshold, max_value, cv.CV_THRESH_BINARY)
