@@ -144,6 +144,10 @@ class Tracker(object):
         location.
         '''
 
+        if not self._template:
+            raise RuntimeError("The Tracker class can not be used after it is "
+                               "unpickled.")
+
         search_rect = clip_rectangle((
             self.object_center[0]-self.search_size[0]/2,  # x
             self.object_center[1]-self.search_size[1]/2,  # y
@@ -207,6 +211,21 @@ class Tracker(object):
             return self.object_center
         else:
             return False
+
+    def __getstate__(self):
+        '''Makes this object safe for pickling.
+
+        OpenCV object cannot be pickled.  Something very weird happens if you
+        try.  This function is called while pickling.  The dictionary returned
+        by this function is what is actually pickled, which excludes the
+        IplImage which won't pickle correctly.
+
+        Note that for this reason, this class does not work correctly after pickled.
+
+        '''
+        pickleable_copy = self.__dict__.copy()
+        pickleable_copy['_template'] = None
+        return pickleable_copy
 
 
 def scale_32f_image(image):
