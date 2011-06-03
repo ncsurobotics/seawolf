@@ -5,6 +5,7 @@ if sys.version_info < (2, 6):
 
 import multiprocessing
 import os
+from copy import copy
 
 try:
     import cv
@@ -200,17 +201,8 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
 
     entities = None
 
-    # Derive capture directory
     if record:
-        if not os.path.exists("capture"):
-            os.mkdir("capture")
-        # Find the next index inside capture/ that isn't taken
-        i = 0
-        while True:
-            record_path = os.path.join("capture", str(i))
-            if not os.path.exists(record_path):
-                break
-            i += 1
+        record_path = get_record_path()
     else:
         record_path = False
 
@@ -265,7 +257,7 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
         for entity in entities:
 
             if is_graphical:
-                cv.NamedWindow("%s" %entity.name)
+                cv.NamedWindow("%s" % entity.name)
 
             if len(entities) > 1:
                 frame = cv.CloneImage(frames[entity.camera_name])
@@ -304,6 +296,18 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
         if key == 27:
             watchdog.send_exit_signal()
             break
+
+def get_record_path():
+    if not os.path.exists("capture"):
+        os.mkdir("capture")
+    # Find the next index inside capture/ that isn't taken
+    i = 0
+    while True:
+        record_path = os.path.join("capture", str(i))
+        if not os.path.exists(record_path):
+            break
+        i += 1
+    return record_path
 
 def _initialize_cameras(camera_indexes, display, record_path):
     '''
@@ -353,3 +357,83 @@ def _initialize_cameras(camera_indexes, display, record_path):
             pass
 
     return cameras
+
+
+class SingleProcessEntitySearcher(object):
+    '''An entity searcher that doesn't work in a separate process.
+
+    This class is a drop in replacement for EntitySearcher that doesn't start a
+    separate process.  Because EntitySearcher does all of the heavy lifting in
+    another process, it can be hard to debug certain problems.  For example,
+    EntitySearcher doesn't have a mechanism to run gdb or pdb within its
+    subprocess.
+
+    This class should only be used for debugging.  Certain problems can arrise
+    only when running in a subprocess.  If you don't believe me, try passing an
+    IplImage back to the superprocess, and watch the superprocess segfault.
+
+    '''
+
+    def __init__(self, camera_indexes={}, is_graphical=True, record=True, delay=10):
+        self.camera_indexes = camera_indexes
+        self.is_graphical = is_graphical
+        self.record = record
+        self.delay = delay
+
+        self.searching_entity = None
+        if record:
+            self.record_path = get_record_path()
+        else:
+            self.record_path = False
+
+        self.cameras = _initialize_cameras(self.camera_indexes,
+            self.is_graphical, self.record_path)
+
+    def start_search(self, entity_list):
+        if len(entity_list) > 1:
+            raise ValueError("The Dummy Entity Searcher only supports searching "
+                "for a single entity at a time.")
+        elif len(entity_list) == 1:
+            self.searching_entity = entity_list[0]
+
+    def ping(self):
+        return True
+
+    def is_alive(self):
+        return True
+
+    def get_entity(self):
+
+        # Grab Frames
+        camera = self.cameras[self.searching_entity.camera_name]
+        frame = camera.get_frame()
+
+        if self.is_graphical:
+            cv.NamedWindow("%s" % self.searching_entity.name)
+
+        # Initialize nonpickleable if object is new
+        if not hasattr(self.searching_entity, "non_pickleable_initialized"):
+            self.searching_entity.initialize_non_pickleable(self.is_graphical)
+            self.searching_entity.non_pickleable_initialized = True
+
+        # Search for each entity
+        if self.searching_entity.find(frame, debug=self.is_graphical):
+            #TODO: Timestamp the object
+            entity_found = True
+        else:
+            entity_found = False
+
+        # Debug window for this entity
+        if self.is_graphical:
+            #TODO: Would be cleaner to not create the window every
+            #      frame.
+            #TODO: Destroy windows when entity list changes. (if we
+            #      care)
+            cv.ShowImage("%s" % self.searching_entity.name, frame)
+
+        cv.WaitKey(self.delay)
+
+        if entity_found:
+            return self.searching_entity
+        else:
+            return None

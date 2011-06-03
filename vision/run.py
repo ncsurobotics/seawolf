@@ -18,7 +18,7 @@ if sys.version_info < (2, 6):
 from optparse import OptionParser
 
 import entities
-from entity_searcher import EntitySearcher
+from entity_searcher import EntitySearcher, SingleProcessEntitySearcher
 from process_watchdog import ExitSignal
 
 def main():
@@ -60,6 +60,11 @@ def main():
         dest="delay", default=10,
         help="Delay between frames, in milliseconds, or -1 to wait for "
             "keypress")
+    opt_parser.add_option("-s", "--single-process", action="store_true",
+        dest="single_process", default=False,
+        help="Do not run a subprocess for vision processing.  This is useful "
+            "for debugging, but it isn't the way which mission control "
+            "interacts with vision.")
 
     options, args = opt_parser.parse_args()
     if len(args) < 1:
@@ -81,8 +86,13 @@ def main():
     for camera_name, camera_index in options.cameras:
         camera_dict[camera_name] = camera_index
 
+    if options.single_process:
+        entity_searcher_cls = SingleProcessEntitySearcher
+    else:
+        entity_searcher_cls = EntitySearcher
+
     # Start searcher
-    entity_searcher = EntitySearcher(
+    entity_searcher = entity_searcher_cls(
         camera_indexes=camera_dict,
         is_graphical=options.graphical,
         record=options.record,
