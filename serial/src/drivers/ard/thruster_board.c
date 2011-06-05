@@ -12,11 +12,11 @@
 #define DEPTH_DEAD_BAND 8
 
 /* Thruster numbers */
-#define PORT   0 // (old PORT_X)
-#define STAR   1 // (old STAR_X)
-#define STRAFE 2 // (old PORT_Y)
-#define BOW    3 // (old STAR_Y)
-#define STERN  4 // (renamed from AFT)
+#define PORT   0
+#define STAR   1
+#define BOW    2
+#define STERN  3
+#define STRAFE 4
 
 void manage(SerialPort sp);
 
