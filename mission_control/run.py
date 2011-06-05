@@ -24,6 +24,7 @@ from mission_controller import MissionController
 MISSION_ORDER = [
     missions.GateMission(),
     missions.PathMission(),
+    missions.BuoysMission(),
 ]
 
 if __name__ == "__main__":

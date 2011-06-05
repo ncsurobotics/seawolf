@@ -2,11 +2,14 @@
 from __future__ import division
 import math
 import ctypes
+from collections import namedtuple
 
 import cv
 
 from entities.base import VisionEntity
 import libvision
+
+Point = namedtuple("Point", ["x", "y"])
 
 BUOY_GREEN = 0
 BUOY_RED = 1
@@ -63,21 +66,37 @@ class BuoysEntity(VisionEntity):
         locations = []
         if self.state == "tracking":
 
-            locations = []
             for tracker in self.trackers:
                 location = tracker.locate_object(frame)
                 locations.append(location)
 
                 if debug and location:
-                    cv.Circle(frame, location, 5, (0,255,0))
+                    cv.Circle(frame, location, 5, (0,0,255))
 
         if debug and blobs:
             for blob in blobs:
                 cv.Rectangle(frame, (blob.left, blob.top),
                          (blob.right, blob.bottom), (0,0,255))
 
-        self.buoy_locations = locations
-        return locations
+        if locations:
+
+            self.buoy_locations = []
+            for location in locations:
+                # Move origin to center and flip along horizontal axis.  Right
+                # and up will then be positive, which makes more sense for
+                # mission control.
+                if location:
+                    adjusted_location = Point(
+                        location[0] - frame.width/2,
+                        -1*location[1] + frame.height/2
+                    )
+                    self.buoy_locations.append(adjusted_location)
+                else:
+                    self.buoy_locations.append(False)
+            return True
+
+        else:
+            return False
 
     def __repr__(self):
         return "<BuoysEntity buoy_locations=%s>" % self.buoy_locations
