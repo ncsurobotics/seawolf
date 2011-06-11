@@ -127,8 +127,8 @@ class CModule(object):
         object_file_name = path.join(SOURCE_DIRECTORY, self.file_name)
         try:
             self.ctypes_object = ctypes.cdll.LoadLibrary(object_file_name)
-        except OSError:
-            raise OSError('Could not find shared object "%s". Did you forget to compile libvision?' % object_file_name)
+        except OSError as e:
+            raise OSError('Could open "%s". Did you forget to compile libvision?  Error: %s' % (object_file_name, e))
 
         for name, return_type, argument_types in self.functions.itervalues():
             func = getattr(self.ctypes_object, name)
