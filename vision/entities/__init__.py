@@ -14,12 +14,14 @@ from path import PathEntity
 from example import ExampleEntity
 from gate import GateEntity, GATE_BLACK, GATE_WHITE
 from buoys import BuoysEntity, BUOY_GREEN, BUOY_RED, BUOY_YELLOW
+from letters import LettersEntity 
 
 entity_classes = {
     "path": PathEntity,
     "example": ExampleEntity,
     "gate": GateEntity,
     "buoys": BuoysEntity,
+    "letters": LettersEntity,
 }
 
 def get_all_used_cameras():
