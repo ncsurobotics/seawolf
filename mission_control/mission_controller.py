@@ -1,7 +1,9 @@
 
 from collections import deque
+from time import sleep
 
 from vision import ExitSignal
+import sw3
 
 try:
     import seawolf
@@ -14,7 +16,7 @@ Error: Could not import library "seawolf".
 class MissionController(object):
     '''Orchestrates the execution of a queue of missions.'''
 
-    def __init__(self, entity_searcher):
+    def __init__(self, entity_searcher, wait_for_go=False):
         '''
         Arguments:
 
@@ -23,14 +25,17 @@ class MissionController(object):
         '''
 
         self.entity_searcher = entity_searcher
+        self.wait_for_go = wait_for_go
         self.mission_queue = deque()
         self.current_mission = None
         self.last_mission = None
 
         # libseawolf init
-        seawolf.loadConfig("../conf/seawolf.conf")
-        seawolf.init("Mission Control")
-        seawolf.notify.filter(seawolf.FILTER_ACTION, "GO")
+        application_name = "Mission Control"
+        if seawolf.getName() != application_name:  # Check if seawolf is already initialized
+            seawolf.loadConfig("../conf/seawolf.conf")
+            seawolf.init(application_name)
+            seawolf.notify.filter(seawolf.FILTER_ACTION, "GO")
 
         # Zero Heading
         #TODO
@@ -39,12 +44,17 @@ class MissionController(object):
         self.reference_angle = None #TODO
 
     def kill(self):
-        self.entity_searcher.kill()
-        seawolf.close()
+        self.entity_searcher.start_search([])
+        sw3.nav.idle()
     __del__ = kill
 
     def execute_all(self):
         '''Runs all missions in the queue.'''
+        if self.wait_for_go:
+            while not seawolf.notify.available():
+                sleep(0.1)
+                self.entity_searcher.ping()
+            action, param = seawolf.notify.get()
         while self.execute_next():
             pass
 
@@ -71,7 +81,9 @@ class MissionController(object):
         self.current_mission.init()
         try:
             self.current_mission.execute()
+            print "MISSION FINISHED"
         except ExitSignal:
             return False
         self.entity_searcher.start_search([])
         return True
+

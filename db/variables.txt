@@ -1,5 +1,5 @@
 #
-# Varible definitions file. 
+# Varible definitions file.
 # Each line of this file defines a variable, comments begin with a '#'
 #
 # NAME               = DEAFULT, PERSIST, READONLY
@@ -36,7 +36,7 @@ RotatePID.i          = 0.0,  1,  0
 RotatePID.p          = 0.0,  1,  0
 
 CountDownStatus      = 0.0,  0,  0
-MissionStatus        = 0.0,  0,  0
+MissionReset         = 0.0,  0,  0
 StatusLight          = 0.0,  0,  0
 
 SEA.Pitch            = 0.0,  0,  0

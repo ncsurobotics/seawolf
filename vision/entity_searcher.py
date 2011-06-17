@@ -199,7 +199,7 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
         EntitySearcher.__init__'s documentation.
     '''
 
-    entities = None
+    entities = []
 
     if record:
         record_path = get_record_path()

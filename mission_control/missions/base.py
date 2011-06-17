@@ -1,5 +1,11 @@
 
+import seawolf
+
 from time import time
+
+class MissionControlReset(Exception):
+    '''Indicates that a mission reset was signaled from an outside source.'''
+    pass
 
 class MissionBase(object):
     '''A base class for missions.'''
@@ -34,6 +40,10 @@ class MissionBase(object):
         last_entity_timestamp = time()
 
         while not self._mission_done:
+
+            if seawolf.var.get("MissionReset"):
+                raise MissionControlReset()
+
             entity = self.entity_searcher.get_entity(0.1)
 
             if entity:
@@ -54,7 +64,6 @@ class MissionBase(object):
         register this function as a callback for anything, such as a nav
         routine.
         '''
-        print "MISSION FINISHED"
         self._mission_done = True
 
     def step(self, entity_found):
@@ -66,4 +75,4 @@ class MissionBase(object):
 
         This is the only function that needs to be implemented in a subclass.
         '''
-        raise NotImplementedError()
+        raise NotImplementedError("A subclass must implement this method.")

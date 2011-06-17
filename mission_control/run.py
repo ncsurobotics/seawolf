@@ -35,7 +35,7 @@ if __name__ == "__main__":
         dest="initial_mission", type="int",
         help="Specifies a mission index to start at.  Default 0.")
     opt_parser.add_option("-w", "--wait-for-go", action="store_true",
-        default=True, dest="wait_for_go",
+        default=False, dest="wait_for_go",
         help="Wait for mission go signal. (default)")
     opt_parser.add_option("-W", "--no-wait-for-go", action="store_false",
         dest="wait_for_go",
@@ -69,6 +69,7 @@ if __name__ == "__main__":
     for camera_name, camera_index in options.cameras:
         camera_dict[camera_name] = camera_index
 
+
     entity_searcher = vision.EntitySearcher(
         camera_indexes=camera_dict,
         is_graphical=options.graphical,
@@ -76,11 +77,26 @@ if __name__ == "__main__":
         delay=options.delay,
     )
 
-    mission_controller = MissionController(entity_searcher)
+    while True:
 
-    # Add missions
-    for mission in MISSION_ORDER[options.initial_mission:]:
-        mission_controller.append_mission(mission)
+        mission_controller = MissionController(
+            entity_searcher,
+            options.wait_for_go,
+        )
 
-    mission_controller.execute_all()
+        # Add missions
+        for mission in MISSION_ORDER[options.initial_mission:]:
+            mission_controller.append_mission(mission)
+
+        try:
+            mission_controller.execute_all()
+        except missions.MissionControlReset:
+            entity_searcher.start_search([])
+            mission_controller.kill()
+            continue
+        else:
+            break
+
+    entity_searcher.kill()
     mission_controller.kill()
+
