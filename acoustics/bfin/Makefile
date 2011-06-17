@@ -2,13 +2,12 @@
 export SW_TOPDIR=$(PWD)/../..
 include $(SW_TOPDIR)/mk/common.mk
 
+LIBSEAWOLF_INCLUDE_DIR=../libseawolf/include
+LIBSEAWOLF_LIB_DIR=../libseawolf/lib
+
 CC= bfin-linux-uclibc-gcc
 CFLAGS= -g --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(LIBSEAWOLF_INCLUDE_DIR)
-LDFLAGS= -L$(LIBSEAWOLF_LIB_DIR) -lseawolf-bfin -lbfdsp -lm
-
-#CC= bfin-uclinux-gcc
-#CFLAGS= -static --std=gnu99 -Wall -pedantic -Wmissing-prototypes -I$(LIBSEAWOLF_INCLUDE_DIR)
-#LDFLAGS= -L$(LIBSEAWOLF_LIB_DIR) -lbfdsp -lm -Wl,-elf2flt
+LDFLAGS= -L$(LIBSEAWOLF_LIB_DIR) -lseawolf -lbfdsp -lm
 
 # Enable the use of libseawolf (when not in testing)
 #CFLAGS+= -DUSE_LIBSEAWOLF

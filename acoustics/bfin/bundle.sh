@@ -1,46 +1,55 @@
 #!/bin/sh
 
+# Ensure build is up to date
 make
 
 if [ -d acoustics ]; then
     echo "The acoustics directory already exists. I need that as a temporary directory";
-else
-    echo -n "Generating bundle...";
+    exit 1;
+fi
 
-    mkdir acoustics;
-    mkdir acoustics/coefs;
+echo -n "Generating bundle...";
 
-    cp bin/acoustics-bfin ../ppiadc/ppiadc.ko ../libseawolf-bfin.so acoustics/;
+# Build directory structure
+mkdir acoustics;
+mkdir acoustics/coefs;
+mkdir acoustics/libseawolf;
 
-    cat <<EOF > acoustics/seawolf.conf
+# Copy binaries
+cp bin/acoustics-bfin ../ppiadc/ppiadc.ko acoustics;
+cp -r ../libseawolf/* acoustics/libseawolf;
+
+# Generate config files and scripts
+cat <<EOF > acoustics/seawolf.conf
 comm_server = 10.17.0.2
 comm_password = 
 EOF
 
-    cat <<EOF > acoustics/update
+cat <<EOF > acoustics/update
 #!/bin/sh
 cd /root && wget http://10.17.0.2:8080/acoustics.tar -O - | tar -xf - && cd /root/acoustics
 EOF
 
-    cat <<EOF > acoustics/init
+cat <<EOF > acoustics/init
 #!/bin/sh
-cp /root/acoustics/libseawolf-bfin.so /lib/libseawolf-bfin.so.0
+cp /root/acoustics/libseawolf/lib/libseawolf.so* /usr/lib
 modprobe gptimers
 if cat /proc/modules | grep ppiadc > /dev/null 2>&1; then
-  rmmod ppiadc
+    rmmod ppiadc
 fi
 insmod /root/acoustics/ppiadc.ko
 mknod /dev/ppiadc c 157 0
 EOF
 
-    chmod +x acoustics/update acoustics/init;
-    
-    for f in ../fir_coef/*.fcf; do
-	python ../fir_coef/convert.py < $f > acoustics/coefs/`basename $f .fcf`.cof;
-    done;
+chmod +x acoustics/update acoustics/init;
 
-    tar -cf acoustics.tar acoustics;
-    rm -rf acoustics;
+# Build FIR coefficient files
+for f in ../fir_coef/*.fcf; do
+    python ../fir_coef/convert.py < $f > acoustics/coefs/`basename $f .fcf`.cof;
+done;
 
-    echo "done.";
-fi;
+tar -cf acoustics.tar acoustics;
+rm -rf acoustics;
+
+echo "done.";
+
