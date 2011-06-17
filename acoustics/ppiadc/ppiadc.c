@@ -22,6 +22,7 @@
 #include <asm/blackfin.h>
 #include <asm/cacheflush.h>
 #include <asm/dma.h>
+#include <asm/gpio.h>
 #include <asm/gptimers.h>
 #include <asm/portmux.h>
 #include <asm/uaccess.h>
@@ -68,6 +69,9 @@
 
 /* See Blackfin Hardware Reference Manual 3.2, page 7-27, "PPI Control Register" */
 #define PPI_MODE 0xe80c
+
+/* ADC power enable tied to pin 14 */
+#define ENABLE_PIN GPIO_PF14
 
 static irqreturn_t buffer_full_handler(int irq, void* data);
 static int page_alloc_order(size_t size);
@@ -219,7 +223,7 @@ static int ppi_chr_open(struct inode* i, struct file* filp) {
     current_buffer_pointer = 0;
 
     /* Turn on ADC */
-    gpio_set_value(GPIO_PG14, 1);
+    gpio_set_value(ENABLE_PIN, 1);
 
     /* -- timing loop -- */
     while(s < n) {
@@ -240,7 +244,7 @@ static int ppi_chr_open(struct inode* i, struct file* filp) {
 
 static int ppi_chr_release(struct inode* i, struct file* filp) {
     /* Turn off power */
-    gpio_set_value(GPIO_PG14, 0);
+    gpio_set_value(ENABLE_PIN, 0);
 
     /* Disable CONVST clock */
     disable_gptimers(TIMER1bit);
@@ -374,11 +378,11 @@ static int __init ppi_adc_init(void) {
     }
 
     /* Request IO pin */
-    gpio_request(GPIO_PG14, DRIVER_NAME);
-    gpio_direction_output(GPIO_PG14, 1);
+    gpio_request(ENABLE_PIN, DRIVER_NAME);
+    gpio_direction_output(ENABLE_PIN, 1);
 
     /* Disable everything */
-    gpio_set_value(GPIO_PG14, 0);
+    gpio_set_value(ENABLE_PIN, 0);
     disable_gptimers(TIMER1bit);
     disable_dma(CH_PPI);
     bfin_write_PPI_CONTROL(bfin_read_PPI_CONTROL() & (~PORT_EN));
@@ -416,10 +420,10 @@ static void __exit ppi_adc_close(void) {
     dma_close();
     timers_close();
 
-    gpio_free(GPIO_PG14);
+    gpio_free(ENABLE_PIN);
 }
 
-MODULE_LICENSE("BSD");
+MODULE_LICENSE("GPL");
 module_init(ppi_adc_init);
 module_exit(ppi_adc_close);
 
