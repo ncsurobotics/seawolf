@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <cv.h>
 #include <highgui.h>  
+#include <math.h>
 
 /** 
  * \ingroup colortools
@@ -52,7 +53,7 @@
 
 /* DEFINITIONS */ 
 
-#define HUE_WEIGHT 1
+#define HUE_WEIGHT 2
 #define SAT_WEIGHT 1
 #define VAL_WEIGHT 1
 
@@ -64,17 +65,17 @@ struct HSVPixel_s {
 
 typedef struct HSVPixel_s HSVPixel; 
 
-float Pixel_stddev_hsv(HSVPixel* px_1, HSVPixel* px_2);
+float Pixel_dist_hsv(HSVPixel* px_1, HSVPixel* px_2);
 
 int min(int a, int b);
  
 IplImage* find_target_color_hsv(IplImage* frame, int hue, int saturation, int value, int min_blobsize, int dev_threshold, double precision_threshold){ //should find the set of colors closest to the target color
     int i,j,s;
-    int* sigmas; //holds the accumulation for all possible standard deviations in the image
+    int* radii; //holds the accumulation for all possible distances from target pixel
     int blobsize = 0; //current number of pixels found in color "blob" (not necceserily a single blob)
-    int stddev; //the computed maximum allowable stddev
-    int averagestddev; //the average stddev from target color
-    int smallest_stddev = -1; //the smallest stddev found
+    int rlimit=0; // stddev; //the computed maximum allowable stddev
+    int raverage; //the average stddev from target color
+    int smallestr; //the smallest stddev found
     double imgAverage_h=0; //hold average colors for this image as doubles
     double imgAverage_s=0;
     double imgAverage_v=0;
@@ -95,45 +96,114 @@ IplImage* find_target_color_hsv(IplImage* frame, int hue, int saturation, int va
 	color.s = saturation;
 	color.v = value;
 
-    sigmas = (int*)calloc(444,sizeof(int)); // Allocate memory for sigma table (max sigma is sqrt(256^2 + 256^2 + 256^2) ) 
+    int maxr = (int) sqrt(pow((short)256*HUE_WEIGHT,2)+
+                        pow((short)256*SAT_WEIGHT,2)+
+                        pow((short)256*VAL_WEIGHT,2));
+    // It's easiest if maxr is always even
+    if((double) maxr/2 != maxr/2) maxr++;
+
+    radii = (int*)calloc(maxr,sizeof(int));
 
     // Initialize tables
-    for (i=0;i<444;i++) {
-        sigmas[i] = 0;
+    for (i=0;i<maxr;i++) {
+        radii[i] = 0;
     }
 
 
-    for(i=in->width*in->height; i>=0;i--){ // Fill the acumulator tables 
+    //Fill the accumulator table / histogram
+    smallestr = maxr;
+    int peakr = 0;
+    for(i=in->width*in->height; i>=0;i--){  
         tempPixel.v = ptrIn[3*i+2];
         tempPixel.h = ptrIn[3*i+0];
         tempPixel.s = ptrIn[3*i+1];
-        s = (int)Pixel_stddev_hsv(&color, &tempPixel); //this function used to keep color data associated with each sigma, so this s got used a lot
-        sigmas[s]++;
+        s = (int)Pixel_dist_hsv(&color, &tempPixel); 
+        radii[s]++;
+        if(radii[s] > peakr) peakr = radii[s]; 
+        if(s < smallestr) smallestr = s;
+
         // Update the average color
-        imgAverage_v = (imgAverage_h*(i)+tempPixel.h)/(i+1);
-        imgAverage_h = (imgAverage_s*(i)+tempPixel.s)/(i+1);
-        imgAverage_s = (imgAverage_v*(i)+tempPixel.v)/(i+1); 
+        imgAverage_h = (imgAverage_h*(i)+tempPixel.h)/(i+1);
+        imgAverage_s = (imgAverage_s*(i)+tempPixel.s)/(i+1);
+        imgAverage_v = (imgAverage_v*(i)+tempPixel.v)/(i+1); 
     }
+
+    /* DEBUG CODE */
+        CvSize histsize = {maxr,300};
+        IplImage* rgram = cvCreateImage(histsize, 8, 1);
+        uchar* histdata = rgram->imageData;
+
+        printf("maxr = %d\n",maxr);
+
+        for(i=0; i<maxr; i++){
+            int j;
+            for(j=0; j<300; j++){
+                if(peakr !=0 && j<radii[i]*300/peakr)
+                    histdata[j*(maxr) + i] = 150 ; 
+                else
+                    histdata[j*(maxr) + i] = 0; 
+            }
+        }
+
+    /* END DEBUG CODE */
     // Update the imgAverage pixel (converting all averages to integers)
     imgAverage.h = (int)imgAverage_h;
     imgAverage.s = (int)imgAverage_s;
     imgAverage.v = (int)imgAverage_v;
 
-    averagestddev= Pixel_stddev_hsv(&color,&imgAverage); 
+    raverage= Pixel_dist_hsv(&color,&imgAverage); 
 
-    for(i=0; (blobsize < min_blobsize || i < smallest_stddev + (averagestddev-smallest_stddev)/precision_threshold)  && i<dev_threshold;i++){ //analyze data to determine sigma
-        if(sigmas[i] != 0 && smallest_stddev < 0 ) {
-            smallest_stddev = i;
+    int tot_sum = 0;
+    int prev_sum = 0;
+    rlimit = 0;
+    //use a differential approach to locate the best place to draw the line
+    for( i=0; i<maxr && i<dev_threshold; i+=3){
+        int cur_sum = radii[i] + radii[i+1] + radii[i+2]; 
+        tot_sum += cur_sum;
+        if (cur_sum < prev_sum && tot_sum > min_blobsize ) {
+            rlimit = i;
+            break;
         }
-        blobsize += sigmas[i]; 
+        prev_sum = cur_sum; 
     }
-    stddev = i; // Save the max. std dev
+
+#if 0
+    // find best place for r limit by point that minimizes stddev 
+    double minvariance = 0;
+    for( i=smallestr; i<dev_threshold && i < maxr; i++){
+        //compute the variance around this point 
+        int j;
+        double variance = 0;
+        for ( j=smallestr; j<dev_threshold && j < maxr; j++){
+            double dif = (double)(i-j)/dev_threshold;
+            variance += dif*dif*radii[j];
+        }
+        if (variance < minvariance || i==smallestr){
+            minvariance = variance;
+            rlimit = i;
+        }        
+        //printf("%d ",(int)variance);
+        //fflush(NULL);
+    }
+#endif 
+    /* DEBUG CODE */
+        printf("rlimit = %d\n",rlimit);
+        //Draw a line representing the selected distance cut-off
+        CvPoint pt1 = {rlimit,0};
+        CvPoint pt2 = {rlimit,299};
+        CvScalar cutoffline_color = {254,254,254};
+        cvLine(rgram,pt1,pt2,cutoffline_color,1,8,0);
+
+        cvNamedWindow("Rgram", CV_WINDOW_AUTOSIZE);
+        cvShowImage("Rgram", rgram);
+
+    /* END DEBUG CODE */
 
     for(i=in->width*in->height-1;i>=0;i--){ //Update the Output Image
-        tempPixel.h = ptrIn[3*i+2];
-        tempPixel.s = ptrIn[3*i+0];
-        tempPixel.v = ptrIn[3*i+1];
-        if((int)Pixel_stddev_hsv(&color,&tempPixel) < stddev){
+        tempPixel.v = ptrIn[3*i+2];
+        tempPixel.h = ptrIn[3*i+0];
+        tempPixel.s = ptrIn[3*i+1];
+        if((int)Pixel_dist_hsv(&color,&tempPixel) < rlimit){
             // This pixel is "close" to the target color, mark it white
             ptrOut[3*i+2] = 0xff;   
             ptrOut[3*i+1] = 0xff;
@@ -146,8 +216,9 @@ IplImage* find_target_color_hsv(IplImage* frame, int hue, int saturation, int va
         } 
     }
 
-    free(sigmas);
+    free(radii);
     cvReleaseImage(&in);
+    cvReleaseImage(&rgram);
     //printf("confidence = %d blobsize = %d\n",averagestddev-smallest_stddev,blobsize);
     //fflush(NULL);
     return out;
@@ -157,7 +228,7 @@ IplImage* find_target_color_hsv(IplImage* frame, int hue, int saturation, int va
  * \brief computes distance between two pixels in rgb space
  * \private
  */
-float Pixel_stddev_hsv(HSVPixel* px_1, HSVPixel* px_2) {
+float Pixel_dist_hsv(HSVPixel* px_1, HSVPixel* px_2) {
     int hue = min(abs(px_1->h - px_2->h), abs(px_1->h + px_2->h - 179) );
     int sat = px_1->s - px_2->s;
     int val = px_1->v - px_2->v;
