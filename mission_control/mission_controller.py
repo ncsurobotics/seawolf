@@ -1,4 +1,5 @@
 
+import sys
 from collections import deque
 from time import sleep
 
@@ -50,11 +51,17 @@ class MissionController(object):
 
     def execute_all(self):
         '''Runs all missions in the queue.'''
+
+        # Wait for go signal
         if self.wait_for_go:
+            print "Waiting for GO signal..."
             while not seawolf.notify.available():
+                seawolf.var.set("MissionReset", 0)
                 sleep(0.1)
                 self.entity_searcher.ping()
             action, param = seawolf.notify.get()
+
+        # Run missions
         while self.execute_next():
             pass
 
@@ -83,7 +90,7 @@ class MissionController(object):
             self.current_mission.execute()
             print "MISSION FINISHED"
         except ExitSignal:
-            return False
+            sys.exit(0)
         self.entity_searcher.start_search([])
         return True
 

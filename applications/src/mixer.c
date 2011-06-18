@@ -99,6 +99,7 @@ int main(void) {
 
     /* Notify filters */
     Notify_filter(FILTER_ACTION, "THRUSTER_REQUEST");
+    Notify_send("GO", "MissionControl");
     
     count = 0;
     Task_background(rate);
