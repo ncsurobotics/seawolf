@@ -12,6 +12,9 @@
 #define BOW    3
 #define STERN  4
 
+/* Trim port/star values to compensate for rotation from strafing */
+#define STRAFE_TRIM 0.3
+
 #define UPDATE_TOLERANCE 0.01
 
 /* Simple summing mixing algorithm */
@@ -21,6 +24,12 @@ static void mix(float req_pitch, float req_depth, float req_forward, float req_y
     out[PORT] = req_forward + req_yaw;
     out[STAR] = req_forward - req_yaw;
     out[STRAFE] = req_strafe;
+
+    /* Trim port/starboad thrusters */
+    if(out[STRAFE] != 0) {
+        out[PORT] -= out[STRAFE] * STRAFE_TRIM;
+        out[STAR] += out[STRAFE] * STRAFE_TRIM;
+    }
 }
 
 static void setThrusters(float out[5]) {
@@ -132,3 +141,4 @@ int main(void) {
     Seawolf_close();
     return 0;
 }
+
