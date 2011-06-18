@@ -92,7 +92,7 @@ IplImage* find_target_color_hsv(IplImage* frame, int hue, int saturation, int va
    
     //Compile target color 
     HSVPixel color; 
-        color.h = hue;
+    color.h = hue;
 	color.s = saturation;
 	color.v = value;
 
@@ -155,15 +155,21 @@ IplImage* find_target_color_hsv(IplImage* frame, int hue, int saturation, int va
 
     int tot_sum = 0;
     int prev_sum = 0;
+    int check1 = 0;
     rlimit = 0;
     //use a differential approach to locate the best place to draw the line
-    for( i=0; i<maxr && i<dev_threshold; i+=3){
+    for( i=smallestr; i<maxr && i<dev_threshold; i+=3){
         int cur_sum = radii[i] + radii[i+1] + radii[i+2]; 
         tot_sum += cur_sum;
         if (cur_sum < prev_sum && tot_sum > min_blobsize ) {
-            rlimit = i;
+           // check1 = 1;
+            rlimit = i + (i - smallestr) * precision_threshold;
             break;
         }
+       // if (check1 && cur_sum > prev_sum && tot_sum > min_blobsize){
+       //     rlimit = i;
+       //     break;
+       // }
         prev_sum = cur_sum; 
     }
 
