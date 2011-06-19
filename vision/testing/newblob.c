@@ -9,7 +9,7 @@
 #include <highgui.h>
 
 //#define COMPARE 1
-//#define VISUAL_DEBUG 1
+#define VISUAL_DEBUG 1
 
 #ifdef COMPARE
 
@@ -180,6 +180,8 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, int min_size, int keep_nu
 
     uint32_t* blob_mapping = calloc(sizeof(uint32_t), img_in->height * img_in->widthStep);
     uint32_t* pixel_above = blob_mapping - img_in->widthStep;
+    uint8_t* img_pixel = (uint8_t*) img_in->imageData;
+    uint32_t* map_pixel = blob_mapping;
 
     uint32_t next_part_id = 1;
     
@@ -195,102 +197,114 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, int min_size, int keep_nu
     Blob* blobs = NULL;
     uint32_t num_blobs;
 
-    int i, j;
+    int i;
 
     blob_parts[0] = calloc(sizeof(BlobPart), BLOB_PART_TABLE_ALLOC_UNIT);
     for(i = 1; i < BLOB_PART_TABLE_ALLOC_UNIT; i++) {
         blob_parts[i] = &blob_parts[0][i];
     }
 
-    for(i = 0; i < img_in->imageSize; i++, pixel_above++) {
-        memset(adjacent_parts, 0, sizeof(adjacent_parts));
-
-        if(img_in->imageData[i]) {
-            /* Build list of adjacent blob parts */
-            if(row > 0) {
-                if(column > 0) {
-                    adjacent_parts[UP_LEFT] = pixel_above[-1];
-                }
-
-                adjacent_parts[UP] = pixel_above[0];
-
-                if(column < img_in->width - 1) {
-                    adjacent_parts[UP_RIGHT] = pixel_above[1];
-                }
-
-            }
-            if(column > 0) {
-                adjacent_parts[LEFT] = blob_mapping[i - 1];
-            }
-
+    for(row = 0; row < img_in->height; row++) {
+        for(column = 0; column < img_in->width; column++) {
+            memset(adjacent_parts, 0, sizeof(adjacent_parts));
             
-            /* Scan the list of adjacent pixel parts for the one with the lowest index */
-            assigned_to = 0;
-            for(j = 0; j < 4; j++) {
-                if(adjacent_parts[j]) {
-                    assigned_to = adjacent_parts[j];
-                    break;
-                }
-            }
-            
-            /* No adjacent blob pixels, create new blob part */
-            if(assigned_to == 0) {
-                assigned_to = next_part_id;
-
-                blob_parts[assigned_to]->blob_id = assigned_to;
-                next_part_id++;
-
-                if(next_part_id >= blob_part_table_size) {
-                    blob_parts = realloc(blob_parts, sizeof(BlobPart*) * (blob_part_table_size + BLOB_PART_TABLE_ALLOC_UNIT));
-                    blob_parts[blob_part_table_size] = calloc(sizeof(BlobPart), BLOB_PART_TABLE_ALLOC_UNIT);
-
-                    for(int j = 1; j < BLOB_PART_TABLE_ALLOC_UNIT; j++) {
-                        blob_parts[blob_part_table_size + j] = &blob_parts[blob_part_table_size][j];
+            if(*img_pixel) {
+                /* Build list of adjacent blob parts */
+                if(row > 0) {
+                    if(column > 0) {
+                        adjacent_parts[UP_LEFT] = pixel_above[-1];
                     }
                     
-                    blob_part_table_size += BLOB_PART_TABLE_ALLOC_UNIT;
+                    adjacent_parts[UP] = pixel_above[0];
+                    
+                    if(column < img_in->width - 1) {
+                        adjacent_parts[UP_RIGHT] = pixel_above[1];
+                    }
+                    
                 }
-            }
+                if(column > 0) {
+                    adjacent_parts[LEFT] = blob_mapping[i - 1];
+                }
+
             
-            /* Store blob part identifier */
-            blob_parts[assigned_to]->part_size++;
-            blob_mapping[i] = assigned_to;
-            target_blob = blob_parts[assigned_to]->blob_id;
+                /* Scan the list of adjacent pixel parts for the one with the lowest index */
+                assigned_to = 0;
+                for(i = 0; i < 4; i++) {
+                    if(adjacent_parts[i]) {
+                        assigned_to = adjacent_parts[i++];
+                        break;
+                    }
+                }
+            
+                /* No adjacent blob pixels, create new blob part */
+                if(assigned_to == 0) {
+                    assigned_to = next_part_id;
 
-            /* Connect newly adjacent blob parts */
-            for(j = 0; j < 4; j++) {
-                if(adjacent_parts[j] && blob_parts[adjacent_parts[j]]->blob_id != target_blob) {
-                    /* Join the blobs, assigning the blob parts in
-                       adjacent_parts[j] to the blob in assigned_to */
-                    join_blob_parts(blob_parts, assigned_to, adjacent_parts[j]);
+                    blob_parts[assigned_to]->blob_id = assigned_to;
+                    next_part_id++;
+
+                    if(next_part_id >= blob_part_table_size) {
+                        blob_parts = realloc(blob_parts, sizeof(BlobPart*) * (blob_part_table_size + BLOB_PART_TABLE_ALLOC_UNIT));
+                        blob_parts[blob_part_table_size] = calloc(sizeof(BlobPart), BLOB_PART_TABLE_ALLOC_UNIT);
+
+                        for(i = 1; i < BLOB_PART_TABLE_ALLOC_UNIT; i++) {
+                            blob_parts[blob_part_table_size + i] = &blob_parts[blob_part_table_size][i];
+                        }
+                    
+                        blob_part_table_size += BLOB_PART_TABLE_ALLOC_UNIT;
+                        i = 4;
+                    }
+                }
+            
+                /* Store blob part identifier */
+                blob_parts[assigned_to]->part_size++;
+                *map_pixel = assigned_to;
+                target_blob = blob_parts[assigned_to]->blob_id;
+
+                /* Connect newly adjacent blob parts */
+                while(i < 4) {
+                    if(adjacent_parts[i] && blob_parts[adjacent_parts[i]]->blob_id != target_blob) {
+                        /* Join the blobs, assigning the blob parts in
+                           adjacent_parts[j] to the blob in assigned_to */
+                        join_blob_parts(blob_parts, assigned_to, adjacent_parts[i]);
+                    }
+                    
+                    i++;
                 }
             }
+
+            pixel_above++;
+            map_pixel++;
+            img_pixel++;
         }
 
-        column = (column + 1) % img_in->width;
-        if(column == 0) {
-            row++;
-            pixel_above += row_padding;
-            i += row_padding;
-        }
+        pixel_above += row_padding;
+        map_pixel += row_padding;
+        img_pixel += row_padding;
     }
 
     blobs = build_blobs_list(blob_parts, next_part_id, &num_blobs);
     filter_blob_list(blobs, num_blobs, min_size, keep_number);
 
-    /* Write out the real blob ids */
-    column = 0;
-    for(i = 0; i < blobs_out->imageSize; i++) {
-        if(blob_mapping[i] && blobs[blob_parts[blob_mapping[i]]->blob_id].keep) {
-            blobs_out->imageData[i] = (blob_parts[blob_mapping[i]]->blob_id % 255) + 1;
-        } else {
-            blobs_out->imageData[i] = 0;
-        }
+    
+    map_pixel = blob_mapping;
+    img_pixel = (uint8_t*) blobs_out->imageData;
 
-        column = (column + 1) % blobs_out->width;
-        if(column == 0) {
-            i += (blobs_out->widthStep - blobs_out->width);
+    /* Write out the real blob ids */
+    for(row = 0; row < blobs_out->height; row++) {
+        for(column = 0; column < blobs_out->width; column++) {
+            if((*map_pixel) && blobs[blob_parts[(*map_pixel)]->blob_id].keep) {
+                (*img_pixel) = (blob_parts[*map_pixel]->blob_id % 255) + 1;
+            } else {
+                (*img_pixel) = 0;
+            }
+
+            map_pixel++;
+            img_pixel++;
         }
+        
+        map_pixel += row_padding;
+        img_pixel += row_padding;
     }
 
     free(blobs);
@@ -309,7 +323,7 @@ int main(int argc, char** argv) {
     IplImage* binary = cvCreateImage(cvGetSize(img_in), 8, 1);
     IplImage* binary2 = cvCreateImage(cvGetSize(img_in), 8, 1);
 
-    int value1 = 15, value2 = 20, min_blob = 50, most_blobs = 16;
+    int value1 = 15, value2 = 20, min_blob = 25, most_blobs = 10;
 
     Timer* timer = Timer_new();
 
@@ -326,7 +340,7 @@ int main(int argc, char** argv) {
     cvCreateTrackbar("value1", "binary", &value1, 15, NULL);
     cvCreateTrackbar("value2", "binary", &value2, 20, NULL);
     cvCreateTrackbar("minblob", "binary", &min_blob, 512, NULL);
-    cvCreateTrackbar("mostblobs", "binary", &most_blobs, 1024, NULL);
+    cvCreateTrackbar("mostblobs", "binary", &most_blobs, 4096, NULL);
 
     cvShowImage("original", img_in);
 #endif
