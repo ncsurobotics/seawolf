@@ -8,7 +8,7 @@
 #include <cv.h>
 #include <highgui.h>
 
-//#define COMPARE 1
+#define COMPARE 1
 #define VISUAL_DEBUG 1
 
 #ifdef COMPARE
@@ -223,7 +223,7 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, int min_size, int keep_nu
                     
                 }
                 if(column > 0) {
-                    adjacent_parts[LEFT] = blob_mapping[i - 1];
+                    adjacent_parts[LEFT] = *(map_pixel - 1);
                 }
 
             
@@ -286,6 +286,11 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, int min_size, int keep_nu
     blobs = build_blobs_list(blob_parts, next_part_id, &num_blobs);
     filter_blob_list(blobs, num_blobs, min_size, keep_number);
 
+    if(num_blobs < 50) {
+        for(i = 0; i < next_part_id; i++) {
+            printf("Blob %d\n", blob_parts[i]->part_size);
+        }
+    }
     
     map_pixel = blob_mapping;
     img_pixel = (uint8_t*) blobs_out->imageData;
@@ -319,7 +324,8 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, int min_size, int keep_nu
 }
 
 int main(int argc, char** argv) {
-    IplImage* img_in = cvLoadImage(argv[1], CV_LOAD_IMAGE_GRAYSCALE);
+    CvCapture* camera = cvCaptureFromCAM(0);
+    IplImage* img_in = cvQueryFrame(camera); // = cvLoadImage(argv[1], CV_LOAD_IMAGE_GRAYSCALE);
     IplImage* binary = cvCreateImage(cvGetSize(img_in), 8, 1);
     IplImage* binary2 = cvCreateImage(cvGetSize(img_in), 8, 1);
 
@@ -329,11 +335,11 @@ int main(int argc, char** argv) {
 
 #ifdef COMPARE
     BLOB* blobs;
-    int num_blobs;
 #endif
+    int num_blobs;
 
 #ifdef VISUAL_DEBUG
-    cvNamedWindow("original", CV_WINDOW_AUTOSIZE);
+    //    cvNamedWindow("original", CV_WINDOW_AUTOSIZE);
     cvNamedWindow("binary", CV_WINDOW_AUTOSIZE);
     cvNamedWindow("binary2", CV_WINDOW_AUTOSIZE);
 
@@ -342,11 +348,13 @@ int main(int argc, char** argv) {
     cvCreateTrackbar("minblob", "binary", &min_blob, 512, NULL);
     cvCreateTrackbar("mostblobs", "binary", &most_blobs, 4096, NULL);
 
-    cvShowImage("original", img_in);
 #endif
 
     while(true) {
-        cvSmooth(img_in, binary, CV_GAUSSIAN, 5, 5, 0, 0);
+        img_in = cvQueryFrame(camera);
+        cvCvtColor(img_in, binary, CV_RGB2GRAY);
+        // cvShowImage("original", binary);
+        cvSmooth(binary, binary, CV_GAUSSIAN, 5, 5, 0, 0);
         cvAdaptiveThreshold(binary, binary, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, value1, value2);
         
 #ifdef VISUAL_DEBUG
@@ -354,8 +362,8 @@ int main(int argc, char** argv) {
 #endif
 
         Timer_reset(timer);
-        printf("Found %d blobs\n", find_blobs2(binary, binary2, min_blob, most_blobs));
-        printf("blobs2: %5.3f\n", Timer_getDelta(timer));
+        num_blobs = find_blobs2(binary, binary2, min_blob, most_blobs);
+        printf("blobs2: %5.3f\n\n", Timer_getDelta(timer));
 
 #ifdef COMPARE
         Timer_reset(timer);
@@ -366,7 +374,7 @@ int main(int argc, char** argv) {
 
 #ifdef VISUAL_DEBUG
         cvShowImage("binary2", binary2);
-        if(cvWaitKey(-1) == 'q') break;
+        if(cvWaitKey(1) == 'q') break;
 #else
         break;
 #endif
