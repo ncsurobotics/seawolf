@@ -9,7 +9,7 @@
 #include <highgui.h>
 
 //#define COMPARE 1
-#define VISUAL_DEBUG 1
+//#define VISUAL_DEBUG 1
 
 #ifdef COMPARE
 
@@ -38,30 +38,28 @@ void blob_free(BLOB* blobs, int blobs_found);
 #define UP_RIGHT 2
 #define LEFT     3
 
-typedef struct BlobPart_s {
-    uint16_t blob_id;
-    uint16_t part_size;
-    uint16_t stored;
-    struct BlobPart_s* next;
-    struct BlobPart_s* prev;
-} BlobPart;
-
 typedef struct Blob_s {
-    uint8_t keep;
-    uint16_t size;
+    uint32_t id;
     uint32_t c_x;
     uint32_t c_y;
+    uint16_t size;
+    uint8_t keep;
 } Blob;
 
+typedef struct BlobPart_s {
+    Blob* blob;
+    struct BlobPart_s* next;
+    struct BlobPart_s* prev;
+    uint16_t part_size;
+    uint16_t stored;
+} BlobPart;
+
 static void join_blob_parts(BlobPart** parts, uint32_t i, uint32_t j);
-static inline bool is_same_blob(BlobPart** parts, uint32_t i, uint32_t j);
-static void build_blob(Blob* blob, uint16_t blob_id, BlobPart* part);
-static Blob* build_blobs_list(BlobPart** parts, uint32_t num_parts, uint32_t *num_blobs);
 
 static void join_blob_parts(BlobPart** parts, uint32_t i, uint32_t j) {
     BlobPart* tail = parts[i];
     BlobPart* head = parts[j];
-    uint32_t blob_id = parts[i]->blob_id;
+    Blob* blob = parts[i]->blob;
 
     while(tail->next) {
         tail = tail->next;
@@ -74,107 +72,22 @@ static void join_blob_parts(BlobPart** parts, uint32_t i, uint32_t j) {
     tail->next = head;
     head->prev = tail;
 
+    tail->blob->size += head->blob->size;
+
     while(head) {
-        head->blob_id = blob_id;
+        head->blob = blob;
         head = head->next;
     }
 }
 
-static inline bool is_same_blob(BlobPart** parts, uint32_t i, uint32_t j) {
-    return parts[i]->blob_id == parts[j]->blob_id;
+void free_blobs(Blob** blobs, int num_blobs) {
+    for(int i = 0; i < num_blobs; i++) {
+        free(blobs[i]);
+    }
+    free(blobs);
 }
 
-/**
- * Given an uninitialized Blob structure, a blob id, and one part of the blob
- * reassign all blob_id's of the parts and compute the size of the blob 
- */
-static void build_blob(Blob* blob, uint16_t blob_id, BlobPart* part) {
-    blob->keep = false;
-    blob->c_x = 0;
-    blob->c_y = 0;
-
-    while(part->prev) {
-        part = part->prev;
-    }
-
-    blob->size = 0;
-    while(part) {
-        blob->size += part->part_size;
-        part->blob_id = blob_id;
-        part->stored = 1;
-        part = part->next;
-    }
-}
-
-static Blob* build_blobs_list(BlobPart** parts, uint32_t num_parts, uint32_t *num_blobs) {
-    uint16_t max_id = 256;
-    uint16_t blob_id = 0;
-    Blob* blobs = calloc(sizeof(Blob), max_id);
-
-    for(int i = 0; i < num_parts; i++) {
-        /* Check if blob part alread assigned */
-        if(parts[i]->stored) {
-            continue;
-        }
-        
-        build_blob(&blobs[blob_id], blob_id, parts[i]);
-
-        blob_id++;
-        if(blob_id >= max_id) {
-            max_id += 16;
-            blobs = realloc(blobs, sizeof(Blob) * max_id);
-        }
-    }
-
-    (*num_blobs) = blob_id;
-    return blobs;
-}
-
-static bool add_largest_blob(Blob* blobs, uint32_t num_blobs, int min_size) {
-    int largest_i = 0;
-
-    while(blobs[largest_i].keep == true) {
-        largest_i++;
-    }
-
-    for(int i = largest_i + 1; i < num_blobs; i++) {
-        if(blobs[i].keep == false && blobs[i].size > blobs[largest_i].size) {
-            largest_i = i;
-        }
-    }
-
-    if(blobs[largest_i].size < min_size) {
-        return false;
-    }
-
-    blobs[largest_i].keep = true;
-    return true;
-}
-
-static int filter_blob_list(Blob* blobs, uint32_t num_blobs, int min_size, int keep) {
-    int i;
-
-    if(num_blobs < keep) {
-        keep = num_blobs;
-        for(i = 0; i < num_blobs; i++) {
-            if(blobs[i].size > min_size) {
-                blobs[i].keep = true;
-            } else {
-                keep--;
-            }
-        }
-    } else {
-        for(i = 0; i < keep; i++) {
-            if(add_largest_blob(blobs, num_blobs, min_size) == false) {
-                return i;
-            }
-        }
-    }
-
-    return keep;
-}
-
-int find_blobs2(IplImage* img_in, IplImage* blobs_out, Blob** blobs, int min_size, int keep_number) {
+int find_blobs2(IplImage* img_in, IplImage* blobs_out, Blob*** blobs, int min_size, int keep_number) {
     uint32_t blob_part_table_size = BLOB_PART_TABLE_ALLOC_UNIT;
     BlobPart** blob_parts = calloc(sizeof(BlobPart*), blob_part_table_size);
 
@@ -190,11 +103,13 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, Blob** blobs, int min_siz
 
     int32_t adjacent_parts[4];
     int32_t assigned_to;
-    uint16_t target_blob;
+    Blob* target_blob;
 
     uint8_t row_padding = img_in->widthStep - img_in->width;
 
-    uint32_t num_blobs;
+    uint32_t num_blobs = 0;
+
+    List* raw_blobs = List_new();
 
     int i;
 
@@ -239,7 +154,9 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, Blob** blobs, int min_siz
                 if(assigned_to == 0) {
                     assigned_to = next_part_id;
 
-                    blob_parts[assigned_to]->blob_id = assigned_to;
+                    blob_parts[assigned_to]->blob = calloc(sizeof(Blob), 1);
+                    blob_parts[assigned_to]->blob->keep = true;
+                    List_append(raw_blobs, blob_parts[assigned_to]->blob);
                     next_part_id++;
 
                     if(next_part_id >= blob_part_table_size) {
@@ -257,12 +174,16 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, Blob** blobs, int min_siz
             
                 /* Store blob part identifier */
                 blob_parts[assigned_to]->part_size++;
+                blob_parts[assigned_to]->blob->size++;
                 (*map_pixel) = assigned_to;
-                target_blob = blob_parts[assigned_to]->blob_id;
+                target_blob = blob_parts[assigned_to]->blob;
 
                 /* Connect newly adjacent blob parts */
                 while(i < 4) {
-                    if(adjacent_parts[i] && blob_parts[adjacent_parts[i]]->blob_id != target_blob) {
+                    if(adjacent_parts[i] && blob_parts[adjacent_parts[i]]->blob != target_blob) {
+                        //List_remove(raw_blobs, List_indexOf(raw_blobs, blob_parts[adjacent_parts[i]]->blob));
+                        blob_parts[adjacent_parts[i]]->blob->keep = false;
+
                         /* Join the blobs, assigning the blob parts in
                            adjacent_parts[j] to the blob in assigned_to */
                         join_blob_parts(blob_parts, assigned_to, adjacent_parts[i]);
@@ -282,8 +203,73 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, Blob** blobs, int min_siz
         img_pixel += row_padding;
     }
 
-    (*blobs) = build_blobs_list(blob_parts, next_part_id, &num_blobs);
-    filter_blob_list((*blobs), num_blobs, min_size, keep_number);
+    printf("Blob parts: %d\n", next_part_id);
+
+    int raw_blobs_count = List_getSize(raw_blobs);
+    Blob* b;
+    int j, k;
+
+    (*blobs) = malloc(sizeof(Blob*) * keep_number);
+
+    Timer* timer = Timer_new();
+
+    i = 0;
+    for(j = 0; j < raw_blobs_count; j++) {
+        b = List_get(raw_blobs, j);
+
+        if(b->keep == false) {
+            continue;
+        }
+
+        if(b->size < min_size) {
+            continue;
+        }
+
+        k = 0;
+        while(k < i && b->size < (*blobs)[k]->size) {
+            k++;
+        }
+
+        memmove((*blobs) + k + 1, (*blobs) + k, (i - k) * sizeof(Blob**));
+        (*blobs)[k] = b;
+
+        i++;
+        if(i >= keep_number) {
+            break;
+        }
+    }
+
+    num_blobs = i;
+
+    for(j = j + 1; j < raw_blobs_count; j++) {
+        b = List_get(raw_blobs, j);
+
+        if(b->keep == false) {
+            continue;
+        }
+
+        if(b->size < min_size) {
+            continue;
+        }
+
+        if(b->size <= (*blobs)[keep_number - 1]->size) {
+            continue;
+        }
+
+        i = 0;
+        while(b->size < (*blobs)[i]->size) {
+            i++;
+        }
+
+        memmove((*blobs) + i + 1, (*blobs) + i, (keep_number - i - 1) * sizeof(Blob**));
+        (*blobs)[i] = b;
+    }
+
+    printf("%.4f\n", Timer_getDelta(timer));
+
+    for(i = 0; i < num_blobs; i++) {
+        (*blobs)[i]->id = i + 1;
+    }
 
     map_pixel = blob_mapping;
     img_pixel = (uint8_t*) blobs_out->imageData;
@@ -291,8 +277,8 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, Blob** blobs, int min_siz
     /* Write out the real blob ids */
     for(row = 0; row < blobs_out->height; row++) {
         for(column = 0; column < blobs_out->width; column++) {
-            if((*map_pixel) && (*blobs)[blob_parts[(*map_pixel)]->blob_id].keep) {
-                (*img_pixel) = (blob_parts[*map_pixel]->blob_id % 255) + 1;
+            if((*map_pixel)) {
+                (*img_pixel) = blob_parts[*map_pixel]->blob->id;
             } else {
                 (*img_pixel) = 0;
             }
@@ -305,27 +291,34 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, Blob** blobs, int min_siz
         img_pixel += row_padding;
     }
 
-    free(blob_mapping);
-    
     for(i = 0; i < blob_part_table_size; i += BLOB_PART_TABLE_ALLOC_UNIT) {
         free(blob_parts[i]);
     }
     free(blob_parts);
+    free(blob_mapping);
+    
+    for(i = 0; i < raw_blobs_count; i++) {
+        b = List_get(raw_blobs, i);
+        if(b->id == 0) {
+            free(b);
+        }
+    }
+    List_destroy(raw_blobs);
 
     return num_blobs;
 }
 
 int main(int argc, char** argv) {
-    CvCapture* camera = cvCaptureFromCAM(0);
-    IplImage* img_in = cvQueryFrame(camera); // = cvLoadImage(argv[1], CV_LOAD_IMAGE_GRAYSCALE);
+    // CvCapture* camera = cvCaptureFromCAM(0);
+    IplImage* img_in = cvLoadImage(argv[1], CV_LOAD_IMAGE_GRAYSCALE); // = cvQueryFrame(camera);
     IplImage* binary = cvCreateImage(cvGetSize(img_in), 8, 1);
     IplImage* binary2 = cvCreateImage(cvGetSize(img_in), 8, 1);
 
-    int value1 = 15, value2 = 20, min_blob = 25, most_blobs = 10;
+    int value1 = 15, value2 = 20, min_blob = 512, most_blobs = 64;
 
     Timer* timer = Timer_new();
 
-    Blob* blobs;
+    Blob** blobs;
     int num_blobs;
 
 #ifdef COMPARE
@@ -345,10 +338,10 @@ int main(int argc, char** argv) {
 #endif
 
     while(true) {
-        img_in = cvQueryFrame(camera);
-        cvCvtColor(img_in, binary, CV_RGB2GRAY);
+        // img_in = cvQueryFrame(camera);
+        // cvCvtColor(img_in, binary, CV_RGB2GRAY);
         // cvShowImage("original", binary);
-        cvSmooth(binary, binary, CV_GAUSSIAN, 5, 5, 0, 0);
+        cvSmooth(img_in, binary, CV_GAUSSIAN, 5, 5, 0, 0);
         cvAdaptiveThreshold(binary, binary, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, value1, value2);
         
 #ifdef VISUAL_DEBUG
@@ -358,6 +351,9 @@ int main(int argc, char** argv) {
         Timer_reset(timer);
         num_blobs = find_blobs2(binary, binary2, &blobs, min_blob, most_blobs);
         printf("blobs2: %5.3f\n\n", Timer_getDelta(timer));
+        printf("Found %d blobs\n", num_blobs);
+        free_blobs(blobs, num_blobs);
+
 
 #ifdef COMPARE
         Timer_reset(timer);
@@ -368,7 +364,7 @@ int main(int argc, char** argv) {
 
 #ifdef VISUAL_DEBUG
         cvShowImage("binary2", binary2);
-        if(cvWaitKey(1) == 'q') break;
+        if(cvWaitKey(-1) == 'q') break;
 #else
         break;
 #endif
