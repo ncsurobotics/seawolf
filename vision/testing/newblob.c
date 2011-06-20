@@ -8,7 +8,7 @@
 #include <cv.h>
 #include <highgui.h>
 
-#define COMPARE 1
+//#define COMPARE 1
 #define VISUAL_DEBUG 1
 
 #ifdef COMPARE
@@ -174,7 +174,7 @@ static int filter_blob_list(Blob* blobs, uint32_t num_blobs, int min_size, int k
     return keep;
 }
 
-int find_blobs2(IplImage* img_in, IplImage* blobs_out, int min_size, int keep_number) {
+int find_blobs2(IplImage* img_in, IplImage* blobs_out, Blob** blobs, int min_size, int keep_number) {
     uint32_t blob_part_table_size = BLOB_PART_TABLE_ALLOC_UNIT;
     BlobPart** blob_parts = calloc(sizeof(BlobPart*), blob_part_table_size);
 
@@ -194,7 +194,6 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, int min_size, int keep_nu
 
     uint8_t row_padding = img_in->widthStep - img_in->width;
 
-    Blob* blobs = NULL;
     uint32_t num_blobs;
 
     int i;
@@ -258,7 +257,7 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, int min_size, int keep_nu
             
                 /* Store blob part identifier */
                 blob_parts[assigned_to]->part_size++;
-                *map_pixel = assigned_to;
+                (*map_pixel) = assigned_to;
                 target_blob = blob_parts[assigned_to]->blob_id;
 
                 /* Connect newly adjacent blob parts */
@@ -283,22 +282,16 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, int min_size, int keep_nu
         img_pixel += row_padding;
     }
 
-    blobs = build_blobs_list(blob_parts, next_part_id, &num_blobs);
-    filter_blob_list(blobs, num_blobs, min_size, keep_number);
+    (*blobs) = build_blobs_list(blob_parts, next_part_id, &num_blobs);
+    filter_blob_list((*blobs), num_blobs, min_size, keep_number);
 
-    if(num_blobs < 50) {
-        for(i = 0; i < next_part_id; i++) {
-            printf("Blob %d\n", blob_parts[i]->part_size);
-        }
-    }
-    
     map_pixel = blob_mapping;
     img_pixel = (uint8_t*) blobs_out->imageData;
 
     /* Write out the real blob ids */
     for(row = 0; row < blobs_out->height; row++) {
         for(column = 0; column < blobs_out->width; column++) {
-            if((*map_pixel) && blobs[blob_parts[(*map_pixel)]->blob_id].keep) {
+            if((*map_pixel) && (*blobs)[blob_parts[(*map_pixel)]->blob_id].keep) {
                 (*img_pixel) = (blob_parts[*map_pixel]->blob_id % 255) + 1;
             } else {
                 (*img_pixel) = 0;
@@ -312,7 +305,6 @@ int find_blobs2(IplImage* img_in, IplImage* blobs_out, int min_size, int keep_nu
         img_pixel += row_padding;
     }
 
-    free(blobs);
     free(blob_mapping);
     
     for(i = 0; i < blob_part_table_size; i += BLOB_PART_TABLE_ALLOC_UNIT) {
@@ -333,10 +325,12 @@ int main(int argc, char** argv) {
 
     Timer* timer = Timer_new();
 
-#ifdef COMPARE
-    BLOB* blobs;
-#endif
+    Blob* blobs;
     int num_blobs;
+
+#ifdef COMPARE
+    BLOB* other_blobs;
+#endif
 
 #ifdef VISUAL_DEBUG
     //    cvNamedWindow("original", CV_WINDOW_AUTOSIZE);
@@ -362,13 +356,13 @@ int main(int argc, char** argv) {
 #endif
 
         Timer_reset(timer);
-        num_blobs = find_blobs2(binary, binary2, min_blob, most_blobs);
+        num_blobs = find_blobs2(binary, binary2, &blobs, min_blob, most_blobs);
         printf("blobs2: %5.3f\n\n", Timer_getDelta(timer));
 
 #ifdef COMPARE
         Timer_reset(timer);
-        num_blobs = find_blobs(binary, &blobs, most_blobs, min_blob);
-        blob_free(blobs, num_blobs);
+        num_blobs = find_blobs(binary, &other_blobs, most_blobs, min_blob);
+        blob_free(other_blobs, num_blobs);
         printf("blobs: %5.3f\n", Timer_getDelta(timer));
 #endif
 
