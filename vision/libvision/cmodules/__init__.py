@@ -110,3 +110,23 @@ blob = CModule("blob.so", [
     CFunction("find_blobs", ctypes.c_int, [IplImage_p, BlobStruct_p_p, ctypes.c_int, ctypes.c_int]),
     CFunction("blob_free", None, [BlobStruct_p, ctypes.c_int]),
 ])
+
+class cBlob(ctypes.Structure):
+    _fields_ = [
+        ("id", ctypes.c_uint32),
+        ("size", ctypes.c_int32),
+        ("c_x", ctypes.c_uint32),
+        ("c_y", ctypes.c_uint32),
+        ("x_0", ctypes.c_uint16),
+        ("x_1", ctypes.c_uint16),
+        ("y_0", ctypes.c_uint16),
+        ("y_1", ctypes.c_uint16)
+    ]
+
+cBlob_p = ctypes.POINTER(cBlob)
+cBlob_p_p = ctypes.POINTER(cBlob_p)
+
+cblob_mod = CModule("blob2.so", [
+    CFunction("_wrap_find_blobs", cBlob_p_p, [ctypes.py_object, ctypes.py_object, ctypes.POINTER(ctypes.c_int), ctypes.c_int, ctypes.c_int]),
+    CFunction("free_blobs", None, [cBlob_p_p, ctypes.c_int])
+])

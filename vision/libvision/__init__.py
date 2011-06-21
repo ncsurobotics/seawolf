@@ -1,5 +1,6 @@
 
 from camera import Camera
+import blob
 import cmodules
 import filters
 import hist

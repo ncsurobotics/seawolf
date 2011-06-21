@@ -18,7 +18,7 @@ all: $(SHARED_OBJECTS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
 
 %.o: %.c Makefile
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(shell cat $(<:%.c=%.flags) 2>/dev/null) -c $< -o $@
 
 clean:
 	-rm $(OBJECTS) $(SHARED_OBJECTS)
