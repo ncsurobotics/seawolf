@@ -25,8 +25,9 @@ class LettersEntity(VisionEntity):
     def initialize_non_pickleable(self,debug=True):
 
         if debug:
-            cv.NamedWindow("Binary")
             cv.NamedWindow("Filtered")
+            cv.NamedWindow("Binary")
+            cv.NamedWindow("Indexed")
 
     def find(self, frame, debug=True):
 
@@ -42,22 +43,16 @@ class LettersEntity(VisionEntity):
         binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(filtered, 250, 0, 0, 800, 800, 1.5)
 
         blob_indexed = cv.CreateImage(cv.GetSize(binary), 8, 1)
-        blobs = libvision.blob.find_blobs(binary,blob_indexed,50,4)
-
-        # dilated = cv.CreateImage(cv.GetSize(binary), 8, 1)
-        # cv.Dilate(binary, dilated,None, 1)
-        eroded = cv.CreateImage(cv.GetSize(binary), 8, 1)
-        cv.Erode(binary, eroded, None, 1)
+        blobs = libvision.blob.find_blobs(binary,blob_indexed,50,1)
 
         for i, blob in enumerate(blobs):
             #check for an x
-            #x_sighted = libvision.cmodules.shape_detect.match_X(eroded)
-     
-            x_sighted = libvision.cmodules.shape_detect.match_X(eroded, i, blob.centroid[0], blob.centroid[1],blob.roi[0],blob.roi[1],blob.roi[2],blob.roi[3])
-        #check for an 0
+            x_sighted = libvision.cmodules.shape_detect.match_X(blob_indexed, i+1, blob.centroid[0], blob.centroid[1],blob.roi[0],blob.roi[1],blob.roi[2],blob.roi[3])
+            #check for an 0
 
         if debug:
-            cv.ShowImage("Binary",eroded)
+            cv.ShowImage("Binary",binary)
+            cv.ShowImage("Indexed",blob_indexed)
             cv.ShowImage("Filtered",filtered)
 
         return False 

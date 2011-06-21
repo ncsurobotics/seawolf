@@ -9,15 +9,14 @@
 
 // Prototypes
 
-int match_X(IplImage* binary, int index, int centroid_x, int centroid_y, int roi1, int roi2, int roi3, int roi4);
+int match_X(IplImage* binary, int index, int centroid_x, int centroid_y, int roix0, int roiy0, int roix, int roiy);
 int match_O(IplImage* binary);
 
 int arctan(int x, int y);
 
-int match_X(IplImage* binary, int index, int centroid_x, int centroid_y, int roi1, int roi2, int roi3, int roi4){
+int match_X(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int roiy0, int roix, int roiy){
 
-//    printf("index = %d, cent_x = %d, cent_y = %d, in roi1 = %d, int roi2 = %d, int roi3 = %d, roi4 = %d \n",index, centroid_x, centroid_y, roi1, roi2, roi3, roi4);
-
+    int i,x,y; //useful variable names
     CvPoint* points; //an array of pixel coordinates
     CvPoint* corners; //the corners of the image
     int pixel_count = 0; //total number of pixels we find
@@ -31,24 +30,28 @@ int match_X(IplImage* binary, int index, int centroid_x, int centroid_y, int roi
         IplImage* debug = cvCreateImage(cvGetSize(binary),8,3);
     #endif 
 
-    //populate a list of pixel coordinates
-    int x,y;
-    double cent_x=0;
-    double cent_y=0;
-    for(x = binary->width - 1; x>=0; x--){
-        for( y = binary->height -1; y>=0; y--){
-            if(binary->imageData[y*binary->width + x] != 0){
+    //populate a list of pixel coordinates, and find the furthest pixel
+    int maxr = 0;
+    for(x = roix0; x <= roix0 + roix; x++){
+        for( y = roiy0; y <= roiy0 + roiy; y++){
+            if(binary->imageData[y*binary->width + x] == index){
                 //record this pixel
                 points[pixel_count].x = x;
                 points[pixel_count].y = y;
                 
-                //update the centroid
-                cent_x += x; 
-                cent_y += y; 
-
                 //increment pixel count
                 pixel_count++;
-                
+               
+                //look for furthest pixel from centroid
+                int tempx = x - cent_x;
+                int tempy = y - cent_y; 
+                int r = (int)sqrt((double)(tempx*tempx + tempy*tempy));
+
+                if( r > maxr){
+                    maxr = r;
+                    corners[0].x = x;
+                    corners[0].y = y;
+                }
             }
 
             #ifdef VISUAL_DEBUG
@@ -58,25 +61,6 @@ int match_X(IplImage* binary, int index, int centroid_x, int centroid_y, int roi
                 debug->imageData[3*i + 1] = binary->imageData[i];
                 debug->imageData[3*i + 2] = binary->imageData[i];
             #endif
-        }
-    }
-    cent_x = (int) cent_x / pixel_count;
-    cent_y = (int) cent_y / pixel_count;
-
-    //find the pixel furthest from the centroid (this should be a corner)
-    int i;
-    int maxr = 0;
-    for(i = pixel_count -1; i >= 0; i--){
-        x = points[i].x - cent_x;
-        y = points[i].y - cent_y; 
-
-        //compute the distance this point is from the centroid
-        int r = (int)sqrt((double)(x*x + y*y));
-
-        if( r > maxr){
-            maxr = r;
-            corners[0].x = points[i].x;
-            corners[0].y = points[i].y;
         }
     }
 
@@ -268,9 +252,9 @@ int match_X(IplImage* binary, int index, int centroid_x, int centroid_y, int roi
     //scale confidence
     confidence = (confidence - 50 ) * 2;
 
-    printf("confidence = %d \n",confidence);
-
     #ifdef VISUAL_DEBUG
+        printf("X confidence = %d \n",confidence);
+
         cvNamedWindow("Compared",CV_WINDOW_AUTOSIZE);
         cvShowImage("Compared", compared);
 
