@@ -15,7 +15,7 @@ SHARED_OBJECTS = $(SOURCES:%.c=%.so)
 all: $(SHARED_OBJECTS)
 
 %.so: %.o Makefile
-	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@
+	$(CC) $(CFLAGS) $(shell cat $(<:%.c=%.flags) 2>/dev/null) $(LDFLAGS) $< -o $@
 
 %.o: %.c Makefile
 	$(CC) $(CFLAGS) $(shell cat $(<:%.c=%.flags) 2>/dev/null) -c $< -o $@
