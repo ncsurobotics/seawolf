@@ -3,185 +3,307 @@
 #include <highgui.h>
 #include <math.h>
 
+#define VISUAL_DEBUG 1 
 
 #define HOLE_SIZE .75 //small the number, smaller the hole
 
 // Prototypes
 
-void detect_letters(IplImage* binary);
+int match_X(IplImage* binary, int index, int centroid_x, int centroid_y, int roi1, int roi2, int roi3, int roi4);
+int match_O(IplImage* binary);
 
-// Definitions
+int arctan(int x, int y);
 
-struct Point_s {
-    int x;
-    int y;
-};
+int match_X(IplImage* binary, int index, int centroid_x, int centroid_y, int roi1, int roi2, int roi3, int roi4){
 
-typedef struct Point_s Point;  
+//    printf("index = %d, cent_x = %d, cent_y = %d, in roi1 = %d, int roi2 = %d, int roi3 = %d, roi4 = %d \n",index, centroid_x, centroid_y, roi1, roi2, roi3, roi4);
 
-void detect_letters(IplImage* binary){
+    CvPoint* points; //an array of pixel coordinates
+    CvPoint* corners; //the corners of the image
+    int pixel_count = 0; //total number of pixels we find
     
-    Point* points; //an array of the found pixel points 
-    int* xsums;   //an array of the sums of pixels at each x coordinate
-    int* ysums;   //an array of the sums of pixels at each y coordinate
-    int* angdensity; //an array to hold pixel density at various angles
-    int pixelcount = 0; //the total number of found pixels
-    uchar* data = binary->imageData;
+    //allocate memory for points
+    points = (CvPoint*)calloc(binary->width * binary->height, sizeof(CvPoint)); 
+    corners = (CvPoint*)calloc(4, sizeof(CvPoint)); 
+  
+    #ifdef VISUAL_DEBUG
+        //create a debug image
+        IplImage* debug = cvCreateImage(cvGetSize(binary),8,3);
+    #endif 
 
-    //allocate memory for arrays 
-    points = (Point*)calloc(binary->width * binary->height, sizeof(Point)); 
-    xsums = (int*)calloc(binary->width, sizeof(int));
-    ysums = (int*)calloc(binary->height, sizeof(int));
-    angdensity = (int*)calloc(360, sizeof(int));
-
-    //create a debug image
-    IplImage* debug;
-    debug = cvCloneImage(binary);
- 
-    //initialize arrays 
-    int i;
-    for( i = binary->width * binary->height - 1; i>=0; i--){
-        if( i < binary->width)
-            xsums[i] = 0;
-        if( i < binary->height)  
-            ysums[i] = 0;
-        points[i].x = 0;
-        points[i].y = 0;
-    }
-    for ( i=0; i<360; i++ ){
-        angdensity[i] = 0; 
-    }
-
-    //walk through the image, populating a list of found pixels 
+    //populate a list of pixel coordinates
     int x,y;
+    double cent_x=0;
+    double cent_y=0;
     for(x = binary->width - 1; x>=0; x--){
-        for(y = binary->height -1; y>=0; y--){
+        for( y = binary->height -1; y>=0; y--){
+            if(binary->imageData[y*binary->width + x] != 0){
+                //record this pixel
+                points[pixel_count].x = x;
+                points[pixel_count].y = y;
+                
+                //update the centroid
+                cent_x += x; 
+                cent_y += y; 
 
-            //make sure this is a found pixel
-            int pos = 3 * ( binary->width * y + x );
-            if( data[pos] != 0xff || data[pos+1] != 0xff || data[pos+2] != 0xff)
-            continue;
+                //increment pixel count
+                pixel_count++;
+                
+            }
 
-            //add this pixel to the list of found pixels
-            points[pixelcount].x = x;
-            points[pixelcount].y = y;
-
-            //update the pixel sums 
-            pixelcount++;
-            xsums[x]++;
-            ysums[y]++;
+            #ifdef VISUAL_DEBUG
+                //copy the binary image onto the debug image
+                int i = y*binary->width + x;
+                debug->imageData[3*i + 0] = binary->imageData[i];
+                debug->imageData[3*i + 1] = binary->imageData[i];
+                debug->imageData[3*i + 2] = binary->imageData[i];
+            #endif
         }
     }
+    cent_x = (int) cent_x / pixel_count;
+    cent_y = (int) cent_y / pixel_count;
 
-    //collect distribution data 
-    int upxquart = -1;
-    int lowxquart = -1;
-    int upyquart = -1;
-    int lowyquart = -1;
-    int xmid = -1;
-    int ymid = -1;
+    //find the pixel furthest from the centroid (this should be a corner)
+    int i;
+    int maxr = 0;
+    for(i = pixel_count -1; i >= 0; i--){
+        x = points[i].x - cent_x;
+        y = points[i].y - cent_y; 
 
-    int tempsum = 0;
-    for ( x = binary->width - 1; x>=0; x--){
-        tempsum += xsums[x];
-        if (upxquart == -1 && tempsum >= pixelcount * 1/4)
-            upxquart = x;
-        if (xmid == -1 && tempsum >= pixelcount / 2)
-            xmid = x;
-        if (lowxquart == -1 && tempsum >= pixelcount * 3 / 4){
-            lowxquart = x;
-            break;
-        }
-    }
-
-    tempsum = 0;
-    for ( y = binary->height - 1; y>=0; y--){
-        tempsum += ysums[y];
-        if (upyquart == -1 && tempsum >= pixelcount * 1/4)
-            upyquart = y;
-        if (ymid == -1 && tempsum >= pixelcount / 2)
-            ymid = y;
-        if (lowyquart == -1 && tempsum >= pixelcount * 3/ 4){
-            lowyquart = y;
-            break;
-        }
-    }
-
-    //use quartile data to compute an average radius
-    int r1 = upxquart - xmid;
-    int r2 = xmid - lowxquart;
-    int r3 = upyquart - ymid;
-    int r4 = ymid - lowyquart;
-    int avg_radius = (r1 + r2 + r3 + r4)/4;
-
-    //Test to make sure the radii are all about equal
-    printf("---------------------------------------------------\n");
-    printf("Radii = %d, %d, %d, %d, %d \n",r1,r2,r3,r4,avg_radius);
-    printf("xmid = %d, ymid = %d \n",xmid,ymid);
-    printf("---------------------------------------------------\n");
-
-    //do statistical analysis on pixels
-    int smallrcount = 0;
-    int maxangdensity = 0;
-    for ( i = pixelcount - 1; i >= 0; i--){
-        x = points[i].x - xmid;
-        y = points[i].y - ymid;
-
-        //check that not too many pixels are in the center of the blob
+        //compute the distance this point is from the centroid
         int r = (int)sqrt((double)(x*x + y*y));
 
-        if(r < avg_radius * HOLE_SIZE ) {
-            
-            //mark that we found a new small radius point
-            smallrcount++;
-
-            //show on the debug the location of this point
-            
-            debug->imageData[points[i].y*debug->width*3 + points[i].x*3 + 0] = 0;
-            //debug->imageData[points[i].y*debug->width*3 + points[i].x*3 + 1] = 254;
-            debug->imageData[points[i].y*debug->width*3 + points[i].x*3 + 2] = 0;
+        if( r > maxr){
+            maxr = r;
+            corners[0].x = points[i].x;
+            corners[0].y = points[i].y;
         }
+    }
 
-        //gather the angular distribution of the image
-        if( x !=0 && y != 0 ){
-            int theta = (int)(atan((double) y / x ) * 360 / 3.14) + 180;
-            angdensity[theta]++;  
-            if(angdensity[theta] > maxangdensity){
-                maxangdensity++;
+    //find the angle of the first corner
+    x = corners[0].x - cent_x;
+    y = corners[0].y - cent_y;
+    int theta = arctan(y,x);
+
+    //find the other 3 corners
+    int maxr1 = 0;
+    int maxr2 = 0;
+    int maxr3 = 0;
+    //keep track of the pixel sums on either side of angle0 
+    int pxsum1 = 0; //this is bigger --> corner 0 goes in upper left
+    int pxsum2 = 0; // this is bigger --> corner 0 goes in upper right
+    for(i = pixel_count -1; i>=0; i--){
+        x = points[i].x - cent_x;
+        y = points[i].y - cent_y;
+        int tempang = arctan(y,x);
+
+        //normalize angles
+        if (tempang < theta) tempang += 360;
+        
+        //find tempr
+        int tempr = (int)sqrt((double)(x*x + y*y));
+
+        if( tempang - theta > 315 ){
+            //we are in the same quadrant as the origional angle
+            pxsum1++;
+        } else if( tempang - theta > 225){
+            //call this quadrant 3
+            if( tempr > maxr3){
+                maxr3 = tempr;
+                corners[3].x = points[i].x;
+                corners[3].y = points[i].y;
             }
-        }      
-    } 
-    printf("pixel count = %d, small r count = %d, maxangdensity = %d\n",pixelcount, smallrcount, maxangdensity);
-
-    /* DEBUG CODE */
-        //make a histogram for the angular density
-        CvSize histsize = {360,180};
-        IplImage* thetagram = cvCreateImage(histsize, 8, 1); 
-        uchar* histdata = thetagram->imageData; 
-
-        for(i=0; i<360; i++){
-            int j;
-            for(j=0;j<180; j++){
-                if(maxangdensity != 0 && j<angdensity[i] * 180 / maxangdensity)
-                    histdata[j*360 + i] = 150;
-                else
-                    histdata[j*360 + i] = 0;
+       } else if( tempang - theta > 135) {
+            //call this quadrant 2
+            if( tempr > maxr2) {
+                maxr2 = tempr;
+                corners[2].x = points[i].x;
+                corners[2].y = points[i].y;
             }
-        }
+       } else if( tempang - theta > 45) {
+            //call this quadrant 1
+            if( tempr > maxr1) {
+                maxr1 = tempr;
+                corners[1].x = points[i].x;
+                corners[1].y = points[i].y;
+            }
+       } else {
+            //we are again in the same quadrant as the origional angle
+            pxsum2++;
+       }
 
-        cvNamedWindow("Thetagram", CV_WINDOW_AUTOSIZE);
-        cvShowImage("Thetagram", thetagram);
+       #ifdef VISUAL_DEBUG
+            //color every quadrant a different color
+            if( tempang - theta > 315 ){
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+2]=0;
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+1]=254;
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+0]=254;
+            } else if( tempang - theta > 225){
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+2]=254;
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+1]=0;
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+0]=0;
+           } else if( tempang - theta > 135) {
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+2]=0;
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+1]=0;
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+0]=254;
+           } else if( tempang - theta > 45) {
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+2]=254;
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+1]=0;
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+0]=254;
+           } else {
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+2]=0;
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+1]=254;
+                debug->imageData[3*points[i].y*debug->width+3*points[i].x+0]=0;
+           }
+        #endif
+    }
+
+    #ifdef VISUAL_DEBUG
+        //printf("theta = %d, pxsum1 = %d, pxsum2 = %d \n", theta,pxsum1,pxsum2);
+
+        //draw a line between consecutive corners
+        CvScalar boxcolor = {0, 254, 0};
+        cvLine(debug, corners[0], corners[1], boxcolor, 1, 8, 0);
+        cvLine(debug, corners[1], corners[2], boxcolor, 1, 8, 0);
+        cvLine(debug, corners[2], corners[3], boxcolor, 1, 8, 0);
+        cvLine(debug, corners[3], corners[0], boxcolor, 1, 8, 0);
+        
+        //draw a circle at the center of the image
+        CvPoint center = {cent_x, cent_y};
+        CvScalar centercolor = {0, 0, 254};
+        cvCircle(debug, center, 5, centercolor, 2, 8, 0);
+
+        //mark corner 0
+        CvPoint corner0 = {corners[0].x, corners[0].y};
+        CvScalar cornercolor = {254, 0, 254};
+        cvCircle(debug, corner0, 5, cornercolor, 1, 8, 0);
+
         cvNamedWindow("Debug", CV_WINDOW_AUTOSIZE);
         cvShowImage("Debug", debug);
-    /* END DEBUG */
-  
+    #endif
+
+    //load template
+    IplImage* xtemplate = cvLoadImage("xtemplate.png",CV_LOAD_IMAGE_GRAYSCALE);
+    //get transformation matrix that would place corner values
+        //in the correct location to compare to template
+
+    //transform image
+        //create an array for the 4 src points and dest points
+        CvPoint2D32f* src;
+        CvPoint2D32f* dst;
+        src = (CvPoint2D32f*)calloc(4, sizeof(CvPoint2D32f));
+        dst = (CvPoint2D32f*)calloc(4, sizeof(CvPoint2D32f));
+
+        //populate the src array 
+        if( pxsum1 >= pxsum2 ){
+            for ( i=0; i<4; i++){
+                src[i].x = corners[i].x;
+                src[i].y = corners[i].y;
+            }
+        }else{
+            for ( i=0; i<4; i++){
+                int j = i-1;
+                if ( j<0 ) j = 3;
+                src[i].x = corners[j].x;
+                src[i].y = corners[j].y;
+            }
+        }
+        //populate the dst array
+        dst[0].x = 0;
+        dst[0].y = 0;
+        dst[1].x = 0;
+        dst[1].y = 100;
+        dst[2].x = 100;
+        dst[2].y = 100;
+        dst[3].x = 100;
+        dst[3].y = 0;
+
+        //get the transformation matrix
+        CvMat* tmatrix = cvCreateMat(3,3,CV_32FC1);
+        tmatrix = cvGetPerspectiveTransform( src, dst, tmatrix);
+
+        //transform the image
+        CvSize warpedsize = {100,100};
+        IplImage* warped = cvCreateImage(warpedsize, 8, 1);
+        CvScalar fillcolor = {0};
+        cvWarpPerspective(binary, warped, tmatrix,CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS , fillcolor);
+
+    #ifdef VISUAL_DEBUG
+        IplImage* compared = cvCreateImage(cvGetSize(xtemplate),8,3);
+    #endif
+
+    //XOR the template image with our warped image 
+    int xor_sum = 0;
+    for ( i=xtemplate->width*xtemplate->height -1; i>=0; i--){
+        int p1 = xtemplate->imageData[i];
+        int p2 = warped->imageData[i];
+        if(( p1 != 0 &&  p1 != 0 ) || ( p2 == 0 && p2 == 0 )){
+            xor_sum++;
+        }
+       
+        #ifdef VISUAL_DEBUG
+        if(p1 != 0 && p2 != 0){
+            compared->imageData[i*3+0] = 0x00;
+            compared->imageData[i*3+1] = 0xff;
+            compared->imageData[i*3+2] = 0x00;
+        }else if(p1 == 0 && p2 == 0){
+            compared->imageData[i*3+0] = 0x00;
+            compared->imageData[i*3+1] = 0x00;
+            compared->imageData[i*3+2] = 0x00;
+        }else if(p1 != 0){
+            compared->imageData[i*3+0] = 0xff;
+            compared->imageData[i*3+1] = 0x00;
+            compared->imageData[i*3+2] = 0x00;
+        }else if(p2 != 0){
+            compared->imageData[i*3+0] = 0x00;
+            compared->imageData[i*3+1] = 0x00;
+            compared->imageData[i*3+2] = 0xff;
+        }
+        #endif
+    }
+
+    //compute confidence
+    int confidence = xor_sum * 100 / (xtemplate->width*xtemplate->height);
+
+    //scale confidence
+    confidence = (confidence - 50 ) * 2;
+
+    printf("confidence = %d \n",confidence);
+
+    #ifdef VISUAL_DEBUG
+        cvNamedWindow("Compared",CV_WINDOW_AUTOSIZE);
+        cvShowImage("Compared", compared);
+
+        cvNamedWindow("Warped", CV_WINDOW_AUTOSIZE);
+        cvShowImage("Warped", warped);
+
+        cvNamedWindow("Xtemplate", CV_WINDOW_AUTOSIZE);
+        cvShowImage("Xtemplate",xtemplate);
+    #endif
+
     //free memory
-    cvReleaseImage(&thetagram);
-    cvReleaseImage(&debug);
+    cvReleaseImage(&xtemplate);
+    cvReleaseImage(&warped);
     free(points);
-    free(xsums);
-    free(ysums);
-    free(angdensity);
+    free(corners);
+    free(src);
+    free(dst);
+    cvReleaseMat(&tmatrix);
+
+    #ifdef VISUAL_DEBUG
+        cvReleaseImage(&debug);
+        cvReleaseImage(&compared);
+    #endif
+
+    return 0;
+}
+int match_O(IplImage* binary){
+
+    return 0;
 }
 
-
+//returns arctan of x and y, from -180 to 180 degrees
+int arctan(int x, int y){
+    int theta = (int)( atan2((double)y, (double)x) * 180 / M_PI );
+    return theta;
+}

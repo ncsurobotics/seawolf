@@ -1,12 +1,12 @@
 /**
  * \file
- * Target Color HSV
+ * Target Color RGB 
  */
 
 //************************************************
-//  target_color_hsv.c: 
+//  target_color_rgb.c: 
 //
-//  Houses find_target_color_hsv() and related functions
+//  Houses find_target_color_rgb() and related functions
 //        - returns a blacked-out IplImage (black is
 //          not the color you are looking for)
 //
@@ -53,52 +53,53 @@
 
 #define VISUAL_DEBUG 1
 
-#define HUE_WEIGHT 2
-#define SAT_WEIGHT 1
-#define VAL_WEIGHT 1
+#define RED_WEIGHT 2
+#define GREEN_WEIGHT 1
+#define BLUE_WEIGHT 1
+#define SEPARATION_THRESHOLD 150 //how low the histogram must drop in order to consider a blob 'isolated' 
 
-struct HSVPixel_s {
-    unsigned char h;
-    unsigned char s;
-    unsigned char v;
+struct RGBPixel_s {
+    unsigned char r;
+    unsigned char g;
+    unsigned char b;
 };
 
-typedef struct HSVPixel_s HSVPixel; 
+typedef struct RGBPixel_s RGBPixel; 
 
-float Pixel_dist_hsv(HSVPixel* px_1, HSVPixel* px_2);
+float Pixel_dist_rgb(RGBPixel* px_1, RGBPixel* px_2);
 
 int min(int a, int b);
  
-IplImage* find_target_color_hsv(IplImage* frame, int hue, int saturation, int value, int min_blobsize, int dev_threshold, double precision_threshold){ //should find the set of colors closest to the target color
+IplImage* find_target_color_rgb(IplImage* frame, int red, int green, int blue, int min_blobsize, int dev_threshold, double precision_threshold){ //should find the set of colors closest to the target color
     int i,j,s;
     int* radii; //holds the accumulation for all possible distances from target pixel
     int blobsize = 0; //current number of pixels found in color "blob" (not necceserily a single blob)
     int rlimit=0; // stddev; //the computed maximum allowable stddev
     int raverage; //the average stddev from target color
-    int smallestr; //the smallest stddev found
-    double imgAverage_h=0; //hold average colors for this image as doubles
-    double imgAverage_s=0;
-    double imgAverage_v=0;
-    HSVPixel imgAverage;
-    HSVPixel tempPixel;
+    int smallestr; //the smallest stddev found  
+    double imgAverage_r=0; //hold average colors for this image as doubles
+    double imgAverage_g=0;
+    double imgAverage_b=0;
+    RGBPixel imgAverage;
+    RGBPixel tempPixel;
    
     //Initialize Images  
     IplImage* out = cvCreateImage(cvGetSize(frame),8,1);
     IplImage* in = cvCreateImage(cvGetSize(frame),8,3);
-    cvCvtColor(frame, in, CV_BGR2HSV);
+    in = cvCloneImage(frame);
 
     uchar* ptrIn = (uchar*) in->imageData;
     uchar* ptrOut = (uchar*) out->imageData;
    
     //Compile target color 
-    HSVPixel color; 
-    color.h = hue;
-	color.s = saturation;
-	color.v = value;
+    RGBPixel color; 
+    color.r = red;
+	color.g = green;
+	color.b = blue;
 
-    int maxr = (int) sqrt(pow((short)256*HUE_WEIGHT,2)+
-                        pow((short)256*SAT_WEIGHT,2)+
-                        pow((short)256*VAL_WEIGHT,2));
+    int maxr = (int) sqrt(pow((short)256*RED_WEIGHT,2)+
+                        pow((short)256*GREEN_WEIGHT,2)+
+                        pow((short)256*BLUE_WEIGHT,2));
     // It's easiest if maxr is always even
     if((double) maxr/2 != maxr/2) maxr++;
 
@@ -114,18 +115,18 @@ IplImage* find_target_color_hsv(IplImage* frame, int hue, int saturation, int va
     smallestr = maxr;
     int peakr = 0;
     for(i=in->width*in->height; i>=0;i--){  
-        tempPixel.v = ptrIn[3*i+2];
-        tempPixel.h = ptrIn[3*i+0];
-        tempPixel.s = ptrIn[3*i+1];
-        s = (int)Pixel_dist_hsv(&color, &tempPixel); 
+        tempPixel.r = ptrIn[3*i+2];
+        tempPixel.g = ptrIn[3*i+1];
+        tempPixel.b = ptrIn[3*i+0];
+        s = (int)Pixel_dist_rgb(&color, &tempPixel); 
         radii[s]++;
         if(radii[s] > peakr) peakr = radii[s]; 
         if(s < smallestr) smallestr = s;
-
+        
         // Update the average color
-        imgAverage_h = (imgAverage_h*(i)+tempPixel.h)/(i+1);
-        imgAverage_s = (imgAverage_s*(i)+tempPixel.s)/(i+1);
-        imgAverage_v = (imgAverage_v*(i)+tempPixel.v)/(i+1); 
+        imgAverage_r = (imgAverage_r*(i)+tempPixel.r)/(i+1);
+        imgAverage_g = (imgAverage_g*(i)+tempPixel.g)/(i+1);
+        imgAverage_b = (imgAverage_b*(i)+tempPixel.b)/(i+1); 
     }
 
     #ifdef VISUAL_DEBUG
@@ -145,28 +146,50 @@ IplImage* find_target_color_hsv(IplImage* frame, int hue, int saturation, int va
     #endif
 
     // Update the imgAverage pixel (converting all averages to integers)
-    imgAverage.h = (int)imgAverage_h;
-    imgAverage.s = (int)imgAverage_s;
-    imgAverage.v = (int)imgAverage_v;
+    imgAverage.r = (int)imgAverage_r;
+    imgAverage.g = (int)imgAverage_g;
+    imgAverage.b = (int)imgAverage_b;
 
-    raverage= Pixel_dist_hsv(&color,&imgAverage); 
+    raverage= Pixel_dist_rgb(&color,&imgAverage); 
 
     int tot_sum = 0;
     int prev_sum = 0;
     int check1 = 0;
-    rlimit = 0;
-    //use a differential approach to locate the best place to draw the line
+    int check2 = 0;
+    int rlimit_thresh = 0;
+    int rlimit_dif = 0;
+
+    //first see if a large group is isolated from the rest of the histogram
+    //if that failed, use a differential approach to locate the first peak
     for( i=smallestr; i<maxr && i<dev_threshold; i+=3){
         int cur_sum = radii[i] + radii[i+1] + radii[i+2]; 
         tot_sum += cur_sum;
-        if (cur_sum < prev_sum && tot_sum > min_blobsize ) {
-            rlimit = i + (i - smallestr) * precision_threshold;
-            break;
+        if (cur_sum < prev_sum && tot_sum > min_blobsize && !check1 ) {
+            rlimit_dif = i + (i - smallestr) * precision_threshold;
+            check1 = 1;
         }
         prev_sum = cur_sum; 
+
+        if ( tot_sum > min_blobsize && cur_sum < SEPARATION_THRESHOLD && !check2 ){
+            rlimit_thresh = i;
+            check2 = 1;
+        }
+
+        if ( i >= raverage )
+            check2 = 1;
+
+        if( check1 && check2 )
+            break;
+    }
+
+    if(rlimit_thresh){
+        rlimit = rlimit_thresh;
+    } else {
+        rlimit = rlimit_dif;
     }
 
     #ifdef VISUAL_DEBUG 
+        //printf("rlimit = %d, smallestr = %d \n",rlimit, smallestr);
         //Draw a line representing the selected distance cut-off
         CvPoint pt1 = {rlimit,0};
         CvPoint pt2 = {rlimit,299};
@@ -178,10 +201,10 @@ IplImage* find_target_color_hsv(IplImage* frame, int hue, int saturation, int va
     #endif
 
     for(i=in->width*in->height-1;i>=0;i--){ //Update the Output Image
-        tempPixel.v = ptrIn[3*i+2];
-        tempPixel.h = ptrIn[3*i+0];
-        tempPixel.s = ptrIn[3*i+1];
-        if((int)Pixel_dist_hsv(&color,&tempPixel) < rlimit){
+        tempPixel.r = ptrIn[3*i+2];
+        tempPixel.g = ptrIn[3*i+1];
+        tempPixel.b = ptrIn[3*i+0];
+        if((int)Pixel_dist_rgb(&color,&tempPixel) < rlimit){
             // This pixel is "close" to the target color, mark it white
             ptrOut[i] = 0xff;
         } else {
@@ -203,13 +226,13 @@ IplImage* find_target_color_hsv(IplImage* frame, int hue, int saturation, int va
  * \brief computes distance between two pixels in rgb space
  * \private
  */
-float Pixel_dist_hsv(HSVPixel* px_1, HSVPixel* px_2) {
-    int hue = min(abs(px_1->h - px_2->h), abs(px_1->h + px_2->h - 179) );
-    int sat = px_1->s - px_2->s;
-    int val = px_1->v - px_2->v;
-    return sqrt(pow((short)hue * HUE_WEIGHT, 2) +
-                pow((short)sat * SAT_WEIGHT, 2) +
-                pow((short)val * VAL_WEIGHT, 2));
+float Pixel_dist_rgb(RGBPixel* px_1, RGBPixel* px_2) {
+    int red = px_1->r - px_2->r;
+    int green = px_1->g - px_2->g;
+    int blue = px_1->b - px_2->b;
+    return sqrt(pow((short)red * RED_WEIGHT, 2) +
+                pow((short)green * GREEN_WEIGHT, 2) +
+                pow((short)blue * BLUE_WEIGHT, 2));
 }
 
 int min(int a, int b) {

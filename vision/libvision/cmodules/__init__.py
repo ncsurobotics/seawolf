@@ -69,8 +69,8 @@ from cvtypes import IplImage, IplImage_p, CvPoint
 
 # Target Color Module
 
-target_color = CModule("target_color.so", [
-    CFunction("find_target_color", IplImage_p, [IplImage_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_double])
+target_color_rgb = CModule("target_color_rgb.so", [
+    CFunction("find_target_color_rgb", IplImage_p, [IplImage_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_double])
 ])
 
 # Target Color HSV Module
@@ -82,7 +82,8 @@ target_color_hsv = CModule("target_color_hsv.so", [
 # Shape Detect Module
 
 shape_detect = CModule("shape_detect.so", [
-    CFunction("detect_letters", None, [IplImage_p])
+    CFunction("match_X",ctypes.c_int,[IplImage_p,ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]),
+    CFunction("match_O",ctypes.c_int,[IplImage_p])
 ])  
 
 # Instantiate CModule objects below:

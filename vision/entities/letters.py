@@ -33,17 +33,31 @@ class LettersEntity(VisionEntity):
         #import pdb 
         #pdb.set_trace()
 
+        #smooth the image
         filtered = cv.CreateImage(cv.GetSize(frame), 8, 3)
         cv.Smooth(frame, filtered, FILTER_TYPE, FILTER_SIZE, FILTER_SIZE)  
-        #detect correctly colored regions
-        binary = libvision.cmodules.target_color_hsv.find_target_color_hsv(frame, 120, 250, 250, 800, 800, 1)
-       # dilated = cv.CreateImage(cv.GetSize(binary), 8, 3)
-       # cv.Dilate(binary, dilated,None, 1)
 
-        libvision.cmodules.shape_detect.detect_letters(binary)
+        #detect correctly colored regions
+        #binary = libvision.cmodules.target_color_hsv.find_target_color_hsv(filtered, 0, 250, 250, 800, 800, 1)
+        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(filtered, 250, 0, 0, 800, 800, 1.5)
+
+        blob_indexed = cv.CreateImage(cv.GetSize(binary), 8, 1)
+        blobs = libvision.blob.find_blobs(binary,blob_indexed,50,4)
+
+        # dilated = cv.CreateImage(cv.GetSize(binary), 8, 1)
+        # cv.Dilate(binary, dilated,None, 1)
+        eroded = cv.CreateImage(cv.GetSize(binary), 8, 1)
+        cv.Erode(binary, eroded, None, 1)
+
+        for i, blob in enumerate(blobs):
+            #check for an x
+            #x_sighted = libvision.cmodules.shape_detect.match_X(eroded)
+     
+            x_sighted = libvision.cmodules.shape_detect.match_X(eroded, i, blob.centroid[0], blob.centroid[1],blob.roi[0],blob.roi[1],blob.roi[2],blob.roi[3])
+        #check for an 0
 
         if debug:
-            cv.ShowImage("Binary",binary)
+            cv.ShowImage("Binary",eroded)
             cv.ShowImage("Filtered",filtered)
 
         return False 
