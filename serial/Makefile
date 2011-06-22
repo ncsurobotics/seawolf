@@ -1,5 +1,5 @@
 
-export SW_TOPDIR=$(PWD)/..
+export SW_TOPDIR ?= $(PWD)/..
 include $(SW_TOPDIR)/mk/common.mk
 
 export CC= gcc
