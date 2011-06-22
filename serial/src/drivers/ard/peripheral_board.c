@@ -77,10 +77,7 @@ void manage(SerialPort _sp) {
     while(true) {
         Serial_get(sp, data, 3);
         if(data[0] == 0x01) {
-            if(data[1] == 0x00) {
-                Notify_send("EVENT", "MissionStart");
-                Logging_log(DEBUG, "Got mission start");
-            } else if(data[1] == 0x01) {
+            if(data[1] == 0x01) {
                 Notify_send("EVENT", "PowerKill");
                 Logging_log(DEBUG, "Power killed");
             } else if(data[1] == 0x02) {
