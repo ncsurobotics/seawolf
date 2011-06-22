@@ -98,6 +98,22 @@ static void join_blob_parts(BlobPart** parts, BlobPartId i, BlobPartId j) {
     }
 }
 
+static BlobPart** grow_blob_parts_table(BlobPart** parts, size_t* current_size) {
+    size_t old_size = *current_size;
+    size_t new_size = old_size + BLOB_PART_TABLE_ALLOC_UNIT;
+
+    parts = realloc(parts, sizeof(BlobPart*) * new_size);
+    parts[old_size] = calloc(sizeof(BlobPart), BLOB_PART_TABLE_ALLOC_UNIT);
+
+    for(int i = 1; i < BLOB_PART_TABLE_ALLOC_UNIT; i++) {
+        parts[old_size + i] = &(parts[old_size][i]);
+    }
+    
+    (*current_size) = new_size;
+
+    return parts;
+}
+
 /**
  * \brief Locate contigous regions (blobs) in a binary imgae
  *
@@ -119,11 +135,11 @@ static void join_blob_parts(BlobPart** parts, BlobPartId i, BlobPartId j) {
  * \param r_num_blobs A pointer to an integer where the number of blobs returned can be stored
  * \param min_size Any smaller blobs will be discarded
  * \param keep_number Maximum number of blobs to return
- * \param A list of blobs
+ * \return A list of blobs
  */
 Blob** find_blobs(IplImage* img_in, IplImage* blobs_out, int* r_num_blobs, int min_size, int keep_number) {
-    size_t blob_part_table_size = BLOB_PART_TABLE_ALLOC_UNIT;
-    BlobPart** blob_parts = calloc(sizeof(BlobPart*), blob_part_table_size);
+    size_t blob_part_table_size = 0;
+    BlobPart** blob_parts = NULL;
 
     BlobPartId* blob_mapping = calloc(sizeof(BlobPartId), img_in->height * img_in->widthStep);
 
@@ -151,12 +167,6 @@ Blob** find_blobs(IplImage* img_in, IplImage* blobs_out, int* r_num_blobs, int m
 
     Blob* b;
     int i, j;
-
-    /* Initialize the BlobParts table */
-    blob_parts[0] = calloc(sizeof(BlobPart), BLOB_PART_TABLE_ALLOC_UNIT);
-    for(i = 1; i < BLOB_PART_TABLE_ALLOC_UNIT; i++) {
-        blob_parts[i] = &blob_parts[0][i];
-    }
 
     /* Go through the input image and construct all the blob parts and raw blobs */
     for(row = 0; row < height; row++) {
@@ -193,6 +203,11 @@ Blob** find_blobs(IplImage* img_in, IplImage* blobs_out, int* r_num_blobs, int m
                 if(assigned_to == 0) {
                     assigned_to = next_part_id;
 
+                    /* Grow BlobParts table if there's no free space */
+                    if(assigned_to >= blob_part_table_size) {
+                        blob_parts = grow_blob_parts_table(blob_parts, &blob_part_table_size);
+                    }
+
                     /* Create the new blob */
                     b = calloc(sizeof(Blob), 1);
 
@@ -201,18 +216,6 @@ Blob** find_blobs(IplImage* img_in, IplImage* blobs_out, int* r_num_blobs, int m
                     
                     next_part_id++;
                     num_raw_blobs++;
-
-                    if(next_part_id >= blob_part_table_size) {
-                        blob_parts = realloc(blob_parts, sizeof(BlobPart*) * (blob_part_table_size + BLOB_PART_TABLE_ALLOC_UNIT));
-                        blob_parts[blob_part_table_size] = calloc(sizeof(BlobPart), BLOB_PART_TABLE_ALLOC_UNIT);
-
-                        for(i = 1; i < BLOB_PART_TABLE_ALLOC_UNIT; i++) {
-                            blob_parts[blob_part_table_size + i] = &blob_parts[blob_part_table_size][i];
-                        }
-                    
-                        blob_part_table_size += BLOB_PART_TABLE_ALLOC_UNIT;
-                        i = 4;
-                    }
                 }
             
                 /* Store blob part identifier */
