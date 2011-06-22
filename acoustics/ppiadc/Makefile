@@ -1,6 +1,6 @@
 obj-m := ppiadc.o
 
-KERNEL_SRC ?= ../blackfin-linux-dist/linux-2.6.x/
+KERNEL_SRC ?= /home/christopher/downloads/src/blackfin-linux-dist/linux-2.6.x/
 
 all:
 	make -C $(KERNEL_SRC) SUBDIRS=$(PWD) modules
