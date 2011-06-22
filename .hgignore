@@ -17,6 +17,7 @@ syntax: regexp
 ^applications/bin/
 ^acoustics/bfin/bin/
 ^acoustics/bfin/acoustics_bundle.tar$
+^acoustics/libseawolf/
 
 # Vision
 syntax: regexp
@@ -27,3 +28,4 @@ syntax: regexp
 ^vision/libvision/doc/
 ^vision/libvision/c/interface.py$
 ^vision/libvision/c/interface_wrap.c$
+^vision/footage/
