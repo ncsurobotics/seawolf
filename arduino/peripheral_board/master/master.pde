@@ -1,7 +1,7 @@
 
 /* I2C master. Controls depth and RFID reader */
 
-//#include <Wire.h>
+#include <Wire.h>
 
 /* I2C slave */
 #define SLAVE 1
@@ -10,6 +10,7 @@
 #define DEPTH_SLEEP 100
 
 #define LOW_SENSE 100
+#define HIGH_SENSE 400
 #define SENSE_WAIT 250
 
 #define DEPTH_PIN 7
@@ -26,13 +27,15 @@ unsigned long last_sense_change = 0;
 
 byte wire_data[3];
 
-int get_sense_value(void) {
+int get_sense_value(int prev_value) {
     int v = analogRead(SENSE_PIN);
 
-    if(v < LOW_SENSE) {
+    if(prev_value == 1 && v < LOW_SENSE) {
         return 0;
-    } else {
+    } else if (prev_value == 0 && v > HIGH_SENSE) {
         return 1;
+    } else {
+        return prev_value;
     }
 }
 
@@ -56,10 +59,11 @@ void setup(void) {
     analogReference(EXTERNAL);
 
     /* Get initial sense value */
-    last_sense_value = get_sense_value();
+    last_sense_value = get_sense_value(0);
 }
 
 void loop() {
+    
     /* Send new depth value */
     if(millis() - last_depth > DEPTH_SLEEP) {
         last_depth = millis();
@@ -75,7 +79,7 @@ void loop() {
     }
 
     /* Check for change to the sense */
-    sense = get_sense_value();
+    sense = get_sense_value(last_sense_value);
     if(sense != last_sense_value && (millis() - last_sense_change) > SENSE_WAIT) {
         /* Record the change */
         last_sense_value = sense;
