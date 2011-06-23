@@ -56,7 +56,7 @@
 #define RED_WEIGHT 2
 #define GREEN_WEIGHT 1
 #define BLUE_WEIGHT 1
-#define SEPARATION_THRESHOLD 150 //how low the histogram must drop in order to consider a blob 'isolated' 
+#define SEPARATION_THRESHOLD 100 //how low the histogram must drop in order to consider a blob 'isolated' 
 
 struct RGBPixel_s {
     unsigned char r;
@@ -85,8 +85,7 @@ IplImage* find_target_color_rgb(IplImage* frame, int red, int green, int blue, i
    
     //Initialize Images  
     IplImage* out = cvCreateImage(cvGetSize(frame),8,1);
-    IplImage* in = cvCreateImage(cvGetSize(frame),8,3);
-    in = cvCloneImage(frame);
+    IplImage* in = cvCloneImage(frame);
 
     uchar* ptrIn = (uchar*) in->imageData;
     uchar* ptrOut = (uchar*) out->imageData;
@@ -183,8 +182,10 @@ IplImage* find_target_color_rgb(IplImage* frame, int red, int green, int blue, i
     }
 
     if(rlimit_thresh){
+        //printf("Using Thresh\n");
         rlimit = rlimit_thresh;
     } else {
+        //printf("Using Dif\n");
         rlimit = rlimit_dif;
     }
 

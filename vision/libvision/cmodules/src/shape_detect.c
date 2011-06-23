@@ -3,31 +3,42 @@
 #include <highgui.h>
 #include <math.h>
 
-#define VISUAL_DEBUG 1 
+//#define VISUAL_DEBUG 1 
+//#define VISUAL_DEBUG_X 1
+//#define VISUAL_DEBUG_O 1
 
-#define HOLE_SIZE .75 //small the number, smaller the hole
+#define HOLE_SIZE .5 //smaller the number, smaller the hole
+#define R_RATIO .05 //number small radii allowed (per pixel)
+#define X_CONFIDENCE_THRESHOLD 80 //required confidence to accept an X
+#define O_CONFIDENCE_THRESHOLD 80 //required confidence to accept an O
 
 // Prototypes
-
-int match_X(IplImage* binary, int index, int centroid_x, int centroid_y, int roix0, int roiy0, int roix, int roiy);
-int match_O(IplImage* binary);
-
+int match_letters(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int roiy0, int roix, int roiy);
+int match_X(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point, int cent_x, int cent_y, IplImage* debug );
+int match_O(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point, int cent_x, int cent_y, int mid_x, int mid_y, IplImage* debug );
 int arctan(int x, int y);
 
-int match_X(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int roiy0, int roix, int roiy){
+int match_letters(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int roiy0, int roix, int roiy){
 
     int i,x,y; //useful variable names
     CvPoint* points; //an array of pixel coordinates
-    CvPoint* corners; //the corners of the image
     int pixel_count = 0; //total number of pixels we find
-    
+    CvPoint r_point; //a reference point which has the maximum radius
+
     //allocate memory for points
     points = (CvPoint*)calloc(binary->width * binary->height, sizeof(CvPoint)); 
-    corners = (CvPoint*)calloc(4, sizeof(CvPoint)); 
-  
+
+    //handle the debug image
+    IplImage* debug = NULL;
     #ifdef VISUAL_DEBUG
-        //create a debug image
-        IplImage* debug = cvCreateImage(cvGetSize(binary),8,3);
+        debug = cvCreateImage(cvGetSize(binary),8,3);
+
+        //black out the entire debug image
+        for(i=binary->width*binary->height - 1; i>=0; i--){
+            debug->imageData[3*i + 0] = 0x00;
+            debug->imageData[3*i + 1] = 0x00;
+            debug->imageData[3*i + 2] = 0x00;
+        }
     #endif 
 
     //populate a list of pixel coordinates, and find the furthest pixel
@@ -49,20 +60,74 @@ int match_X(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int 
 
                 if( r > maxr){
                     maxr = r;
-                    corners[0].x = x;
-                    corners[0].y = y;
+                    r_point.x = x;
+                    r_point.y = y;
                 }
             }
 
             #ifdef VISUAL_DEBUG
                 //copy the binary image onto the debug image
-                int i = y*binary->width + x;
-                debug->imageData[3*i + 0] = binary->imageData[i];
-                debug->imageData[3*i + 1] = binary->imageData[i];
-                debug->imageData[3*i + 2] = binary->imageData[i];
+                i = y*binary->width + x;
+                if(binary->imageData[i] == index){
+                    debug->imageData[3*i + 0] = 0xff;
+                    debug->imageData[3*i + 1] = 0xff;
+                    debug->imageData[3*i + 2] = 0xff;
+                }else{
+                    debug->imageData[3*i + 0] = 0x00;
+                    debug->imageData[3*i + 1] = 0x00;
+                    debug->imageData[3*i + 2] = 0x00;
+                }
             #endif
         }
     }
+
+    //compute midpoint of roi
+    int mid_x = roix0 + roix/2;
+    int mid_y = roiy0 + roiy/2;
+
+    //check for an X
+    int x_confidence = match_X(binary, points, pixel_count, &r_point, cent_x, cent_y, debug);
+    int o_confidence = match_O(binary, points, pixel_count, &r_point, cent_x, cent_y,mid_x, mid_y, debug);
+
+    //determine if this blob is an X or an O
+    int result  = 0;
+    if( x_confidence >= X_CONFIDENCE_THRESHOLD && o_confidence >= O_CONFIDENCE_THRESHOLD ){
+        //something is very wrong.  
+        result = 0;
+    }else if( x_confidence >= X_CONFIDENCE_THRESHOLD ){
+        //we likely see an X
+        result = 1;
+    }else if( o_confidence >= O_CONFIDENCE_THRESHOLD ){
+        //we likely see an O
+        result = 2;
+    }else{
+        //we do not see anything
+        result = 0;
+    }
+
+    #ifdef VISUAL_DEBUG
+        cvNamedWindow("Debug", CV_WINDOW_AUTOSIZE);
+        cvShowImage("Debug", debug);
+    #endif
+
+    //free memory
+    free(points);
+    #ifdef VISUAL_DEBUG
+        cvReleaseImage(&debug);
+    #endif
+
+
+    return result;    
+}
+
+int match_X(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point, int cent_x, int cent_y, IplImage* debug){
+
+    int i,x,y; //useful variable names
+    CvPoint* corners; //the corners of the image
+    
+    corners = (CvPoint*)calloc(4, sizeof(CvPoint)); 
+    corners[0].x = r_point->x;
+    corners[0].y = r_point->y;
 
     //find the angle of the first corner
     x = corners[0].x - cent_x;
@@ -116,7 +181,7 @@ int match_X(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int 
             pxsum2++;
        }
 
-       #ifdef VISUAL_DEBUG
+       #ifdef VISUAL_DEBUG_X
             //color every quadrant a different color
             if( tempang - theta > 315 ){
                 debug->imageData[3*points[i].y*debug->width+3*points[i].x+2]=0;
@@ -142,9 +207,7 @@ int match_X(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int 
         #endif
     }
 
-    #ifdef VISUAL_DEBUG
-        //printf("theta = %d, pxsum1 = %d, pxsum2 = %d \n", theta,pxsum1,pxsum2);
-
+    #ifdef VISUAL_DEBUG_X
         //draw a line between consecutive corners
         CvScalar boxcolor = {0, 254, 0};
         cvLine(debug, corners[0], corners[1], boxcolor, 1, 8, 0);
@@ -162,8 +225,6 @@ int match_X(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int 
         CvScalar cornercolor = {254, 0, 254};
         cvCircle(debug, corner0, 5, cornercolor, 1, 8, 0);
 
-        cvNamedWindow("Debug", CV_WINDOW_AUTOSIZE);
-        cvShowImage("Debug", debug);
     #endif
 
     //load template
@@ -212,7 +273,7 @@ int match_X(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int 
         CvScalar fillcolor = {0};
         cvWarpPerspective(binary, warped, tmatrix,CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS , fillcolor);
 
-    #ifdef VISUAL_DEBUG
+    #ifdef VISUAL_DEBUG_X
         IplImage* compared = cvCreateImage(cvGetSize(xtemplate),8,3);
     #endif
 
@@ -221,27 +282,27 @@ int match_X(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int 
     for ( i=xtemplate->width*xtemplate->height -1; i>=0; i--){
         int p1 = xtemplate->imageData[i];
         int p2 = warped->imageData[i];
-        if(( p1 != 0 &&  p1 != 0 ) || ( p2 == 0 && p2 == 0 )){
+        if(( p1 != 0 &&  p2 != 0 ) || ( p1 == 0 && p2 == 0 )){
             xor_sum++;
         }
        
-        #ifdef VISUAL_DEBUG
+        #ifdef VISUAL_DEBUG_X
         if(p1 != 0 && p2 != 0){
             compared->imageData[i*3+0] = 0x00;
             compared->imageData[i*3+1] = 0xff;
             compared->imageData[i*3+2] = 0x00;
         }else if(p1 == 0 && p2 == 0){
             compared->imageData[i*3+0] = 0x00;
-            compared->imageData[i*3+1] = 0x00;
+            compared->imageData[i*3+1] = 0xff;
             compared->imageData[i*3+2] = 0x00;
         }else if(p1 != 0){
             compared->imageData[i*3+0] = 0xff;
             compared->imageData[i*3+1] = 0x00;
             compared->imageData[i*3+2] = 0x00;
         }else if(p2 != 0){
-            compared->imageData[i*3+0] = 0x00;
+            compared->imageData[i*3+0] = 0xff;
             compared->imageData[i*3+1] = 0x00;
-            compared->imageData[i*3+2] = 0xff;
+            compared->imageData[i*3+2] = 0x00;
         }
         #endif
     }
@@ -249,12 +310,7 @@ int match_X(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int 
     //compute confidence
     int confidence = xor_sum * 100 / (xtemplate->width*xtemplate->height);
 
-    //scale confidence
-    confidence = (confidence - 50 ) * 2;
-
-    #ifdef VISUAL_DEBUG
-        printf("X confidence = %d \n",confidence);
-
+    #ifdef VISUAL_DEBUG_X
         cvNamedWindow("Compared",CV_WINDOW_AUTOSIZE);
         cvShowImage("Compared", compared);
 
@@ -268,22 +324,62 @@ int match_X(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int 
     //free memory
     cvReleaseImage(&xtemplate);
     cvReleaseImage(&warped);
-    free(points);
     free(corners);
     free(src);
     free(dst);
     cvReleaseMat(&tmatrix);
-
-    #ifdef VISUAL_DEBUG
-        cvReleaseImage(&debug);
+    #ifdef VISUAL_DEBUG_X
         cvReleaseImage(&compared);
     #endif
 
-    return 0;
+    return confidence;
 }
-int match_O(IplImage* binary){
+int match_O(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point, int cent_x, int cent_y, int mid_x, int mid_y, IplImage* debug){
 
-    return 0;
+    int i,x,y; //useful variables
+    int o_confidence = 0; //set to 100 if the blob is identified as a circle
+
+    //compute max r
+    x = r_point->x - mid_x;
+    y = r_point->y - mid_y; 
+    int maxr = (int)sqrt(x*x + y*y);
+
+    //count the number of pixels where the hole should be 
+    int small_r_sum = 0;
+    for( i=0; i<pixel_count; i++){
+        x = points[i].x - mid_x;
+        y = points[i].y - mid_y;
+        int r = (int)sqrt(x*x + y*y);
+
+        if( r < maxr * HOLE_SIZE){
+            small_r_sum++;
+
+            #ifdef VISUAL_DEBUG_O
+                int temp_idx = 3*points[i].y*binary->width + 3*points[i].x;
+                debug->imageData[temp_idx + 2] = 0xff;
+                debug->imageData[temp_idx + 1] = 0x00;
+                debug->imageData[temp_idx + 0] = 0x00;
+            #endif
+        }
+    }
+   
+    #ifdef VISUAL_DEBUG_O
+        //mark the centroid being used
+        CvPoint centroid = {cent_x, cent_y};
+        CvScalar centroid_color = {0,255,0}; 
+        cvCircle(debug, centroid, 5, centroid_color, 1, 8, 0);  
+
+        CvPoint midpoint = {mid_x, mid_y};
+        CvScalar mid_color = {255,0,0};
+        cvCircle( debug, midpoint, 5, mid_color, 1, 8, 0);
+    #endif
+
+    int small_r_threshold = R_RATIO * pixel_count;
+    if( small_r_sum < small_r_threshold){
+        o_confidence = 100;    
+    }
+
+    return o_confidence;
 }
 
 //returns arctan of x and y, from -180 to 180 degrees
