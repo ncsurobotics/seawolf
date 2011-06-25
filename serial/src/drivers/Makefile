@@ -1,12 +1,12 @@
 
 DRIVERS=altimeter.c imu.c imu_cont.c
 OBJECTS=$(DRIVERS:%.c=%.o)
-BINS=$(DRIVERS:%.c=$(BIN_DIR)/%)
+BINS=$(DRIVERS:%.c=../../$(BIN_DIR)/%)
 
 all: $(BINS)
 	$(MAKE) -C ard
 
-$(BIN_DIR)/%: %.c
+../../$(BIN_DIR)/%: %.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
 clean:
