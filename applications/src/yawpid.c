@@ -27,16 +27,18 @@ int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("Yaw PID");
 
+    Var_subscribe("YawPID.p");
+    Var_subscribe("YawPID.i");
+    Var_subscribe("YawPID.d");
+    Var_subscribe("YawPID.Heading");
+    Var_subscribe("YawPID.Paused");
+    Var_subscribe("SEA.Yaw");
+
     PID* pid;
-    char data[64];
     double mv;
+    double yaw;
     bool paused = (Var_get("YawPID.Paused") != 0.0);
     float heading = Var_get("YawPID.Heading");
-
-    Notify_filter(FILTER_MATCH, "UPDATED YawPID.Coefficients");
-    Notify_filter(FILTER_MATCH, "UPDATED YawPID.Heading");
-    Notify_filter(FILTER_MATCH, "UPDATED YawPID.Paused");
-    Notify_filter(FILTER_MATCH, "UPDATED IMU");
 
     pid = PID_new(0.0, Var_get("YawPID.p"),
                        Var_get("YawPID.i"),
@@ -44,39 +46,54 @@ int main(void) {
     dataOut(0.0);
 
     while(true) {
-        Notify_get(NULL, data);
 
-        double yaw = Var_get("SEA.Yaw");
-        if(strcmp(data, "YawPID.Coefficients") == 0) {
+        Var_sync();
+
+        /* Update SEA.Yaw */
+        if (Var_stale("SEA.Yaw")) {
+            yaw = Var_get("SEA.Yaw");
+        }
+
+        /* Update PID Coefficients */
+        if (Var_stale("YawPID.p") ||
+            Var_stale("YawPID.i") ||
+            Var_stale("YawPID.i"))
+        {
             PID_setCoefficients(pid,
                                 Var_get("YawPID.p"),
                                 Var_get("YawPID.i"),
                                 Var_get("YawPID.d"));
             PID_resetIntegral(pid);
-        } else if(strcmp(data, "YawPID.Heading") == 0) {
+        }
+
+        /* Update Heading */
+        if (Var_stale("YawPID.Heading")) {
             heading = Var_get("YawPID.Heading");
-            mv = PID_update(pid, angleError(heading, yaw));
+            // Automatically unpause if heading is updated
             if(paused) {
                 Var_set("YawPID.Paused", 0.0);
             }
-        } else if(strcmp(data, "YawPID.Paused") == 0) {
-            bool p = (Var_get("YawPID.Paused") != 0.0);
-            if(p == paused) {
-                continue;
-            }
+        }
 
-            paused = p;
-            if(paused) {
+        /* Update Paused */
+        if (Var_stale("YawPID.Paused")) {
+            paused = (Var_get("YawPID.Paused") != 0.0);
+            if (paused) {
                 dataOut(0.0);
                 Notify_send("PIDPAUSED", "Yaw");
+                PID_pause(pid);
             }
-        } else if(strcmp(data, "IMU") == 0 && paused == false) {
-            mv = PID_update(pid, angleError(heading, yaw));
         }
-        
-        if(paused == false) {
+
+        /* Update Thrusters */
+        if (paused == false)
+        {
+            mv = PID_update(pid, angleError(heading, yaw));
             dataOut(mv);
         }
+
+        //Util_usleep(0.01);
+
     }
 
     Seawolf_close();

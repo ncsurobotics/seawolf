@@ -15,15 +15,17 @@ int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("Depth PID");
 
-    PID* pid;
-    char data[64];
-    double mv;
-    bool paused = Var_get("DepthPID.Paused");
+    Var_subscribe("DepthPID.p");
+    Var_subscribe("DepthPID.i");
+    Var_subscribe("DepthPID.d");
+    Var_subscribe("DepthPID.Heading");
+    Var_subscribe("DepthPID.Paused");
+    Var_subscribe("Depth");
 
-    Notify_filter(FILTER_MATCH, "UPDATED DepthPID.Coefficients");
-    Notify_filter(FILTER_MATCH, "UPDATED DepthPID.Heading");
-    Notify_filter(FILTER_MATCH, "UPDATED DepthPID.Paused");
-    Notify_filter(FILTER_MATCH, "UPDATED Depth");
+    PID* pid;
+    double mv;
+    double depth = Var_get("Depth");
+    bool paused = Var_get("DepthPID.Paused");
 
     pid = PID_new(Var_get("DepthPID.Heading"),
                   Var_get("DepthPID.p"),
@@ -32,49 +34,60 @@ int main(void) {
     dataOut(0.0);
 
     while(true) {
-        Notify_get(NULL, data);
 
-        double depth = Var_get("Depth");
-        if(strcmp(data, "DepthPID.Coefficients") == 0) {
+        Var_sync();
+
+        /* Update Depth */
+        if (Var_stale("Depth")) {
+            depth = Var_get("Depth");
+        }
+
+        /* Update PID Coefficients */
+        if (Var_stale("DepthPID.p") ||
+            Var_stale("DepthPID.i") ||
+            Var_stale("DepthPID.i"))
+        {
             PID_setCoefficients(pid,
                                 Var_get("DepthPID.p"),
                                 Var_get("DepthPID.i"),
                                 Var_get("DepthPID.d"));
             PID_resetIntegral(pid);
-        } else if(strcmp(data, "DepthPID.Heading") == 0) {
+        }
+
+        /* Update Heading */
+        if (Var_stale("DepthPID.Heading")) {
             PID_setSetPoint(pid, Var_get("DepthPID.Heading"));
-            mv = PID_update(pid, depth);
-            if(paused) {
+            // Automatically unpause if heading is updated
+            if (paused) {
                 Var_set("DepthPID.Paused", 0.0);
             }
-        } else if(strcmp(data, "DepthPID.Paused") == 0) {
-            bool p = Var_get("DepthPID.Paused");
-            if(p == paused) {
-                continue;
-            }
+        }
 
-            paused = p;
-            if(paused) {
+        /* Update Paused */
+        if (Var_stale("DepthPID.Paused")) {
+            paused = Var_get("DepthPID.Paused");
+            if (paused) {
                 dataOut(0.0);
                 Notify_send("PIDPAUSED", "Depth");
+                PID_pause(pid);
             }
-        } else if(strcmp(data, "Depth") == 0 && paused == false) {
-            mv = PID_update(pid, depth);
         }
-       
-        /* Under ordinary circumstances limit thruster values */
-        mv = Util_inRange(-THRUSTER_CAP, mv, THRUSTER_CAP);
 
-        /* If we're too deep attempt to surface at all costs immediately */
+        /* Panic and breach if too deep. */
         if(depth > PANIC_DEPTH) {
             Logging_log(CRITICAL, Util_format("Depth: %f\n", depth));
-            Logging_log(CRITICAL, "Oh Em Geez!  I'm too freekin deep, rising full force!\n");
+            Logging_log(CRITICAL, "I'm too deep!  Rising full force!\n");
 
             dataOut(-1.0);
             Util_usleep(PANIC_TIME);
-        } else if(paused == false) {
+
+        /* Update Thrusters */
+        } else if (paused == false) {
+            mv = PID_update(pid, depth);
+            mv = Util_inRange(-THRUSTER_CAP, mv, THRUSTER_CAP);
             dataOut(mv);
         }
+
     }
 
     Seawolf_close();
