@@ -82,7 +82,8 @@ target_color_hsv = CModule("target_color_hsv.so", [
 # Shape Detect Module
 
 shape_detect = CModule("shape_detect.so", [
-    CFunction("match_letters",ctypes.c_int,[IplImage_p,ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int])
+    CFunction("match_letters",ctypes.c_int,[IplImage_p,ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]),
+    CFunction("find_bins", IplImage_p,[IplImage_p])
 ])  
 
 # Instantiate CModule objects below:

@@ -2,21 +2,352 @@
 #include <cv.h>
 #include <highgui.h>
 #include <math.h>
+#include "seawolf.h"
 
-//#define VISUAL_DEBUG 1 
-//#define VISUAL_DEBUG_X 1
-//#define VISUAL_DEBUG_O 1
+/* FILE CONTAINS:           */
+/* match_letters()          */
+/* find_bins()              */
+/* and related functions    */
+
+//#define VISUAL_DEBUG      1 
+//#define VISUAL_DEBUG_X    1
+//#define VISUAL_DEBUG_O    1
+
+#define VISUAL_DEBUG_BINS 1
 
 #define HOLE_SIZE .5 //smaller the number, smaller the hole
 #define R_RATIO .05 //number small radii allowed (per pixel)
 #define X_CONFIDENCE_THRESHOLD 80 //required confidence to accept an X
 #define O_CONFIDENCE_THRESHOLD 80 //required confidence to accept an O
+#define EDGE_WIDTH 3 //how far to look for edge pixels when linking corners
+#define GAP_SIZE 15  //number of edgless pixels that can connect two corners
+#define ANGLE_TOLERANCE .1 //how close to a right angle the bins must be
+#define LIN_TOLERANCE .1 //how perfect the ratios of the rectangle sides must be
 
-// Prototypes
+/* PROTOTYPES */
+
+//letter identification
 int match_letters(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int roiy0, int roix, int roiy);
 int match_X(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point, int cent_x, int cent_y, IplImage* debug );
 int match_O(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point, int cent_x, int cent_y, int mid_x, int mid_y, IplImage* debug );
+
+//bin detection
+IplImage* find_bins(IplImage* frame);
+int pair_corners(CvPoint2D32f* pt1, CvPoint2D32f* pt2, IplImage* edges, IplImage* debug);
+int mod(int x, int a);
+int test_connect(int c1, int c2, int** pairs, int* pair_counts);
+
+//misc 
 int arctan(int x, int y);
+
+
+/* FUNCTION: find_bins() */
+
+IplImage* find_bins(IplImage* frame){
+
+    //Edge Detection
+    IplImage* grayscale = cvCreateImage(cvGetSize(frame),IPL_DEPTH_8U,1);
+    cvCvtColor(frame, grayscale, CV_BGR2GRAY);
+    IplImage* edge = cvCreateImage(cvGetSize(frame),8,1);
+
+    cvCanny(grayscale,edge,120,120,3);
+
+    #ifdef VISUAL_DEBUG_BINS 
+        cvNamedWindow("Bin Edges", CV_WINDOW_AUTOSIZE);
+        cvShowImage("Bin Edges", edge);
+    #endif
+
+    //Corner Detection
+
+    int i,j,l,x,y;
+
+    IplImage* eigimage = cvCreateImage(cvGetSize(frame),IPL_DEPTH_32F,1);
+    IplImage* tmpimage = cvCreateImage(cvGetSize(frame),IPL_DEPTH_32F,1);
+    CvPoint2D32f* corners;
+    int corner_count = 25;
+    double quality_level = .2;
+    double min_distance = 50;
+    int block_size = 5;
+
+    //allocate memory for corners
+    corners = (CvPoint2D32f*)calloc(corner_count,sizeof(CvPoint2D32f));
+
+    //find corners
+    cvGoodFeaturesToTrack(grayscale,eigimage,tmpimage,corners,&corner_count,quality_level,min_distance,NULL,block_size,0,0.0);
+    
+
+    #ifdef VISUAL_DEBUG_BINS 
+        IplImage* debug = cvCloneImage(frame);
+
+        for(i=0;i<corner_count;i++){
+            CvScalar corner_color = {0,255,255};
+            CvPoint center;
+            center.x = corners[i].x;
+            center.y = corners[i].y;
+            cvCircle(debug,center,5,corner_color,2,8,0);
+        }
+
+    #endif
+
+    //create table of adjacent corners
+    int** pairs;
+    int** groups;
+    int* group_sizes; //records sizes of groups of corners
+    int* pair_counts; //records number of pairs per corner
+
+    group_sizes = (int*)calloc(corner_count,sizeof(int));
+    pair_counts = (int*)calloc(corner_count,sizeof(int));
+    groups = (int**)calloc(corner_count,sizeof(int*));
+    pairs = (int**)calloc(corner_count,sizeof(int*));
+    for(i=0; i<corner_count; i++){
+        pair_counts[i] = 0;
+        group_sizes[i] = 1;
+        groups[i] = (int*)calloc(corner_count-1,sizeof(int));
+        pairs[i] = (int*)calloc(corner_count-1,sizeof(int));
+        groups[i][0] = i;
+    }
+    
+
+    //pair and group corners based on edge detect
+    for(i = 0; i<corner_count; i++){
+        for(j=i+1; j<corner_count; j++){
+            int paired = pair_corners(&corners[i], &corners[j], edge, debug);
+        
+            //recorded matches
+            if(paired){
+                //update i's group to j's group
+                for(l=0;l<group_sizes[i];l++){
+                    groups[j][group_sizes[j]++] = groups[i][l];
+                }
+                group_sizes[i] = 0;
+
+                //record this match
+                pairs[i][pair_counts[i]++] = j;
+                printf("%d and %d connected \n",i,j);
+
+            }
+
+            #ifdef VISUAL_DEBUG_BINS
+                if(paired){
+                    CvScalar connect_color = {0,0,255};
+                    CvPoint pt1, pt2;
+                    pt1.x = corners[i].x;
+                    pt2.x = corners[j].x;
+                    pt1.y = corners[i].y;
+                    pt2.y = corners[j].y;
+                    cvLine(debug,pt1,pt2,connect_color,1,8,0);
+                }
+            #endif
+        }
+    }
+
+    //Identify Bins
+    CvPoint pt[3];
+    int dis[3];
+    int hyp[3];
+    int connections[3];
+    int cor[3]; 
+    printf("corner_count = %d \n",corner_count);
+    for(i=0; i<corner_count; i++){
+        #ifdef VISUAL_DEBUG_BINS
+            if(group_sizes[i] > 2){
+                for(j=0; j<group_sizes[i]; j++){
+                    for(l=0; l < pair_counts[groups[i][j]]; l++){
+                        CvScalar group_color = {255,0,255};
+                        CvPoint pt1, pt2;
+                        pt1.x = corners[groups[i][j]].x;
+                        pt2.x = corners[pairs[groups[i][j]][l]].x;
+                        pt1.y = corners[groups[i][j]].y;
+                        pt2.y = corners[pairs[groups[i][j]][l]].y;
+                        cvLine(debug,pt1,pt2,group_color,1,8,0);
+                    }
+                }
+            }
+        #endif
+ 
+        if(group_sizes[i] < 3) continue;
+        //there are at least 3 corners in this group
+        //test all combinations of 3 corners to see if we find a right triangle
+        for(cor[0]=0; cor[0]<group_sizes[i]; cor[0]++){
+            for(cor[1]=cor[0]+1;cor[1]<group_sizes[i]; cor[1]++){
+                for(cor[2]=cor[1]+1; cor[2]<group_sizes[i]; cor[2]++){
+                    for(j=0; j<3; j++){
+                        //rename the coner coordinates
+                        pt[j].x = corners[groups[i][cor[j]]].x;
+                        pt[j].y = corners[groups[i][cor[j]]].y;
+                    }
+
+                    for(j=0; j<3; j++){
+                        //make note of any disconections                        
+                        int prv = mod(j-1,3);
+                        int nxt = mod(j+1,3);
+                        connections[j] = test_connect(groups[i][cor[prv]],groups[i][cor[j]],pairs,pair_counts);
+                        connections[j] *= test_connect(groups[i][cor[nxt]],groups[i][cor[j]],pairs,pair_counts);
+
+                        //gather distances between points 
+                        dis[j] = (int)sqrt(pow(pt[prv].x-pt[nxt].x,2)+pow(pt[prv].y-pt[nxt].y,2)); 
+                    }
+
+                    for(j=0; j<3; j++){
+                        if(!connections[j]) continue;
+
+                        int prv = mod(j-1,3);
+                        int nxt = mod(j+1,3);
+
+                        //gather hypotnues calculations 
+                        hyp[j] = (int)sqrt((double)pow(dis[prv],2)+pow((double)dis[nxt],2)); 
+                    
+                        //check hpyotneuses vs actual distances to find right angles
+                        int ang_dif = abs(dis[j]-hyp[j]);
+                        if(ang_dif > dis[j] * ANGLE_TOLERANCE) continue;
+
+                        //check proportions of the rectangle
+                        int small_dis = Util_min(dis[prv],dis[nxt]);
+                        int large_dis = Util_max(dis[prv],dis[nxt]);
+                        int lin_dif = abs(small_dis*2 - large_dis);
+                        if(lin_dif > dis[j] * LIN_TOLERANCE) continue;
+
+                        //we are now sure that these three points are part of a rectangle
+                        #ifdef VISUAL_DEBUG_BINS
+                            int k;
+                            for(k=0;k<3;k++){
+                                CvScalar good_color = {0,255,0};
+                                CvPoint center;
+                                center.x = pt[k].x;
+                                center.y = pt[k].y;
+                                cvCircle(debug,center,7,good_color,2,8,0);
+                            }
+                        #endif
+                    }
+                }
+            }
+        }
+    }
+
+    #ifdef VISUAL_DEBUG_BINS
+        cvNamedWindow("Bin Debug",CV_WINDOW_AUTOSIZE);
+        cvShowImage("Bin Debug",debug);
+    #endif
+
+    //free memory
+    for(i=0; i<corner_count; i++){
+        free(pairs[i]);
+        free(groups[i]);
+    }
+    free(groups);
+    free(group_sizes);
+    free(pairs);
+    free(pair_counts);
+    free(corners);
+    cvReleaseImage(&edge);
+    cvReleaseImage(&grayscale);
+    cvReleaseImage(&tmpimage);
+    #ifdef VISUAL_DEBUG_BINS
+        cvReleaseImage(&debug);
+    #endif
+    return eigimage;
+}
+
+int test_connect(int c1, int c2, int** pairs, int* pair_counts){
+    int connected = 0;
+    int i;
+    for(i=0; i<pair_counts[c1]; i++){
+        if(pairs[c1][i] == c2){
+            connected = 1;
+        }
+    }
+    for(i=0; i<pair_counts[c2]; i++){
+        if(pairs[c2][i] == c1){
+            connected = 1;
+        }
+    }
+    return connected;
+}
+int pair_corners(CvPoint2D32f* pt1, CvPoint2D32f* pt2, IplImage* edges, IplImage* debug){
+    int i,j,x,y;
+    int total_gap = 0;
+    int distance = 0;
+    
+    if(abs(pt1->x - pt2->x) > abs(pt1->y - pt2->y)){
+        //sort the two corners by x value
+        CvPoint lowx;
+        CvPoint highx; 
+        if(pt1->x < pt2->x){
+            lowx.x = pt1->x;
+            lowx.y = pt1->y;
+            highx.x = pt2->x;
+            highx.y = pt2->y;
+        }else{
+            lowx.x = pt2->x;
+            lowx.y = pt2->y;
+            highx.x = pt1->x;
+            highx.y = pt1->y;
+        }
+        distance = highx.x - lowx.x;
+
+        //compute the slope between these two points
+        double slope = (double)(highx.y-lowx.y)/(highx.x-lowx.x);
+        
+        //check the number of edge pixels between these two corners 
+        for(x=lowx.x; x<=highx.x; x++){
+            int linept = (x-lowx.x) * slope + lowx.y;
+            int gap_found = 1;
+            for(y= linept-EDGE_WIDTH; y <= linept+EDGE_WIDTH; y++){
+                if(x < 0 || y < 0 || x >= edges->width || y >= edges->height) continue;
+                if(edges->imageData[x+y*edges->width] != 0){
+                    gap_found = 0;
+                }
+            }
+            total_gap += gap_found;
+
+        }
+    }else{
+        //sort the two corners by y value
+        CvPoint lowy;
+        CvPoint highy; 
+        if(pt1->y < pt2->y){
+            lowy.x = pt1->x;
+            lowy.y = pt1->y;
+            highy.x = pt2->x;
+            highy.y = pt2->y;
+        }else{
+            lowy.x = pt2->x;
+            lowy.y = pt2->y;
+            highy.x = pt1->x;
+            highy.y = pt1->y;
+        }
+        distance = highy.y - lowy.y;
+        
+        //compute the slope between these two points
+        double slope = (double)(highy.x-lowy.x)/(highy.y-lowy.y);
+        
+        //check the number of edge pixels between these two corners 
+        for(y=lowy.y; y<=highy.y; y++){
+            int linept = (y-lowy.y) * slope + lowy.x;
+            int gap_found = 1;
+            for(x= linept-EDGE_WIDTH; x <= linept+EDGE_WIDTH; x++){
+                if(x < 0 || y < 0 || x >= edges->width || y >= edges->height) continue;
+                if(edges->imageData[x+y*edges->width] != 0){
+                    gap_found = 0;
+                }
+            }
+            total_gap += gap_found;
+        }
+    }
+    
+    //decide if the points are connected
+    int points_connected = 0;
+    if(total_gap < GAP_SIZE)
+        points_connected = 1;
+
+    return points_connected;
+}
+
+int mod(int x, int a){
+    for(;x>=a;x-=a);
+    for(;x<0;x+=a);
+    return x;
+}
 
 int match_letters(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int roiy0, int roix, int roiy){
 
