@@ -25,7 +25,7 @@ def update_axis(event):
     if total == 0:
         yaw_heading = sw3.data.imu.yaw
         sw3.nav.do(sw3.CompoundRoutine((sw3.SetYaw(yaw_heading), sw3.Forward(forward))))
-    else:        
+    else:
         for_p = forward / total
         rate_p = rate / total
         
