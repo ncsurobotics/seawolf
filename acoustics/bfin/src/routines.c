@@ -34,7 +34,8 @@
  *   specifies the degree. If not enough, or too many coefficents are then read,
  *   throw and error and bomb out
  */
-void load_coefs(fract16* coefs, char* coef_file_name, int num_coefs) {
+fract16* load_coefs(char* coef_file_name, int* num_coefs) {
+    fract16* coefs = NULL;
     FILE* f;
     char buff[256];
 
@@ -47,13 +48,17 @@ void load_coefs(fract16* coefs, char* coef_file_name, int num_coefs) {
     }
 
     /* Read coefficients */
-    for(int i = 0; i < num_coefs; i++) {
-        fgets(buff, 255, f);
-        coefs[i] = atoi(buff);
+    (*num_coefs) = 0;
+    while(fgets(buff, sizeof(buff) - 1, f) != NULL) {
+        coefs = realloc(coefs, sizeof(fract16) * ((*num_coefs) + 1));
+        coefs[*num_coefs] = atoi(buff);
+        (*num_coefs) += 1;
     }
 
     /* Close File */
     fclose(f);
+
+    return coefs;
 }
 
 /**
