@@ -84,7 +84,7 @@ static int getPeripheralType(SerialPort sp) {
                 return PT_THRUSTER45;
             } else if(strcmp(id, "MissionStatus") == 0) {
                 return PT_MISSIONSTATUS;
-            } else if(strcmp(id, "PressureSensor") == 0) {
+            } else if(strcmp(id, "Depth") == 0) {
                 return PT_DEPTH;
             } else {
                 Logging_log(ERROR, Util_format("Received unknown ID '%s'", id));
