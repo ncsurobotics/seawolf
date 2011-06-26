@@ -63,7 +63,6 @@ int arctan(int x, int y);
 
 void free_bins(Rect** rects, int num_rects){
     int i;
-    printf("freeing %d rectangles\n",num_rects);
     for(i = 0; i < num_rects; i++){
         free(rects[i]);
     }
@@ -268,7 +267,6 @@ Rect** find_bins(IplImage* frame, int* bin_count){
         }
     }
     
-    printf("allocated %d rectangles\n",rect_count);
     #ifdef VISUAL_DEBUG_BINS
         cvNamedWindow("Bin Debug",CV_WINDOW_AUTOSIZE);
         cvShowImage("Bin Debug",debug);
@@ -287,6 +285,8 @@ Rect** find_bins(IplImage* frame, int* bin_count){
     cvReleaseImage(&edge);
     cvReleaseImage(&grayscale);
     cvReleaseImage(&tmpimage);
+    cvReleaseImage(&eigimage);
+
     #ifdef VISUAL_DEBUG_BINS
         cvReleaseImage(&debug);
     #endif

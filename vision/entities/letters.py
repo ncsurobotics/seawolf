@@ -32,6 +32,8 @@ class LettersEntity(VisionEntity):
 
     def find(self, frame, debug=True):
 
+        #import pdb 
+        #pdb.set_trace()
 
         if debug:
             debug = cv.CreateImage(cv.GetSize(frame), 8, 3)
@@ -42,15 +44,14 @@ class LettersEntity(VisionEntity):
         #cv.Smooth(frame, filtered, FILTER_TYPE, FILTER_SIZE, FILTER_SIZE)  
 
         #look for bins (the black rectangles, not the X's and O's)
-        found_bins = libvision.letters.find_bins(frame)
+        bins = libvision.letters.find_bins(frame)
 
-        for i, a_bin in enumerate(found_bins):
-            #import pdb 
-            #pdb.set_trace()
-            #draw a circle filling the center of the bin
-            color = (255, 0, 255)
-            radius = int( math.sqrt(a_bin.area/2) / 2 )
-            cv.Circle(debug, a_bin.center, radius, color, 2, 8, 0)
+
+        if debug:
+            for i, a_bin in enumerate(bins):
+                radius = int( math.sqrt(a_bin.area/2) / 2);
+                bin_color = (255,0,255);
+                cv.Circle(debug,a_bin.center,radius,bin_color,2,8,0)
 
         #detect correctly colored regions
         binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame, 250, 0, 0, 2000, 800, 1)
