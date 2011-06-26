@@ -80,10 +80,21 @@ target_color_hsv = CModule("target_color_hsv.so", [
 ])
 
 # Shape Detect Module
+class cRect(ctypes.Structure):
+    _fields_  = [
+        ("area", ctypes.c_int32),
+        ("c_x", ctypes.c_int32),
+        ("c_y", ctypes.c_int32),
+        ("theta", ctypes.c_int32),
+    ]
+
+cRect_p = ctypes.POINTER(cRect)
+cRect_p_p = ctypes.POINTER(cRect_p)
 
 shape_detect = CModule("shape_detect.so", [
     CFunction("match_letters",ctypes.c_int,[IplImage_p,ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]),
-    CFunction("find_bins", IplImage_p,[IplImage_p])
+    CFunction("find_bins", cRect_p_p,[IplImage_p, ctypes.POINTER(ctypes.c_int)]),
+    CFunction("free_bins", None, [cRect_p_p, ctypes.c_int])
 ])  
 
 # Instantiate CModule objects below:

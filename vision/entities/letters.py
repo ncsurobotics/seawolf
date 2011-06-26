@@ -26,14 +26,12 @@ class LettersEntity(VisionEntity):
 
         if debug:
             #cv.NamedWindow("Filtered")
-            cv.NamedWindow("Binary")
-            #cv.NamedWindow("Python Debug")
+            #cv.NamedWindow("Binary")
+            cv.NamedWindow("Python Debug")
             #cv.NamedWindow("Bins")
 
     def find(self, frame, debug=True):
 
-        #import pdb 
-        #pdb.set_trace()
 
         if debug:
             debug = cv.CreateImage(cv.GetSize(frame), 8, 3)
@@ -44,7 +42,15 @@ class LettersEntity(VisionEntity):
         #cv.Smooth(frame, filtered, FILTER_TYPE, FILTER_SIZE, FILTER_SIZE)  
 
         #look for bins (the black rectangles, not the X's and O's)
-        bins = libvision.cmodules.shape_detect.find_bins(frame) 
+        found_bins = libvision.letters.find_bins(frame)
+
+        for i, a_bin in enumerate(found_bins):
+            #import pdb 
+            #pdb.set_trace()
+            #draw a circle filling the center of the bin
+            color = (255, 0, 255)
+            radius = int( math.sqrt(a_bin.area/2) / 2 )
+            cv.Circle(debug, a_bin.center, radius, color, 2, 8, 0)
 
         #detect correctly colored regions
         binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame, 250, 0, 0, 2000, 800, 1)
@@ -67,10 +73,10 @@ class LettersEntity(VisionEntity):
                     color = (0,0,255)
                 cv.Circle(debug,center, 5, color, 2, 8, 0) 
         if debug:
-            cv.ShowImage("Binary",binary)
+            #cv.ShowImage("Binary",binary)
             #cv.ShowImage("Bins",bins)
             #cv.ShowImage("Filtered",filtered)
-            #cv.ShowImage("Python Debug",debug)
+            cv.ShowImage("Python Debug",debug)
 
         return False 
 

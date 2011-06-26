@@ -2,7 +2,6 @@
 #include <cv.h>
 #include <highgui.h>
 #include <math.h>
-#include "seawolf.h"
 
 /* FILE CONTAINS:           */
 /* match_letters()          */
@@ -13,7 +12,7 @@
 //#define VISUAL_DEBUG_X    1
 //#define VISUAL_DEBUG_O    1
 
-#define VISUAL_DEBUG_BINS 1
+//#define VISUAL_DEBUG_BINS 1
 
 #define HOLE_SIZE .5 //smaller the number, smaller the hole
 #define R_RATIO .05 //number small radii allowed (per pixel)
@@ -24,6 +23,25 @@
 #define ANGLE_TOLERANCE .1 //how close to a right angle the bins must be
 #define LIN_TOLERANCE .1 //how perfect the ratios of the rectangle sides must be
 
+#ifndef M_PI
+    #define M_PI 3.1415926535897932384626433832795028841971693993751058209749445923
+#endif
+
+// Rectangle Deffintion
+typedef struct Rect_s {
+    
+    /* area of the rectangle */
+    int32_t area;
+    
+    /* center of rectangle */
+    int32_t c_x;
+    int32_t c_y;
+
+    /* direction of rectangle */
+    int32_t theta;
+} Rect;
+
+
 /* PROTOTYPES */
 
 //letter identification
@@ -32,18 +50,27 @@ int match_X(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point
 int match_O(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point, int cent_x, int cent_y, int mid_x, int mid_y, IplImage* debug );
 
 //bin detection
-IplImage* find_bins(IplImage* frame);
+Rect** find_bins(IplImage* frame, int* bin_count);
 int pair_corners(CvPoint2D32f* pt1, CvPoint2D32f* pt2, IplImage* edges, IplImage* debug);
 int mod(int x, int a);
 int test_connect(int c1, int c2, int** pairs, int* pair_counts);
+Rect* create_rect(CvPoint* ctr_pt, CvPoint* cls_pt, CvPoint* far_pt);
 
 //misc 
 int arctan(int x, int y);
 
-
 /* FUNCTION: find_bins() */
 
-IplImage* find_bins(IplImage* frame){
+void free_bins(Rect** rects, int num_rects){
+    int i;
+    printf("freeing %d rectangles\n",num_rects);
+    for(i = 0; i < num_rects; i++){
+        free(rects[i]);
+    }
+    free(rects);
+}
+
+Rect** find_bins(IplImage* frame, int* bin_count){
 
     //Edge Detection
     IplImage* grayscale = cvCreateImage(cvGetSize(frame),IPL_DEPTH_8U,1);
@@ -58,8 +85,7 @@ IplImage* find_bins(IplImage* frame){
     #endif
 
     //Corner Detection
-
-    int i,j,l,x,y;
+    int i,j,l;
 
     IplImage* eigimage = cvCreateImage(cvGetSize(frame),IPL_DEPTH_32F,1);
     IplImage* tmpimage = cvCreateImage(cvGetSize(frame),IPL_DEPTH_32F,1);
@@ -76,11 +102,12 @@ IplImage* find_bins(IplImage* frame){
     cvGoodFeaturesToTrack(grayscale,eigimage,tmpimage,corners,&corner_count,quality_level,min_distance,NULL,block_size,0,0.0);
     
 
+    IplImage* debug = NULL;
     #ifdef VISUAL_DEBUG_BINS 
-        IplImage* debug = cvCloneImage(frame);
+        debug = cvCloneImage(frame);
 
         for(i=0;i<corner_count;i++){
-            CvScalar corner_color = {0,255,255};
+            CvScalar corner_color = {{0,255,255}};
             CvPoint center;
             center.x = corners[i].x;
             center.y = corners[i].y;
@@ -94,6 +121,10 @@ IplImage* find_bins(IplImage* frame){
     int** groups;
     int* group_sizes; //records sizes of groups of corners
     int* pair_counts; //records number of pairs per corner
+
+    //create list of rectangles
+    Rect** rects = calloc(corner_count,sizeof(Rect*));
+    int rect_count = 0;
 
     group_sizes = (int*)calloc(corner_count,sizeof(int));
     pair_counts = (int*)calloc(corner_count,sizeof(int));
@@ -123,13 +154,11 @@ IplImage* find_bins(IplImage* frame){
 
                 //record this match
                 pairs[i][pair_counts[i]++] = j;
-                printf("%d and %d connected \n",i,j);
-
             }
 
             #ifdef VISUAL_DEBUG_BINS
                 if(paired){
-                    CvScalar connect_color = {0,0,255};
+                    CvScalar connect_color = {{0,0,255}};
                     CvPoint pt1, pt2;
                     pt1.x = corners[i].x;
                     pt2.x = corners[j].x;
@@ -147,13 +176,13 @@ IplImage* find_bins(IplImage* frame){
     int hyp[3];
     int connections[3];
     int cor[3]; 
-    printf("corner_count = %d \n",corner_count);
+    int group_finished;
     for(i=0; i<corner_count; i++){
         #ifdef VISUAL_DEBUG_BINS
             if(group_sizes[i] > 2){
                 for(j=0; j<group_sizes[i]; j++){
                     for(l=0; l < pair_counts[groups[i][j]]; l++){
-                        CvScalar group_color = {255,0,255};
+                        CvScalar group_color = {{255,0,255}};
                         CvPoint pt1, pt2;
                         pt1.x = corners[groups[i][j]].x;
                         pt2.x = corners[pairs[groups[i][j]][l]].x;
@@ -164,7 +193,7 @@ IplImage* find_bins(IplImage* frame){
                 }
             }
         #endif
- 
+        group_finished = 0;
         if(group_sizes[i] < 3) continue;
         //there are at least 3 corners in this group
         //test all combinations of 3 corners to see if we find a right triangle
@@ -202,28 +231,44 @@ IplImage* find_bins(IplImage* frame){
                         if(ang_dif > dis[j] * ANGLE_TOLERANCE) continue;
 
                         //check proportions of the rectangle
-                        int small_dis = Util_min(dis[prv],dis[nxt]);
-                        int large_dis = Util_max(dis[prv],dis[nxt]);
+                        int small_dis, large_dis, cls_pt, far_pt;
+                        if(dis[prv] < dis[nxt]){
+                            cls_pt = nxt;
+                            far_pt = prv;
+                        }else{
+                            cls_pt = prv;
+                            far_pt = nxt;
+                        }
+                        small_dis = dis[far_pt];
+                        large_dis = dis[cls_pt];
                         int lin_dif = abs(small_dis*2 - large_dis);
                         if(lin_dif > dis[j] * LIN_TOLERANCE) continue;
 
                         //we are now sure that these three points are part of a rectangle
+                        //record this rectangle
+                        rects[rect_count++] = create_rect(&pt[j],&pt[cls_pt],&pt[far_pt]);
+                        group_finished = 1;
                         #ifdef VISUAL_DEBUG_BINS
                             int k;
                             for(k=0;k<3;k++){
-                                CvScalar good_color = {0,255,0};
+                                CvScalar good_color = {{0,255,0}};
                                 CvPoint center;
                                 center.x = pt[k].x;
                                 center.y = pt[k].y;
                                 cvCircle(debug,center,7,good_color,2,8,0);
                             }
                         #endif
+                        break;
                     }
+                if(group_finished) break;    
                 }
+            if(group_finished) break;    
             }
+        if(group_finished) break;    
         }
     }
-
+    
+    printf("allocated %d rectangles\n",rect_count);
     #ifdef VISUAL_DEBUG_BINS
         cvNamedWindow("Bin Debug",CV_WINDOW_AUTOSIZE);
         cvShowImage("Bin Debug",debug);
@@ -245,7 +290,38 @@ IplImage* find_bins(IplImage* frame){
     #ifdef VISUAL_DEBUG_BINS
         cvReleaseImage(&debug);
     #endif
-    return eigimage;
+   
+    //return data
+    (*bin_count) = rect_count;
+    return rects;
+}
+
+//create a new rectangle structure
+Rect* create_rect(CvPoint* ctr_pt, CvPoint* cls_pt, CvPoint* far_pt){
+    //compute center
+    int32_t cnt_x = (cls_pt->x + far_pt->x )/2;
+    int32_t cnt_y = (cls_pt->y + far_pt->y )/2;
+    
+    //compute area
+    int smalld = sqrt(pow(cls_pt->x-ctr_pt->x,2)+pow(cls_pt->y-ctr_pt->y,2));
+    int larged = sqrt(pow(far_pt->x-ctr_pt->x,2)+pow(far_pt->y-ctr_pt->y,2));
+    int32_t area = smalld * larged;
+
+    //compute angle
+    int refx = (cls_pt->x + ctr_pt->x ) / 2;
+    int refy = (cls_pt->y + ctr_pt->y ) / 2;
+    refx -= cnt_x;
+    refy -= cnt_y;
+    int32_t theta = arctan(refx,refy);
+
+    //create rectangle
+    Rect* rect = (Rect*)calloc(1,sizeof(Rect));
+    rect->area = area;
+    rect->c_x = cnt_x;
+    rect->c_y = cnt_y;
+    rect->theta = theta;
+
+    return rect;
 }
 
 int test_connect(int c1, int c2, int** pairs, int* pair_counts){
@@ -264,7 +340,7 @@ int test_connect(int c1, int c2, int** pairs, int* pair_counts){
     return connected;
 }
 int pair_corners(CvPoint2D32f* pt1, CvPoint2D32f* pt2, IplImage* edges, IplImage* debug){
-    int i,j,x,y;
+    int x,y;
     int total_gap = 0;
     int distance = 0;
     
@@ -351,7 +427,7 @@ int mod(int x, int a){
 
 int match_letters(IplImage* binary, int index, int cent_x, int cent_y, int roix0, int roiy0, int roix, int roiy){
 
-    int i,x,y; //useful variable names
+    int x,y; //useful variable names
     CvPoint* points; //an array of pixel coordinates
     int pixel_count = 0; //total number of pixels we find
     CvPoint r_point; //a reference point which has the maximum radius
@@ -601,7 +677,7 @@ int match_X(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point
         //transform the image
         CvSize warpedsize = {100,100};
         IplImage* warped = cvCreateImage(warpedsize, 8, 1);
-        CvScalar fillcolor = {0};
+        CvScalar fillcolor = {{0}};
         cvWarpPerspective(binary, warped, tmatrix,CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS , fillcolor);
 
     #ifdef VISUAL_DEBUG_X
