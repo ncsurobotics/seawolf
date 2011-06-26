@@ -6,6 +6,8 @@
 #define PANIC_DEPTH  12.0 // At what depth we panic and go up full force
 #define PANIC_TIME   10.0 // Time in seconds that we panic
 
+#define BASE_I 0.3
+
 static void dataOut(double mv) {
     float out = Util_inRange(-1.0, mv, 1.0);
     Notify_send("THRUSTER_REQUEST", Util_format("Depth %.4f", out));
@@ -31,6 +33,7 @@ int main(void) {
                   Var_get("DepthPID.p"),
                   Var_get("DepthPID.i"),
                   Var_get("DepthPID.d"));
+    pid->e_dt = BASE_I / pid->i;
     dataOut(0.0);
 
     while(true) {
@@ -45,23 +48,39 @@ int main(void) {
         /* Update PID Coefficients */
         if (Var_stale("DepthPID.p") ||
             Var_stale("DepthPID.i") ||
-            Var_stale("DepthPID.i"))
+            Var_stale("DepthPID.d"))
         {
             PID_setCoefficients(pid,
                                 Var_get("DepthPID.p"),
                                 Var_get("DepthPID.i"),
                                 Var_get("DepthPID.d"));
-            PID_resetIntegral(pid);
+            //PID_resetIntegral(pid);
+            pid->e_dt = BASE_I / pid->i;
         }
 
         /* Update Heading */
-        if (Var_stale("DepthPID.Heading")) {
+        if (Var_poked("DepthPID.Heading")) {
             PID_setSetPoint(pid, Var_get("DepthPID.Heading"));
             // Automatically unpause if heading is updated
             if (paused) {
                 Var_set("DepthPID.Paused", 0.0);
             }
         }
+
+        //printf("e_dt = %f\n", pid->e_dt);
+        /*
+        if (Var_get("DepthPID.Heading") - depth < -1) {
+            PID_setCoefficients(pid,
+                                0.0,
+                                Var_get("DepthPID.i"),
+                                Var_get("DepthPID.d"));
+        } else {
+            PID_setCoefficients(pid,
+                                Var_get("DepthPID.p"),
+                                Var_get("DepthPID.i"),
+                                Var_get("DepthPID.d"));
+        }
+        */
 
         /* Update Paused */
         if (Var_stale("DepthPID.Paused")) {
