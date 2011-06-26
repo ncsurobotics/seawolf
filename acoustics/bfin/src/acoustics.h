@@ -19,17 +19,19 @@
 /** A sample from the FPGA/ADC is 16 bits */
 typedef fract16 adcsample;
 
-/** Channel A */
+/** Channel A (hydrophone 4) */
 #define A 0
 
-/** Channel B */
+/** Channel B (hydrophone 3) */
 #define B 1
 
-/** Channel C */
+/** Channel C (hydrophone 2) */
 #define C 2
 
-/** Channel D */
+/** Channel D (hydrophone 1) */
 #define D 3
+
+#define DUMP(x) (1 << (x))
 
 /** Number of channels */
 #define CHANNELS 4
@@ -46,32 +48,27 @@ typedef fract16 adcsample;
 /** Total number of samples in each channel's circular buffer */
 #define BUFFER_SIZE_CHANNEL (SAMPLES_PER_CHUNK * BUFFER_CHUNK_COUNT)
 
-/**
- * Number of coefficients in the FIR filter
- *
- * \todo This shouldn't be defined here
- * \see load_coefs
- */
-#define FIR_COEF_COUNT 151
-
 /** Minimum triggering value (raw value) */
-#define TRIGGER_VALUE ((short)(80))
+#define TRIGGER_VALUE ((short)(70))
 
 /** Number of samples to offset the position of the trigger by. This is used to
     better center the trigger in the sample */
 #define TRIGGER_POINT_OFFSET 200
 
 /** Use this channel to detect the incoming signal (i.e. trigger on) */
-#define TRIGGER_CHANNEL A
+#define TRIGGER_CHANNEL C
 
 /** The correlation block only acts on a subset of the available data. Namely,
-    points within +/- COR_RANGE of the trigger point. This parameter can be used
-    to tune the amount of the data the correlation block is run over */
-#define CORR_RANGE 200
+    points within +/- CORR_RANGE of the trigger point. This parameter can be
+    used to tune the amount of the data the correlation block is run over */
+#define CORR_RANGE 512
 
 /** The correlation block will only consider lag values from -COR_LAG_MAX to
     COR_LAG_MAX */
-#define CORR_LAG_MAX 100 
+#define CORR_LAG_MAX 60 
+
+/** Divide each data point in the cross correlation by this factor */
+#define CORR_SCALE_FACTOR 2
 
 /** Data out of the FIR filter block may not be centered at 0, so after
     filtering, each data block is zeroed by shifting the signal by the signal
@@ -112,7 +109,7 @@ typedef fract16 adcsample;
 /** \} */
 
 /* Support routines */
-void load_coefs(fract16* coefs, char* coef_file_name, int num_coefs);
+fract16* load_coefs(char* coef_file_name, int* num_coefs);
 int find_max_cmplx(complex_fract16* w, int size);
 void multiply(complex_fract16* in1, complex_fract16* in2, complex_fract16* out, int size);
 void conjugate(complex_fract16* w, int size);

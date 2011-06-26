@@ -1,46 +1,30 @@
-#define pressure_in 0
-#define numRows 2
-#define numCols 16
 
-float depthOffset;
+#define DEPTH_PIN 0
+#define DEPTH_SLEEP 100
+
+unsigned long last_depth = 0;
+unsigned int depth = 0;
+byte wire_data[3];
 
 void setup() {
-  Serial.begin(9600);           // set up Serial library at 9600 bps
-  handshakeSerial();
-  
-  //depthOffset = offset();
-  depthOffset = 0;
+    Serial.begin(9600);
+    handshakeSerial();
 }
-
-float offset(){
-  float pressure=0;
-  int i;
-  
-  for(i=0;i<100;i++){
-    pressure = pressure + analogRead(pressure_in);
-  }
-  
-  pressure=pressure/100;
-  
-  return pressure;
-}
-
 
 void loop() {
-  float pressure=0; 
-  float depth;
-  int i;
-  
-  for(i=0;i<1000;i++){
-    pressure = (pressure + analogRead(pressure_in));
-  }
-  pressure=pressure/1000 - depthOffset;
-  
-  pressure = pressure * 25 / 1024;
-  depth = pressure*.703242*3.2808399;  //depth in ft.
-  
-  Serial.print(depth);
-  Serial.print('\n');
+
+    /* Send new depth value */
+    if(millis() - last_depth > DEPTH_SLEEP) {
+        last_depth = millis();
+        depth = analogRead(DEPTH_PIN);
+
+        wire_data[0] = 0x01;
+        wire_data[1] = depth / 256; /* High bit */
+        wire_data[2] = depth % 256; /* Low bit */
+
+        Serial.write(wire_data, 3);
+    }
+
 }
 
 int handshakeSerial(){

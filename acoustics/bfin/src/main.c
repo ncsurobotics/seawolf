@@ -15,10 +15,10 @@
 #define ACOUSTICS_PROFILE
 
 /** If defined, dump channel data pre and post filtering */
-#define ACOUSTICS_DUMP
+//#define ACOUSTICS_DUMP (DUMP(A) | DUMP(B) | DUMP(C) | DUMP(D))
 
 /** If defined, use libseawolf to store the computed delay values */
-#define USE_LIBSEAWOLF
+//#define USE_LIBSEAWOLF
 
 /** \} */
 
@@ -54,6 +54,7 @@ static unsigned int cir_buff_offset;
 
 /** FIR Coefficients */
 static fract16* coefs;
+static int fir_coef_count;
 
 /** File handler associated with the opened device driver /dev/ppiadc */
 static int driver_f = -1;
@@ -133,22 +134,21 @@ static void dump(fract16* buff, int size, const char* file) {
  */
 static void init(char* coefs_file_name) {
     /* Load coefficients from .cof file */
-    coefs = calloc(sizeof(adcsample), FIR_COEF_COUNT);
-    load_coefs(coefs, coefs_file_name, FIR_COEF_COUNT );
+    coefs = load_coefs(coefs_file_name, &fir_coef_count);
 
     /* Initialize delay lines for FIR filters */
-    fir_delay[A] = calloc(sizeof(adcsample), FIR_COEF_COUNT);
-    fir_delay[B] = calloc(sizeof(adcsample), FIR_COEF_COUNT);
-    fir_delay[C] = calloc(sizeof(adcsample), FIR_COEF_COUNT);
-    fir_delay[D] = calloc(sizeof(adcsample), FIR_COEF_COUNT);
-    fir_delay_trig = calloc(sizeof(adcsample), FIR_COEF_COUNT);
+    fir_delay[A] = calloc(sizeof(adcsample), fir_coef_count);
+    fir_delay[B] = calloc(sizeof(adcsample), fir_coef_count);
+    fir_delay[C] = calloc(sizeof(adcsample), fir_coef_count);
+    fir_delay[D] = calloc(sizeof(adcsample), fir_coef_count);
+    fir_delay_trig = calloc(sizeof(adcsample), fir_coef_count);
 
     /* FIR state macros */
-    fir_init(fir_state[A], coefs, fir_delay[A], FIR_COEF_COUNT, 0);
-    fir_init(fir_state[B], coefs, fir_delay[B], FIR_COEF_COUNT, 0);
-    fir_init(fir_state[C], coefs, fir_delay[C], FIR_COEF_COUNT, 0);
-    fir_init(fir_state[D], coefs, fir_delay[D], FIR_COEF_COUNT, 0);
-    fir_init(fir_state_trig, coefs, fir_delay_trig, FIR_COEF_COUNT, 0);
+    fir_init(fir_state[A], coefs, fir_delay[A], fir_coef_count, 0);
+    fir_init(fir_state[B], coefs, fir_delay[B], fir_coef_count, 0);
+    fir_init(fir_state[C], coefs, fir_delay[C], fir_coef_count, 0);
+    fir_init(fir_state[D], coefs, fir_delay[D], fir_coef_count, 0);
+    fir_init(fir_state_trig, coefs, fir_delay_trig, fir_coef_count, 0);
 
     /* Circular buffers per channel */
     cir_buff[A] = calloc(sizeof(adcsample), BUFFER_SIZE_CHANNEL);
@@ -203,6 +203,9 @@ static void record_ping(void) {
     /* Signal the ADC driver that we have reset (new sampling set) */
     write(driver_f, &RESET_FLAG, 1);
     
+    /* Clear out the delay line */
+    memset(fir_delay_trig, 0, sizeof(adcsample) * fir_coef_count);
+
     while(state != DONE) {
         /* Wait for the ADC driver to fill a buffer and return its address */
         read(driver_f, &current_buffer, sizeof(current_buffer));
@@ -234,7 +237,6 @@ static void record_ping(void) {
             cir_buff[D][j] = expand_complement(*current_buffer_copy);
         }
 
-        /* Don't look for a trigger until the buffer has been filled */
         if(state == READING) {
             /* Run the FIR filter on the current sample from channel A */
             fir_fr16(cir_buff[TRIGGER_CHANNEL] + cir_buff_offset, temp_buff, SAMPLES_PER_CHUNK, &fir_state_trig);
@@ -301,6 +303,34 @@ static void linearize_buffers(void) {
     }
 }
 
+/**
+ * \brief Center buffers around 0
+ *
+ * Subtracts the average value of the signal to approximately center it about 0
+ *
+ * \param buffer Buffer to center
+ */
+static void center_buffer(fract16* buffer, int size) {
+    long int avg = 0;
+    short sample_count = (size < AVG_COUNT) ? size : AVG_COUNT;
+
+    for(int i = 0; i < sample_count; i++) {
+        avg += buffer[i];
+    }
+    avg = avg / sample_count;
+
+    for(int i = 0; i < size; i++) {
+        buffer[i] -= avg;
+    }
+}
+
+static void center_buffers(void) {
+    center_buffer(cir_buff[A], BUFFER_SIZE_CHANNEL);
+    center_buffer(cir_buff[B], BUFFER_SIZE_CHANNEL);
+    center_buffer(cir_buff[C], BUFFER_SIZE_CHANNEL);
+    center_buffer(cir_buff[D], BUFFER_SIZE_CHANNEL);
+}
+
 /** 
  * \brief Filter each linearized buffer
  *
@@ -310,21 +340,93 @@ static void linearize_buffers(void) {
  */
 static void filter_buffers(void) {
     for(int channel = A; channel <= D; channel++) {
+        memset(fir_delay[channel], 0, sizeof(adcsample) * fir_coef_count);
         fir_fr16(cir_buff[channel], temp_buff, BUFFER_SIZE_CHANNEL, &fir_state[channel]);
         memcpy(cir_buff[channel], temp_buff, sizeof(adcsample) * BUFFER_SIZE_CHANNEL);
         
         /* Center and scale the signal */
-        for(int i = 0; i < BUFFER_SIZE_CHANNEL; i++) {
-            cir_buff[channel][i] -= signal_mean;
-            cir_buff[channel][i] *= 10;
-        }
+        center_buffer(cir_buff[channel], BUFFER_SIZE_CHANNEL);
 
         /* Remove invalid data points from when the FIR filter is ramping up */
-        for(int i = FIR_COEF_COUNT; i >= 0; i--) {
-            cir_buff[channel][i] = cir_buff[channel][FIR_COEF_COUNT];
+        for(int i = fir_coef_count; i >= 0; i--) {
+            cir_buff[channel][i] = cir_buff[channel][fir_coef_count];
         }
     }
 }
+
+static int compute_noise_mag(fract16* buffer, int window_start, int window_end) {
+    int high = 0;
+    int low = 0;
+
+    for(int i = window_start; i <= window_end; i++) {
+        if(buffer[i] > high) {
+            high = buffer[i];
+        } else if(buffer[i] < low) {
+            low = buffer[i];
+        }
+    }
+
+    return high - low;
+}
+
+static int locate_growth_points(fract16* buffer, int noise_mag, float* scalers, int* indices, int count) {
+    int high = 0;
+    int low = 0;
+    int* mags = malloc(sizeof(int) * count);
+    int mag_i = 0;
+
+    for(int i = 0; i < count; i++) {
+        mags[i] = (int) noise_mag * scalers[i];
+    }
+
+    for(int i = 0; i < BUFFER_SIZE_CHANNEL && mag_i < count; i++) {
+        if(buffer[i] > high) {
+            high = buffer[i];
+        } else if(buffer[i] < low) {
+            low = buffer[i];
+        }
+
+        while(high - low > mags[mag_i]) {
+            indices[mag_i++] = i;
+        }
+    }
+
+    free(mags);
+    return mag_i;
+}
+
+static int average_lag(int* samples1, int* samples2, int count) {
+    int sum = 0;
+
+    for(int i = 0; i < count; i++) {
+        sum += (samples1[i] - samples2[i]);
+    }
+    
+    return sum / count;
+}
+
+#if 0
+static void correlate_buffers(void) {
+    float scalers[] = {2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9};
+    int indices[CHANNELS][10];
+    int noise_mags[CHANNELS];
+    int max_find[CHANNELS];
+    int min_max_find = 10;
+
+    for(int channel = A; channel <= D; channel++) {
+        noise_mags[channel] = compute_noise_mag(cir_buff[channel], 500, 1000);
+        max_find[channel] = locate_growth_points(cir_buff[channel], noise_mags[channel], scalers, indices[channel], 10);
+
+        if(max_find[channel] < min_max_find) {
+            min_max_find = max_find[channel];
+        }
+    }
+
+    delay_AC = average_lag(indices[A], indices[C], Util_min(max_find[A], max_find[C]));
+    delay_BD = average_lag(indices[B], indices[D], Util_min(max_find[B], max_find[D]));
+}
+
+#else
 
 /**
  * \brief Perform an optimized cross-correlation-like operation
@@ -342,23 +444,17 @@ static void filter_buffers(void) {
  * \return The lag corresponding to the largest numerical correlation
  */
 static int crosscor_max(fract16* a, fract16* b, int size, int min_lag, int max_lag) {
-    fract16* c = malloc(sizeof(fract16) * (max_lag - min_lag));
+    fract32* c = malloc(sizeof(fract32) * (max_lag - min_lag));
+    fract32 max_y;
     int max_x;
-    int max_y;
-    complex_fract16 s, t;
-
-    s.im = 0;
-    t.im = 0;
 
     for(int lag = min_lag; lag < max_lag; lag++) {
         c[lag - min_lag] = 0;
         for(int n = 0; n < size; n++) {
-            s.re = a[n];
-            t.re = b[n + lag];
-            c[lag - min_lag] += cmlt_fr16(s, t).re;
+            c[lag - min_lag] = add_fr1x32(c[lag - min_lag], mult_fr1x32(a[n], b[n + lag]));
         }
     }
-
+ 
     max_x = 0;
     max_y = c[0];
     for(int i = 0; i < max_lag - min_lag; i++) {
@@ -392,6 +488,7 @@ static void correlate_buffers(void) {
                             cir_buff[D] + trigger_point - CORR_RANGE,
                             CORR_RANGE * 2, -CORR_LAG_MAX, CORR_LAG_MAX);
 }
+#endif
 
 /**
  * \brief Output the delays
@@ -482,33 +579,54 @@ int main(int argc, char** argv) {
         record_ping();
         TIME_POST(t);
 
+        printf("Trigger point: %d\n", trigger_point);
+
         TIME_PRE(t, "Linearizing buffers...");
         linearize_buffers();
         TIME_POST(t);
 
+        TIME_PRE(t, "Recentering buffers...");
+        center_buffers();
+        TIME_POST(t);
+
 #ifdef ACOUSTICS_DUMP
         TIME_PRE(t, "Dumping raw buffers...");
-        dump(cir_buff[A], BUFFER_SIZE_CHANNEL, "dump_a_raw.txt");
-        dump(cir_buff[B], BUFFER_SIZE_CHANNEL, "dump_b_raw.txt");
-        dump(cir_buff[C], BUFFER_SIZE_CHANNEL, "dump_c_raw.txt");
-        dump(cir_buff[D], BUFFER_SIZE_CHANNEL, "dump_d_raw.txt");
+        if(ACOUSTICS_DUMP & 1) {
+            dump(cir_buff[A], BUFFER_SIZE_CHANNEL, "dump_a_raw.txt");
+        }
+        if(ACOUSTICS_DUMP & 2) {
+            dump(cir_buff[B], BUFFER_SIZE_CHANNEL, "dump_b_raw.txt");
+        }
+        if(ACOUSTICS_DUMP & 4) {
+            dump(cir_buff[C], BUFFER_SIZE_CHANNEL, "dump_c_raw.txt");
+        }
+        if(ACOUSTICS_DUMP & 8) {
+            dump(cir_buff[D], BUFFER_SIZE_CHANNEL, "dump_d_raw.txt");
+        }
         TIME_POST(t);
 #endif
 
+#if 1
         TIME_PRE(t, "Filtering buffers...");
         filter_buffers();
         TIME_POST(t);
+#endif
 
 #ifdef ACOUSTICS_DUMP
         TIME_PRE(t, "Dumping filtered buffers...");
-        dump(cir_buff[A], BUFFER_SIZE_CHANNEL, "dump_a_filtered.txt");
-        dump(cir_buff[B], BUFFER_SIZE_CHANNEL, "dump_b_filtered.txt");
-        dump(cir_buff[C], BUFFER_SIZE_CHANNEL, "dump_c_filtered.txt");
-        dump(cir_buff[D], BUFFER_SIZE_CHANNEL, "dump_d_filtered.txt");
+        if(ACOUSTICS_DUMP & 1) {
+            dump(cir_buff[A], BUFFER_SIZE_CHANNEL, "dump_a_filtered.txt");
+        }
+        if(ACOUSTICS_DUMP & 2) {
+            dump(cir_buff[B], BUFFER_SIZE_CHANNEL, "dump_b_filtered.txt");
+        }
+        if(ACOUSTICS_DUMP & 4) {
+            dump(cir_buff[C], BUFFER_SIZE_CHANNEL, "dump_c_filtered.txt");
+        }
+        if(ACOUSTICS_DUMP & 8) {
+            dump(cir_buff[D], BUFFER_SIZE_CHANNEL, "dump_d_filtered.txt");
+        }
         TIME_POST(t);
-
-        /* Exit after dumping buffers */
-        break;
 #endif
 
         TIME_PRE(t, "Correlating buffers...");
@@ -516,6 +634,11 @@ int main(int argc, char** argv) {
         TIME_POST(t);
 
         data_out();
+
+#ifdef ACOUSTICS_DUMP
+        /* Exit after dumping buffers */
+        break;
+#endif
     }
 
     /* Close driver connection */

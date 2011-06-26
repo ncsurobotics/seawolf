@@ -20,7 +20,7 @@
  * chains are joined head to tail and the BlobParts of one join the Blob of the
  * other.
  *
- * Now a mapping of of pixels to BlobParts has been established, and all
+ * Now a mapping of pixels to BlobParts has been established, and all
  * BlobParts point to their Blobs. At this point the list of Blobs is filtered,
  * and the blob indexes written to the output image.
  */
@@ -131,9 +131,9 @@ static BlobPart** grow_blob_parts_table(BlobPart** parts, size_t* current_size) 
  * box for each blob. The returned blob list can be freed using free_blobs.
  *
  * \param img_in The input image. Should be single channel, 8 bit depth
- * \param img_in The indexed output image. Should be single channel, 8 bit depth
+ * \param img_out The indexed output image. Should be single channel, 8 bit depth
  * \param r_num_blobs A pointer to an integer where the number of blobs returned can be stored
- * \param min_size Any smaller blobs will be discarded
+ * \param min_size Any blobs smaller than this will be discarded
  * \param keep_number Maximum number of blobs to return
  * \return A list of blobs
  */
@@ -277,7 +277,7 @@ Blob** find_blobs(IplImage* img_in, IplImage* blobs_out, int* r_num_blobs, int m
         }
         blobs[j] = b;
 
-        /* Increment the number of blobs of we don't already have the maximum number */
+        /* Increment the number of blobs if we don't already have the maximum number */
         if(num_blobs < keep_number) {
             num_blobs++;
         }

@@ -15,6 +15,9 @@
 /* Trim port/star values to compensate for rotation from strafing */
 #define STRAFE_TRIM 0.3
 
+/* Trim bow/stern values to compensate for pitch from diving/surfacing */
+#define PITCH_TRIM 0.1
+
 #define UPDATE_TOLERANCE 0.01
 
 /* Simple summing mixing algorithm */
@@ -29,6 +32,12 @@ static void mix(float req_pitch, float req_depth, float req_forward, float req_y
     if(out[STRAFE] != 0) {
         out[PORT] -= out[STRAFE] * STRAFE_TRIM;
         out[STAR] += out[STRAFE] * STRAFE_TRIM;
+    }
+
+    /* Trim bow/stern thrusters */
+    if(req_depth != 0) {
+        out[STERN] -= req_depth * PITCH_TRIM;
+        out[BOW] += req_depth * PITCH_TRIM;
     }
 }
 

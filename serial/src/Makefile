@@ -1,5 +1,5 @@
 
-SERIALAPP=$(BIN_DIR)/serialapp
+SERIALAPP=../$(BIN_DIR)/serialapp
 
 all: $(SERIALAPP)
 	$(MAKE) -C drivers

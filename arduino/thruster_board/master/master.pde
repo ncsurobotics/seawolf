@@ -21,13 +21,18 @@
 #define SLAVE_2 0x20
 
 /* Thrusters */
-#define PORT_X 0
-#define STAR_X 1
-#define PORT_Y 2
-#define STAR_Y 3
-#define AFT    4
+#define PORT   0
+#define STAR   1
+#define BOW    2
+#define STERN  3
+#define STRAFE 4
 
 #define GET_BIT(v, b) (((v) >> (b)) & 1)
+
+/* Optoisolation inverts the duty cycle and direction so we flip it before
+   sending it out */
+#define CONV_DIR(d) (1 - (d))
+#define CONV_PWM(v) (0x200 - (v))
 
 byte data[2];
 unsigned int thruster_id, dir, value;
@@ -45,10 +50,10 @@ void setup(void) {
     ICR1 = 0x01F4;      /* 2Khz */
 
     /* Zero thrusters */
-    analogWrite(PWM1, 0);
-    analogWrite(PWM2, 0);
-    digitalWrite(DIRECTION1, 0);
-    digitalWrite(DIRECTION2, 0);
+    analogWrite(PWM1, CONV_PWM(0));
+    analogWrite(PWM2, CONV_PWM(0));
+    digitalWrite(DIRECTION1, CONV_DIR(0));
+    digitalWrite(DIRECTION2, CONV_DIR(0));
     
     /* Start communication */
     Serial.begin(9600);
@@ -81,24 +86,24 @@ void loop() {
 
     /* Set local thruster values or forward request over I2C */
     switch(thruster_id) {
-    case PORT_X:
-        analogWrite(PWM1, value);
-        digitalWrite(DIRECTION1, dir);
+    case PORT:
+        analogWrite(PWM1, CONV_PWM(value));
+        digitalWrite(DIRECTION1, CONV_DIR(dir));
         break;
 
-    case STAR_X:
-        analogWrite(PWM2, value);
-        digitalWrite(DIRECTION2, dir);
+    case STAR:
+        analogWrite(PWM2, CONV_PWM(value));
+        digitalWrite(DIRECTION2, CONV_DIR(dir));
         break;
 
-    case PORT_Y:
-    case STAR_Y:
+    case BOW:
+    case STERN:
         Wire.beginTransmission(SLAVE_1);
         Wire.send(data, 2);
         Wire.endTransmission();
         break;
 
-    case AFT:
+    case STRAFE:
         Wire.beginTransmission(SLAVE_2);
         Wire.send(data, 2);
         Wire.endTransmission();

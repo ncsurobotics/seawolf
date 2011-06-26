@@ -431,7 +431,9 @@ class SingleProcessEntitySearcher(object):
             #      care)
             cv.ShowImage("%s" % self.searching_entity.name, frame)
 
-        cv.WaitKey(self.delay)
+        key = cv.WaitKey(self.delay)
+        if key == 27:  # escape pressed
+            raise ExitSignal()
 
         if entity_found:
             return self.searching_entity

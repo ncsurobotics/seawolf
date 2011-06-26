@@ -1,7 +1,7 @@
 
 #include <Wire.h>
 
-/* 0x10 is for starboard/port y slave, 0x20 is for aft slave */
+/* 0x10 is for bow/stern slave, 0x20 is for strafe slave */
 #define SLAVE 0x10
 
 #define PWM1 9
@@ -11,13 +11,18 @@
 #define DIRECTION2 12
 
 /* Thrusters */
-#define PORT_X 0
-#define STAR_X 1
-#define PORT_Y 2
-#define STAR_Y 3
-#define AFT    4
+#define PORT   0
+#define STAR   1
+#define BOW    2
+#define STERN  3
+#define STRAFE 4
 
 #define GET_BIT(v, b) (((v) >> (b)) & 1)
+
+/* Optoisolation inverts the duty cycle and direction so we flip it before
+   sending it out */
+#define CONV_DIR(d) (1 - (d))
+#define CONV_PWM(v) (0x200 - (v))
 
 byte data[2];
 unsigned int thruster_id, dir, value;
@@ -37,10 +42,10 @@ void setup(void) {
     ICR1 = 0x01F4;      /* 2Khz */
 
     /* Zero thrusters */
-    analogWrite(PWM1, 0);
-    analogWrite(PWM2, 0);
-    digitalWrite(DIRECTION1, 0);
-    digitalWrite(DIRECTION2, 0);
+    analogWrite(PWM1, CONV_PWM(0));
+    analogWrite(PWM2, CONV_PWM(0));
+    digitalWrite(DIRECTION1, CONV_DIR(0));
+    digitalWrite(DIRECTION2, CONV_DIR(0));
  
     /* Start I2C */
     Wire.begin(SLAVE);
@@ -59,21 +64,21 @@ void set_thrusters(int _n) {
     /* Set local thruster values or forward request over I2C */
     switch(thruster_id) {
 #if SLAVE == 0x10
-    case PORT_Y:
-        analogWrite(PWM1, value);
-        digitalWrite(DIRECTION1, dir);
+    case BOW:
+        analogWrite(PWM1, CONV_PWM(value));
+        digitalWrite(DIRECTION1, CONV_DIR(dir));
         break;
 
-    case STAR_Y:
-        analogWrite(PWM2, value);
-        digitalWrite(DIRECTION2, dir);
+    case STERN:
+        analogWrite(PWM2, CONV_PWM(value));
+        digitalWrite(DIRECTION2, CONV_DIR(dir));
         break;
 #endif
 
 #if SLAVE == 0x20
-    case AFT:
-        analogWrite(PWM1, value);
-        digitalWrite(DIRECTION1, dir);
+    case STRAFE:
+        analogWrite(PWM1, CONV_PWM(value));
+        digitalWrite(DIRECTION1, CONV_DIR(dir));
         break;
 #endif
     }

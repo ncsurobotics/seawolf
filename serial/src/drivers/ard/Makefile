@@ -3,11 +3,11 @@ DRIVERS=depth.c status.c thruster12-bin.c thruster3-bin.c thruster45-bin.c thrus
 
 DEPS=ard.c
 OBJECTS=$(DRIVERS:%.c=%.o) $(DEPS:%.c=%.o)
-BINS=$(DRIVERS:%.c=$(BIN_DIR)/%)
+BINS=$(DRIVERS:%.c=../../../$(BIN_DIR)/%)
 
 all: $(BINS)
 
-$(BIN_DIR)/%: %.o $(DEPS)
+../../../$(BIN_DIR)/%: %.o $(DEPS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(DEPS) $<
 
 %.o: %.c
