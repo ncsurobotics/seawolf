@@ -55,7 +55,7 @@ class LettersEntity(VisionEntity):
                 cv.Circle(debug,a_bin.center,radius,bin_color,2,8,0)
 
         #detect correctly colored regions
-        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame, 250, 0, 0, 2000, 800, 1)
+        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame, 250, 0, 0, 500, 800, .3)
 
         #collect blobs
         blob_indexed = cv.CreateImage(cv.GetSize(binary), 8, 1)

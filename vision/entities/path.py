@@ -62,7 +62,7 @@ class PathEntity(VisionEntity):
             self.hue_bandstop,
         )'''
         #use RGB color finder 
-        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,2000,800,1)
+        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,500,800,.3)
 
         if debug:
             color_filtered = cv.CloneImage(binary)

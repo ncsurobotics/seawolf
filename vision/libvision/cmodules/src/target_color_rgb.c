@@ -56,7 +56,8 @@
 #define RED_WEIGHT 2
 #define GREEN_WEIGHT 1
 #define BLUE_WEIGHT 1
-#define SEPARATION_THRESHOLD 100 //how low the histogram must drop in order to consider a blob 'isolated' 
+#define REL_SEPARATION_THRESHOLD .2 //how low the histogram must drop relative to current peak
+#define ABS_SEPARATION_THRESHOLD 100 //how absolutely low the histogram must drop in order to consider a blob 'isolated' 
 
 struct RGBPixel_s {
     unsigned char r;
@@ -153,40 +154,54 @@ IplImage* find_target_color_rgb(IplImage* frame, int red, int green, int blue, i
 
     int tot_sum = 0;
     int prev_sum = 0;
-    int check1 = 0;
-    int check2 = 0;
+    int check_dif = 0;
+    int check_thresh = 0;
     int rlimit_thresh = 0;
     int rlimit_dif = 0;
+    int max_peak = 0;
+    int target_sum = 0;
 
     //first see if a large group is isolated from the rest of the histogram
     //if that failed, use a differential approach to locate the first peak
-    for( i=smallestr; i<maxr && i<dev_threshold; i+=3){
+    for( i=smallestr; i<maxr && i<dev_threshold && i<raverage; i+=3){
+        //keep up a few basic values
         int cur_sum = radii[i] + radii[i+1] + radii[i+2]; 
+        if(cur_sum > max_peak) max_peak = cur_sum;
         tot_sum += cur_sum;
-        if (cur_sum < prev_sum && tot_sum > min_blobsize && !check1 ) {
-            rlimit_dif = i + (i - smallestr) * precision_threshold;
-            check1 = 1;
+
+        //test differential threshold(looks for first peak)
+        if (cur_sum < prev_sum && tot_sum > min_blobsize && !target_sum ) {
+            target_sum = tot_sum + tot_sum * precision_threshold;
+        }
+        if (target_sum && tot_sum >= target_sum && !check_dif) { 
+            rlimit_dif = i;
+            check_dif = 1;
         }
         prev_sum = cur_sum; 
 
-        if ( tot_sum > min_blobsize && cur_sum < SEPARATION_THRESHOLD && !check2 ){
+        //test valley threshold(looks for first valley)
+        int in_valley = 0;
+        if( cur_sum < REL_SEPARATION_THRESHOLD*max_peak || cur_sum < ABS_SEPARATION_THRESHOLD){
+            in_valley = 1;
+        }
+        if ( tot_sum > min_blobsize && in_valley && !check_thresh ){
             rlimit_thresh = i;
-            check2 = 1;
+            check_thresh = 1;
         }
 
-        if ( i >= raverage )
-            check2 = 1;
-
-        if( check1 && check2 )
+        if( check_dif && check_thresh )
             break;
     }
 
     if(rlimit_thresh){
         //printf("Using Thresh\n");
         rlimit = rlimit_thresh;
-    } else {
+    } else if(rlimit_dif){
         //printf("Using Dif\n");
         rlimit = rlimit_dif;
+    } else {
+        //printf("Color Not Found\n");
+        rlimit = 0;
     }
 
     #ifdef VISUAL_DEBUG 

@@ -151,13 +151,10 @@ Rect** find_bins(IplImage* frame, int* bin_count){
             if(!paired) continue;
 
             int g_old, g_new; 
-            printf("moving group %d to group %d \n",i,j);
             //find the old group that i belongs to
             for(g_old = i; group_sizes[g_old]<0; g_old = groups[g_old][0]);
             for(g_new = j; group_sizes[g_new]<0; g_new = groups[g_new][0]);
             
-            printf("group %d was really at %d\n",j,g_new);
-            printf("group %d was really at %d\n",i,g_old);
 
             if(g_old != g_new){
                 //update old group to new group
@@ -172,9 +169,6 @@ Rect** find_bins(IplImage* frame, int* bin_count){
                         }
                     }
                     if(!member_found){
-                        if(group_sizes[g_new]<1){
-                            printf("assignment out of bounds\n");
-                        }
                         groups[g_new][group_sizes[g_new]++] = groups[g_old][l];
                     }
                 }
@@ -257,7 +251,6 @@ Rect** find_bins(IplImage* frame, int* bin_count){
                     
                         //check hpyotneuses vs actual distances to find right angles
                         int ang_dif = abs(dis[j]-hyp[j]);
-                        printf("ang_dif = %d\n",ang_dif);
                         if(ang_dif > dis[j] * ANGLE_TOLERANCE) continue;
 
                         //check proportions of the rectangle
@@ -272,7 +265,6 @@ Rect** find_bins(IplImage* frame, int* bin_count){
                         small_dis = dis[far_pt];
                         large_dis = dis[cls_pt];
                         int lin_dif = abs(small_dis*2 - large_dis);
-                        printf("lin_dif = %d \n",lin_dif);
                         if(lin_dif > dis[j] * LIN_TOLERANCE) continue;
 
                         //we are now sure that these three points are part of a rectangle
@@ -304,12 +296,10 @@ cvWaitKey(10);
         cvNamedWindow("Bin Debug",CV_WINDOW_AUTOSIZE);
         cvShowImage("Bin Debug",debug);
     #endif
-printf("freeing memory \n");
     //free memory
     for(i=0; i<corner_count; i++){
         free(pairs[i]);
         free(groups[i]);
-        printf("groups freed\n");
     }
     free(groups);
     free(group_sizes);
