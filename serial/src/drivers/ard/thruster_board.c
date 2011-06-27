@@ -22,65 +22,71 @@ void manage(SerialPort sp);
 
 const char* app_name = "Serial : ThrusterBoard";
 
-static int get_thruster_number(const char* name) {
-    if(strcmp(name, "Port") == 0) {
-        return PORT;
-    } else if(strcmp(name, "Star") == 0) {
-        return STAR;
-    } else if(strcmp(name, "Strafe") == 0) {
-        return STRAFE;
-    } else if(strcmp(name, "Bow") == 0) {
-        return BOW;
-    } else if(strcmp(name, "Stern") == 0) {
-        return STERN;
+static void pack_message(unsigned char* data, int thruster, float value) {
+    /* Get thruster number */
+    data[0] = thruster;
+
+    /* Get thruster value */
+    value = (int) (value * THRUSTER_SCALER);
+
+    /* Set base value */
+    data[1] = ((value < 0) ? -value : value);
+        
+    /* Set to zero if less than dead band */
+    if(((data[0] == STAR || data[0] == PORT) && data[1] <= YAW_DEAD_BAND) ||
+       ((data[0] == STERN || data[0] == BOW) && data[1] <= DEPTH_DEAD_BAND)) {
+        data[1] = 0;
     }
 
-    return -1;
+    /* Set direction bit */
+    if(value > 0) {
+        data[1] |= (1 << 6);
+    }
+
+    /* Set high bit (used as frame sync) */
+    data[1] |= (1 << 7);
 }
 
 void manage(SerialPort sp) {
-    char varname[32];
     unsigned char data[2];
-    int value;
 
     /* Set blocking */
     Serial_setBlocking(sp);
 
     /* Receive all thruster update notifications */
-    Notify_filter(FILTER_MATCH, "UPDATED Port");
-    Notify_filter(FILTER_MATCH, "UPDATED Star");
-    Notify_filter(FILTER_MATCH, "UPDATED Strafe");
-    Notify_filter(FILTER_MATCH, "UPDATED Bow");
-    Notify_filter(FILTER_MATCH, "UPDATED Stern");
+    Var_subscribe("Port");
+    Var_subscribe("Star");
+    Var_subscribe("Strafe");
+    Var_subscribe("Bow");
+    Var_subscribe("Stern");
 
     /* Main loop */
     while(true) {
-        Notify_get(NULL, varname);
+        Var_sync();
 
-        /* Get thruster number */
-        data[0] = get_thruster_number(varname);
-
-        /* Get thruster value */
-        value = (int) (Var_get(varname) * THRUSTER_SCALER);
-
-        /* Set base value */
-        data[1] = ((value < 0) ? -value : value);
-        
-        /* Set to zero if less than dead band */
-        if(((data[0] == STAR || data[0] == PORT) && data[1] <= YAW_DEAD_BAND) ||
-           ((data[0] == STERN || data[0] == BOW) && data[1] <= DEPTH_DEAD_BAND)) {
-            data[1] = 0;
+        if(Var_stale("Port")) {
+            pack_message(data, PORT, Var_get("Port"));
+            Serial_send(sp, data, 2);
         }
 
-        /* Set direction bit */
-        if(value > 0) {
-            data[1] |= (1 << 6);
+        if(Var_stale("Star")) {
+            pack_message(data, STAR, Var_get("Star"));
+            Serial_send(sp, data, 2);
         }
-
-        /* Set high bit (used as frame sync) */
-        data[1] |= (1 << 7);
-
-        /* Send data */
-        Serial_send(sp, data, 2);
+    
+        if(Var_stale("Strafe")) {
+            pack_message(data, STRAFE, Var_get("Strafe"));
+            Serial_send(sp, data, 2);
+        } 
+    
+        if(Var_stale("Bow")) {
+            pack_message(data, BOW, Var_get("Bow"));
+            Serial_send(sp, data, 2);
+        }
+    
+        if(Var_stale("Stern")) {
+            pack_message(data, STERN, Var_get("Stern"));
+            Serial_send(sp, data, 2);
+        }
     }
 }
