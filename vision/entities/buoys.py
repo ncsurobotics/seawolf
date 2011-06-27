@@ -15,13 +15,18 @@ BUOY_GREEN = 0
 BUOY_RED = 1
 BUOY_YELLOW = 2
 
-# Tuning Values
+############################### Tuning Values ###############################
+#FILTER_TYPE = cv.CV_GAUSSIAN
 FILTER_TYPE = cv.CV_GAUSSIAN
 FILTER_SIZE = 11
 # If we want to see buoys from far away, 50 is a good value for MIN_BLOB_SIZE.
 # However, if we align with the path first, the buoys will be much closer, and
 # this can be raised to 200.
 MIN_BLOB_SIZE = 200
+TRACKING_MIN_Z_SCORE = 15
+TRACKING_ALPHA = 0.6
+TRACKING_TEMPLATE_MULTIPLIER = 2
+TRACKING_SEARCH_AREA_MULTIPLIER = 8
 
 class BuoysEntity(VisionEntity):
 
@@ -35,86 +40,111 @@ class BuoysEntity(VisionEntity):
         self.buoy_locations = []
 
     def initialize_non_pickleable(self, debug=True):
-
-        if debug:
-            pass
-            #cv.NamedWindow("Hist")
+        pass
 
     def find(self, frame, debug=True):
 
-        blobs = None
+        # Scale image to reduce processing
+        scale_in_place(frame, (frame.width*0.7, frame.height*0.7))
+
+        # debug_frame will be copied to frame at the end if debug=True
+        if debug:
+            debug_frame = cv.CloneImage(frame)
+        else:
+            debug_frame = False
+
+        # Searching State
+        # Search for buoys, then move to tracking when they are found
         if self.state == "searching":
 
-            blobs = find_blobs(frame, debug)
-
-            buoy_blobs = extract_buoys_from_blobs(blobs)
-            if buoy_blobs:
-
-                # Initialize Tracking
+            trackers = self.initial_search(frame, debug_frame)
+            if trackers:
+                self.trackers = trackers
                 self.state = "tracking"
-                self.trackers = []
-                for blob in buoy_blobs:
-                    size = (blob.right-blob.left, blob.top-blob.bottom)
-                    tracker = libvision.Tracker(
-                        frame,
-                        (blob.cent_x, blob.cent_y),
-                        size,
-                        (size[0]*5, size[1]*5),
-                    )
-                    self.trackers.append(tracker)
 
-        locations = []
+        # Tracking State
+        num_buoys_found = 0
         if self.state == "tracking":
+            num_buoys_found, locations = self.buoy_track(frame, self.trackers, debug_frame)
+            if num_buoys_found > 0:
+                self.buoy_locations = locations
 
-            for tracker in self.trackers:
-                location = tracker.locate_object(frame)
-                locations.append(location)
+        # Copy debug_frame
+        if debug_frame:
+            cv.Copy(debug_frame, frame)
 
-                if debug and location:
-                    cv.Circle(frame, location, 5, (0,0,255))
+        return num_buoys_found > 0
 
-        if debug and blobs:
+    def initial_search(self, frame, debug_frame):
+        '''Search for buoys, return trackers when at least 2 are found.  '''
+
+        blobs, labeled_image = find_blobs(frame, debug_frame)
+        #print map(lambda x: x.roi, blobs)
+        buoy_blobs = extract_buoys_from_blobs(blobs, labeled_image)
+
+        trackers = []
+        if buoy_blobs:
+
+            # Initialize Tracking
+            for blob in buoy_blobs:
+                tracker = libvision.Tracker(
+                    frame,
+                    blob.centroid,
+                    (blob.roi[2]*TRACKING_TEMPLATE_MULTIPLIER,
+                            blob.roi[3]*TRACKING_TEMPLATE_MULTIPLIER),
+                    (blob.roi[2]*TRACKING_SEARCH_AREA_MULTIPLIER,
+                            blob.roi[3]*TRACKING_SEARCH_AREA_MULTIPLIER),
+                    min_z_score=TRACKING_MIN_Z_SCORE,
+                    alpha=TRACKING_ALPHA,
+                    #debug=True,
+                )
+                trackers.append(tracker)
+
+        # Debug info
+        if debug_frame and blobs:
             for blob in blobs:
-                cv.Rectangle(frame, (blob.left, blob.top),
-                         (blob.right, blob.bottom), (0,0,255))
+                cv.Rectangle(debug_frame, (blob.roi[0], blob.roi[1]),
+                         (blob.roi[0]+blob.roi[2], blob.roi[1]+blob.roi[3]), (0,255,0))
 
-        if locations:
+        return trackers
 
-            self.buoy_locations = []
-            for location in locations:
+    def buoy_track(self, frame, trackers, debug_frame):
+        '''Update trackers and return (num_buoys_found, buoy_locations).'''
+
+        num_buoys_found = 0
+        locations = []
+
+        # Update trackers
+        for tracker in trackers:
+            location = tracker.locate_object(frame)
+
+            if location:
+                num_buoys_found += 1
+
+                # Draw buoy on debug frame
+                if debug_frame:
+                    cv.Circle(debug_frame, location, 5, (0,255,0))
+
                 # Move origin to center and flip along horizontal axis.  Right
                 # and up will then be positive, which makes more sense for
                 # mission control.
-                if location:
-                    adjusted_location = Point(
-                        location[0] - frame.width/2,
-                        -1*location[1] + frame.height/2
-                    )
-                    self.buoy_locations.append(adjusted_location)
-                else:
-                    self.buoy_locations.append(False)
-            return True
+                adjusted_location = Point(
+                    location[0] - frame.width/2,
+                    -1*location[1] + frame.height/2
+                )
+                locations.append(adjusted_location)
 
-        else:
-            return False
+            else:
+                locations.append(False)
+
+        return num_buoys_found, locations
 
     def __repr__(self):
         return "<BuoysEntity buoy_locations=%s>" % self.buoy_locations
 
 
-def blob_filter(blob):
-    height = blob.top - blob.bottom
-    width = blob.right - blob.left
-
-    if blob.area/(height*width) < 0.7:
-        return False
-
-    return True
-
-def blobs_overlap_vert(a, b):
-    if (b.top > a.bottom and b.bottom < a.top) and \
-        (a.top > b.bottom and a.bottom < b.top):
-
+def rectangles_overlap_vertically(a, b):
+    if a[1] <= b[1]+b[3] and a[1]+a[3] >= b[1]:
         return True
     else:
         return False
@@ -127,42 +157,12 @@ def list_union(*args):
                 union.append(item)
     return union
 
-def extract_buoys_from_blobs(blobs):
-
-    '''
-    # Find 3 blobs that all overlap vertically
-    overlapping_triplets = []
-    for i, a in enumerate(blobs):
-        for j, b in enumerate(blobs[i+1:]):
-            for c in blobs[i+j+1:]:
-                if blobs_overlap_vert(a,b) and \
-                   blobs_overlap_vert(a,c) and \
-                   blobs_overlap_vert(b,c):
-
-                    overlapping_triplets.append((a,b,c))
-
-    for triplet in overlapping_triplets:
-
-        # Find smallest and largest
-        smallest = triplet[0]
-        largest = triplet[0]
-        for blob in triplet[1:]:
-            if blob.area > largest:
-                largest = blob
-            elif blob.area < smallest:
-                smallest = blob
-
-        if largest.area / smallest.area > 2:
-            continue
-
-        #TODO: Return middle buoy, not an arbitrary one
-        return triplet[0]
-    '''
+def extract_buoys_from_blobs(blobs, labeled_image):
 
     pairs = []
     for i, a in enumerate(blobs):
         for b in blobs[i+1:]:
-            if blobs_overlap_vert(a,b):
+            if rectangles_overlap_vertically(a.roi, b.roi):
                 pairs.append([a,b])
 
     if len(pairs) == 1:
@@ -185,8 +185,7 @@ def extract_buoys_from_blobs(blobs):
     else:
         return False
 
-
-def find_blobs(frame, debug=True):
+def find_blobs(frame, debug_image):
     '''Find blobs in an image.
 
     Hopefully this gets blobs that correspond with
@@ -231,6 +230,9 @@ def find_blobs(frame, debug=True):
     max_value = cv.MinMaxLoc(total_laplace)[1]
     cv.ConvertScaleAbs(total_laplace, result, 255/max_value)
 
+    cv.NamedWindow("Total Laplace") #XXX
+    cv.ShowImage("Total Laplace", result) #XXX
+
     # Get otsu threshold of total_laplace
     hist = cv.CreateHist([256], cv.CV_HIST_ARRAY, [[0,255]], 1)
     cv.CalcHist([result], hist)
@@ -238,11 +240,11 @@ def find_blobs(frame, debug=True):
     max_value = int(cv.GetMinMaxHistValue(hist)[1])
 
     # Show histogram
-    if debug:
-        pass
-        #hist_image = libvision.hist.histogram_image(hist, color=(0,255,0))
-        #cv.Line(hist_image, (threshold,0), (threshold,255), (255,255,255))
-        #cv.ShowImage("Hist", hist_image)
+    if debug_image:
+        hist_image = libvision.hist.histogram_image(hist, color=(0,255,0))
+        cv.Line(hist_image, (threshold,0), (threshold,255), (255,255,255))
+        cv.NamedWindow("Hist")
+        cv.ShowImage("Hist", hist_image)
 
     # Threshold
     cv.Threshold(result, result, threshold, max_value, cv.CV_THRESH_BINARY)
@@ -251,19 +253,23 @@ def find_blobs(frame, debug=True):
     # pixels.  If there isn't a large enough spike, ignore the image.
     # The reason for this becomes more clear if you study the histogram on
     # test footage.
-    if cv.QueryHistValue_1D(hist, threshold)/max_value >= 0.01:
-        return []
+    if cv.QueryHistValue_1D(hist, threshold)/max_value >= 0.02:
+        return [], None
 
     # Get blobs
-    blobs_p = libvision.cmodules.BlobStruct_p()
-    num_blobs = libvision.cmodules.blob.find_blobs(result, ctypes.pointer(blobs_p), 10, MIN_BLOB_SIZE)
-    # The blobs are coppied here because we want to free the memory allocated
-    # for them in C.  In the future libvision should do this for us.
-    blobs = []
-    for i in xrange(num_blobs):
-        blob = libvision.cmodules.BlobStruct()
-        ctypes.pointer(blob)[0] = blobs_p[i]
-        blobs.append(blob)
-    libvision.cmodules.blob.blob_free(blobs_p, num_blobs)
+    labeled_image = cv.CreateImage(cv.GetSize(result), 8, 1)
+    blobs = libvision.blob.find_blobs(result, labeled_image, MIN_BLOB_SIZE, 10)
 
-    return blobs
+    return blobs, labeled_image
+
+def scale_in_place(image, new_size):
+    '''Mutates image to have size of new_size.
+
+    This function sets the ROI and copies a resized image into it.  Be aware
+    that the image's ROI is set after returning from this function.
+
+    '''
+    copy = cv.CreateImage(cv.GetSize(image), 8, 3)
+    cv.Copy(image, copy)
+    cv.SetImageROI(image, (0, 0, new_size[0], new_size[1]))
+    cv.Resize(copy, image, cv.CV_INTER_NN)
