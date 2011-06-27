@@ -50,6 +50,7 @@ class PathEntity(VisionEntity):
         found_path = False
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
+        '''
         # HSV Color Filter
         binary = libvision.filters.hsv_filter(frame,
             self.lower_hue,
@@ -59,7 +60,10 @@ class PathEntity(VisionEntity):
             self.min_value,
             self.max_value,
             self.hue_bandstop,
-        )
+        )'''
+        #use RGB color finder 
+        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,2000,800,1)
+
         if debug:
             color_filtered = cv.CloneImage(binary)
 

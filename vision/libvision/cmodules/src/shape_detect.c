@@ -12,16 +12,23 @@
 //#define VISUAL_DEBUG_X    1
 //#define VISUAL_DEBUG_O    1
 
-//#define VISUAL_DEBUG_BINS 1
+#define VISUAL_DEBUG_BINS 1
 
+/* X recognition */
+#define X_CONFIDENCE_THRESHOLD 80 //required confidence to accept an X
+/* O recognition */
 #define HOLE_SIZE .5 //smaller the number, smaller the hole
 #define R_RATIO .05 //number small radii allowed (per pixel)
-#define X_CONFIDENCE_THRESHOLD 80 //required confidence to accept an X
 #define O_CONFIDENCE_THRESHOLD 80 //required confidence to accept an O
+/* corner finding */
+#define CORNER_QUALITY .1  //how sharp the corners must be
+#define MIN_CORNER_DISTANCE 30 //how close the corners may be 
+/* corner linking */
 #define EDGE_WIDTH 3 //how far to look for edge pixels when linking corners
 #define GAP_SIZE 15  //number of edgless pixels that can connect two corners
-#define ANGLE_TOLERANCE .1 //how close to a right angle the bins must be
-#define LIN_TOLERANCE .1 //how perfect the ratios of the rectangle sides must be
+/* rectange recognition */
+#define ANGLE_TOLERANCE .15 //how close to a right angle the bins must be
+#define LIN_TOLERANCE .2 //how perfect the ratios of the rectangle sides must be
 
 #ifndef M_PI
     #define M_PI 3.1415926535897932384626433832795028841971693993751058209749445923
@@ -90,8 +97,8 @@ Rect** find_bins(IplImage* frame, int* bin_count){
     IplImage* tmpimage = cvCreateImage(cvGetSize(frame),IPL_DEPTH_32F,1);
     CvPoint2D32f* corners;
     int corner_count = 25;
-    double quality_level = .2;
-    double min_distance = 50;
+    double quality_level = CORNER_QUALITY;
+    double min_distance = MIN_CORNER_DISTANCE;
     int block_size = 5;
 
     //allocate memory for corners
@@ -99,7 +106,6 @@ Rect** find_bins(IplImage* frame, int* bin_count){
 
     //find corners
     cvGoodFeaturesToTrack(grayscale,eigimage,tmpimage,corners,&corner_count,quality_level,min_distance,NULL,block_size,0,0.0);
-    
 
     IplImage* debug = NULL;
     #ifdef VISUAL_DEBUG_BINS 
@@ -120,6 +126,7 @@ Rect** find_bins(IplImage* frame, int* bin_count){
     int** groups;
     int* group_sizes; //records sizes of groups of corners
     int* pair_counts; //records number of pairs per corner
+    //int group_count = 0; //track number of groups
 
     //create list of rectangles
     Rect** rects = calloc(corner_count,sizeof(Rect*));
@@ -132,39 +139,62 @@ Rect** find_bins(IplImage* frame, int* bin_count){
     for(i=0; i<corner_count; i++){
         pair_counts[i] = 0;
         group_sizes[i] = 1;
-        groups[i] = (int*)calloc(corner_count-1,sizeof(int));
+        groups[i] = (int*)calloc(corner_count,sizeof(int));
         pairs[i] = (int*)calloc(corner_count-1,sizeof(int));
         groups[i][0] = i;
     }
     
-
     //pair and group corners based on edge detect
     for(i = 0; i<corner_count; i++){
         for(j=i+1; j<corner_count; j++){
             int paired = pair_corners(&corners[i], &corners[j], edge, debug);
-        
-            //recorded matches
-            if(paired){
-                //update i's group to j's group
-                for(l=0;l<group_sizes[i];l++){
-                    groups[j][group_sizes[j]++] = groups[i][l];
-                }
-                group_sizes[i] = 0;
+            if(!paired) continue;
 
-                //record this match
-                pairs[i][pair_counts[i]++] = j;
+            int g_old, g_new; 
+            printf("moving group %d to group %d \n",i,j);
+            //find the old group that i belongs to
+            for(g_old = i; group_sizes[g_old]<0; g_old = groups[g_old][0]);
+            for(g_new = j; group_sizes[g_new]<0; g_new = groups[g_new][0]);
+            
+            printf("group %d was really at %d\n",j,g_new);
+            printf("group %d was really at %d\n",i,g_old);
+
+            if(g_old != g_new){
+                //update old group to new group
+                for(l=0;l<group_sizes[g_old];l++){
+                    //check to see if groups[i][l] is already a member of groups[j]
+                    int k;
+                    int member_found = 0;
+                    for(k=0;k<group_sizes[g_new];k++){
+                        if (groups[g_new][k] == groups[g_old][l]){
+                            member_found = 1;
+                            break;
+                        }
+                    }
+                    if(!member_found){
+                        if(group_sizes[g_new]<1){
+                            printf("assignment out of bounds\n");
+                        }
+                        groups[g_new][group_sizes[g_new]++] = groups[g_old][l];
+                    }
+                }
+                //flag this group as moved elsewhere
+                group_sizes[g_old] = -1;
+                groups[g_old][0] = j;
             }
 
+            //record this match
+            pairs[i][pair_counts[i]++] = j;
+            pairs[j][pair_counts[j]++] = i;
+
             #ifdef VISUAL_DEBUG_BINS
-                if(paired){
-                    CvScalar connect_color = {{0,0,255}};
-                    CvPoint pt1, pt2;
-                    pt1.x = corners[i].x;
-                    pt2.x = corners[j].x;
-                    pt1.y = corners[i].y;
-                    pt2.y = corners[j].y;
-                    cvLine(debug,pt1,pt2,connect_color,1,8,0);
-                }
+                CvScalar connect_color = {{0,0,255}};
+                CvPoint pt1, pt2;
+                pt1.x = corners[i].x;
+                pt2.x = corners[j].x;
+                pt1.y = corners[i].y;
+                pt2.y = corners[j].y;
+                cvLine(debug,pt1,pt2,connect_color,1,8,0);
             #endif
         }
     }
@@ -227,6 +257,7 @@ Rect** find_bins(IplImage* frame, int* bin_count){
                     
                         //check hpyotneuses vs actual distances to find right angles
                         int ang_dif = abs(dis[j]-hyp[j]);
+                        printf("ang_dif = %d\n",ang_dif);
                         if(ang_dif > dis[j] * ANGLE_TOLERANCE) continue;
 
                         //check proportions of the rectangle
@@ -241,6 +272,7 @@ Rect** find_bins(IplImage* frame, int* bin_count){
                         small_dis = dis[far_pt];
                         large_dis = dis[cls_pt];
                         int lin_dif = abs(small_dis*2 - large_dis);
+                        printf("lin_dif = %d \n",lin_dif);
                         if(lin_dif > dis[j] * LIN_TOLERANCE) continue;
 
                         //we are now sure that these three points are part of a rectangle
@@ -266,16 +298,18 @@ Rect** find_bins(IplImage* frame, int* bin_count){
         if(group_finished) break;    
         }
     }
-    
+cvWaitKey(10);
+
     #ifdef VISUAL_DEBUG_BINS
         cvNamedWindow("Bin Debug",CV_WINDOW_AUTOSIZE);
         cvShowImage("Bin Debug",debug);
     #endif
-
+printf("freeing memory \n");
     //free memory
     for(i=0; i<corner_count; i++){
         free(pairs[i]);
         free(groups[i]);
+        printf("groups freed\n");
     }
     free(groups);
     free(group_sizes);

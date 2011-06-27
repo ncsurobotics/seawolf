@@ -26,7 +26,7 @@ class LettersEntity(VisionEntity):
 
         if debug:
             #cv.NamedWindow("Filtered")
-            #cv.NamedWindow("Binary")
+            cv.NamedWindow("Binary")
             cv.NamedWindow("Python Debug")
             #cv.NamedWindow("Bins")
 
@@ -34,6 +34,8 @@ class LettersEntity(VisionEntity):
 
         #import pdb 
         #pdb.set_trace()
+
+        cv.WaitKey(2)
 
         if debug:
             debug = cv.CreateImage(cv.GetSize(frame), 8, 3)
@@ -45,7 +47,6 @@ class LettersEntity(VisionEntity):
 
         #look for bins (the black rectangles, not the X's and O's)
         bins = libvision.letters.find_bins(frame)
-
 
         if debug:
             for i, a_bin in enumerate(bins):
@@ -74,7 +75,7 @@ class LettersEntity(VisionEntity):
                     color = (0,0,255)
                 cv.Circle(debug,center, 5, color, 2, 8, 0) 
         if debug:
-            #cv.ShowImage("Binary",binary)
+            cv.ShowImage("Binary",binary)
             #cv.ShowImage("Bins",bins)
             #cv.ShowImage("Filtered",filtered)
             cv.ShowImage("Python Debug",debug)
