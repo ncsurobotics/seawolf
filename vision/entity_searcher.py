@@ -342,7 +342,7 @@ def _initialize_cameras(camera_indexes, display, record_path):
         if index < 100:
             index += 200
 
-        cameras[name] = Camera(index, display=display, window_name=name,
+        cameras[name] = Camera(index, display=False, window_name=name,
             record_path=this_camera_record_path)
 
         # This is specific to firewire cameras (indexes 300-400).
@@ -434,8 +434,19 @@ class SingleProcessEntitySearcher(object):
         key = cv.WaitKey(self.delay)
         if key == 27:  # escape pressed
             raise ExitSignal()
+        elif key == ord(' ') and self.delay > 0:
+            wait_for_space()
 
         if entity_found:
             return self.searching_entity
         else:
             return None
+
+def wait_for_space():
+    print "Paused... Press spacebar to continue."
+    while True:
+        key = cv.WaitKey(-1)
+        if key == ord(' '):
+            return
+        elif key == 27:
+            raise ExitSignal()
