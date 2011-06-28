@@ -12,7 +12,7 @@
 //#define VISUAL_DEBUG_X    1
 //#define VISUAL_DEBUG_O    1
 
-#define VISUAL_DEBUG_BINS 1
+//#define VISUAL_DEBUG_BINS 1
 
 /* X recognition */
 #define X_CONFIDENCE_THRESHOLD 80 //required confidence to accept an X
@@ -290,7 +290,6 @@ Rect** find_bins(IplImage* frame, int* bin_count){
         if(group_finished) break;    
         }
     }
-cvWaitKey(10);
 
     #ifdef VISUAL_DEBUG_BINS
         cvNamedWindow("Bin Debug",CV_WINDOW_AUTOSIZE);
@@ -465,6 +464,7 @@ int match_letters(IplImage* binary, int index, int cent_x, int cent_y, int roix0
         debug = cvCreateImage(cvGetSize(binary),8,3);
 
         //black out the entire debug image
+        int i;
         for(i=binary->width*binary->height - 1; i>=0; i--){
             debug->imageData[3*i + 0] = 0x00;
             debug->imageData[3*i + 1] = 0x00;
@@ -640,7 +640,7 @@ int match_X(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point
 
     #ifdef VISUAL_DEBUG_X
         //draw a line between consecutive corners
-        CvScalar boxcolor = {0, 254, 0};
+        CvScalar boxcolor = {{0, 254, 0}};
         cvLine(debug, corners[0], corners[1], boxcolor, 1, 8, 0);
         cvLine(debug, corners[1], corners[2], boxcolor, 1, 8, 0);
         cvLine(debug, corners[2], corners[3], boxcolor, 1, 8, 0);
@@ -648,12 +648,12 @@ int match_X(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point
         
         //draw a circle at the center of the image
         CvPoint center = {cent_x, cent_y};
-        CvScalar centercolor = {0, 0, 254};
+        CvScalar centercolor = {{0, 0, 254}};
         cvCircle(debug, center, 5, centercolor, 2, 8, 0);
 
         //mark corner 0
         CvPoint corner0 = {corners[0].x, corners[0].y};
-        CvScalar cornercolor = {254, 0, 254};
+        CvScalar cornercolor = {{254, 0, 254}};
         cvCircle(debug, corner0, 5, cornercolor, 1, 8, 0);
 
     #endif
@@ -797,11 +797,11 @@ int match_O(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point
     #ifdef VISUAL_DEBUG_O
         //mark the centroid being used
         CvPoint centroid = {cent_x, cent_y};
-        CvScalar centroid_color = {0,255,0}; 
+        CvScalar centroid_color = {{0,255,0}}; 
         cvCircle(debug, centroid, 5, centroid_color, 1, 8, 0);  
 
         CvPoint midpoint = {mid_x, mid_y};
-        CvScalar mid_color = {255,0,0};
+        CvScalar mid_color = {{255,0,0}};
         cvCircle( debug, midpoint, 5, mid_color, 1, 8, 0);
     #endif
 
