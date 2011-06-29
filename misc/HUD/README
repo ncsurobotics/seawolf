@@ -1,4 +1,0 @@
-s/SeaSQL_get([^(]+)[(]/Var_get("\1"/
-s/SeaSQL_set([^(]+)[(]/Var_set("\1", /
-/Var_get[(]"[^_]+_.*"[)]/s/Var_get[(]"([^_]+)_([^"]+)"/Var_get("\1.\2"/
-/Var_set[(]"[a-zA-Z]+_[^"]+"/s/Var_set[(]"([a-zA-Z]+)_([^"]+)"/Var_set("\1.\2"/
