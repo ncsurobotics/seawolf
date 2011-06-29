@@ -659,7 +659,7 @@ int match_X(IplImage* binary, CvPoint* points, int pixel_count, CvPoint* r_point
     #endif
 
     //load template
-    IplImage* xtemplate = cvLoadImage("xtemplate.png",CV_LOAD_IMAGE_GRAYSCALE);
+    IplImage* xtemplate = cvLoadImage("../vision/xtemplate.png",CV_LOAD_IMAGE_GRAYSCALE);
     //get transformation matrix that would place corner values
         //in the correct location to compare to template
 

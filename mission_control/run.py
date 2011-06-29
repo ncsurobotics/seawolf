@@ -26,6 +26,7 @@ MISSION_ORDER = [
     missions.GateMission(),
     missions.PathMission(),
     missions.BuoysMission(),
+    missions.BinsMission(),
 ]
 
 if __name__ == "__main__":

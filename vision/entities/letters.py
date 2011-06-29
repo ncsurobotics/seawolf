@@ -9,6 +9,9 @@ from entities.base import VisionEntity
 
 class Bin(object):
     def __init__(self,type,center,angle,area):
+        #ID number used when tracking bins
+        self.id = 0
+
         #decisive type of letter in the bin
         self.type = type
 
@@ -40,6 +43,8 @@ class LettersEntity(VisionEntity):
 
         self.known_bins = []
         self.candidates = []
+        self.missing = []
+        self.bins_seen = 0
 
     def initialize_non_pickleable(self,debug=True):
 
@@ -62,7 +67,7 @@ class LettersEntity(VisionEntity):
         rects = libvision.letters.find_bins(frame)
 
         #record rectangles(bins) found
-        cur_bins = [Bin(0,rect.center,rect.theta,rect.area) for rect in rects]
+        cur_bins = [Bin(0,(rect.center[0]-frame.width/2,frame.height/2-rect.center[1]),rect.theta,rect.area) for rect in rects]
 
         #detect correctly colored regions
         binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame, 250, 0, 0, 500, 800, .3)
@@ -98,27 +103,18 @@ class LettersEntity(VisionEntity):
 
             if( not letter_placed ):
                 #make a new bin for this floating letter
-                cur_bins.append(Bin(letter,(blob.centroid[0],blob.centroid[1]),0,0))
-            '''
-            if debug and letter:
-                #mark letters
-                center = (blob.roi[0] + blob.roi[2]/2 , blob.roi[1] + blob.roi[3]/2)
-                color = (0,0,0)
-                if letter == 1:
-                    color = (0,255,0)
-                if letter == 2:
-                    color = (0,0,255)
-                cv.Circle(debug,center, 5, color, 2, 8, 0) 
-            '''
+                cur_bins.append(Bin(letter,(blob.centroid[0]-frame.width/2,frame.height/2-blob.centroid[1]),0,0))
 
         # Compare Bins 
         # --- tune-able values --- #
-        max_travel = 50
+        max_travel = 60
+        missing_travel = 100
         timeout_inc = 10
         promo_req = 15
         timeout_dec = 5 
         timeout_cap = 50
         type_count_thresh = 3
+        missing_timeout =  200 
         # ------------------------ #
 
         #decide if we've seen any current bin before
@@ -145,6 +141,24 @@ class LettersEntity(VisionEntity):
             if(bin_recognized): 
                 continue
 
+            # check missing bins 
+            for missing_bin in self.missing:
+                #compute distance between bins
+                x_dif = a_bin.center[0] - missing_bin.center[0]
+                y_dif = a_bin.center[1] - missing_bin.center[1]
+                tot_dif = math.sqrt(x_dif**2 + y_dif**2)
+                
+                if(tot_dif < missing_travel):
+                    #re-instate this missing bin as a candidate
+                    missing_bin.timeout = 10
+                    print "found a missing bin with i.d. ",missing_bin.id
+                    self.candidates.append(missing_bin)
+                    self.missing.remove(missing_bin)
+                    bin_recognized = True
+
+            if(bin_recognized):
+                continue
+
             # not a known bin, check candidates
             for candidate in self.candidates:
                 #compute distance between bins
@@ -153,7 +167,7 @@ class LettersEntity(VisionEntity):
                 tot_dif = math.sqrt(x_dif**2 + y_dif**2)
                 
                 if(tot_dif < max_travel):
-                    #update this known_bin 
+                    #update this candidate 
                     candidate.timeout += timeout_inc
                     candidate.type_counts[a_bin.type] += 1
                     candidate.center = a_bin.center
@@ -174,8 +188,18 @@ class LettersEntity(VisionEntity):
         for candidate in self.candidates: 
             candidate.timeout -= timeout_dec
             if(candidate.timeout <= 0):
+                if(candidate.id):
+                    candidate.timeout = missing_timeout
+                    self.missing.append(candidate)
                 self.candidates.remove(candidate)
+                continue
             if(candidate.timeout >= promo_req):
+                if(candidate.id == 0):
+                    print "promoting a brand new bin"
+                    self.bins_seen += 1
+                    candidate.id = self.bins_seen  
+                else:
+                    print "promoting bin with id ", candidate.id
                 self.known_bins.append(candidate)
                 self.candidates.remove(candidate)            
 
@@ -193,10 +217,19 @@ class LettersEntity(VisionEntity):
             known_bin.timeout -= timeout_dec
             #remove timed-out bins
             if(known_bin.timeout <= 0):
+                known_bin.timeout = missing_timeout
+                self.missing.append(known_bin)
                 self.known_bins.remove(known_bin)
+                continue
             #cap timeout
             if(known_bin.timeout > timeout_cap):
                 known_bin.timeout = timeout_cap
+
+        #decrement timeouts on missing bins
+        for missing_bin in self.missing:
+            missing_bin.timeout -= timeout_dec
+            if(missing_bin.timeout <= 0):
+                self.missing.remove(missing_bin)
 
         if debug:
             '''
@@ -225,7 +258,26 @@ class LettersEntity(VisionEntity):
                     bin_color = (0,255,0)
                 elif(a_bin.type == 2):
                     bin_color = (0,0,255)
-                cv.Circle(debug,a_bin.center,radius,bin_color,2,8,0)
+                tmp_center = (a_bin.center[0]+frame.width/2,frame.height/2-a_bin.center[1])
+                cv.Circle(debug,tmp_center,radius,bin_color,2,8,0)
+                
+                if (a_bin.id > 5):
+                    self.bins_seen -= 5
+                    a_bin.id -= 5
+                if(a_bin.id == 1):
+                    id_color = (0,0,0)
+                elif(a_bin.id == 2):
+                    id_color = (255,255,255)
+                elif(a_bin.id == 3):
+                    id_color = (120,120,120)
+                elif(a_bin.id == 4):
+                    id_color = (255, 0, 0)
+                elif(a_bin.id == 5):
+                    id_color = (0, 255, 255)
+                else:
+                    print "invalid id of ", a_bin.id
+                    continue
+                cv.Circle(debug,tmp_center,radius-2,id_color,2,8,0)
 
             cv.ShowImage("Binary",binary)
             #cv.ShowImage("Bins",bins)
