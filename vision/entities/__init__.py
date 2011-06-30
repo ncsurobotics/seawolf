@@ -14,7 +14,8 @@ from path import PathEntity
 from example import ExampleEntity
 from gate import GateEntity, GATE_BLACK, GATE_WHITE
 from buoys import BuoysEntity, BUOY_GREEN, BUOY_RED, BUOY_YELLOW
-from letters import LettersEntity 
+from letters import LettersEntity
+from lovelane import LoveLaneEntity
 
 entity_classes = {
     "path": PathEntity,
@@ -22,6 +23,7 @@ entity_classes = {
     "gate": GateEntity,
     "buoys": BuoysEntity,
     "letters": LettersEntity,
+    "lovelane": LoveLaneEntity,
 }
 
 def get_all_used_cameras():
