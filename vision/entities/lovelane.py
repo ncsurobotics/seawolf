@@ -3,7 +3,7 @@ from __future__ import division
 import math
 
 import cv
-
+import pdb
 from entities.base import VisionEntity
 import libvision
 from sw3.util import circular_average
@@ -16,14 +16,22 @@ def line_group_accept_test(line_group, line, max_range):
     added.  If the range is greater than max_range the line is rejected and
     False is returned.
     '''
-    min_rho = line[0]
-    max_rho = line[0]
+    line_accepted = True
     for l in line_group:
-        if l[0] > max_rho:
-            max_rho = l[0]
-        if l[0] < min_rho:
-            min_rho = l[0]
-    return max_rho - min_rho < max_range
+        d00 = math.sqrt((l[0][0]-line[0][0])**2 \
+            + (l[0][1]-line[0][1])**2)
+        d01 = math.sqrt((l[0][0]-line[1][0])**2 \
+            + (l[0][1]-line[1][1])**2)
+        d10 = math.sqrt((l[1][0]-line[0][0])**2 \
+            + (l[1][1]-line[0][1])**2)
+        d11 = math.sqrt((l[1][0]-line[1][0])**2 \
+            + (l[1][1]-line[1][1])**2)
+
+        if ((d00 > max_range and d01 > max_range) or \
+            (d10 > max_range and d11 > max_range) ):
+            line_accepted = False
+            break
+    return line_accepted
 
 class LoveLaneEntity(VisionEntity):
 
@@ -33,15 +41,18 @@ class LoveLaneEntity(VisionEntity):
     def __init__(self):
 
         # Thresholds
-        self.vertical_threshold = 0.2  # How close to verticle lines must be
-        self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 51
+        self.vertical_threshold = 0.75  # min slope of verticle lines 
+        self.horizontal_threshold = 0.25  # max slope of horizontal lines
+        self.hough_threshold = 10
+        self.hough_gap = 50 #maximum gap in a line segment
+        self.hough_min_length = 15 #minimum length of a line segment
         self.adaptive_thresh_blocksize = 19
         self.adaptive_thresh = 15
-        self.max_range = 60
+        self.max_range = 100 #how far in pixels endpoints of segments must be
+                            #to be considered a new line
 
-        self.left_pole = None
-        self.right_pole = None
+        self.vert_pole = None
+        self.horz_pole = None
         self.seen_crossbar = False
 
     def initialize_non_pickleable(self, debug=True):
@@ -80,9 +91,8 @@ class LoveLaneEntity(VisionEntity):
         )
 
         # Morphology
-        kernel = cv.CreateStructuringElementEx(3, 3, 1, 1, cv.CV_SHAPE_ELLIPSE)
-        cv.Erode(binary, binary, kernel, 1)
-        cv.Dilate(binary, binary, kernel, 1)
+        cv.Erode(binary, binary, None, 1)
+        cv.Dilate(binary, binary, None, 1)
         if debug:
             color_filtered = cv.CloneImage(binary)
 
@@ -91,21 +101,32 @@ class LoveLaneEntity(VisionEntity):
 
         # Hough Transform
         line_storage = cv.CreateMemStorage()
-        raw_lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_STANDARD,
+        raw_lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_PROBABILISTIC, 
             rho=1,
             theta=math.pi/180,
             threshold=self.hough_threshold,
-            param1=0,
-            param2=0
+            param1=self.hough_min_length,
+            param2=self.hough_gap
         )
 
+        '''
+        if debug:
+            for line in raw_lines:
+                point = (line[0], line[1])
+                color = (0,0,0)
+                cv.Line(frame, line[0], line[1], color, 1, 8, 0) 
+        '''
+
+        
         # Get vertical lines
         vertical_lines = []
         for line in raw_lines:
-            if line[1] < self.vertical_threshold or \
-                line[1] > math.pi-self.vertical_threshold:
-
-                vertical_lines.append( (abs(line[0]), line[1]) )
+            if(line[0][0] == line[1][0]):
+                vertical_lines.append( line )
+                continue
+            slope = abs( (line[1][1]-line[0][1]) / (line[0][0]-line[1][0]) )
+            if slope > self.vertical_threshold:
+                vertical_lines.append( line )
 
         # Group vertical lines
         vertical_line_groups = []  # A list of line groups which are each a line list
@@ -122,20 +143,40 @@ class LoveLaneEntity(VisionEntity):
 
         # Average line groups into lines
         vertical_lines = []
+        upper_pt = [0,0]
+        lower_pt = [0,0]
         for line_group in vertical_line_groups:
-            rhos = map(lambda line: line[0], line_group)
-            angles = map(lambda line: line[1], line_group)
-            line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
+            '''
+            for line in line_group:
+                if(line[0][1] < line[1][1]):
+                    upper_pt[0]+=line[0][0]
+                    upper_pt[1]+=line[0][1]
+                    lower_pt[0]+=line[1][0]
+                    lower_pt[1]+=line[1][1]
+                else:
+                    upper_pt[0]+=line[1][0]
+                    upper_pt[1]+=line[1][1]
+                    lower_pt[0]+=line[0][0]
+                    lower_pt[1]+=line[0][1]
+            line_count = len(line_group)
+            upper_pt[0] = int(upper_pt[0] / line_count)
+            upper_pt[1] = int(upper_pt[1] / line_count)
+            lower_pt[0] =  int(lower_pt[0] / line_count)
+            lower_pt[1] =  int(lower_pt[1] / line_count)
+            line = ((upper_pt[0],upper_pt[1]), (lower_pt[0],lower_pt[1]))
             vertical_lines.append(line)
+            '''
+            vertical_lines.append(((line_group[0][0][0],line_group[0][0][1]),\
+                (line_group[0][1][0],line_group[0][1][1])))
 
         # Get horizontal lines
         horizontal_lines = []
         for line in raw_lines:
-            dist_from_horizontal = (math.pi/2 + line[1]) % math.pi
-            if dist_from_horizontal < self.horizontal_threshold or \
-                dist_from_horizontal > math.pi-self.horizontal_threshold:
-
-                horizontal_lines.append( (abs(line[0]), line[1]) )
+            if(line[0][0] == line[1][0]):
+                continue
+            slope = abs( (line[1][1]-line[0][1]) / (line[0][0]-line[1][0]) )
+            if slope < self.horizontal_threshold:
+                horizontal_lines.append(line)
 
         # Group horizontal lines
         horizontal_line_groups = []  # A list of line groups which are each a line list
@@ -150,6 +191,45 @@ class LoveLaneEntity(VisionEntity):
             if not group_found:
                 horizontal_line_groups.append([line])
 
+        # Average line groups into lines
+        horizontal_lines = []
+        left_pt = [0,0]
+        right_pt = [0,0]
+        for line_group in horizontal_line_groups:
+            '''
+            for line in line_group:
+                if(line[0][1] < line[1][1]):
+                    left_pt[0]+=line[0][0]
+                    left_pt[1]+=line[0][1]
+                    right_pt[0]+=line[1][0]
+                    right_pt[1]+=line[1][1]
+                else:
+                    left_pt[0]+=line[1][0]
+                    left_pt[1]+=line[1][1]
+                    right_pt[0]+=line[0][0]
+                    right_pt[1]+=line[0][1]
+            line_count = len(line_group)
+            left_pt[0] = int(left_pt[0] / line_count)
+            left_pt[1] = int(left_pt[1] / line_count)
+            right_pt[0] = int(right_pt[0] / line_count)
+            right_pt[1] = int(right_pt[1] / line_count) 
+            line = ((left_pt[0],left_pt[1]), (right_pt[0],right_pt[1]))
+            horizontal_lines.append(line)
+            '''
+            horizontal_lines.append(((line_group[0][0][0],line_group[0][0][1]),\
+                (line_group[0][1][0],line_group[0][1][1])))
+
+        if debug:
+            for line in vertical_lines:
+                point = (line[0], line[1])
+                color = (255,0,255)
+                cv.Line(frame, line[0], line[1], color, 1, 8, 0) 
+            for line in horizontal_lines:
+                point = (line[0], line[1])
+                color = (0,255,0)
+                cv.Line(frame, line[0], line[1], color, 1, 8, 0) 
+
+        '''
         if len(horizontal_line_groups) == 1:
             self.seen_crossbar = True
             if debug:
@@ -164,7 +244,7 @@ class LoveLaneEntity(VisionEntity):
         for horizontal_lines in horizontal_line_groups:
             for vertical_lines in vertical_line_groups:
                 pass #TODO: I stopped in the middle of writing stuff here...
-
+        '''
         ''' Old stuff copied from gate:
         self.left_pole = None
         self.right_pole = None
@@ -176,12 +256,12 @@ class LoveLaneEntity(VisionEntity):
             self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
         #TODO: If one pole is seen, is it left or right pole?
         '''
-
+        '''
         if debug:
             cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
             libvision.misc.draw_lines(frame, vertical_lines)
             libvision.misc.draw_lines(frame, horizontal_lines)
-
+        '''
     def __repr__(self):
         return "<LoveLaneEntity>"  # TODO
 
