@@ -66,6 +66,13 @@ class EntitySearcher(object):
 
         self.current_searching_entities = []
 
+        # show_fps is only used in single process
+        if "show_fps" in kwargs:
+            if kwargs["show_fps"]:
+                raise ValueError("Show fps option can only be used in single process mode.")
+            else:
+                del kwargs["show_fps"]
+
         # Setup Pipes
         parent_entity_connection, child_entity_connection = multiprocessing.Pipe()
         parent_ping_connection, child_ping_connection = multiprocessing.Pipe()
@@ -103,7 +110,7 @@ class EntitySearcher(object):
         or the subprocess could think that this process has died.
 
         Returns True if the other process is ok, False otherwise.
-        
+
         '''
         if not self.watchdog.ping() or not self.is_alive():
 
@@ -171,7 +178,8 @@ class EntitySearcher(object):
         return self.subprocess.is_alive()
 
     def kill(self):
-        self.watchdog.send_exit_signal()
+        if hasattr(self, "watchdog"):
+            self.watchdog.send_exit_signal()
     __del__ = kill
 
 

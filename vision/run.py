@@ -65,6 +65,10 @@ def main():
         help="Do not run a subprocess for vision processing.  This is useful "
             "for debugging, but it isn't the way which mission control "
             "interacts with vision.")
+    opt_parser.add_option("-f", "--show-fps", action="store_true",
+        dest="show_fps", default=False,
+        help="Display the frames per second and other profiling information. "
+            "Must be used with -s")
 
     options, args = opt_parser.parse_args()
     if len(args) < 1:
@@ -97,6 +101,7 @@ def main():
         is_graphical=options.graphical,
         record=options.record,
         delay=options.delay,
+        show_fps=options.show_fps,
     )
 
     # Send a list of entities for search_forever() to look for
