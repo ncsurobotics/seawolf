@@ -12,7 +12,7 @@ import threading
 from routines import NullRoutine
 
 class NavQueue(object):
-    def __init__(self, idle_routine=NullRoutine):
+    def __init__(self, idle_routine=NullRoutine()):
         self.current_routine = None
         self.nav_queue = queue.Queue()
         self.nav_lock = threading.RLock()

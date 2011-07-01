@@ -90,7 +90,7 @@ void manage(SerialPort _sp) {
             /* Compute depth */
             raw_depth = (data[1] * 256) + data[2];
             voltage = raw_depth * (5.0/1024.0);
-            psi = ((voltage - 0.5) * 100) / 4.0;  
+            psi = ((voltage - 0.5) * 100) / 4.0;
             depth = (psi - AIR_PRESSURE) / PSI_PER_FOOT - DEPTH_ZERO;
 
             /* Depth must be greater than 0 */

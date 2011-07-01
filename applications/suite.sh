@@ -3,4 +3,4 @@
 ./bin/rotpid &
 #./bin/pitchpid &
 #./bin/rollpid &
-./bin/depthpid &
+#./bin/depthpid &

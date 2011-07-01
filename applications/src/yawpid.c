@@ -4,8 +4,13 @@
 
 #include <math.h>
 
+static double thruster_log(double mv) {
+    if (fabs(mv) < 0.01) return 0.0;
+    return (mv/fabs(mv)) * log2(fabs(mv) + 1);
+}
+
 static void dataOut(double mv) {
-    float out = Util_inRange(-1.0, mv, 1.0);
+    float out = Util_inRange(-1.0, thruster_log(mv), 1.0);
     Notify_send("THRUSTER_REQUEST", Util_format("Yaw %.4f", out));
 }
 
@@ -57,7 +62,7 @@ int main(void) {
         /* Update PID Coefficients */
         if (Var_stale("YawPID.p") ||
             Var_stale("YawPID.i") ||
-            Var_stale("YawPID.i"))
+            Var_stale("YawPID.d"))
         {
             PID_setCoefficients(pid,
                                 Var_get("YawPID.p"),

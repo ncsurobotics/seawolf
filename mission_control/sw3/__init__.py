@@ -12,7 +12,7 @@ import pid
 import util
 
 # Initialize the primary navigation stack
-nav = NavQueue(HoldPosition())
+nav = NavQueue()
 
 # Emergency breech function
 def emergency_breech():

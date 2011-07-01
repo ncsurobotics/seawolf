@@ -6,7 +6,8 @@
 #define PANIC_DEPTH  12.0 // At what depth we panic and go up full force
 #define PANIC_TIME   10.0 // Time in seconds that we panic
 
-#define BASE_I 0.3
+//#define BASE_I 0.3
+#define BASE_I 0.2
 
 static void dataOut(double mv) {
     float out = Util_inRange(-1.0, mv, 1.0);

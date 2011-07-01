@@ -36,7 +36,7 @@ static void cycleDTR(SerialPort sp) {
     Serial_setDTR(sp, 0);
     Util_usleep(0.1);
     Serial_setDTR(sp, 1);
-    Util_usleep(0.5);
+    Util_usleep(0.1);
 }
 
 static int getPeripheralType(SerialPort sp) {

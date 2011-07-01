@@ -1,4 +1,5 @@
 
+from __future__ import division
 import sys
 if sys.version_info < (2, 6):
     raise RuntimeError("Python version 2.6 or greater required.")
@@ -6,6 +7,7 @@ if sys.version_info < (2, 6):
 import multiprocessing
 import os
 from copy import copy
+from time import time
 
 try:
     import cv
@@ -235,7 +237,7 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
         breakflag = False
         for entity in entities:
             if entity.camera_name not in cameras:
-                raise IndexError(
+                raise Camera.CaptureError(
                     'Camera "%s" needed for entity "%s", but no camera '
                     'index specified.' % (entity.camera_name, entity))
             camera = cameras[entity.camera_name]
@@ -295,6 +297,7 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
                     sys.exit()
         if key == 27:
             watchdog.send_exit_signal()
+            sys.exit(0)
             break
 
 def get_record_path():
@@ -374,11 +377,12 @@ class SingleProcessEntitySearcher(object):
 
     '''
 
-    def __init__(self, camera_indexes={}, is_graphical=True, record=True, delay=10):
+    def __init__(self, camera_indexes={}, is_graphical=True, record=True, delay=10, show_fps=False):
         self.camera_indexes = camera_indexes
         self.is_graphical = is_graphical
         self.record = record
         self.delay = delay
+        self.show_fps = show_fps
 
         self.searching_entity = None
         if record:
@@ -388,6 +392,10 @@ class SingleProcessEntitySearcher(object):
 
         self.cameras = _initialize_cameras(self.camera_indexes,
             self.is_graphical, self.record_path)
+
+        if show_fps:
+            self.last_time = time()
+            self.frame_counter = 0
 
     def start_search(self, entity_list):
         if len(entity_list) > 1:
@@ -436,6 +444,14 @@ class SingleProcessEntitySearcher(object):
             raise ExitSignal()
         elif key == ord(' ') and self.delay > 0:
             wait_for_space()
+
+        if self.show_fps:
+            self.frame_counter += 1
+            t = time()
+            if t - self.last_time > 1:
+                print "FPS:", self.frame_counter / (t - self.last_time)
+                self.last_time = t
+                self.frame_counter = 0
 
         if entity_found:
             return self.searching_entity

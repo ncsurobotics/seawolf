@@ -15,8 +15,10 @@
 /* Trim port/star values to compensate for rotation from strafing */
 #define STRAFE_TRIM 0.3
 
-/* Trim bow/stern values to compensate for pitch from diving/surfacing */
-#define PITCH_TRIM 0.1
+/* Trim bow/stern values to compensate for pitch from diving/surfacing.
+   Higher values make bow go faster.
+ */
+#define PITCH_TRIM 0.10
 
 #define UPDATE_TOLERANCE 0.01
 

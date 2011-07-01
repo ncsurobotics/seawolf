@@ -42,3 +42,6 @@ StatusLight          = 0.0,  0,  0
 SEA.Pitch            = 0.0,  0,  0
 SEA.Roll             = 0.0,  0,  0
 SEA.Yaw              = 0.0,  0,  0
+
+Position.x           = 0.0,  0,  0
+Position.y           = 0.0,  0,  0

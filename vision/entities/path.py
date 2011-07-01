@@ -15,9 +15,9 @@ class PathEntity(VisionEntity):
     def __init__(self):
 
         # Thresholds
-        self.lower_hue = 220
-        self.upper_hue = 300
-        self.hue_bandstop = 0
+        self.lower_hue = 60
+        self.upper_hue = 220
+        self.hue_bandstop = 1
         self.min_saturation = 0
         self.max_saturation = 110
         self.min_value = 100
@@ -145,13 +145,15 @@ class PathEntity(VisionEntity):
             cv.Sub(frame, binary_rgb, frame)  # Remove all but Red
 
             # Show lines
-            libvision.misc.draw_lines(frame, lines)
             if self.seen_in_a_row >= self.seen_in_a_row_threshold:
                 rounded_center = (
                     round(self.image_coordinate_center[0]),
                     round(self.image_coordinate_center[1]),
                 )
                 cv.Circle(frame, rounded_center, 5, (0,255,0))
+                libvision.misc.draw_lines(frame, [(frame.width/2, self.theta)])
+            else:
+                libvision.misc.draw_lines(frame, lines)
 
         return self.seen_in_a_row >= self.seen_in_a_row_threshold
 

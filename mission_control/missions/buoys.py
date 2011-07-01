@@ -21,7 +21,7 @@ class BuoysMission(MissionBase):
             entities.BuoysEntity(),
         ])
         sw3.nav.do(sw3.CompoundRoutine([
-            sw3.Forward(INITIAL_FORWARD_SPEED), sw3.SetDepth(2)
+            sw3.HoldYaw(), sw3.Forward(INITIAL_FORWARD_SPEED), sw3.SetDepth(2)
         ]))
         self.initial_angle = sw3.data.imu.yaw
 
@@ -48,6 +48,7 @@ class BuoysMission(MissionBase):
         # Do nothing if we've seen it enough already
         location = entity_found.buoy_locations[self.correct_buoy_index]
         if location and self.seen_count < 5:
+            print "Moving towards location:", location.x
             self.seen_count += 1
             sw3.nav.do(sw3.CompoundRoutine([
                 sw3.RelativeYaw(location.x * DEGREE_PER_PIXEL),

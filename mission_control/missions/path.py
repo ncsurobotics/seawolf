@@ -25,7 +25,7 @@ class PathMission(MissionBase):
             entities.PathEntity(),
         ])
         sw3.nav.do(sw3.CompoundRoutine([
-            sw3.Forward(0.4), sw3.SetDepth(2)
+            sw3.Forward(0.2), sw3.SetDepth(2)
         ]))
 
         self.reference_angle = sw3.data.imu.yaw*(pi/180) % (2*pi)

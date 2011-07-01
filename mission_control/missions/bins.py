@@ -2,7 +2,7 @@
 from __future__ import division
 import math
 from math import pi
-from collections import deque
+#from collections import de
 
 from missions.base import MissionBase
 import entities
@@ -36,11 +36,11 @@ class BinsMission(MissionBase):
             entities.LettersEntity(),
         ])
         sw3.nav.do(sw3.CompoundRoutine([
-            sw3.Forward(0.4), sw3.SetDepth(2)
+            sw3.Forward(0.3), sw3.SetDepth(2),sw3.RelativeYaw(0)
         ]))
 
         self.reference_angle = sw3.data.imu.yaw*(pi/180) % (2*pi)
-        self.phase = 0
+        self.phase = 1
         self.state = 0
         self.centering_timeout = 0
         self.centered_counter = 0
@@ -50,11 +50,12 @@ class BinsMission(MissionBase):
         self.set_entity_timeout(0)
 
     def step(self, entity_found):
+        print "running vission code"
         if(not entity_found):
             #we don't see an entity this frame
             #but might still be tracking one
             if(self.centering):
-                center_on_point(self.target)
+                center_on_point(self.target.center)
                 self.centering_timeout += 1
                 if(self.centering_timeout < MISSION_TIMEOUT):
                     self.reset_mission()
@@ -67,6 +68,7 @@ class BinsMission(MissionBase):
         # walking down the row looking for the other target(s) 
             if(self.state == 0):
                 #this is our first time seeing a bin
+                print "Saw Our First Bin"
 
                 #choose the closest bin 
                 for i, a_bin in enumerate(entity_found.known_bins):
@@ -77,7 +79,7 @@ class BinsMission(MissionBase):
                         self.target = a_bin
 
                 #start centering on target bin
-                center_on_point(self.target)
+                center_on_point(self.target.center)
                 self.centering = True
 
                 #initialization finished
@@ -90,10 +92,11 @@ class BinsMission(MissionBase):
                 found_target = False
                 for a_bin in enumerate(entity_found.known_bins):
                     if(a_bin.id == self.target_id):
+                        print "Centering on a bin\n"
                         #we see our target bin, update centering algorithm
                         found_target = True
                         self.target = a_bin
-                        centered = center_on_point(self.target)
+                        centered = center_on_point(self.target.center)
                         #make a note if we are centered
                         if(centered < RADIAL_CENTERING_THRESHOLD):
                             self.centered_counter += 1
@@ -108,6 +111,7 @@ class BinsMission(MissionBase):
                 if(self.state_timeout > INITIAL_CENTERING_TIMEOUT_THRESHOLD):
                     #reset the entire mission 
                     self.reset_mission()
+                    print "RESTARTING !!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
 
                 if(self.centered_counter > CENTERED_COUNTER_THRESHOLD):
                     #we have successfully centered on our first bin
@@ -129,7 +133,7 @@ class BinsMission(MissionBase):
                         #we see our target bin, update centering algorithm
                         found_target = True
                         self.target = a_bin
-                        centered = center_on_point(self.target)
+                        centered = center_on_point(self.target.center)
                         #make a note if we are centered
                         if(centered < RADIAL_CENTERING_THRESHOLD):
                             self.centered_counter += 1

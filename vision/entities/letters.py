@@ -50,7 +50,7 @@ class LettersEntity(VisionEntity):
 
         if debug:
             #cv.NamedWindow("Filtered")
-            cv.NamedWindow("Binary")
+            #cv.NamedWindow("Binary")
             cv.NamedWindow("Python Debug")
             #cv.NamedWindow("Bins")
 
@@ -279,12 +279,12 @@ class LettersEntity(VisionEntity):
                     continue
                 cv.Circle(debug,tmp_center,radius-2,id_color,2,8,0)
 
-            cv.ShowImage("Binary",binary)
+            #cv.ShowImage("Binary",binary)
             #cv.ShowImage("Bins",bins)
             #cv.ShowImage("Filtered",filtered)
             cv.ShowImage("Python Debug",debug)
 
-        return False 
+        return len(self.known_bins) 
 
     def __repr__(self):
         '''Convert this object to a string representation.

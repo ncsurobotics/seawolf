@@ -154,7 +154,7 @@ class NullRoutine(NavRoutine):
     pass
 
 def HoldPosition():
-    return CompoundRoutine((HoldDepth(), HoldYaw(), Forward(0), Strafe(0)))
+    return CompoundRoutine((Forward(0), Strafe(0)))
 
 class ZeroThrusters(NavRoutine):
     interactions = ("Depth", "Yaw", "Stafe", "Forward")
@@ -255,7 +255,7 @@ class SetYaw(NavRoutine):
         else:
             self.i = 0
 
-        if self.i >= 10:
+        if self.i >= 15:
             return NavRoutine.COMPLETED
         return NavRoutine.RUNNING
 

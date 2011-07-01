@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <assert.h>
 
-#define COLLECT_TIME 30 // How long to collect data (seconds)
+#define COLLECT_TIME 20 // How long to collect data (seconds)
 #define CALIBRATION_TYPE 1 // 0 for 3D, 1 for 2D
 /**
  * MAGNETIC_Z_COMPONENT
