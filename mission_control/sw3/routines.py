@@ -47,7 +47,7 @@ class NavRoutine(object):
                 if self.timeout_length > 0:
                     threading.Timer(self.timeout_length, self.timeout).start()
                 self._start()
-                if hasattr(self, "_poll"):
+                if hasattr(self, "_poll") and self.on_done_callbacks:
                     self.__start_poller()
             else:
                 raise Exception("Routine state exception")

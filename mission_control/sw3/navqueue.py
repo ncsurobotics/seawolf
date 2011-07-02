@@ -24,6 +24,8 @@ class NavQueue(object):
     def __next_routine(self, prev_routine_state):
         """ Start the next routine on the navigation queue. This function is
         registered with each routine to be run on completion """
+        raise NotImplementedError("You no can use")
+
         with self.nav_lock:
             if not self.nav_queue.empty():
                 # Disable idle if running
@@ -38,6 +40,8 @@ class NavQueue(object):
 
     def idle(self):
         """ Clear the queue and run the idle routine """
+        raise NotImplementedError("You no can use")
+
         if self.idle_routine:
             self.clear()
             self.idle_routine.reset()
@@ -45,13 +49,17 @@ class NavQueue(object):
 
     def do(self, routine):
         """ Equivalent to a called to clear() followed by append() """
-        self.clear()
-        return self.append(routine)
+        if self.current_routine != None:
+            self.current_routine.cancel()
+        self.current_routine = routine
+        routine.start()
 
     def append(self, routine):
         """ Append a routine to the navigation queue. As one routine finishes the
         next one in line is called until the queue is exhausted. After exhausting
         the queue the robot will idle """
+        raise NotImplementedError("You no can use")
+
         with self.nav_lock:
             self.nav_queue.put(routine)
             if self.current_routine is None:
@@ -60,6 +68,8 @@ class NavQueue(object):
 
     def clear(self):
         """ Clear the navigation queue and cancel any running routine """
+        raise NotImplementedError("You no can use")
+
         with self.nav_lock:
             self.nav_queue = queue.Queue()
             if self.current_routine != None:
