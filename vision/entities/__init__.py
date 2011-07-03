@@ -14,6 +14,7 @@ from path import PathEntity
 from example import ExampleEntity
 from gate import GateEntity, GATE_BLACK, GATE_WHITE
 from buoys import BuoysEntity, BUOY_GREEN, BUOY_RED, BUOY_YELLOW
+from fakebuoys import FakeBuoysEntity
 from letters import LettersEntity
 from lovelane import LoveLaneEntity
 
@@ -22,6 +23,7 @@ entity_classes = {
     "example": ExampleEntity,
     "gate": GateEntity,
     "buoys": BuoysEntity,
+    "fakebuoys": FakeBuoysEntity,
     "letters": LettersEntity,
     "lovelane": LoveLaneEntity,
 }
