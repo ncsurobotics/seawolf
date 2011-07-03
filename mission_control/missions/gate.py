@@ -8,7 +8,7 @@ import sw3
 MISSION_TIMEOUT = 3
 DEGREE_PER_PIXEL = 0.19
 STRAIGHT_TOLERANCE = 3  # In degrees
-FORWARD_SPEED = 0.6
+FORWARD_SPEED = 0.4
 
 class GateMission(MissionBase):
 
@@ -58,4 +58,3 @@ class GateMission(MissionBase):
                     sw3.RelativeYaw(gate_center),
                     sw3.Forward(0.4)
                 ]))
-                sw3.nav.append(sw3.Forward(FORWARD_SPEED))

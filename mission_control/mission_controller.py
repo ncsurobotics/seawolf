@@ -46,7 +46,7 @@ class MissionController(object):
 
     def kill(self):
         self.entity_searcher.start_search([])
-        sw3.nav.idle()
+        sw3.nav.do(sw3.NullRoutine())
     __del__ = kill
 
     def execute_all(self):
