@@ -8,6 +8,7 @@ import sys
 import os
 from optparse import OptionParser
 from time import sleep
+from subprocess import check_call
 
 parent_directory = os.path.realpath(os.path.join(
     os.path.abspath(__file__),
@@ -28,6 +29,9 @@ MISSION_ORDER = [
     missions.BuoysMission(),
     missions.BinsMission(),
 ]
+
+def unbreak_firewire():
+    check_call(["dc1394_reset_bus"])
 
 if __name__ == "__main__":
 
@@ -71,15 +75,17 @@ if __name__ == "__main__":
     for camera_name, camera_index in options.cameras:
         camera_dict[camera_name] = camera_index
 
+    unbreak_firewire()
+    sleep(1)
+
+    entity_searcher = vision.EntitySearcher(
+        camera_indexes=camera_dict,
+        is_graphical=options.graphical,
+        record=options.record,
+        delay=options.delay,
+    )
 
     while True:
-
-        entity_searcher = vision.EntitySearcher(
-            camera_indexes=camera_dict,
-            is_graphical=options.graphical,
-            record=options.record,
-            delay=options.delay,
-        )
 
         mission_controller = MissionController(
             entity_searcher,
@@ -93,7 +99,6 @@ if __name__ == "__main__":
         try:
             mission_controller.execute_all()
         except missions.MissionControlReset:
-            entity_searcher.kill()
             mission_controller.kill()
             sleep(2)
             continue
