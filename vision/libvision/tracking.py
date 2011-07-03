@@ -164,6 +164,8 @@ class Tracker(object):
         cv.MatchTemplate(search_image, self._template, result, self.match_method)
         min_or_max = MATCH_METHOD_MIN_OR_MAX[self.match_method]
         minmaxloc = cv.MinMaxLoc(result)
+        if abs(minmaxloc[1] - minmaxloc[0]) < 0.001:
+            return False
         match_in_result = minmaxloc[min_or_max]
 
         # Change from result image coordinates to search region coordinates to
@@ -248,7 +250,10 @@ def scale_32f_image(image):
         minmaxloc = cv.MinMaxLoc(channel_image)
         minimum = minmaxloc[0]
         maximum = minmaxloc[1]
-        cv.ConvertScale(channel_image, channel_scaled, 255/(maximum-minimum), -255/(maximum-minimum)*minimum)
+        if maximum - minimum > 0:
+            cv.ConvertScale(channel_image, channel_scaled, 255/(maximum-minimum), -255/(maximum-minimum)*minimum)
+        else:
+            cv.ConvertScale(channel_image, channel_scaled, 0, -255/minimum)
 
         cv.SetImageCOI(result, channel_num)
         cv.Copy(channel_scaled, result)
