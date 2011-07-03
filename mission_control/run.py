@@ -8,7 +8,7 @@ import sys
 import os
 from optparse import OptionParser
 from time import sleep
-from subprocess import check_call
+import subprocess
 
 parent_directory = os.path.realpath(os.path.join(
     os.path.abspath(__file__),
@@ -31,7 +31,14 @@ MISSION_ORDER = [
 ]
 
 def unbreak_firewire():
-    check_call(["dc1394_reset_bus"])
+    try:
+        ret = subprocess.call(["dc1394_reset_bus"])
+    except OSError:
+        print "Warning: You don't have the dc1394_reset_bus command. " \
+            "Cannot reset firewire bus."
+        return
+    if ret != 0:
+        print "Warning: Could not reset firewire bus."
 
 if __name__ == "__main__":
 
