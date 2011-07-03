@@ -151,7 +151,6 @@ class LettersEntity(VisionEntity):
                 if(tot_dif < missing_travel):
                     #re-instate this missing bin as a candidate
                     missing_bin.timeout = 10
-                    print "found a missing bin with i.d. ",missing_bin.id
                     self.candidates.append(missing_bin)
                     self.missing.remove(missing_bin)
                     bin_recognized = True
@@ -195,11 +194,8 @@ class LettersEntity(VisionEntity):
                 continue
             if(candidate.timeout >= promo_req):
                 if(candidate.id == 0):
-                    print "promoting a brand new bin"
                     self.bins_seen += 1
                     candidate.id = self.bins_seen  
-                else:
-                    print "promoting bin with id ", candidate.id
                 self.known_bins.append(candidate)
                 self.candidates.remove(candidate)            
 
@@ -275,7 +271,6 @@ class LettersEntity(VisionEntity):
                 elif(a_bin.id == 5):
                     id_color = (0, 255, 255)
                 else:
-                    print "invalid id of ", a_bin.id
                     continue
                 cv.Circle(debug,tmp_center,radius-2,id_color,2,8,0)
 

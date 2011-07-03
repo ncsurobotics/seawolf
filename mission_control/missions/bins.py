@@ -3,7 +3,9 @@ from __future__ import division
 import math
 from math import pi
 #from collections import de
+import pdb
 
+from time import time
 from missions.base import MissionBase
 import entities
 import sw3
@@ -14,9 +16,10 @@ from sw3 import util
 BIN1 = 1
 BIN2 = 2
 # If the bin's position is off by more than this much, turn towards it
-DISTANCE_CAP = 100   #determines where to cap the linear scaling of velocity
-INITIAL_CENTERING_TIMEOUT_THRESHOLD = 300 #Timeout length when centering on our first bin
-INITIAL_DIVING_TIMEOUT_THRESHOLD = 300 #Timeout length when diving to exam height
+VELOCITY = .35  #speed throughout mission
+DISTANCE_CAP = 1       #max displacement from target that influences velocity 
+TRACKING_TIMEOUT = 3   #for when we see objects, but not the one we are looking for
+LOST_TIMEOUT = 8      #how many seconds we may look at nothing
 ANGULAR_CENTERING_THRESHOLD = 10 #anglular tolerance for alligning with target angles
 RADIAL_CENTERING_THRESHOLD = 50  #radial displacement tolerance for alligning with targets
 MISSION_TIMEOUT = 800 #blindly restart the mission if we see nothing for this long
@@ -24,6 +27,7 @@ CENTERED_COUNTER_THRESHOLD = 5 #how long we must stay centered before acknowledg
 APPROACH_DEPTH = 2 #how deep when approaching obstacle
 EXAM_DEPTH = 4     #how deep when walkign along row of bins
 DROP_DEPTH = 5     #how deep when dropping a marker 
+DEPTH_ERROR_THRESHOLD = .6 #how far from target depth we may be
 
 class BinsMission(MissionBase):
 
@@ -42,23 +46,51 @@ class BinsMission(MissionBase):
         self.reference_angle = sw3.data.imu.yaw*(pi/180) % (2*pi)
         self.phase = 1
         self.state = 0
-        self.centering_timeout = 0
+        self.state_timeout = 0
+        self.lost_timeout = 0
         self.centered_counter = 0
         self.centering = False
         self.obstacle_angle = 0
         #be sure step always gets called
-        self.set_entity_timeout(0)
+        self.set_entity_timeout(.001)
+
+    def reset_timeouts(self):
+        self.state_timeout = 0
+        self.lost_timeout = 0
+        self.centered_counter = 0
+
+    def reset_mission(self):
+        #reset states
+        self.phase = 0
+        self.state = 0
+        self.state_timeout = 0
+        self.lost_timeout = 0
+        self.centered_counter = 0
+        self.centering = False
+        self.target = None
+
+        #resume navigating
+        sw3.nav.do(sw3.CompoundRoutine([
+            sw3.SetYaw(self.reference_angle),sw3.Forward(VELOCITY)
+        ]))
 
     def step(self, entity_found):
-        print "running vission code"
         if(not entity_found):
+            print "don't see an entity"
+            if not self.lost_timeout:
+                self.lost_timeout = time()
+            print "LOST FOR ", time()-self.lost_timeout, "SECONDS"
+            if time() - self.lost_timeout > LOST_TIMEOUT:
+                self.reset_mission()
+                print "COMPLETELY LOST: RESTARTING"
             #we don't see an entity this frame
             #but might still be tracking one
             if(self.centering):
                 center_on_point(self.target.center)
-                self.centering_timeout += 1
-                if(self.centering_timeout < MISSION_TIMEOUT):
-                    self.reset_mission()
+
+            return 
+
+        self.lost_timeout = 0
 
         if(self.phase == 1):
         # --- PHASE ONE ---- 
@@ -68,15 +100,14 @@ class BinsMission(MissionBase):
         # walking down the row looking for the other target(s) 
             if(self.state == 0):
                 #this is our first time seeing a bin
-                print "Saw Our First Bin"
 
                 #choose the closest bin 
                 for i, a_bin in enumerate(entity_found.known_bins):
                     distance = math.sqrt(a_bin.center[0]**2+a_bin.center[1]**2)
                     if(not i or distance < min_distance):
                         min_distance = distance
-                        self.target_id = a_bin.id 
                         self.target = a_bin
+                        print "tracking bin with ID = ", a_bin.id
 
                 #start centering on target bin
                 center_on_point(self.target.center)
@@ -90,13 +121,13 @@ class BinsMission(MissionBase):
 
                 #determine if we see our target bin
                 found_target = False
-                for a_bin in enumerate(entity_found.known_bins):
-                    if(a_bin.id == self.target_id):
-                        print "Centering on a bin\n"
+                for a_bin in entity_found.known_bins:
+                    if(a_bin.id == self.target.id):
                         #we see our target bin, update centering algorithm
                         found_target = True
                         self.target = a_bin
                         centered = center_on_point(self.target.center)
+                        print "centering.  current displacement = ",centered
                         #make a note if we are centered
                         if(centered < RADIAL_CENTERING_THRESHOLD):
                             self.centered_counter += 1
@@ -104,14 +135,15 @@ class BinsMission(MissionBase):
                             self.centerd_counter = 0
                 
                 #handle timeout for this centering algorithm
-                if(not found_target):
-                    self.state_timeout += 1
+                if(found_target or not self.state_timeout):
+                    self.state_timeout = time()
                 else:
-                    self.state_timeout = 0
-                if(self.state_timeout > INITIAL_CENTERING_TIMEOUT_THRESHOLD):
-                    #reset the entire mission 
-                    self.reset_mission()
-                    print "RESTARTING !!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+                    print "DON'T SEE TARGET"
+                    if(time() - self.state_timeout > TRACKING_TIMEOUT):
+                        #reset the entire mission 
+                        self.reset_mission()
+                        print "RESTARTING !!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+                        return
 
                 if(self.centered_counter > CENTERED_COUNTER_THRESHOLD):
                     #we have successfully centered on our first bin
@@ -119,17 +151,20 @@ class BinsMission(MissionBase):
                     self.obstacle_angle = self.target.angle+sw3.data.imu.yaw*(pi/180) % (2*pi)
 
                     #descend to desired depth
-                    sw3.nav.do(sw3.SetDepth(EXAM_HEIGHT))
+                    sw3.nav.do(sw3.SetDepth(EXAM_DEPTH))
                     
                     #proceed to the next state
+                    print "FINSIHED CENTERING ON TARGET"
                     self.state += 1    
+                    self.reset_timeouts()
                     
             elif(self.state == 2):
-                #currently descending to EXAM_HEIGHT
+                #currently descending to EXAM_DEPTH
                 #continue to track target bin as reference
                 found_target = False
-                for a_bin in enumerate(entity_found.known_bins):
-                    if(a_bin.id == self.target_id):
+                print "diving"
+                for a_bin in entity_found.known_bins:
+                    if(a_bin.id == self.target.id):
                         #we see our target bin, update centering algorithm
                         found_target = True
                         self.target = a_bin
@@ -140,15 +175,16 @@ class BinsMission(MissionBase):
                         else:
                             self.centerd_counter = 0
                             
-                #handle timeout                
-                if(not found_target):
-                    self.state_timeout += 1
+                #handle timeout 
+                if(found_target or not self.state_timeout):
+                    self.state_timeout = time()
                 else:
-                    self.state_timeout = 0
-                if(self.state_timeout > INITIAL_DIVING_TIMEOUT_THRESHOLD):
-                    #rise to previous depth, and revert a state 
-                    sw3.nav.do(sw3.SetDepth(APPROACH_DEPTH))
-                    self.state -= 1
+                    if(time() - self.state_timeout > TRACKING_TIMEOUT):
+                        #rise to previous depth, and revert a state 
+                        sw3.nav.do(sw3.SetDepth(APPROACH_DEPTH))
+                        print "TIMED OUT DURING DEPTH"
+                        self.state -= 1
+                        self.reset_timeouts()
                 
                 #test our depth
                 depth_error = abs(sw3.data.depth - EXAM_DEPTH)  
@@ -160,6 +196,7 @@ class BinsMission(MissionBase):
                 #if we are centered at depth, increment state
                 if(depth_reached and self.centered_counter > CENTERED_COUNTER_THRESHOLD):
                     self.state += 1
+                    self.reset_timeouts()
 
             elif(self.state ==3):
 
@@ -219,17 +256,6 @@ class BinsMission(MissionBase):
             # celebrate with champagne 
             self.state == party 
     
-    #reset the mission
-    def reset_mission(self):
-        #reset states
-        self.phase = 0
-        self.state = 0
-
-        #resume navigating
-        sw3.nav.do(sw3.CompoundRoutine([
-            sw3.Yaw(self.reference_angle),sw3.Forward(0.4)
-        ]))
-
 
 def center_on_point(point):
     #calculate neccessary rotation of robot
@@ -237,7 +263,9 @@ def center_on_point(point):
     y = point[1]
     theta = math.atan2(x,y)*180/pi - 90
     distance = math.sqrt(x**2 + y**2)
-    distance /= DISTANCE_CAP
+    vel_scale = distance / DISTANCE_CAP
+    if vel_scale > 1: 
+        vel_scale = 1
 
     if(abs(theta) <= 90):
         direction = 1
@@ -254,7 +282,7 @@ def center_on_point(point):
     
     if(abs(theta) < ANGULAR_CENTERING_THRESHOLD):
         #we are pointed towards our target
-        sw3.nav.do(sw3.Forward(0.4*direction*distance))
+        sw3.nav.do(sw3.Forward(VELOCITY*direction*vel_scale))
 
     return distance
 
