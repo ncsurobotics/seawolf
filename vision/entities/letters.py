@@ -133,6 +133,7 @@ class LettersEntity(VisionEntity):
                     known_bin.timeout += timeout_inc
                     known_bin.type_counts[a_bin.type] += 1
                     known_bin.center = a_bin.center
+                    known_bin.angle = a_bin.angle
                     if(a_bin.area):
                         known_bin.area = a_bin.area
                     bin_recognized = True;
@@ -170,6 +171,7 @@ class LettersEntity(VisionEntity):
                     candidate.timeout += timeout_inc
                     candidate.type_counts[a_bin.type] += 1
                     candidate.center = a_bin.center
+                    candidate.angle - a_bin.angle
                     if(a_bin.area):
                         candidate.area = a_bin.area
                     bin_recognized = True
@@ -289,4 +291,4 @@ class LettersEntity(VisionEntity):
         orientation information the object stores.
 
         '''
-        return False # "<ExampleEntity position=%s>" % self.position
+        return "<LettersEntity>"

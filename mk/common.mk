@@ -1,3 +1,3 @@
 
-LIBSEAWOLF_LIB_DIR ?= $(SW_TOPDIR)/libseawolf/
-LIBSEAWOLF_INCLUDE_DIR ?= $(SW_TOPDIR)/libseawolf/include/
+LIBSEAWOLF_LIB_DIR ?= /usr/local/lib
+LIBSEAWOLF_INCLUDE_DIR ?= /usr/local/include
