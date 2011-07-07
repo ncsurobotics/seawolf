@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <dc1394/dc1394.h>
 #include <highgui.h>
@@ -235,7 +236,10 @@ unsigned char* grab_frame(dc1394camera_t* camera) {
         if (raw_frame == NULL) {
             if (i > 50) {
                 printf("Warning: Had to re-call one_shot!!\n");
-                dc1394error_t err = dc1394_video_set_one_shot(camera, DC1394_ON);
+                err = dc1394_video_set_one_shot(camera, DC1394_ON);
+                if (err != DC1394_SUCCESS) {
+                    printf("Warning: dc1394_video_set_one_shot failed!\n");
+                }
                 i = 0;
             }
             usleep(10000);
@@ -283,6 +287,10 @@ unsigned char* grab_frame(dc1394camera_t* camera) {
     }
 
     // Put this in its final format
+    // TODO: The compiler complains here about assigning a signed char to an
+    //       unsigned char:
+    //           "warning: pointer targets in initialization differ in signedness"
+    //       I want to fix this, but I don't have a firewire camera with me to test it.
     unsigned char* image_data = (char*) calloc(sizeof(char), color_converted->size[0]*color_converted->size[1]*3);
     memmove(image_data, color_converted->image, sizeof(char)*color_converted->size[0]*color_converted->size[1]*3);
 

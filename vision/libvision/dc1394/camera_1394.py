@@ -11,8 +11,8 @@ dc1394_so_file = path.realpath(
 )
 try:
     dc = ctypes.cdll.LoadLibrary(dc1394_so_file)
-except OSError:
-    raise OSError('Could not find "dc1394.so". Did you forget to compile libvision?')
+except OSError as e:
+    raise OSError('Could not load "dc1394.so". Did you forget to compile libvision? Error: "%s"' % e)
 dc.grab_frame.restype = ctypes.POINTER( ctypes.c_char )
 
 class DC1394Camera(object):

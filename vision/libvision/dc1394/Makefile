@@ -6,7 +6,7 @@ CFLAGS = -fPIC --shared $(OPENCV_FLAGS)
 LDFLAGS = -ldc1394 $(OPENCV_LDFLAGS)
 
 # For Debugging
-CFLAGS += -g
+CFLAGS += -g -Wall
 
 all: dc1394.so
 
