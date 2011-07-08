@@ -6,7 +6,8 @@ sw.loadConfig("../conf/seawolf.conf")
 sw.init("SW3 Command Line Interface")
 
 def zero_thrusters():
-    nav.clear()
+    #nav.clear()
+    nav.do(NullRoutine())
 
     pid.yaw.pause()
     pid.rotate.pause()
@@ -35,5 +36,3 @@ EB = emergency_breech
 ZT = zero_thrusters
 zt = ZT
 
-nav.clear()
-nav.idle()
