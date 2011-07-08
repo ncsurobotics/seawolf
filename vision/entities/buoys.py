@@ -54,11 +54,14 @@ class BuoysEntity(VisionEntity):
     def find(self, frame, debug=True):
 
         # Scale image to reduce processing
-        #scale_in_place(frame, (frame.width*0.7, frame.height*0.7))
+        frame_scaled = cv.CreateImage((frame.width*0.5, frame.height*0.5), 8, 3)
+        cv.Resize(frame, frame_scaled)
+        cv.SetImageROI(frame, (0, 0, frame.width*0.5, frame.height*0.5))
+        #scale_in_place(frame, (frame.width*0.5, frame.height*0.5))
 
         # debug_frame will be copied to frame at the end if debug=True
         if debug:
-            debug_frame = cv.CloneImage(frame)
+            debug_frame = cv.CloneImage(frame_scaled)
         else:
             debug_frame = False
 
@@ -66,15 +69,22 @@ class BuoysEntity(VisionEntity):
         # Search for buoys, then move to tracking when they are found
         if self.state == "searching":
 
-            trackers = self.initial_search(frame, debug_frame)
+            trackers = self.initial_search(frame_scaled, debug_frame)
             if trackers:
                 self.trackers = trackers
                 self.state = "tracking"
 
+                '''
+                self.buoy_locations = map(lambda x: adjust_location(x.object_center, frame_scaled.width, frame_scaled.height), self.trackers)
+                if debug_frame:
+                    cv.Copy(debug_frame, frame)
+                return True
+                '''
+
         # Tracking State
         num_buoys_found = 0
         if self.state == "tracking":
-            num_buoys_found, locations = self.buoy_track(frame, self.trackers, debug_frame)
+            num_buoys_found, locations = self.buoy_track(frame_scaled, self.trackers, debug_frame)
             if num_buoys_found > 0:
                 self.buoy_locations = locations
 
@@ -104,7 +114,7 @@ class BuoysEntity(VisionEntity):
                             blob.roi[3]*TRACKING_SEARCH_AREA_MULTIPLIER),
                     min_z_score=TRACKING_MIN_Z_SCORE,
                     alpha=TRACKING_ALPHA,
-                    debug=True,
+                    #debug=True,
                 )
                 trackers.append(tracker)
 
@@ -133,14 +143,7 @@ class BuoysEntity(VisionEntity):
                 if debug_frame:
                     cv.Circle(debug_frame, location, 5, (0,255,0))
 
-                # Move origin to center and flip along horizontal axis.  Right
-                # and up will then be positive, which makes more sense for
-                # mission control.
-                adjusted_location = Point(
-                    location[0] - frame.width/2,
-                    -1*location[1] + frame.height/2
-                )
-                locations.append(adjusted_location)
+                locations.append(adjust_location(location, frame.width, frame.height))
 
             else:
                 locations.append(False)
@@ -153,7 +156,7 @@ class BuoysEntity(VisionEntity):
             return blobs
 
     def blob_filter(self, blob):
-        if blob.size < 50 or blob.size > 700:
+        if blob.size < 20 or blob.size > 700:
             return False
 
         width = blob.roi[2]
@@ -177,10 +180,11 @@ class BuoysEntity(VisionEntity):
         # Get Channels
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3);
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        saturation = libvision.misc.get_channel(hsv, 1)
+        #saturation = libvision.misc.get_channel(hsv, 1)
         red = libvision.misc.get_channel(frame, 2)
 
         # Adaptive Threshold
+        '''
         cv.AdaptiveThreshold(saturation, saturation,
             255,
             cv.CV_ADAPTIVE_THRESH_MEAN_C,
@@ -188,6 +192,7 @@ class BuoysEntity(VisionEntity):
             self.saturation_adaptive_thresh_blocksize - self.saturation_adaptive_thresh_blocksize%2 + 1,
             self.saturation_adaptive_thresh,
         )
+        '''
         cv.AdaptiveThreshold(red, red,
             255,
             cv.CV_ADAPTIVE_THRESH_MEAN_C,
@@ -197,19 +202,20 @@ class BuoysEntity(VisionEntity):
         )
 
         kernel = cv.CreateStructuringElementEx(9, 9, 4, 4, cv.CV_SHAPE_ELLIPSE)
-        cv.Erode(saturation, saturation, kernel, 1)
-        cv.Dilate(saturation, saturation, kernel, 1)
+        #cv.Erode(saturation, saturation, kernel, 1)
+        #cv.Dilate(saturation, saturation, kernel, 1)
         cv.Erode(red, red, kernel, 1)
         cv.Dilate(red, red, kernel, 1)
 
-        buoys_filter = cv.CreateImage(cv.GetSize(frame), 8, 1)
-        cv.And(saturation, red, buoys_filter)
+        #buoys_filter = cv.CreateImage(cv.GetSize(frame), 8, 1)
+        #cv.And(saturation, red, buoys_filter)
+        buoys_filter = red
 
         if debug_image:
-            cv.NamedWindow("Saturation")
-            cv.ShowImage("Saturation", saturation)
-            cv.NamedWindow("Red")
-            cv.ShowImage("Red", red)
+            #cv.NamedWindow("Saturation")
+            #cv.ShowImage("Saturation", saturation)
+            #cv.NamedWindow("Red")
+            #cv.ShowImage("Red", red)
             cv.NamedWindow("AdaptiveThreshold")
             cv.ShowImage("AdaptiveThreshold", buoys_filter)
 
@@ -233,3 +239,15 @@ def scale_in_place(image, new_size):
     cv.Copy(image, copy)
     cv.SetImageROI(image, (0, 0, new_size[0], new_size[1]))
     cv.Resize(copy, image, cv.CV_INTER_NN)
+
+def adjust_location(location, width, height):
+    '''
+    Move origin to center and flip along horizontal axis.  Right
+    and up will then be positive, which makes more sense for
+    mission control.
+    '''
+    return Point(
+        location[0] - width/2,
+        -1*location[1] + height/2
+    )
+
