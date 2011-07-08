@@ -1,6 +1,8 @@
 #!/bin/sh
 ./bin/mixer &
-./bin/rotpid &
+./bin/yawpid &
+./bin/depthpid &
+
+#./bin/rotpid &
 #./bin/pitchpid &
 #./bin/rollpid &
-#./bin/depthpid &
