@@ -75,8 +75,9 @@ class NavRoutine(object):
             if self.state == NavRoutine.RUNNING:
                 self._cleanup()
 
-            for callback in self.on_done_callbacks:
-                callback(new_state)
+                self.state = new_state
+                for callback in self.on_done_callbacks:
+                    callback(new_state)
 
             self.state = new_state
             self.done_event.set()
