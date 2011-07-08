@@ -16,7 +16,8 @@ from sw3 import util
 BIN1 = 1
 BIN2 = 2
 # If the bin's position is off by more than this much, turn towards it
-VELOCITY = .35  #speed throughout mission
+APPROACH_VELOCITY = .35  #speed while looking for the bins
+TRACKING_VELOCITY = .27  #speed while on top of the bins
 DISTANCE_CAP = 100       #max displacement from target that influences velocity 
 TRACKING_TIMEOUT = 3   #for when we see objects, but not the one we are looking for
 LOST_TIMEOUT = 8      #how many seconds we may look at nothing
@@ -40,7 +41,7 @@ class BinsMission(MissionBase):
             entities.LettersEntity(),
         ])
         sw3.nav.do(sw3.CompoundRoutine([
-            sw3.Forward(0.3), sw3.SetDepth(2),sw3.RelativeYaw(0)
+            sw3.Forward(APPROACH_VELOCITY), sw3.SetDepth(2),sw3.RelativeYaw(0)
         ]))
 
         self.reference_angle = sw3.data.imu.yaw
@@ -71,7 +72,7 @@ class BinsMission(MissionBase):
 
         #resume navigating
         sw3.nav.do(sw3.CompoundRoutine([
-            sw3.SetYaw(self.reference_angle),sw3.Forward(VELOCITY)
+            sw3.SetYaw(self.reference_angle),sw3.Forward(APPROACH_VELOCITY)
         ]))
 
     def step(self, entity_found):
@@ -301,8 +302,8 @@ class BinsMission(MissionBase):
             
             if(abs(theta) < ANGULAR_CENTERING_THRESHOLD):
                 #we are pointed towards our target
-                sw3.nav.do(sw3.Forward(VELOCITY*direction*vel_scale))
-                print "driving forward at ", VELOCITY*direction*vel_scale
+                sw3.nav.do(sw3.Forward(TRACKING_VELOCITY*direction*vel_scale))
+                print "driving forward at ", TRACKING_VELOCITY*direction*vel_scale
         else:
             #handle alligning with a missing target
             cur_angle = (sw3.data.imu.yaw-self.target_yaw)
@@ -310,8 +311,8 @@ class BinsMission(MissionBase):
                cur_angle > 360 - ANGULAR_CENTERING_THRESHOLD):
 
                 #we have alligned with our target yaw. drive.
-                sw3.nav.do(sw3.Forward(VELOCITY*direction*vel_scale))
-                print "don't see target, driving forward at ", VELOCITY*direction*vel_scale
+                sw3.nav.do(sw3.Forward(TRACKING_VELOCITY*direction*vel_scale))
+                print "don't see target, driving forward at ", TRACKING_VELOCITY*direction*vel_scale
 
         return distance
 
