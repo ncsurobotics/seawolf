@@ -6,8 +6,11 @@
 #define PANIC_DEPTH  12.0 // At what depth we panic and go up full force
 #define PANIC_TIME   10.0 // Time in seconds that we panic
 
-//#define BASE_I 0.3
-#define BASE_I 0.2
+/* Base Integral
+ * pid->e_dt is initilized to BASE_I / pid->i so that the thrusters have an
+ * initial downward force when the pid starts.
+ */
+#define BASE_I 0.1
 
 static void dataOut(double mv) {
     float out = Util_inRange(-1.0, mv, 1.0);
@@ -90,6 +93,7 @@ int main(void) {
                 dataOut(0.0);
                 Notify_send("PIDPAUSED", "Depth");
                 PID_pause(pid);
+                pid->e_dt = BASE_I / pid->i;
             }
         }
 
