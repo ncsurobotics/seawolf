@@ -4,13 +4,15 @@
 
 #include <math.h>
 
+#define THRUSTER_CAP 0.4
+
 static double thruster_log(double mv) {
     if (fabs(mv) < 0.01) return 0.0;
     return (mv/fabs(mv)) * log2(fabs(mv) + 1);
 }
 
 static void dataOut(double mv) {
-    float out = Util_inRange(-1.0, thruster_log(mv), 1.0);
+    float out = Util_inRange(-THRUSTER_CAP, thruster_log(mv), THRUSTER_CAP);
     Notify_send("THRUSTER_REQUEST", Util_format("Yaw %.4f", out));
 }
 
