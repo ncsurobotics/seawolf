@@ -17,8 +17,8 @@ BUOY_RED = 1
 BUOY_YELLOW = 2
 
 ############################### Tuning Values ###############################
-TRACKING_MIN_Z_SCORE = 15
-TRACKING_ALPHA = 0.0
+TRACKING_MIN_Z_SCORE = 18
+TRACKING_ALPHA = 0.8
 TRACKING_TEMPLATE_SIZE = (50, 50)
 TRACKING_SEARCH_AREA = (200, 200)
 
@@ -39,15 +39,26 @@ class FakeBuoysEntity(VisionEntity):
     def mouse_callback(self, event, x, y, flags, param):
         if event == cv.CV_EVENT_LBUTTONDOWN:
             self.trackers.append(
-                libvision.Tracker(self.frame, (x,y), TRACKING_TEMPLATE_SIZE, TRACKING_SEARCH_AREA)
-            )
+                libvision.Tracker(self.frame, (x,y),
+                    TRACKING_TEMPLATE_SIZE,
+                    TRACKING_SEARCH_AREA,
+                    min_z_score=TRACKING_MIN_Z_SCORE,
+                    alpha=TRACKING_ALPHA,
+            ))
+            #self._show_debug = False
 
     def find(self, frame, debug=True):
-        self.frame = frame
+
+        # Scale image to reduce processing
+        frame_scaled = cv.CreateImage((frame.width*0.5, frame.height*0.5), 8, 3)
+        cv.Resize(frame, frame_scaled)
+        cv.SetImageROI(frame, (0, 0, frame.width*0.5, frame.height*0.5))
+
+        self.frame = frame_scaled
 
         # debug_frame will be copied to frame at the end if debug=True
         if debug:
-            debug_frame = cv.CloneImage(frame)
+            debug_frame = cv.CloneImage(frame_scaled)
         else:
             debug_frame = False
 
@@ -62,7 +73,7 @@ class FakeBuoysEntity(VisionEntity):
         # Tracking State
         num_buoys_found = 0
         if self.state == "tracking":
-            num_buoys_found, locations = self.buoy_track(frame, self.trackers, debug_frame)
+            num_buoys_found, locations = self.buoy_track(frame_scaled, self.trackers, debug_frame)
             if num_buoys_found > 0:
                 self.buoy_locations = locations
 
@@ -71,6 +82,11 @@ class FakeBuoysEntity(VisionEntity):
             cv.Copy(debug_frame, frame)
 
         return num_buoys_found > 0
+
+    def __getstate__(self):
+        pickleable_copy = self.__dict__.copy()
+        pickleable_copy['frame'] = None
+        return pickleable_copy
 
     def buoy_track(self, frame, trackers, debug_frame):
         '''Update trackers and return (num_buoys_found, buoy_locations).'''
