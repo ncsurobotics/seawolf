@@ -7,31 +7,11 @@ import pdb
 from entities.base import VisionEntity
 import libvision
 from sw3.util import circular_average
+from copy import copy
 
-def line_group_accept_test(line_group, line, max_range):
-    '''
-    Returns True if the line should be let into the line group.
-
-    First calculates what the range of rho values would be if the line were
-    added.  If the range is greater than max_range the line is rejected and
-    False is returned.
-    '''
-    line_accepted = True
-    for l in line_group:
-        d00 = math.sqrt((l[0][0]-line[0][0])**2 \
-            + (l[0][1]-line[0][1])**2)
-        d01 = math.sqrt((l[0][0]-line[1][0])**2 \
-            + (l[0][1]-line[1][1])**2)
-        d10 = math.sqrt((l[1][0]-line[0][0])**2 \
-            + (l[1][1]-line[0][1])**2)
-        d11 = math.sqrt((l[1][0]-line[1][0])**2 \
-            + (l[1][1]-line[1][1])**2)
-
-        if ((d00 > max_range and d01 > max_range) or \
-            (d10 > max_range and d11 > max_range) ):
-            line_accepted = False
-            break
-    return line_accepted
+LANE_DIRECTION = -1 #  1 is L ; -1 is backwards L 
+XTHRESHOLD = 80     #required sepperation of endpoints
+YTHRESHOLD = 80 
 
 class LoveLaneEntity(VisionEntity):
 
@@ -64,10 +44,10 @@ class LoveLaneEntity(VisionEntity):
     def find(self, frame, debug=True):
 
         # Resize image to 320x240
-        copy = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        cv.Copy(frame, copy)
+        img_copy = cv.CreateImage(cv.GetSize(frame), 8, 3)
+        cv.Copy(frame, img_copy)
         cv.SetImageROI(frame, (0, 0, 320, 240))
-        cv.Resize(copy, frame, cv.CV_INTER_NN)
+        cv.Resize(img_copy, frame, cv.CV_INTER_NN)
 
         found_lovelane = False
 
@@ -109,164 +89,63 @@ class LoveLaneEntity(VisionEntity):
             param2=self.hough_gap
         )
 
-        '''
+        #find the two endpoints of the L
+        toppoint = []
+        bottompoint = []
+
+        for line in raw_lines:
+            for point in line:
+                if not toppoint:
+                    toppoint = copy(point)
+                    bottompoint = copy(point)
+                    continue
+
+                y_thresh_top = toppoint[1] + LANE_DIRECTION*(point[0]-toppoint[0])
+                y_thresh_bot = bottompoint[1] + LANE_DIRECTION*(point[0]-bottompoint[0])
+                if point[1] < y_thresh_top:
+                    toppoint = copy(point)
+                if point[1] > y_thresh_bot:
+                    bottompoint = copy(point)
+
+        #check that top and bottom points make sense
+        xdistance = abs(toppoint[0] - bottompoint[0])
+        ydistance = abs(toppoint[1] - bottompoint[1])
+
+        if  xdistance > XTHRESHOLD and ydistance > YTHRESHOLD:
+            #we probably see the lane
+            found_lane = True
+            centerx = ( toppoint[0] + bottompoint[0] ) / 2
+            centery = ( toppoint[1] + bottompoint[1] ) / 2
+            self.center = (centerx, centery)
+            self.scale = math.sqrt(xdistance**2+ydistance**2)
+
+        else:
+            #this probably isn't a lane
+            found_lane = False
+
+                
         if debug:
+            #circle endpoints
+            centertop = (toppoint[0],toppoint[1])
+            centerbot = (bottompoint[0], bottompoint[1])
+            colortop = (255,0,255)
+            colorbot = (0,255,0)
+            cv.Circle(frame, centertop, 5, colortop, 2, 8, 0)
+            cv.Circle(frame, centerbot, 5, colorbot, 2, 8, 0)
+            
+            #draw lines
             for line in raw_lines:
-                point = (line[0], line[1])
                 color = (0,0,0)
                 cv.Line(frame, line[0], line[1], color, 1, 8, 0) 
-        '''
 
-        
-        # Get vertical lines
-        vertical_lines = []
-        for line in raw_lines:
-            if(line[0][0] == line[1][0]):
-                vertical_lines.append( line )
-                continue
-            slope = abs( (line[1][1]-line[0][1]) / (line[0][0]-line[1][0]) )
-            if slope > self.vertical_threshold:
-                vertical_lines.append( line )
+            #mark center of lane
+            if found_lane:
+                center_color = (0,0,255)
+                cv.Circle(frame,self.center,9,center_color, 2, 8, 0)
+            
+        return  found_lane
 
-        # Group vertical lines
-        vertical_line_groups = []  # A list of line groups which are each a line list
-        for line in vertical_lines:
-            group_found = False
-            for line_group in vertical_line_groups:
-
-                if line_group_accept_test(line_group, line, self.max_range):
-                    line_group.append(line)
-                    group_found = True
-
-            if not group_found:
-                vertical_line_groups.append([line])
-
-        # Average line groups into lines
-        vertical_lines = []
-        upper_pt = [0,0]
-        lower_pt = [0,0]
-        for line_group in vertical_line_groups:
-            '''
-            for line in line_group:
-                if(line[0][1] < line[1][1]):
-                    upper_pt[0]+=line[0][0]
-                    upper_pt[1]+=line[0][1]
-                    lower_pt[0]+=line[1][0]
-                    lower_pt[1]+=line[1][1]
-                else:
-                    upper_pt[0]+=line[1][0]
-                    upper_pt[1]+=line[1][1]
-                    lower_pt[0]+=line[0][0]
-                    lower_pt[1]+=line[0][1]
-            line_count = len(line_group)
-            upper_pt[0] = int(upper_pt[0] / line_count)
-            upper_pt[1] = int(upper_pt[1] / line_count)
-            lower_pt[0] =  int(lower_pt[0] / line_count)
-            lower_pt[1] =  int(lower_pt[1] / line_count)
-            line = ((upper_pt[0],upper_pt[1]), (lower_pt[0],lower_pt[1]))
-            vertical_lines.append(line)
-            '''
-            vertical_lines.append(((line_group[0][0][0],line_group[0][0][1]),\
-                (line_group[0][1][0],line_group[0][1][1])))
-
-        # Get horizontal lines
-        horizontal_lines = []
-        for line in raw_lines:
-            if(line[0][0] == line[1][0]):
-                continue
-            slope = abs( (line[1][1]-line[0][1]) / (line[0][0]-line[1][0]) )
-            if slope < self.horizontal_threshold:
-                horizontal_lines.append(line)
-
-        # Group horizontal lines
-        horizontal_line_groups = []  # A list of line groups which are each a line list
-        for line in horizontal_lines:
-            group_found = False
-            for line_group in horizontal_line_groups:
-
-                if line_group_accept_test(line_group, line, self.max_range):
-                    line_group.append(line)
-                    group_found = True
-
-            if not group_found:
-                horizontal_line_groups.append([line])
-
-        # Average line groups into lines
-        horizontal_lines = []
-        left_pt = [0,0]
-        right_pt = [0,0]
-        for line_group in horizontal_line_groups:
-            '''
-            for line in line_group:
-                if(line[0][1] < line[1][1]):
-                    left_pt[0]+=line[0][0]
-                    left_pt[1]+=line[0][1]
-                    right_pt[0]+=line[1][0]
-                    right_pt[1]+=line[1][1]
-                else:
-                    left_pt[0]+=line[1][0]
-                    left_pt[1]+=line[1][1]
-                    right_pt[0]+=line[0][0]
-                    right_pt[1]+=line[0][1]
-            line_count = len(line_group)
-            left_pt[0] = int(left_pt[0] / line_count)
-            left_pt[1] = int(left_pt[1] / line_count)
-            right_pt[0] = int(right_pt[0] / line_count)
-            right_pt[1] = int(right_pt[1] / line_count) 
-            line = ((left_pt[0],left_pt[1]), (right_pt[0],right_pt[1]))
-            horizontal_lines.append(line)
-            '''
-            horizontal_lines.append(((line_group[0][0][0],line_group[0][0][1]),\
-                (line_group[0][1][0],line_group[0][1][1])))
-
-        if debug:
-            for line in vertical_lines:
-                point = (line[0], line[1])
-                color = (255,0,255)
-                cv.Line(frame, line[0], line[1], color, 1, 8, 0) 
-            for line in horizontal_lines:
-                point = (line[0], line[1])
-                color = (0,255,0)
-                cv.Line(frame, line[0], line[1], color, 1, 8, 0) 
-
-        '''
-        if len(horizontal_line_groups) == 1:
-            self.seen_crossbar = True
-            if debug:
-                rhos = map(lambda line: line[0], horizontal_line_groups[0])
-                angles = map(lambda line: line[1], horizontal_line_groups[0])
-                line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
-                horizontal_lines = [line]
-        else:
-            self.seen_crossbar = False
-            horizontal_lines = []
-
-        for horizontal_lines in horizontal_line_groups:
-            for vertical_lines in vertical_line_groups:
-                pass #TODO: I stopped in the middle of writing stuff here...
-        '''
-        ''' Old stuff copied from gate:
-        self.left_pole = None
-        self.right_pole = None
-        if len(vertical_lines) is 2:
-            roi = cv.GetImageROI(frame)
-            width = roi[2]
-            height = roi[3]
-            self.left_pole = round(min(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
-            self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
-        #TODO: If one pole is seen, is it left or right pole?
-        '''
-        '''
-        if debug:
-            cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
-            libvision.misc.draw_lines(frame, vertical_lines)
-            libvision.misc.draw_lines(frame, horizontal_lines)
-        '''
     def __repr__(self):
         return "<LoveLaneEntity>"  # TODO
 
 
-def average_line(lines):
-    rhos = map(lambda line: line[0], horizontal_line_groups[0])
-    angles = map(lambda line: line[1], horizontal_line_groups[0])
-    return (sum(rhos)/len(rhos), circular_average(angles, math.pi))
