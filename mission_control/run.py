@@ -27,6 +27,7 @@ MISSION_ORDER = [
     missions.GateMission(),
     missions.PathMission(),
     missions.BuoysMission(),
+    missions.PathMission(),
     missions.BinsMission(),
 ]
 
