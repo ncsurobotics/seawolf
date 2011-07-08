@@ -24,9 +24,9 @@ ANGULAR_CENTERING_THRESHOLD = 15 #anglular tolerance for alligning with target a
 RADIAL_CENTERING_THRESHOLD = 30  #radial displacement tolerance for alligning with targets
 MISSION_TIMEOUT = 800 #blindly restart the mission if we see nothing for this long
 CENTERED_TIME_THRESHOLD = 5 #how long we must stay centered before acknowledging it 
-APPROACH_DEPTH = 2 #how deep when approaching obstacle
-EXAM_DEPTH = 4     #how deep when walkign along row of bins
-DROP_DEPTH = 5     #how deep when dropping a marker 
+APPROACH_DEPTH = 3 #how deep when approaching obstacle
+EXAM_DEPTH = 3     #how deep when walkign along row of bins
+DROP_DEPTH = 3   #how deep when dropping a marker 
 DEPTH_ERROR_THRESHOLD = .6 #how far from target depth we may be
 
 class BinsMission(MissionBase):
@@ -150,7 +150,7 @@ class BinsMission(MissionBase):
                 if(self.centered_time and time() - self.centered_time > CENTERED_TIME_THRESHOLD):
                     #we have successfully centered on our first bin
                     #record direction the bin is pointing
-                    self.obstacle_angle = self.target.angle+sw3.data.imu.yaw
+                    self.obstacle_angle = ((sw3.data.imu.yaw-self.target.angle)+180 )%360 - 180
                     if self.obstacle_angle > 180:
                         self.obstacle_angle -= 360
 
@@ -275,6 +275,7 @@ class BinsMission(MissionBase):
         x = self.target.center[0]
         y = self.target.center[1]
         theta = math.atan2(y,x)*180/pi - 90
+        theta *= -1
         distance = math.sqrt(x**2 + y**2)
         vel_scale = distance / DISTANCE_CAP
         if vel_scale > 1: 
@@ -290,7 +291,7 @@ class BinsMission(MissionBase):
 
         if( target_visible ):
             #record target yaw
-            self.target_yaw = sw3.data.imu.yaw + theta
+            self.target_yaw = ((sw3.data.imu.yaw + theta)+180)%360 - 180
 
             #handle centering on visible target
             if(distance > RADIAL_CENTERING_THRESHOLD):
@@ -310,7 +311,7 @@ class BinsMission(MissionBase):
 
                 #we have alligned with our target yaw. drive.
                 sw3.nav.do(sw3.Forward(VELOCITY*direction*vel_scale))
-                print "driving forward at ", VELOCITY*direction*vel_scale
+                print "don't see target, driving forward at ", VELOCITY*direction*vel_scale
 
         return distance
 

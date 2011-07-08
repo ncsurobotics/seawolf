@@ -110,7 +110,7 @@ class LettersEntity(VisionEntity):
         max_travel = 60
         missing_travel = 100
         timeout_inc = 10
-        promo_req = 15
+        promo_req = 25
         timeout_dec = 5 
         timeout_cap = 50
         type_count_thresh = 3

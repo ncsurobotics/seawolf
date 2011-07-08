@@ -12,7 +12,6 @@ class Rect(object):
 
         #direction towards the skinny edge 
         self.theta = crect.contents.theta
-        print "                  rect.theta = ",crect.contents.theta
 
 def find_bins(img_in):
     """"find 2x1 size rectangles in image"""
