@@ -105,6 +105,7 @@ class Tracker(object):
         be selected between on init.
 
         '''
+
         dst = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_32F, frame.channels)
         cv.Laplace(frame, dst, 19)
         return dst
@@ -174,13 +175,13 @@ class Tracker(object):
             match_in_result[0] + self._template.width/2,
             match_in_result[1] + self._template.height/2,
         )
-        self.object_center = (
+        object_center = (
             match_in_search_region[0] + search_rect[0],
             match_in_search_region[1] + search_rect[1],
         )
-        self.object_center = (
-            int(in_range(0, self.object_center[0], frame.width-1)),
-            int(in_range(0, self.object_center[1], frame.height-1)),
+        object_center = (
+            int(in_range(0, object_center[0], frame.width-1)),
+            int(in_range(0, object_center[1], frame.height-1)),
         )
 
         # Determine if the max/min is significant.
@@ -194,6 +195,7 @@ class Tracker(object):
         else:
             object_found = True
             self._update_template(search_image, match_in_search_region)
+            self.object_center = object_center
 
         if self.debug:
 
@@ -240,6 +242,8 @@ def scale_32f_image(image):
     esoteric results.
 
     '''
+    if image.depth != cv.IPL_DEPTH_32F:
+        return image
     result = cv.CreateImage(cv.GetSize(image), 8, image.channels)
     channel_image = cv.CreateImage(cv.GetSize(image), cv.IPL_DEPTH_32F, 1)
     channel_scaled = cv.CreateImage(cv.GetSize(image), 8, 1)
