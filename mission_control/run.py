@@ -28,7 +28,10 @@ MISSION_ORDER = [
     missions.PathMission(),
     missions.BuoysMission(),
     missions.PathMission(),
+    missions.LoveLaneMission(),
+    missions.PathMission(),
     missions.BinsMission(),
+    missions.PathMission(),
 ]
 
 def unbreak_firewire():

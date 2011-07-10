@@ -116,7 +116,7 @@ class LoveLaneEntity(VisionEntity):
             found_lane = True
             centerx = ( toppoint[0] + bottompoint[0] ) / 2
             centery = ( toppoint[1] + bottompoint[1] ) / 2
-            self.center = (centerx, centery)
+            self.center = adjust_location((centerx,centery), frame.width, frame.height)
             self.scale = math.sqrt(xdistance**2+ydistance**2)
 
         else:
@@ -141,11 +141,21 @@ class LoveLaneEntity(VisionEntity):
             #mark center of lane
             if found_lane:
                 center_color = (0,0,255)
-                cv.Circle(frame,self.center,9,center_color, 2, 8, 0)
+                cv.Circle(frame,(centerx, centery),9,center_color, 2, 8, 0)
             
         return  found_lane
 
     def __repr__(self):
         return "<LoveLaneEntity>"  # TODO
 
+def adjust_location(location, width, height):
+    '''
+    Move origin to center and flip along horizontal axis.  Right
+    and up will then be positive, which makes more sense for
+    mission control.
+    '''
+    return (
+        location[0] - width/2,
+        -1*location[1] + height/2
+    )
 
