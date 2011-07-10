@@ -10,12 +10,13 @@ from sw3.util import circular_average
 from copy import copy
 
 LANE_DIRECTION = -1 #  1 is L ; -1 is backwards L 
-XTHRESHOLD = 80     #required sepperation of endpoints
-YTHRESHOLD = 80 
+VERT_THRESHOLD = 80     #required sepperation of endpoints
+HORZ_THRESHOLD = 80 
+ANGULAR_TOLERANCE = .03 #how strict our right angle must be
 
 class LoveLaneEntity(VisionEntity):
 
-    name = "LoneLaneEntity"
+    name = "LoveLaneEntity"
     camera_name = "forward"
 
     def __init__(self):
@@ -89,49 +90,80 @@ class LoveLaneEntity(VisionEntity):
             param2=self.hough_gap
         )
 
-        #find the two endpoints of the L
+        #verify that we found something
+        if not raw_lines:
+            return False
+
+        if debug:
+            #draw lines
+            for line in raw_lines:
+                color = (0,0,0)
+                cv.Line(frame, line[0], line[1], color, 1, 8, 0) 
+
+        #find the three corners of the L
         toppoint = []
-        bottompoint = []
+        bottomleft = []
+        bottomright = []
 
         for line in raw_lines:
             for point in line:
                 if not toppoint:
                     toppoint = copy(point)
-                    bottompoint = copy(point)
+                    bottomleft = copy(point)
+                    bottomright = copy(point)
                     continue
 
                 y_thresh_top = toppoint[1] + LANE_DIRECTION*(point[0]-toppoint[0])
-                y_thresh_bot = bottompoint[1] + LANE_DIRECTION*(point[0]-bottompoint[0])
+                y_thresh_bot_left = bottomleft[1] - (point[0]-bottomleft[0])
+                y_thresh_bot_right = bottomright[1] + (point[0]-bottomright[0])
                 if point[1] < y_thresh_top:
                     toppoint = copy(point)
-                if point[1] > y_thresh_bot:
-                    bottompoint = copy(point)
+                if point[1] > y_thresh_bot_left:
+                    bottomleft = copy(point)
+                if point[1] > y_thresh_bot_right:
+                    bottomright = copy(point)
 
-        #check that top and bottom points make sense
-        xdistance = abs(toppoint[0] - bottompoint[0])
-        ydistance = abs(toppoint[1] - bottompoint[1])
-
-        if  xdistance > XTHRESHOLD and ydistance > YTHRESHOLD:
-            #we probably see the lane
-            found_lane = True
-            centerx = ( toppoint[0] + bottompoint[0] ) / 2
-            centery = ( toppoint[1] + bottompoint[1] ) / 2
-            self.center = adjust_location((centerx,centery), frame.width, frame.height)
-            self.scale = math.sqrt(xdistance**2+ydistance**2)
-
+        #analyze corners
+        if LANE_DIRECTION == 1:
+            vert_distance = math.sqrt((toppoint[0]-bottomleft[0])**2+(toppoint[1]-bottomleft[1])**2)
+            diag_distance = math.sqrt((toppoint[0]-bottomright[0])**2+(toppoint[1]-bottomright[1])**2)
         else:
-            #this probably isn't a lane
-            found_lane = False
+            vert_distance = math.sqrt((toppoint[0]-bottomright[0])**2+(toppoint[1]-bottomright[1])**2)
+            diag_distance = math.sqrt((toppoint[0]-bottomleft[0])**2+(toppoint[1]-bottomleft[1])**2)
+        horz_distance = math.sqrt((bottomright[0]-bottomleft[0])**2+(bottomright[1]-bottomleft[1])**2)
+        
+        #check that the corners are reasonably sepperated
+        if vert_distance < VERT_THRESHOLD or horz_distance < HORZ_THRESHOLD:
+            return False
 
-                
+        #check that the three endpoints form roughly a right angle
+        hypo_length = math.sqrt(vert_distance**2+horz_distance**2)
+        if abs(hypo_length - diag_distance)/hypo_length > ANGULAR_TOLERANCE:
+            return False
+        
+        found_lane = True
+        # compute the center
+        if LANE_DIRECTION == 1:
+            centerx = ( toppoint[0] + bottomright[0]) / 2
+            centery = ( toppoint[1] + bottomright[1]) / 2
+        else:
+            centerx = ( toppoint[0] + bottomleft[0]) / 2
+            centery = ( toppoint[1] + bottomleft[1]) / 2
+
+        self.center = adjust_location((centerx,centery), frame.width, frame.height)
+        self.scale = diag_distance
+
         if debug:
             #circle endpoints
             centertop = (toppoint[0],toppoint[1])
-            centerbot = (bottompoint[0], bottompoint[1])
+            centerbotleft = (bottomleft[0], bottomleft[1])
+            centerbotright = (bottomright[0], bottomright[1])
             colortop = (255,0,255)
-            colorbot = (0,255,0)
+            colorbotl = (0,255,0)
+            colorbotr = (0, 0, 255)
             cv.Circle(frame, centertop, 5, colortop, 2, 8, 0)
-            cv.Circle(frame, centerbot, 5, colorbot, 2, 8, 0)
+            cv.Circle(frame, centerbotleft, 5, colorbotl, 2, 8, 0)
+            cv.Circle(frame, centerbotright, 5, colorbotr, 2, 8, 0)
             
             #draw lines
             for line in raw_lines:
@@ -142,7 +174,6 @@ class LoveLaneEntity(VisionEntity):
             if found_lane:
                 center_color = (0,0,255)
                 cv.Circle(frame,(centerx, centery),9,center_color, 2, 8, 0)
-            
         return  found_lane
 
     def __repr__(self):
