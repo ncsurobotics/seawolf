@@ -8,11 +8,11 @@
 /* find_bins()              */
 /* and related functions    */
 
-//#define VISUAL_DEBUG      1 
-//#define VISUAL_DEBUG_X    1
+#define VISUAL_DEBUG      1 
+#define VISUAL_DEBUG_X    1
 //#define VISUAL_DEBUG_O    1
 
-//#define VISUAL_DEBUG_BINS 1
+#define VISUAL_DEBUG_BINS 1
 
 /* X recognition */
 #define X_CONFIDENCE_THRESHOLD 80 //required confidence to accept an X
@@ -21,14 +21,15 @@
 #define R_RATIO .05 //number small radii allowed (per pixel)
 #define O_CONFIDENCE_THRESHOLD 80 //required confidence to accept an O
 /* corner finding */
-#define CORNER_QUALITY .1  //how sharp the corners must be
+#define CORNER_COUNT 15 //how many corners to look for
+#define CORNER_QUALITY .5  //how sharp the corners must be
 #define MIN_CORNER_DISTANCE 30 //how close the corners may be 
 /* corner linking */
 #define EDGE_WIDTH 3 //how far to look for edge pixels when linking corners
 #define GAP_SIZE 15  //number of edgless pixels that can connect two corners
 /* rectange recognition */
 #define ANGLE_TOLERANCE .15 //how close to a right angle the bins must be
-#define LIN_TOLERANCE .2 //how perfect the ratios of the rectangle sides must be
+#define LIN_TOLERANCE .05 //how perfect the ratios of the rectangle sides must be
 
 #ifndef M_PI
     #define M_PI 3.1415926535897932384626433832795028841971693993751058209749445923
@@ -96,7 +97,7 @@ Rect** find_bins(IplImage* frame, int* bin_count){
     IplImage* eigimage = cvCreateImage(cvGetSize(frame),IPL_DEPTH_32F,1);
     IplImage* tmpimage = cvCreateImage(cvGetSize(frame),IPL_DEPTH_32F,1);
     CvPoint2D32f* corners;
-    int corner_count = 25;
+    int corner_count = CORNER_COUNT;
     double quality_level = CORNER_QUALITY;
     double min_distance = MIN_CORNER_DISTANCE;
     int block_size = 5;

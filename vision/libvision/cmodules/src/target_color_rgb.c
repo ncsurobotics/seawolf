@@ -51,7 +51,7 @@
 
 /* DEFINITIONS */ 
 
-//#define VISUAL_DEBUG 1
+#define VISUAL_DEBUG 1
 
 #define RED_WEIGHT 2
 #define GREEN_WEIGHT 1
