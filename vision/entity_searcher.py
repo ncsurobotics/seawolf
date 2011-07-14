@@ -10,6 +10,14 @@ from copy import copy
 from time import time
 
 try:
+    import seawolf
+except ImportError:
+    raise ImportError('''\n
+Error: Could not import library "seawolf".
+    Make sure the libseawolf python bindings are installed.
+''')
+
+try:
     import cv
 except ImportError:
     raise ImportError('''\n
@@ -209,6 +217,12 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
         EntitySearcher.__init__'s documentation.
     '''
 
+    # libseawolf init
+    application_name = "Vision"
+    if seawolf.getName() != application_name:  # Check if seawolf is already initialized
+        seawolf.loadConfig("../conf/seawolf.conf")
+        seawolf.init(application_name)
+
     entities = []
 
     if record:
@@ -238,7 +252,11 @@ def _search_forever_subprocess(entity_pipe, ping_pipe, camera_indexes={},
             entities = entity_pipe.recv()
 
         # Get timestamp
-        #TODO
+        # This is here to sync the IMU data with when the frame is grabbed.
+        #TODO: Set the variables grabbed to be synced with libseawolf.
+        yaw = seawolf.var.get("SEA.Yaw")
+        for entity in entities:
+            entity.current_yaw = yaw
 
         # Grab Frames
         frames = {} # Maps camera names to a frame from that camera

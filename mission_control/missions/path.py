@@ -60,7 +60,7 @@ class PathMission(MissionBase):
         if entity_found:
 
             # Get path angle
-            current_yaw = (sw3.data.imu.yaw*(pi/180)) % (2*pi)
+            current_yaw = (entity_found.current_yaw*(pi/180)) % (2*pi)
             path_angle = (entity_found.theta + current_yaw) % pi
 
             # Flip direction if it will make path_angle closer to the reference angle.
@@ -75,7 +75,7 @@ class PathMission(MissionBase):
             sw3.nav.do(turn_routine)
 
         desired_yaw = seawolf.var.get("YawPID.Heading")
-        error = util.circular_distance(desired_yaw, sw3.data.imu.yaw, 180, -180)
+        error = util.circular_distance(desired_yaw, entity_found.current_yaw, 180, -180)
         print "Angle Error:", error
         t = time()
         if not self.orient_time or error > ORIENT_ANGLE_THRESHOLD:
