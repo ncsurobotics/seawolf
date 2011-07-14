@@ -19,8 +19,8 @@ class Blob(object):
                     cblob.contents.x_1 - cblob.contents.x_0,
                     cblob.contents.y_1 - cblob.contents.y_0)
 
-def find_blobs(img_in, img_out, min_blob_size, max_blobs):
-    """ find_blobs(img_in, img_out, min_blob_size, max_blobs)
+def find_blobs(img_in, img_out, min_blob_size, max_blobs, out_coloring=0):
+    """ find_blobs(img_in, img_out, min_blob_size, max_blobs, out_coloring=0)
 
     Locate blobs in the binary image img_in. Choose blobs having at least
     min_blob_size pixels, and choose no more than max_blobs. The blobs which
@@ -31,7 +31,7 @@ def find_blobs(img_in, img_out, min_blob_size, max_blobs):
     """
 
     num_blobs = ctypes.c_int()
-    cblobs = cmodules.cblob_mod._wrap_find_blobs(ctypes.py_object(img_in), ctypes.py_object(img_out), ctypes.pointer(num_blobs), min_blob_size, max_blobs)
+    cblobs = cmodules.cblob_mod._wrap_find_blobs(ctypes.py_object(img_in), ctypes.py_object(img_out), ctypes.pointer(num_blobs), min_blob_size, max_blobs, out_coloring)
 
     blobs = [Blob(cblobs[i]) for i in range(0, num_blobs.value)]
     cmodules.cblob_mod.free_blobs(cblobs, num_blobs)

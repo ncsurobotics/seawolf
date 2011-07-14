@@ -135,9 +135,10 @@ static BlobPart** grow_blob_parts_table(BlobPart** parts, size_t* current_size) 
  * \param r_num_blobs A pointer to an integer where the number of blobs returned can be stored
  * \param min_size Any blobs smaller than this will be discarded
  * \param keep_number Maximum number of blobs to return
+ * \param out_coloring Color pixels in output map. If 0 is given then blob ids determine color
  * \return A list of blobs
  */
-Blob** find_blobs(IplImage* img_in, IplImage* blobs_out, int* r_num_blobs, int min_size, int keep_number) {
+Blob** find_blobs(IplImage* img_in, IplImage* blobs_out, int* r_num_blobs, int min_size, int keep_number, uint8_t out_coloring) {
     size_t blob_part_table_size = 0;
     BlobPart** blob_parts = NULL;
 
@@ -315,6 +316,11 @@ Blob** find_blobs(IplImage* img_in, IplImage* blobs_out, int* r_num_blobs, int m
                 (*img_pixel) = b->id;
 
                 if(b->id) {
+                    /* If a static coloring is being used rewrite the pixel value */
+                    if(out_coloring) {
+                        (*img_pixel) = out_coloring;
+                    }
+                    
                     /* Running totals of x, y pixel locations in this
                        blob. These are divided by the blob size in the end to
                        get the blob's center of mass */
@@ -413,8 +419,8 @@ struct iplimage_t {
 
 /* Wrapper around find_blobs which takes Python IplImages (a.k.a PyObject) and
    calls find_blobs with the underlying IplImage structures */
-Blob** _wrap_find_blobs(struct iplimage_t* _img_in, struct iplimage_t* _blobs_out, int* r_num_blobs, int min_size, int keep_number) {
-    return find_blobs(_img_in->a, _blobs_out->a, r_num_blobs, min_size, keep_number);
+Blob** _wrap_find_blobs(struct iplimage_t* _img_in, struct iplimage_t* _blobs_out, int* r_num_blobs, int min_size, int keep_number, int out_coloring) {
+    return find_blobs(_img_in->a, _blobs_out->a, r_num_blobs, min_size, keep_number, (uint8_t) out_coloring);
 }
 
 #endif // #ifdef __SW_LIBVISION
