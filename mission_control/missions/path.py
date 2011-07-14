@@ -70,7 +70,7 @@ class PathMission(MissionBase):
             if path_angle > math.pi:  # convert to range -pi to pi
                 path_angle = path_angle - 2*pi
 
-            #print "Orienting to", (180/pi)*path_angle
+            print "Orienting to", (180/pi)*path_angle
             turn_routine = sw3.SetYaw((180/pi)*path_angle)
             sw3.nav.do(turn_routine)
 

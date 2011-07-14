@@ -5,6 +5,7 @@ from math import pi
 #from collections import de
 import pdb
 
+import seawolf
 from time import time
 from missions.base import MissionBase
 import entities
@@ -25,10 +26,12 @@ ANGULAR_CENTERING_THRESHOLD = 15 #anglular tolerance for alligning with target a
 RADIAL_CENTERING_THRESHOLD = 30  #radial displacement tolerance for alligning with targets
 MISSION_TIMEOUT = 800 #blindly restart the mission if we see nothing for this long
 CENTERED_TIME_THRESHOLD = 5 #how long we must stay centered before acknowledging it 
-APPROACH_DEPTH = 3 #how deep when approaching obstacle
-EXAM_DEPTH = 3     #how deep when walkign along row of bins
-DROP_DEPTH = 3   #how deep when dropping a marker 
+APPROACH_DEPTH = 4 #how deep when approaching obstacle
+EXAM_DEPTH = 4     #how deep when walkign along row of bins
+DROP_DEPTH = 4   #how deep when dropping a marker 
 DEPTH_ERROR_THRESHOLD = .6 #how far from target depth we may be
+BIN_SEARCH_TIMEOUT = 7 #how many secodns we must not see a new bin for in order to time out
+DROP_DELAY = 2 #how many seconds to spend dropping a ball
 
 class BinsMission(MissionBase):
 
@@ -45,13 +48,15 @@ class BinsMission(MissionBase):
         ]))
 
         self.reference_angle = sw3.data.imu.yaw
-        self.phase = 1
+        self.bin1_dropped = False
+        self.bin2_dropped = False
         self.state = 0
         self.state_timeout = 0
         self.lost_timeout = 0
         self.centered_time = 0
         self.centering = False
         self.obstacle_angle = 0
+        self.patrol_direction = 1
         #be sure step always gets called
         self.set_entity_timeout(.001)
 
@@ -62,13 +67,13 @@ class BinsMission(MissionBase):
 
     def reset_mission(self):
         #reset states
-        self.phase = 1
         self.state = 0
         self.state_timeout = 0
         self.lost_timeout = 0
         self.centered_time = 0
         self.centering = False
         self.target = None
+        self.patrol_direction = 1
 
         #resume navigating
         sw3.nav.do(sw3.CompoundRoutine([
@@ -92,183 +97,181 @@ class BinsMission(MissionBase):
 
         self.lost_timeout = 0
 
-        if(self.phase == 1):
-        # --- PHASE ONE ---- 
-        # the first time we see a bin, get on top of it 
-        # if it is a target drop. 
-        # afterwards, orient with the row of bins, and begin
-        # walking down the row looking for the other target(s) 
-            if(self.state == 0):
-                #this is our first time seeing a bin
+        if(self.state == 0):
+            #this is our first time seeing a bin
 
-                #choose the closest bin 
-                for i, a_bin in enumerate(entity_found.known_bins):
-                    distance = math.sqrt(a_bin.center[0]**2+a_bin.center[1]**2)
-                    if(not i or distance < min_distance):
-                        min_distance = distance
-                        self.target = a_bin
-                        print "tracking bin with ID = ", a_bin.id
+            #choose the closest bin 
+            for i, a_bin in enumerate(entity_found.known_bins):
+                distance = math.sqrt(a_bin.center[0]**2+a_bin.center[1]**2)
+                if(not i or distance < min_distance):
+                    min_distance = distance
+                    self.target = a_bin
+                    print "tracking bin with ID = ", a_bin.id
 
-                #start centering on target bin
-                self.center_on_target(True)
-                self.centering = True
+            #start centering on target bin
+            self.center_on_target(True)
+            self.centering = True
 
-                #initialization finished
+            #initialization finished
+            self.state += 1
+
+        elif(self.state == 1):
+            #we are attempting to center on a target bin
+
+            #determine if we see our target bin
+            found_target = False
+            for a_bin in entity_found.known_bins:
+                if(a_bin.id == self.target.id):
+                    #we see our target bin, update centering algorithm
+                    found_target = True
+                    self.target = a_bin
+                    centered = self.center_on_target(True)
+                    print "centering.  current displacement = ",centered, "obs. angle = ", a_bin.angle
+                    #make a note if we are centered
+                    if(centered < RADIAL_CENTERING_THRESHOLD and not self.centered_time):
+                        self.centered_time = time()
+                    elif(centered >= RADIAL_CENTERING_THRESHOLD):
+                        self.centered_time = 0
+
+            if(not found_target):
+                self.centered_time = 0
+            
+            #handle timeout for this centering algorithm
+            if(found_target or not self.state_timeout):
+                self.state_timeout = time()
+            else:
+                print "DON'T SEE TARGET"
+                if(time() - self.state_timeout > TRACKING_TIMEOUT):
+                    #reset the entire mission 
+                    self.reset_mission()
+                    print "RESTARTING !!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
+                    return
+
+            if(self.centered_time and time() - self.centered_time > CENTERED_TIME_THRESHOLD):
+                #we have successfully centered on our first bin
+                #record direction the bin is pointing
+                self.obstacle_angle = ((sw3.data.imu.yaw-self.target.angle)+180 )%360 - 180
+                if self.obstacle_angle > 180:
+                    self.obstacle_angle -= 360
+
+                #descend to desired depth
+                sw3.nav.do(sw3.SetDepth(EXAM_DEPTH))
+                
+                #proceed to the next state
+                print "FINSIHED CENTERING ON TARGET"
+                print "time() = ", time(), " centered_time = ", self.centered_time
+                self.state += 1    
+                self.reset_timeouts()
+                
+        elif(self.state == 2):
+            #currently descending to EXAM_DEPTH
+            #continue to track target bin as reference
+            found_target = False
+            print "diving"
+            for a_bin in entity_found.known_bins:
+                if(a_bin.id == self.target.id):
+                    #we see our target bin, update centering algorithm
+                    found_target = True
+                    self.target = a_bin
+                    centered = self.center_on_target(True)
+                    #make a note if we are centered
+                    if(centered < RADIAL_CENTERING_THRESHOLD and not self.centered_time):
+                        self.centered_time = time()
+                    elif(centered >= RADIAL_CENTERING_THRESHOLD):
+                        self.centerd_time = 0
+
+            if(not found_target):
+                self.centered_time = 0
+                        
+            #handle timeout 
+            if(found_target or not self.state_timeout):
+                self.state_timeout = time()
+            else:
+                if(time() - self.state_timeout > TRACKING_TIMEOUT):
+                    #rise to previous depth, and revert a state 
+                    sw3.nav.do(sw3.SetDepth(APPROACH_DEPTH))
+                    print "TIMED OUT DURING DEPTH"
+                    self.state -= 1
+                    self.reset_timeouts()
+            
+            #test our depth
+            depth_error = abs(sw3.data.depth - EXAM_DEPTH)  
+            if(depth_error < DEPTH_ERROR_THRESHOLD):
+                depth_reached = True
+            else:
+                depth_reached = False
+
+            #if we are centered at depth, increment state
+            if(depth_reached and \
+               self.centered_time and \
+               time() - self.centered_time > CENTERED_TIME_THRESHOLD):
+                self.state += 1
+                self.reset_timeouts()
+                self.state_timeout = time()
+
+        #Bind Identification And Marker Dropping
+        elif(self.state ==3):
+            print "passing through bin identification"
+
+            drop_marker = False
+            #check to see what kind of bin this is 
+            if (self.target.type == BIN1 and not self.bin1_dropped):
+                self.bin1_dropped = True
+                drop_marker = True
+
+            if (self.target.type == BIN2 and self.bin1_dropped): 
+                self.bin2_dropped = True
+                drop_marker = True
+
+                #FIRE ZE MISSILES!!!
+            if drop_marker == True:
+                print "we should be dropping now"
+                seawolf.notify.send("RUN","Dropper")
+
+            if time() - self.state_timeout > DROP_DELAY:
+                print "Finished Dropping"
                 self.state += 1
 
-            elif(self.state == 1):
-                #we are attempting to center on a target bin
+        elif(self.state == 4):
 
-                #determine if we see our target bin
-                found_target = False
-                for a_bin in entity_found.known_bins:
-                    if(a_bin.id == self.target.id):
-                        #we see our target bin, update centering algorithm
-                        found_target = True
-                        self.target = a_bin
-                        centered = self.center_on_target(True)
-                        print "centering.  current displacement = ",centered, "obs. angle = ", a_bin.angle
-                        #make a note if we are centered
-                        if(centered < RADIAL_CENTERING_THRESHOLD and not self.centered_time):
-                            self.centered_time = time()
-                        elif(centered >= RADIAL_CENTERING_THRESHOLD):
-                            self.centered_time = 0
+            #compute and allign with our new target angle
+            sw3.nav.do(sw3.SetYaw(self.obstacle_angle))
+            print "alligning with obstacle angle = ", self.obstacle_angle
 
-                if(not found_target):
-                    self.centered_time = 0
-                
-                #handle timeout for this centering algorithm
-                if(found_target or not self.state_timeout):
-                    self.state_timeout = time()
-                else:
-                    print "DON'T SEE TARGET"
-                    if(time() - self.state_timeout > TRACKING_TIMEOUT):
-                        #reset the entire mission 
-                        self.reset_mission()
-                        print "RESTARTING !!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-                        return
-
-                if(self.centered_time and time() - self.centered_time > CENTERED_TIME_THRESHOLD):
-                    #we have successfully centered on our first bin
-                    #record direction the bin is pointing
-                    self.obstacle_angle = ((sw3.data.imu.yaw-self.target.angle)+180 )%360 - 180
-                    if self.obstacle_angle > 180:
-                        self.obstacle_angle -= 360
-
-                    #descend to desired depth
-                    sw3.nav.do(sw3.SetDepth(EXAM_DEPTH))
-                    
-                    #proceed to the next state
-                    print "FINSIHED CENTERING ON TARGET"
-                    print "time() = ", time(), " centered_time = ", self.centered_time
-                    self.state += 1    
-                    self.reset_timeouts()
-                    
-            elif(self.state == 2):
-                #currently descending to EXAM_DEPTH
-                #continue to track target bin as reference
-                found_target = False
-                print "diving"
-                for a_bin in entity_found.known_bins:
-                    if(a_bin.id == self.target.id):
-                        #we see our target bin, update centering algorithm
-                        found_target = True
-                        self.target = a_bin
-                        centered = self.center_on_target(True)
-                        #make a note if we are centered
-                        if(centered < RADIAL_CENTERING_THRESHOLD and not self.centered_time):
-                            self.centered_time = time()
-                        elif(centered >= RADIAL_CENTERING_THRESHOLD):
-                            self.centerd_time = 0
-
-                if(not found_target):
-                    self.centered_time = 0
-                            
-                #handle timeout 
-                if(found_target or not self.state_timeout):
-                    self.state_timeout = time()
-                else:
-                    if(time() - self.state_timeout > TRACKING_TIMEOUT):
-                        #rise to previous depth, and revert a state 
-                        sw3.nav.do(sw3.SetDepth(APPROACH_DEPTH))
-                        print "TIMED OUT DURING DEPTH"
-                        self.state -= 1
-                        self.reset_timeouts()
-                
-                #test our depth
-                depth_error = abs(sw3.data.depth - EXAM_DEPTH)  
-                if(depth_error < DEPTH_ERROR_THRESHOLD):
-                    depth_reached = True
-                else:
-                    depth_reached = False
-
-                #if we are centered at depth, increment state
-                if(depth_reached and \
-                   self.centered_time and \
-                   time() - self.centered_time > CENTERED_TIME_THRESHOLD):
-                    self.state += 1
-                    self.reset_timeouts()
-
-            elif(self.state ==3):
-                print "passing through bin identification"
-
-                #check to see what kind of bin this is 
-                if (self.target.type == BIN1 or self.target.type == BIN2 ):
-                    #FIRE ZE MISSILES!!!
-                    print "we should be dropping now"
-                
+            #if we are alligned with our target angle, continue
+            ang_error = abs(util.circular_distance(self.obstacle_angle,sw3.data.imu.yaw,180,-180))
+            if ang_error < ANGULAR_CENTERING_THRESHOLD: 
                 self.state += 1
+                self.state_timeout = time()
+                sw3.nav.do(sw3.Forward(TRACKING_SPEED))
 
-            elif(self.state == 4):
+        if(self.state == 5):
+            #we are moving forward, looking for a new bin
+            sw3.nav.do(sw3.Forward(self.patrol_direction * TRACKING_VELOCITY))
 
-                #compute and allign with our new target angle
-                sw3.nav.do(sw3.SetYaw(self.obstacle_angle))
-                print "alligning with obstacle angle = ", self.obstacle_angle
-                
-                
-                self.phase = 2
-                self.state = 0
+            found_new_bin = False
+            #if we see a bin other than our current target
+            #take note and begin to track it
+            for i, a_bin in enumerate(entity_found.known_bins):
+                if not self.target or not a_bin.id == self.target.id:
+                    self.target = a_bin
+                    found_new_bin = True
+                    print "found new bin with ID = ", a_bin.id
 
-        elif(self.phase == 2):
-        # --- PHASE TWO ---- 
-        # walk down the row of bins, looking for new bins
-        # if we see a new bin, get on top of it
-        # if we don't see a bin, reverse the robot
-            
-            if(self.state == 0):
-                #we are moving forward, looking for a new bin
+            #if it's been too long since we last saw a new bin,
+            #start moving the robot the other direction
+            if not found_new_bin:
+                if time() - self.state_timeout > BIN_SEARCH_TIMEOUT:
+                    self.patrol_direction *= -1
+                    self.state_timeout = time()
+                    self.target = None
 
-                #if it's been too long since we last saw a new bin,
-                #start moving the robot the other direction
+            #start centering on target bin
+            self.center_on_target(True)
+            self.centering = True
 
-                #if we see a bin
-                self.state = 1
-
-            if(self.state == 1):
-                #we are alligning with a bin
-
-                #if it's too far away, get on top of it
-
-                #if we are on top of it
-                #drop the ball if this is a target
-                #if we are out of balls
-                    #self.phase = 3
-                    #self.state = 0
-                self.state = 2
-            
-            if(self.state == 2):
-                #we are on top of a bin, 
-                #allign ourselves to continue walkign down
-
-                #if alligned
-                self.state == 0
-
-        elif(self.phase == 3):
-            # --- PHASE THREE ---- 
-            # we have dropped both markers 
-            # celebrate with champagne 
-            self.state == party 
-    
+            #initialization finished
+            self.state = 1
 
     def center_on_target(self, target_visible):
 
@@ -291,6 +294,7 @@ class BinsMission(MissionBase):
                 theta -= 360
 
         if( target_visible ):
+            print "do see target "
             #record target yaw
             self.target_yaw = ((sw3.data.imu.yaw + theta)+180)%360 - 180
 
@@ -299,11 +303,11 @@ class BinsMission(MissionBase):
                 #we are far enough away for angular data to be sensible
                 sw3.nav.do(sw3.SetYaw(self.target_yaw))
                 print "theta = ", theta, " direction = ", direction
-            
+
             if(abs(theta) < ANGULAR_CENTERING_THRESHOLD):
                 #we are pointed towards our target
                 sw3.nav.do(sw3.Forward(TRACKING_VELOCITY*direction*vel_scale))
-                print "driving forward at ", TRACKING_VELOCITY*direction*vel_scale
+                print "do see target driving forward at ", TRACKING_VELOCITY*direction*vel_scale
         else:
             #handle alligning with a missing target
             cur_angle = (sw3.data.imu.yaw-self.target_yaw)

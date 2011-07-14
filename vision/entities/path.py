@@ -23,7 +23,7 @@ class PathEntity(VisionEntity):
         self.min_value = 100
         self.max_value = 255
         self.theta_threshold = 0.1
-        self.hough_threshold = 40
+        self.hough_threshold = 55
         self.lines_to_consider = 4 # Only consider the strongest so many lines
         self.seen_in_a_row_threshold = 2 # Must see path this many times in a row before reporting it
 

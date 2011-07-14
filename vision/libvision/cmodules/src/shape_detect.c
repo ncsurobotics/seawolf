@@ -8,11 +8,11 @@
 /* find_bins()              */
 /* and related functions    */
 
-#define VISUAL_DEBUG      1 
-#define VISUAL_DEBUG_X    1
+//#define VISUAL_DEBUG      1 
+//#define VISUAL_DEBUG_X    1
 //#define VISUAL_DEBUG_O    1
 
-#define VISUAL_DEBUG_BINS 1
+//#define VISUAL_DEBUG_BINS 1
 
 /* X recognition */
 #define X_CONFIDENCE_THRESHOLD 80 //required confidence to accept an X

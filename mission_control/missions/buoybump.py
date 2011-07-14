@@ -7,13 +7,13 @@ from missions.base import MissionBase
 import sw3
 import seawolf
 
-INITIAL_FORWARD_SPEED = 3.5
-BUMPING_SPEED = 3.0
+INITIAL_FORWARD_SPEED = .35
+BUMPING_SPEED = .3
 BUMPING_TIME = 3 #how many seconds we give seawolf to bump the buoy
-BACKING_SPEED = -2.5 #how fast to back up
-BACKUP_TIME = 2  #how many seconds to back up for
-RELATIVE_DEPTH = -1.5 #how much to surface to clear the buoy
-BYPASS_SPEED = 3.5 #how fast to pass over the buoy
+BACKING_SPEED = -.25 #how fast to back up
+BACKUP_TIME = 3  #how many seconds to back up for
+RELATIVE_DEPTH = -2.5 #how much to surface to clear the buoy
+BYPASS_SPEED = .35 #how fast to pass over the buoy
 BYPASS_TIME = 3 #how long to spend passing over the buoy
 
 class BuoyBumpMission(MissionBase):
@@ -27,6 +27,7 @@ class BuoyBumpMission(MissionBase):
         )
 
         self.state = "Searching"
+        #self.state = "Bumping"
 
     def step(self, entity_found):
         if (self.state == "Searching"):

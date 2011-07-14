@@ -8,7 +8,7 @@
 /* Air and water pressure constants. Varies by location (calibration recommended) */
 #define PSI_PER_FOOT 0.4335
 #define AIR_PRESSURE 14.23
-#define DEPTH_ZERO 0.0
+#define DEPTH_ZERO 0.57
 
 void manage(SerialPort sp);
 
