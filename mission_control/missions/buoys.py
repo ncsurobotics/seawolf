@@ -11,7 +11,7 @@ DEGREE_PER_PIXEL = 0.1
 DEPTH_PER_PIXEL = -1/50
 INITIAL_FORWARD_SPEED = 0.2
 TRACKING_FORWARD_SPEED = 0.4
-MISSION_TIMEOUT = 16
+MISSION_TIMEOUT = 7
 
 class BuoysMission(MissionBase):
 
@@ -31,10 +31,15 @@ class BuoysMission(MissionBase):
 
     def step(self, entity_found):
 
-        # Complete mission if timeout has passed
-        if not entity_found:
+        # Complete mission after we've seen it for MISSION_TIMEOUT seconds
+        self.set_entity_timeout(0.1)
+        if self.first_seen and time() - self.first_seen > MISSION_TIMEOUT:
             sw3.nav.do(sw3.Forward(0.8))
             return True
+
+        # Don't run mission if we didn't see it
+        elif not entity_found:
+            return False
 
         # Check if this our first time seeing the buoys
         if self.correct_buoy_index is None:
@@ -42,13 +47,13 @@ class BuoysMission(MissionBase):
             # Pick out buoy that is most centered
             center_most_location = entity_found.buoy_locations[0]
             self.correct_buoy_index = 0
+            print entity_found.buoy_locations
             for i, location in enumerate(entity_found.buoy_locations):
                 if abs(location.x) < center_most_location.x:
                     center_most_location = location
                     self.correct_buoy_index = i
 
             self.first_seen = time()
-            self.set_entity_timeout(MISSION_TIMEOUT)
 
         # If center buoy was found, go towards it
         location = entity_found.buoy_locations[self.correct_buoy_index]

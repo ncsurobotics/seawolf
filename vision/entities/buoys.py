@@ -22,8 +22,8 @@ FILTER_SIZE = 11
 # If we want to see buoys from far away, 50 is a good value for MIN_BLOB_SIZE.
 # However, if we align with the path first, the buoys will be much closer, and
 # this can be raised to 200.
-MIN_BLOB_SIZE = 200
-TRACKING_MIN_Z_SCORE = 15
+MIN_BLOB_SIZE = 100
+TRACKING_MIN_Z_SCORE = 10
 TRACKING_ALPHA = 0.6
 TRACKING_TEMPLATE_MULTIPLIER = 2
 TRACKING_SEARCH_AREA_MULTIPLIER = 8
@@ -42,7 +42,7 @@ class BuoysEntity(VisionEntity):
         self.saturation_adaptive_thresh_blocksize = 51
         self.saturation_adaptive_thresh = 15
         self.red_adaptive_thresh_blocksize = 51
-        self.red_adaptive_thresh = 20
+        self.red_adaptive_thresh = 10
 
     def initialize_non_pickleable(self, debug=True):
 
@@ -73,13 +73,14 @@ class BuoysEntity(VisionEntity):
             if trackers:
                 self.trackers = trackers
                 self.state = "tracking"
+                print "Tracking"
 
-                '''
+                # Finish mission to make sure the first entity returned to
+                # mission control has locations for all buoys
                 self.buoy_locations = map(lambda x: adjust_location(x.object_center, frame_scaled.width, frame_scaled.height), self.trackers)
                 if debug_frame:
                     cv.Copy(debug_frame, frame)
                 return True
-                '''
 
         # Tracking State
         num_buoys_found = 0
@@ -133,7 +134,8 @@ class BuoysEntity(VisionEntity):
         locations = []
 
         # Update trackers
-        for tracker in trackers:
+        id_colors = ((0,255,0), (0,255,255), (255,255,0))
+        for i, tracker in enumerate(trackers):
             location = tracker.locate_object(frame)
 
             if location:
@@ -141,7 +143,7 @@ class BuoysEntity(VisionEntity):
 
                 # Draw buoy on debug frame
                 if debug_frame:
-                    cv.Circle(debug_frame, location, 5, (0,255,0))
+                    cv.Circle(debug_frame, location, 5, id_colors[i])
 
                 locations.append(adjust_location(location, frame.width, frame.height))
 
@@ -152,11 +154,12 @@ class BuoysEntity(VisionEntity):
 
     def extract_buoys_from_blobs(self, blobs, labeled_image):
         blobs = filter(self.blob_filter, blobs)
-        if len(blobs) == 2:
+        if len(blobs) == 2 or len(blobs) == 3:
             return blobs
 
     def blob_filter(self, blob):
-        if blob.size < 20 or blob.size > 700:
+        if blob.size > 700:
+            print "Filtering based on large blob size"
             return False
 
         width = blob.roi[2]
@@ -165,6 +168,7 @@ class BuoysEntity(VisionEntity):
         if ratio < 1:
             ratio = 1 / ratio
         if ratio > 2:
+            print "Filtering based on aspect ratio"
             return False
 
         return True
