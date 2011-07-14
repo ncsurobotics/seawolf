@@ -9,10 +9,10 @@ import libvision
 from sw3.util import circular_average
 from copy import copy
 
-LANE_DIRECTION = -1 #  1 is L ; -1 is backwards L 
-VERT_THRESHOLD = 80     #required sepperation of endpoints
-HORZ_THRESHOLD = 80 
-ANGULAR_TOLERANCE = .03 #how strict our right angle must be
+LANE_DIRECTION = -1  # -1 is L ; 1 is backwards L 
+VERT_THRESHOLD = 50  #required sepperation of endpoints
+HORZ_THRESHOLD = 50 
+ANGULAR_TOLERANCE = .06 #how strict our right angle must be
 
 class LoveLaneEntity(VisionEntity):
 
@@ -24,11 +24,11 @@ class LoveLaneEntity(VisionEntity):
         # Thresholds
         self.vertical_threshold = 0.75  # min slope of verticle lines 
         self.horizontal_threshold = 0.25  # max slope of horizontal lines
-        self.hough_threshold = 10
-        self.hough_gap = 50 #maximum gap in a line segment
-        self.hough_min_length = 15 #minimum length of a line segment
-        self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 15
+        self.hough_threshold = 30
+        self.hough_gap = 30 #maximum gap in a line segment
+        self.hough_min_length = 30 #minimum length of a line segment
+        self.adaptive_thresh_blocksize = 9
+        self.adaptive_thresh = 3
         self.max_range = 100 #how far in pixels endpoints of segments must be
                             #to be considered a new line
 
@@ -42,8 +42,16 @@ class LoveLaneEntity(VisionEntity):
             self.create_trackbar("adaptive_thresh", 20)
             self.create_trackbar("hough_threshold", 100)
 
-    def find(self, frame, debug=True):
+    def draw_point(self, frame, point, c=(255, 255, 255)):
+        x, y = point
+        w, h = cv.GetSize(frame)
+        for i in range(x - 2, x + 2):
+            i = min(w - 1, max(0, i))
+            for j in range(y - 2, y + 2):
+                j = min(h - 1, max(0, j))
+                cv.Set2D(frame, j, i, c)
 
+    def find(self, frame, debug=True):
         # Resize image to 320x240
         img_copy = cv.CreateImage(cv.GetSize(frame), 8, 3)
         cv.Copy(frame, img_copy)
@@ -58,7 +66,7 @@ class LoveLaneEntity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 2)
+        cv.SetImageCOI(hsv, 3)
         cv.Copy(hsv, binary)  # Binary image now contains saturation channel
         cv.SetImageCOI(hsv, 0)
 
@@ -72,10 +80,11 @@ class LoveLaneEntity(VisionEntity):
         )
 
         # Morphology
-        cv.Erode(binary, binary, None, 1)
         cv.Dilate(binary, binary, None, 1)
-        if debug:
-            color_filtered = cv.CloneImage(binary)
+        cv.Erode(binary, binary, None, 1)
+
+        # Filter out small blobs
+        libvision.blob.find_blobs(binary, binary, 7, 32, 255)
 
         # Get Edges
         cv.Canny(binary, binary, 30, 40)
@@ -92,6 +101,7 @@ class LoveLaneEntity(VisionEntity):
 
         #verify that we found something
         if not raw_lines:
+            print "No lines"
             return False
 
         if debug:
@@ -123,6 +133,10 @@ class LoveLaneEntity(VisionEntity):
                 if point[1] > y_thresh_bot_right:
                     bottomright = copy(point)
 
+        self.draw_point(frame, toppoint, (255, 0, 0))
+        self.draw_point(frame, bottomleft, (0, 255, 0))
+        self.draw_point(frame, bottomright, (0, 0, 255))
+
         #analyze corners
         if LANE_DIRECTION == 1:
             vert_distance = math.sqrt((toppoint[0]-bottomleft[0])**2+(toppoint[1]-bottomleft[1])**2)
@@ -134,11 +148,13 @@ class LoveLaneEntity(VisionEntity):
         
         #check that the corners are reasonably sepperated
         if vert_distance < VERT_THRESHOLD or horz_distance < HORZ_THRESHOLD:
+            print "Sides too short"
             return False
 
         #check that the three endpoints form roughly a right angle
         hypo_length = math.sqrt(vert_distance**2+horz_distance**2)
         if abs(hypo_length - diag_distance)/hypo_length > ANGULAR_TOLERANCE:
+            print "Too un-right"
             return False
         
         found_lane = True
