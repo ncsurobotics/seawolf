@@ -7,6 +7,12 @@ from entities.base import VisionEntity
 import libvision
 from sw3.util import circular_average
 
+class Path(object):
+    def __init__(self, center, theta, image_center):
+        self.center = center
+        self.theta = theta
+        self.image_center = image_center
+
 class DoublePathEntity(VisionEntity):
 
     name = "DoublePathEntity"
@@ -27,9 +33,7 @@ class DoublePathEntity(VisionEntity):
         self.lines_to_consider = 4 # Only consider the strongest so many lines
         self.seen_in_a_row_threshold = 2 # Must see path this many times in a row before reporting it
 
-        # Position/orientation
-        self.theta = None
-        self.center = None
+        self.paths = []
 
         self.seen_in_a_row = 0
 
@@ -46,35 +50,17 @@ class DoublePathEntity(VisionEntity):
             self.create_trackbar("hough_threshold", 100)
             self.create_trackbar("lines_to_consider", 10)
 
-    def find(self, frame, debug=True):
+    def lines_in_roi(self, frame, binary, path):
+        """
+        frame - debug output frame
+        binary - input binary map
+        roi - roi to consider
+        """
+
+        cv.SetImageROI(binary, path.roi)
         found_path = False
-        cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
-
-        '''
-        # HSV Color Filter
-        binary = libvision.filters.hsv_filter(frame,
-            self.lower_hue,
-            self.upper_hue,
-            self.min_saturation,
-            self.max_saturation,
-            self.min_value,
-            self.max_value,
-            self.hue_bandstop,
-        )'''
-        #use RGB color finder 
-        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,1500,800,.3)
-
-        if debug:
-            color_filtered = cv.CloneImage(binary)
-
-        # Morphology
-        # We size the kernel to about the width of a path.
-        kernel = cv.CreateStructuringElementEx(7, 7, 3, 3, cv.CV_SHAPE_ELLIPSE)
-        cv.Erode(binary, binary, kernel, 1)
-        cv.Dilate(binary, binary, kernel, 1)
-
-        # Get Edges
-        cv.Canny(binary, binary, 30, 40)
+        theta = None
+        center = None
 
         # Hough Transform
         line_storage = cv.CreateMemStorage()
@@ -112,23 +98,65 @@ class DoublePathEntity(VisionEntity):
 
             if theta_range < self.theta_threshold:
                 found_path = True
-
                 angles = map(lambda line: line[1], lines)
-                self.theta = circular_average(angles, math.pi)
+                theta = circular_average(angles, math.pi)
+
+        cv.ResetImageROI(binary)
 
         if found_path:
+            image_center = path.centroid
+            # Move the origin to the center of the image
+            center = (
+                image_center[0] - frame.width/2,
+                image_center[1]*-1 + frame.height/2
+            )
+            return Path(center, theta, image_center)
+        else:
+            return None
+
+
+    def find(self, frame, debug=True):
+        cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
+
+        '''
+        # HSV Color Filter
+        binary = libvision.filters.hsv_filter(frame,
+            self.lower_hue,
+            self.upper_hue,
+            self.min_saturation,
+            self.max_saturation,
+            self.min_value,
+            self.max_value,
+            self.hue_bandstop,
+        )'''
+        #use RGB color finder 
+        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,1500,800,.3)
+
+        if debug:
+            color_filtered = cv.CloneImage(binary)
+
+        # Morphology
+        # We size the kernel to about the width of a path.
+        kernel = cv.CreateStructuringElementEx(7, 7, 3, 3, cv.CV_SHAPE_ELLIPSE)
+        cv.Erode(binary, binary, kernel, 1)
+        cv.Dilate(binary, binary, kernel, 1)
+
+        # Get Edges
+        cv.Canny(binary, binary, 30, 40)
+
+        path_blobs = libvision.blob.find_blobs(binary, binary, 100, 2, 255)
+        
+        found_paths = []
+        for path_blob in path_blobs:
+            path = self.lines_in_roi(frame, binary, path_blob)
+            if path:
+                found_paths.append(path)
+
+        if found_paths:
             self.seen_in_a_row += 1
         else:
             self.seen_in_a_row = 0
-
-        if self.seen_in_a_row >= self.seen_in_a_row_threshold:
-            self.image_coordinate_center = self.find_centroid(binary)
-            # Move the origin to the center of the image
-            self.center = (
-                self.image_coordinate_center[0] - frame.width/2,
-                self.image_coordinate_center[1]*-1 + frame.height/2
-            )
-
+        
         if debug:
 
             # Show color filtered
@@ -145,30 +173,20 @@ class DoublePathEntity(VisionEntity):
             cv.Sub(frame, binary_rgb, frame)  # Remove all but Red
 
             # Show lines
-            if self.seen_in_a_row >= self.seen_in_a_row_threshold:
+            for path in found_paths:
                 rounded_center = (
-                    round(self.image_coordinate_center[0]),
-                    round(self.image_coordinate_center[1]),
-                )
+                    round(path.image_center[0]),
+                    round(path.image_center[1]),
+                    )
                 cv.Circle(frame, rounded_center, 5, (0,255,0))
-                libvision.misc.draw_lines(frame, [(frame.width/2, self.theta)])
-            else:
-                libvision.misc.draw_lines(frame, lines)
+                libvision.misc.draw_lines(frame, [(frame.width/2, path.theta)])
 
-        return self.seen_in_a_row >= self.seen_in_a_row_threshold
-
-    def find_centroid(self, binary):
-        mat = cv.GetMat(binary)
-        moments = cv.Moments(mat)
-        return (
-            int(moments.m10/moments.m00),
-            int(moments.m01/moments.m00)
-        )
+        if self.seen_in_a_row >= self.seen_in_a_row_threshold:
+            self.paths = found_paths
+            return True
+        else:
+            return False
 
     def __repr__(self):
-        if self.theta is None:
-            theta = None
-        else:
-            theta = round((180/math.pi)*self.theta, 2)
-        return "<DoublePathEntity center=%s theta=%s>" % \
-            (self.center, theta)
+        return "<DoublePathEntity> %s" % \
+            (repr([(p.center, "%.3f" % (p.theta,)) for p in self.paths]),)
