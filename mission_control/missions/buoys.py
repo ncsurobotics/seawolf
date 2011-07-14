@@ -9,7 +9,6 @@ import seawolf
 
 DEGREE_PER_PIXEL = 0.1
 DEPTH_PER_PIXEL = -1/50
-DEPTH_DEADBAND = 1
 INITIAL_FORWARD_SPEED = 0.2
 TRACKING_FORWARD_SPEED = 0.4
 MISSION_TIMEOUT = 16
@@ -26,7 +25,7 @@ class BuoysMission(MissionBase):
             entities.BuoysEntity(),
         ])
         sw3.nav.do(sw3.CompoundRoutine([
-            sw3.Forward(INITIAL_FORWARD_SPEED), sw3.SetDepth(2)
+            sw3.Forward(INITIAL_FORWARD_SPEED), sw3.SetDepth(6)
         ]))
         self.initial_angle = sw3.data.imu.yaw
 

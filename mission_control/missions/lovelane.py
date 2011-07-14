@@ -11,7 +11,7 @@ MISSION_TIMEOUT = 8  # Timeout after we've seen the love lane
 DEGREE_PER_PIXEL = 0.19
 APPROACH_SPEED = 0.4
 TRACKING_SPEED = 0.4
-DEPTH = 4
+DEPTH = 5.5
 
 class LoveLaneMission(MissionBase):
 
