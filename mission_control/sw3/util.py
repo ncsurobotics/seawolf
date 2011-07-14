@@ -67,12 +67,14 @@ def circular_distance(a, b, high=2*math.pi, low=0):
 
     '''
 
-    a += low
-    b += low
-    high += low
+    a -= low
+    b -= low
+    diff = high - low
 
-    distance = abs(a-b)
-    if distance > high/2:
-        distance = high - distance
+    a = a % diff
+    b = b % diff
+    if abs(a-b) < diff/2:
+        return abs(a-b)
+    else:
+        return diff - abs(a-b)
 
-    return distance
