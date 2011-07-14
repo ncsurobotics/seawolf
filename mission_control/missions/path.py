@@ -42,12 +42,6 @@ class PathMission(MissionBase):
         self.orient_time = None
 
     def step(self, entity_found):
-        #ignore paths that are perpendicular to reference angle
-        #this should filter out the white rods at the bottom
-        #of the buoys
-        if entity_found and util.circular_distance(self.reference_angle,entity_found.theta) > pi / 2 - PERPENDICULAR_THRESHOLD:
-           #ignore this path
-           entity_found = None
 
         if self.state == "centering":
             if entity_found and self.state_centering(entity_found):
@@ -58,10 +52,7 @@ class PathMission(MissionBase):
         if self.state == "orienting":
             self.set_entity_timeout(0.2)
             finished = self.state_orienting(entity_found)
-            print "returning ", finished
             return finished
-
-        print "THIS IS NOT HAPPENING, I PROMISE"
 
     def state_orienting(self, entity_found):
 
@@ -79,16 +70,14 @@ class PathMission(MissionBase):
             if path_angle > math.pi:  # convert to range -pi to pi
                 path_angle = path_angle - 2*pi
 
-            print "Orienting to", (180/pi)*path_angle
+            #print "Orienting to", (180/pi)*path_angle
             turn_routine = sw3.SetYaw((180/pi)*path_angle)
             sw3.nav.do(turn_routine)
 
         desired_yaw = seawolf.var.get("YawPID.Heading")
         error = util.circular_distance(desired_yaw, sw3.data.imu.yaw, 180, -180)
-        t = time()
-        if self.orient_time:
-            print "Time:", t - self.orient_time
         print "Angle Error:", error
+        t = time()
         if not self.orient_time or error > ORIENT_ANGLE_THRESHOLD:
             self.orient_time = t
         if t - self.orient_time > ORIENT_TIME_THRESHOLD:
