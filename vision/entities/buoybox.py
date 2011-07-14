@@ -124,7 +124,6 @@ class BuoyBoxEntity(VisionEntity):
         #if we see 1 horizontal line cluster, record the average rho
         if not self.seen_crossbar:
             self.tracking_counter = 0
-            print "don't see a bar"
             return False
 
         avg_rho = 0

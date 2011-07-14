@@ -9,13 +9,16 @@ from buoys import BuoysMission
 from bins import BinsMission
 from lovelane import LoveLaneMission
 from doublepath import DoublePathMission
+from buoybump import BuoyBumpMission
 
 mission_classes = {
     'test': TestMission,
     'path': PathMission,
     'gate': GateMission,
     'buoys': BuoysMission,
+    'buoybump': BuoyBumpMission,
     'bins': BinsMission,
     'lovelane': LoveLaneMission,
     'doublepath': DoublePathMission,
+
 }
