@@ -17,6 +17,7 @@ from buoys import BuoysEntity, BUOY_GREEN, BUOY_RED, BUOY_YELLOW
 from fakebuoys import FakeBuoysEntity
 from letters import LettersEntity
 from lovelane import LoveLaneEntity
+from buoybox import BuoyBoxEntity
 
 entity_classes = {
     "path": PathEntity,
@@ -26,6 +27,7 @@ entity_classes = {
     "fakebuoys": FakeBuoysEntity,
     "letters": LettersEntity,
     "lovelane": LoveLaneEntity,
+    "buoybox": BuoyBoxEntity,
 }
 
 def get_all_used_cameras():
