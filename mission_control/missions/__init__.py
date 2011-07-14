@@ -8,7 +8,7 @@ from gate import GateMission
 from buoys import BuoysMission
 from bins import BinsMission
 from lovelane import LoveLaneMission
-from postlovelanepath import PostLoveLanePathMission
+from doublepath import DoublePathMission
 
 mission_classes = {
     'test': TestMission,
@@ -17,5 +17,5 @@ mission_classes = {
     'buoys': BuoysMission,
     'bins': BinsMission,
     'lovelane': LoveLaneMission,
-    'postlovelanepath': PostLoveLanePathMission,
+    'doublepath': DoublePathMission,
 }

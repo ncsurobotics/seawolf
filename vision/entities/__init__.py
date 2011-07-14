@@ -17,6 +17,7 @@ from buoys import BuoysEntity, BUOY_GREEN, BUOY_RED, BUOY_YELLOW
 from fakebuoys import FakeBuoysEntity
 from letters import LettersEntity
 from lovelane import LoveLaneEntity
+from doublepath import DoublePathEntity
 from buoybox import BuoyBoxEntity
 
 entity_classes = {
@@ -27,6 +28,7 @@ entity_classes = {
     "fakebuoys": FakeBuoysEntity,
     "letters": LettersEntity,
     "lovelane": LoveLaneEntity,
+    "doublepath": DoublePathEntity,
     "buoybox": BuoyBoxEntity,
 }
 
