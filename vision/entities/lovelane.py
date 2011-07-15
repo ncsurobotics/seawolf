@@ -9,7 +9,7 @@ import libvision
 from sw3.util import circular_average
 from copy import copy
 
-LANE_DIRECTION = -1  # -1 is L ; 1 is backwards L 
+LANE_DIRECTION = 1  # -1 is L ; 1 is backwards L 
 VERT_THRESHOLD = 50  #required sepperation of endpoints
 HORZ_THRESHOLD = 50 
 ANGULAR_TOLERANCE = .06 #how strict our right angle must be
@@ -84,7 +84,7 @@ class LoveLaneEntity(VisionEntity):
         cv.Erode(binary, binary, None, 1)
 
         # Filter out small blobs
-        libvision.blob.find_blobs(binary, binary, 7, 32, 255)
+        libvision.blob.find_blobs(binary, binary, 10, 32, 255)
 
         # Get Edges
         cv.Canny(binary, binary, 30, 40)
