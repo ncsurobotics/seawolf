@@ -36,6 +36,14 @@ class LoveLaneEntity(VisionEntity):
         self.horz_pole = None
         self.seen_crossbar = False
 
+        self.last_toppoint = None
+        self.last_bottomleft = None
+        self.last_bottomright = None
+        self.seen_count = 0
+
+        self.min_seen_count = 3 # mininum frames to see a good, consistent love lane
+        self.drift_tolerance = 30 # max number of pixels by which corners can drift per pixel
+
     def initialize_non_pickleable(self, debug=True):
 
         if debug:
@@ -50,6 +58,9 @@ class LoveLaneEntity(VisionEntity):
             for j in range(y - 2, y + 2):
                 j = min(h - 1, max(0, j))
                 cv.Set2D(frame, j, i, c)
+
+    def euclid_dis(self, p1, p2):
+        return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
 
     def find(self, frame, debug=True):
         # Resize image to 320x240
@@ -102,6 +113,7 @@ class LoveLaneEntity(VisionEntity):
         #verify that we found something
         if not raw_lines:
             print "No lines"
+            self.seen_count = 0
             return False
 
         if debug:
@@ -111,9 +123,9 @@ class LoveLaneEntity(VisionEntity):
                 cv.Line(frame, line[0], line[1], color, 1, 8, 0) 
 
         #find the three corners of the L
-        toppoint = []
-        bottomleft = []
-        bottomright = []
+        toppoint = None
+        bottomleft = None
+        bottomright = None
 
         for line in raw_lines:
             for point in line:
@@ -149,15 +161,33 @@ class LoveLaneEntity(VisionEntity):
         #check that the corners are reasonably sepperated
         if vert_distance < VERT_THRESHOLD or horz_distance < HORZ_THRESHOLD:
             print "Sides too short"
+            self.seen_count = 0
             return False
 
         #check that the three endpoints form roughly a right angle
         hypo_length = math.sqrt(vert_distance**2+horz_distance**2)
         if abs(hypo_length - diag_distance)/hypo_length > ANGULAR_TOLERANCE:
             print "Too un-right"
+            self.seen_count = 0
             return False
-        
-        found_lane = True
+
+        if (self.seen_count > 0 and
+            self.euclid_dis(self.last_toppoint, toppoint) < self.drift_tolerance and
+            self.euclid_dis(self.last_bottomleft, bottomleft) < self.drift_tolerance and
+            self.euclid_dis(self.last_bottomright, bottomright) < self.drift_tolerance):
+            self.seen_count += 1
+            if self.seen_count < self.min_seen_count:
+                print "Incrementing"
+        else:
+            print "Moved too much"
+            self.seen_count = 1
+
+        self.last_toppoint = toppoint
+        self.last_bottomleft = bottomleft
+        self.last_bottomright = bottomright
+
+        found_lane = (self.seen_count >= self.min_seen_count)
+                
         # compute the center
         if LANE_DIRECTION == 1:
             centerx = ( toppoint[0] + bottomright[0]) / 2
@@ -190,7 +220,8 @@ class LoveLaneEntity(VisionEntity):
             if found_lane:
                 center_color = (0,0,255)
                 cv.Circle(frame,(centerx, centery),9,center_color, 2, 8, 0)
-        return  found_lane
+
+        return (self.seen_count >= self.min_seen_count)
 
     def __repr__(self):
         return "<LoveLaneEntity>"  # TODO
