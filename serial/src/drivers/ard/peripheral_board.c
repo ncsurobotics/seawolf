@@ -60,7 +60,8 @@ static void sync_stream(void) {
 void manage(SerialPort _sp) {
     uint8_t data[3];
     short raw_depth;
-    float voltage, psi, depth;
+    float voltage, psi, depth, last_good_depth;
+    bool good_depth_seeded = false;
 
     /* Store serial port globally */
     sp = _sp;
@@ -93,12 +94,18 @@ void manage(SerialPort _sp) {
             psi = ((voltage - 0.5) * 100) / 4.0;
             depth = (psi - AIR_PRESSURE) / PSI_PER_FOOT - DEPTH_ZERO;
 
-            /* Depth must be greater than 0 */
-            //if (depth < 0.0) {
-            //    depth = 0.0;
-            //}
+            if(good_depth_seeded == false) {
+                good_depth_seeded = true;
+                last_good_depth = depth;
+            }
+            
+            if(abs(depth - last_good_depth) > 2) {
+                Logging_log(ERROR, Util_format("Extraodinary depth value. (%.2f, 0x%04x)", depth, raw_depth));
+                continue;
+            }
 
             Var_set("Depth", depth);
+            last_good_depth = depth;
         } else {
             Logging_log(ERROR, "Invalid data from peripheral board!");
         }
