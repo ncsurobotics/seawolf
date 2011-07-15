@@ -12,6 +12,8 @@ from sw3 import util
 import seawolf
 
 # If the path's position is off by more than this much, turn towards it
+PREFERED_DIRECTION = 1 #1 is left, -1 is right
+CUTOFF_ANGLE = -5 #hard division between paths
 CENTERED_THRESHOLD = 60  # pixel distance
 THETA_CENTERING_THRESHOLD = 30 * (pi/180)  # radians
 CENTERED_FRAMES_THRESHOLD = 3  # Center for this many frames before orientation
@@ -20,11 +22,15 @@ PERPENDICULAR_THRESHOLD = pi/8 #how close in radians to perpendicular we expect 
 # Angle precision and time we must be oriented to finish mission
 ORIENT_TIME_THRESHOLD = 3
 ORIENT_ANGLE_THRESHOLD = 7
+ANGULAR_IDENTIFICATION_THRESHOLD = 10
+
+ORIENT_DELAY = 0.1
 
 class DoublePathMission(MissionBase):
 
     def __init__(self):
         self.centered_count = 0
+        self.last_time_oriented = None
 
     def init(self):
         self.entity_searcher.start_search([
@@ -40,12 +46,14 @@ class DoublePathMission(MissionBase):
 
         self.state = "centering"
         self.orient_time = None
+        self.known_angle = None
+        self.seen_bad_path = False
 
     def step(self, entity_found):
 
         #If we see two paths, determine which one is correct
         #and record its abolute angle
-        if len(entity_found.paths) == 2:
+        if entity_found and len(entity_found.paths) == 2:
             cur_heading = sw3.data.imu.yaw *  pi / 180 
             ang1 = cur_heading + entity_found.paths[0].theta
             ang2 = cur_heading + entity_found.paths[1].theta
@@ -53,10 +61,14 @@ class DoublePathMission(MissionBase):
             diff2 = abs(util.circular_distance(ang2,self.reference_angle,pi,-pi))
             if diff1 > pi/2: ang1 += pi
             if diff2 > pi/2: ang2 += pi
+            ang1 += pi
+            ang2 += pi
             ang1 = ang1 % 2*pi
             ang2 = ang2 % 2*pi
+            ang1 -= pi
+            ang2 -= pi
 
-            if PREFERED_DIRECTION * (diff1 - diff2) < 0:
+            if PREFERED_DIRECTION * (ang1 - ang2) < 0:
                 #1st path is our desired path
                 target_path = entity_found.paths[0]
                 self.known_angle = ang1
@@ -66,7 +78,7 @@ class DoublePathMission(MissionBase):
                 self.known_angle = ang2
 
         #if we see one path, check that it is at an expected angle
-        elif len(entity_found.paths) == 1:
+        elif entity_found and len(entity_found.paths) == 1:
             cur_heading = sw3.data.imu.yaw * pi / 180
             ang = cur_heading + entity_found.paths[0].theta
             diff = abs(util.circular_distance(ang,self.reference_angle,pi,-pi))
@@ -94,6 +106,7 @@ class DoublePathMission(MissionBase):
                     #to the left and flag that we have turned
                     self.seen_bad_path = True
                     sw3.nav.do(sw3.RelativeYaw(-60))
+                    target_path = None
                 else:
                     #hopefully we will see the correct path soon
                     target_path = None
@@ -102,26 +115,29 @@ class DoublePathMission(MissionBase):
         else:
             target_path = None
 
-        #ignore all except for our target path
-        self.entity_found = target_path
+        #copy imu data to target path
+        if target_path:
+            target_path.current_yaw = entity_found.current_yaw
 
         #if we see a valid target, run path as normal
 
         if self.state == "centering":
-            if entity_found and self.state_centering(entity_found):
+            if target_path and self.state_centering(target_path):
                 print "Orienting Now"
                 self.state = "orienting"
             else:
                 return False
         if self.state == "orienting":
             self.set_entity_timeout(0.2)
-            finished = self.state_orienting(entity_found)
+            finished = self.state_orienting(target_path)
             return finished
 
     def state_orienting(self, entity_found):
 
         # Update orientation if path is seen
-        if entity_found:
+        t = time()
+        if not self.last_time_oriented or (entity_found and t-self.last_time_oriented > ORIENT_DELAY):
+            self.last_time_oriented = t
 
             # Get path angle
             current_yaw = (entity_found.current_yaw*(pi/180)) % (2*pi)
@@ -138,8 +154,11 @@ class DoublePathMission(MissionBase):
             turn_routine = sw3.SetYaw((180/pi)*path_angle)
             sw3.nav.do(turn_routine)
 
+        elif not entity_found:
+            print "Not orienting because of delay"
+
         desired_yaw = seawolf.var.get("YawPID.Heading")
-        error = util.circular_distance(desired_yaw, entity_found.current_yaw, 180, -180)
+        error = util.circular_distance(desired_yaw, sw3.data.imu.yaw, 180, -180)
         print "Angle Error:", error
         t = time()
         if not self.orient_time or error > ORIENT_ANGLE_THRESHOLD:
