@@ -69,9 +69,13 @@ class PathEntity(VisionEntity):
 
         # Morphology
         # We size the kernel to about the width of a path.
+        # TODO: If we ever uncomment this, speed it up with
+        #       cv.MorphologyEx
+        '''
         kernel = cv.CreateStructuringElementEx(7, 7, 3, 3, cv.CV_SHAPE_ELLIPSE)
         cv.Erode(binary, binary, kernel, 1)
         cv.Dilate(binary, binary, kernel, 1)
+        '''
 
         # Get Edges
         cv.Canny(binary, binary, 30, 40)

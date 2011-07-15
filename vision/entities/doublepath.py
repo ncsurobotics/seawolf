@@ -1,5 +1,6 @@
 
 import math
+from time import time
 
 import cv
 
@@ -118,17 +119,6 @@ class DoublePathEntity(VisionEntity):
     def find(self, frame, debug=True):
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
-        '''
-        # HSV Color Filter
-        binary = libvision.filters.hsv_filter(frame,
-            self.lower_hue,
-            self.upper_hue,
-            self.min_saturation,
-            self.max_saturation,
-            self.min_value,
-            self.max_value,
-            self.hue_bandstop,
-        )'''
         #use RGB color finder 
         binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,1500,800,.3)
 
@@ -137,9 +127,13 @@ class DoublePathEntity(VisionEntity):
 
         # Morphology
         # We size the kernel to about the width of a path.
+        # TODO: If we ever uncomment this, speed it up with
+        #       cv.MorphologyEx
+        '''
         kernel = cv.CreateStructuringElementEx(7, 7, 3, 3, cv.CV_SHAPE_ELLIPSE)
         cv.Erode(binary, binary, kernel, 1)
         cv.Dilate(binary, binary, kernel, 1)
+        '''
 
         # Get Edges
         cv.Canny(binary, binary, 30, 40)
