@@ -62,14 +62,12 @@ class BuoysEntity(VisionEntity):
 
     def find(self, frame, debug=True):
 
-        '''
         # Scale image to reduce processing
-        frame_scaled = cv.CreateImage((frame.width*0.5, frame.height*0.5), 8, 3)
+        scale = 0.7
+        frame_scaled = cv.CreateImage((frame.width*scale, frame.height*scale), 8, 3)
         cv.Resize(frame, frame_scaled)
-        cv.SetImageROI(frame, (0, 0, frame.width*0.5, frame.height*0.5))
-        #scale_in_place(frame, (frame.width*0.5, frame.height*0.5))
-        '''
-        frame_scaled = frame
+        cv.SetImageROI(frame, (0, 0, frame.width*scale, frame.height*scale))
+        #scale_in_place(frame, (frame.width*scale, frame.height*scale))
 
         # debug_frame will be copied to frame at the end if debug=True
         if debug:
