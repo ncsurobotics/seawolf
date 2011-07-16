@@ -21,10 +21,13 @@ PERPENDICULAR_THRESHOLD = pi/8 #how close in radians to perpendicular we expect 
 ORIENT_TIME_THRESHOLD = 3
 ORIENT_ANGLE_THRESHOLD = 7
 
+ORIENT_DELAY = 0.1
+
 class PathMission(MissionBase):
 
     def __init__(self):
         self.centered_count = 0
+        self.last_time_oriented = None
 
     def init(self):
         self.entity_searcher.start_search([
@@ -57,7 +60,9 @@ class PathMission(MissionBase):
     def state_orienting(self, entity_found):
 
         # Update orientation if path is seen
-        if entity_found:
+        t = time()
+        if not self.last_time_oriented or (entity_found and t-self.last_time_oriented > ORIENT_DELAY):
+            self.last_time_oriented = t
 
             # Get path angle
             current_yaw = (entity_found.current_yaw*(pi/180)) % (2*pi)
@@ -74,8 +79,11 @@ class PathMission(MissionBase):
             turn_routine = sw3.SetYaw((180/pi)*path_angle)
             sw3.nav.do(turn_routine)
 
+        elif not entity_found:
+            print "Not orienting because of delay"
+
         desired_yaw = seawolf.var.get("YawPID.Heading")
-        error = util.circular_distance(desired_yaw, entity_found.current_yaw, 180, -180)
+        error = util.circular_distance(desired_yaw, sw3.data.imu.yaw, 180, -180)
         print "Angle Error:", error
         t = time()
         if not self.orient_time or error > ORIENT_ANGLE_THRESHOLD:
