@@ -38,7 +38,7 @@ class BuoyBoxEntity(VisionEntity):
     def __init__(self):
 
         # Thresholds
-        self.horizontal_threshold = 0.2  # How close to horizontal lines must be
+        self.horizontal_threshold = math.pi / 2  # How close to horizontal lines must be
         self.hough_threshold = 50
         self.adaptive_thresh_blocksize = 19
         self.adaptive_thresh = 7
