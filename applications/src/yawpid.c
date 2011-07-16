@@ -4,7 +4,7 @@
 
 #include <math.h>
 
-#define THRUSTER_CAP 0.4
+#define THRUSTER_CAP 0.2
 
 static double thruster_log(double mv) {
     if (fabs(mv) < 0.01) return 0.0;
