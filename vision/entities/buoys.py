@@ -47,6 +47,7 @@ class BuoysEntity(VisionEntity):
         self.buoy_locations = []
         self.seen_buoy_count = 0
         self.initial_search_lost = -1
+        self.buoy_scale = None
 
         self.saturation_adaptive_thresh_blocksize = 51
         self.saturation_adaptive_thresh = 15
@@ -96,6 +97,9 @@ class BuoysEntity(VisionEntity):
                 if self.initial_search_lost != -1:
                     self.initial_search_lost += 1
 
+        if self.initial_search_lost >= INIT_SEARCH_LOST_TIMEOUT:
+            self.buoy_scale = None
+
         # Tracking
         num_buoys_found = 0
         if self.trackers:
@@ -122,6 +126,8 @@ class BuoysEntity(VisionEntity):
 
         tracker = None
         if self.seen_buoy_count >= INIT_TRACKING_THRESHOLD:
+            #record size of prop
+            self.buoy_scale = abs(buoy_dist / frame.width)
 
             # Initialize Tracking
             tracker = libvision.Tracker(
@@ -133,7 +139,7 @@ class BuoysEntity(VisionEntity):
                         buoy_dist*TRACKING_SEARCH_AREA_MULTIPLIER),
                 min_z_score=TRACKING_MIN_Z_SCORE,
                 alpha=TRACKING_ALPHA,
-                debug=True,
+                #debug=True,
             )
 
         # Debug info
