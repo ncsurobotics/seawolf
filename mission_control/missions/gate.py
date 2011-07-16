@@ -22,7 +22,9 @@ class GateMission(MissionBase):
             entities.GateEntity(self.gate_type),
         ])
         sw3.nav.do(sw3.CompoundRoutine([
-            sw3.Forward(FORWARD_SPEED), sw3.SetDepth(2)
+            sw3.Forward(FORWARD_SPEED),
+            sw3.SetDepth(2),
+            sw3.HoldYaw(),
         ]))
 
     def step(self, entity_found):
