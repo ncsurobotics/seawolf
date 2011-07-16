@@ -54,6 +54,7 @@ class DoublePathMission(MissionBase):
         #If we see two paths, determine which one is correct
         #and record its abolute angle
         if entity_found and len(entity_found.paths) == 2:
+            print "See Two Paths"
             cur_heading = sw3.data.imu.yaw *  pi / 180 
             ang1 = cur_heading + entity_found.paths[0].theta
             ang2 = cur_heading + entity_found.paths[1].theta
@@ -76,9 +77,11 @@ class DoublePathMission(MissionBase):
                 #2nd path is our desired path
                 target_path = entity_found.paths[1]
                 self.known_angle = ang2
+            print "setting known angle = ", self.known_angle
 
         #if we see one path, check that it is at an expected angle
         elif entity_found and len(entity_found.paths) == 1:
+            print "see one path"
             cur_heading = sw3.data.imu.yaw * pi / 180
             ang = cur_heading + entity_found.paths[0].theta
             diff = abs(util.circular_distance(ang,self.reference_angle,pi,-pi))
@@ -88,20 +91,26 @@ class DoublePathMission(MissionBase):
             ang -= pi
 
             if self.known_angle:
+                print "alligning wiht known_angle"
                 #we have already seen a path we know is correct
                 #only track a path if it has a similar angle
                 ang_error = abs(util.circular_distance(ang, self.known_angle, pi, -pi))
                 if ang_error < ANGULAR_IDENTIFICATION_THRESHOLD:
                     #this is the correct path
                     target_path = entity_found.paths[0]
+                    print "path matches known angle"
                 else:
                     target_path = None
+                    print "path failed known angle"
             else:
+                print "using cutoff angle"
                 #check to make sure the angle is where we expect
                 if ang < CUTOFF_ANGLE:
+                    print "path passes cutoff angle"
                     target_path = entity_found.paths[0]
                     self.known_angle = ang
                 elif not self.seen_bad_path:
+                    print "this is a bad path"
                     #this is not the correct path!! turn 60 degrees
                     #to the left and flag that we have turned
                     self.seen_bad_path = True
@@ -109,6 +118,7 @@ class DoublePathMission(MissionBase):
                     target_path = None
                 else:
                     #hopefully we will see the correct path soon
+                    print "see nothing or a bad path"
                     target_path = None
 
         #we see no paths, or more than two paths
