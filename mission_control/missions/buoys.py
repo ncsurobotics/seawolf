@@ -7,11 +7,15 @@ from missions.base import MissionBase
 import sw3
 import seawolf
 
-DEGREE_PER_PIXEL = 0.1
+DEGREE_PER_PIXEL = 0.03
+SCALE_POWER = .3
 DEPTH_PER_PIXEL = -1/50
 INITIAL_FORWARD_SPEED = 0.2
 TRACKING_FORWARD_SPEED = 0.4
-MISSION_TIMEOUT = 7
+
+INITIAL_DEPTH = 5.5
+DEPTH_ERROR_MARGIN = 0.5 #how close to initial depth we must be before starting to correct from vision
+MISSION_TIMEOUT = 27  # Total time after seeing first buoy we have to run the mission
 
 class BuoysMission(MissionBase):
 
@@ -19,13 +23,14 @@ class BuoysMission(MissionBase):
         self.correct_buoy_index = None
         self.seen_count = 0
         self.first_seen = None
+        self.initial_depth_achieved = False
 
     def init(self):
         self.entity_searcher.start_search([
             entities.BuoysEntity(),
         ])
         sw3.nav.do(sw3.CompoundRoutine([
-            sw3.Forward(INITIAL_FORWARD_SPEED), sw3.SetDepth(6)
+            sw3.Forward(INITIAL_FORWARD_SPEED), sw3.SetDepth(INITIAL_DEPTH)
         ]))
         self.initial_angle = sw3.data.imu.yaw
 
@@ -33,8 +38,11 @@ class BuoysMission(MissionBase):
 
         # Complete mission after we've seen it for MISSION_TIMEOUT seconds
         self.set_entity_timeout(0.1)
+        #debug
+        if self.first_seen:
+            print "we have seen the buoys for ",time()-self.first_seen,"seconds"
+
         if self.first_seen and time() - self.first_seen > MISSION_TIMEOUT:
-            sw3.nav.do(sw3.Forward(0.8))
             return True
 
         # Don't run mission if we didn't see it
@@ -58,15 +66,38 @@ class BuoysMission(MissionBase):
         # If center buoy was found, go towards it
         location = entity_found.buoy_locations[self.correct_buoy_index]
 
-        if location and time()-self.first_seen < 15:
-            yaw_routine = sw3.RelativeYaw(location.x * DEGREE_PER_PIXEL)
+        # Start correcting depth after reached INITIAL_DEPTH
+        if sw3.data.depth >= INITIAL_DEPTH - DEPTH_ERROR_MARGIN:
+            self.initial_depth_achieved = True
+            print "initial depth achieved"
+
+        if location and time()-self.first_seen < MISSION_TIMEOUT:
+            yaw_correction = location.x * DEGREE_PER_PIXEL
+            if entity_found.buoy_scale:
+                temp_scale = entity_found.buoy_scale
+                temp_scale -= 1
+                temp_scale *= SCALE_POWER
+                temp_scale += 1
+                temp_scale = max(0, temp_scale)
+                temp_scale = min(1, temp_scale)
+
+                yaw_correction *=  temp_scale
+                print "temp_scale = ",temp_scale
+
+            yaw_routine = sw3.RelativeYaw(yaw_correction)
             new_depth_heading = location.y * DEPTH_PER_PIXEL
             depth_routine = sw3.RelativeDepth(new_depth_heading)
             forward_routine = sw3.Forward(TRACKING_FORWARD_SPEED)
-            compound_routine = sw3.CompoundRoutine([
-                yaw_routine, depth_routine, forward_routine
-            ])
+            if self.initial_depth_achieved:
+                compound_routine = sw3.CompoundRoutine([
+                    yaw_routine, depth_routine, forward_routine
+                ])
+            else:
+                compound_routine = sw3.CompoundRoutine([
+                    yaw_routine, forward_routine
+                ])
             sw3.nav.do(compound_routine)
 
-            print "Yaw relative:", location.x * DEGREE_PER_PIXEL
+            print "Yaw relative:", yaw_correction
 
+        return False
