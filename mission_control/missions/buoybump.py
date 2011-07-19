@@ -7,11 +7,11 @@ from missions.base import MissionBase
 import sw3
 import seawolf
 
-ANGULAR_CORRECTION = -15 #degrees to turn when above buoys
+ANGULAR_CORRECTION = 5 #degrees to turn when above buoys
 TURNING_TIME = 0.5 #time to turn while above buoys
 
 INITIAL_FORWARD_SPEED = .35
-INITIAL_TIMEOUT = 17
+INITIAL_TIMEOUT = 27
 BUMPING_SPEED = .3
 BUMPING_TIME = 5 #how many seconds we give seawolf to bump the buoy
 BACKING_SPEED = -.4 #how fast to back up

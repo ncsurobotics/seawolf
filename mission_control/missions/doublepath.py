@@ -12,12 +12,14 @@ from sw3 import util
 import seawolf
 
 # If the path's position is off by more than this much, turn towards it
-PREFERED_DIRECTION = 1 #1 is left, -1 is right
-CUTOFF_ANGLE = -5 #hard division between paths
+PREFERED_DIRECTION = 0 #1 is left, -1 is right
+CUTOFF_ANGLE = -45 #hard division between paths
 CENTERED_THRESHOLD = 60  # pixel distance
 THETA_CENTERING_THRESHOLD = 30 * (pi/180)  # radians
 CENTERED_FRAMES_THRESHOLD = 3  # Center for this many frames before orientation
 PERPENDICULAR_THRESHOLD = pi/8 #how close in radians to perpendicular we expect buoy rods to be
+
+BAD_PATH_ANGLE = -90
 
 # Angle precision and time we must be oriented to finish mission
 ORIENT_TIME_THRESHOLD = 3
@@ -114,7 +116,7 @@ class DoublePathMission(MissionBase):
                     #this is not the correct path!! turn 60 degrees
                     #to the left and flag that we have turned
                     self.seen_bad_path = True
-                    sw3.nav.do(sw3.RelativeYaw(-60))
+                    sw3.nav.do(sw3.RelativeYaw(BAD_PATH_ANGLE))
                     target_path = None
                 else:
                     #hopefully we will see the correct path soon

@@ -5,10 +5,10 @@ import entities
 from missions.base import MissionBase
 import sw3
 
-INITIAL_TIMEOUT = 25  # Timeout if we never see the love lane
-MISSION_TIMEOUT = 8  # Timeout after we've seen the love lane
+INITIAL_TIMEOUT = 15  # Timeout if we never see the love lane
+MISSION_TIMEOUT = 5  # Timeout after we've seen the love lane
 
-DEGREE_PER_PIXEL = 0.19
+DEGREE_PER_PIXEL = 0.015
 APPROACH_SPEED = 0.4
 TRACKING_SPEED = 0.4
 DEPTH = 5.5

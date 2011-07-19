@@ -10,6 +10,8 @@ DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.4
 
+YAW_CORRECTION = -3
+
 class GateMission(MissionBase):
 
     def __init__(self, gate_type=entities.GATE_WHITE):
@@ -32,6 +34,9 @@ class GateMission(MissionBase):
 
         if not entity_found:  # timeout has been triggered
             if self.gate_seen:
+                sw3.nav.do(
+                    sw3.RelativeYaw(YAW_CORRECTION),
+                )
                 return True
             else:
                 return False

@@ -44,15 +44,17 @@ class FakeBuoysEntity(VisionEntity):
                     TRACKING_SEARCH_AREA,
                     min_z_score=TRACKING_MIN_Z_SCORE,
                     alpha=TRACKING_ALPHA,
+                    debug=True
             ))
             #self._show_debug = False
 
     def find(self, frame, debug=True):
 
         # Scale image to reduce processing
-        frame_scaled = cv.CreateImage((frame.width*0.5, frame.height*0.5), 8, 3)
+        scale = 1
+        frame_scaled = cv.CreateImage((frame.width*scale, frame.height*scale), 8, 3)
         cv.Resize(frame, frame_scaled)
-        cv.SetImageROI(frame, (0, 0, frame.width*0.5, frame.height*0.5))
+        cv.SetImageROI(frame, (0, 0, frame.width*scale, frame.height*scale))
 
         self.frame = frame_scaled
 

@@ -167,7 +167,7 @@ class BuoysEntity(VisionEntity):
 
                 # Draw buoy on debug frame
                 if debug_frame:
-                    cv.Circle(debug_frame, location, 5, id_colors[i])
+                    cv.Circle(debug_frame, location, 10, id_colors[i], 2)
 
                 locations.append(adjust_location(location, frame.width, frame.height))
 

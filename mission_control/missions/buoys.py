@@ -7,9 +7,10 @@ from missions.base import MissionBase
 import sw3
 import seawolf
 
+MAXIMUM_DEPTH = 7
 DEGREE_PER_PIXEL = 0.03
 SCALE_POWER = .3
-DEPTH_PER_PIXEL = -1/50
+DEPTH_PER_PIXEL = -1/75
 INITIAL_FORWARD_SPEED = 0.2
 TRACKING_FORWARD_SPEED = 0.4
 
@@ -88,10 +89,16 @@ class BuoysMission(MissionBase):
             new_depth_heading = location.y * DEPTH_PER_PIXEL
             depth_routine = sw3.RelativeDepth(new_depth_heading)
             forward_routine = sw3.Forward(TRACKING_FORWARD_SPEED)
-            if self.initial_depth_achieved:
+            # Only adjust depth if:
+            #   * Initial depth has been reached and
+            #   * (We're rising or we're diving to less than MAXIMUM_DEPTH)
+            if self.initial_depth_achieved and \
+                (new_depth_heading <= 0 or sw3.data.depth + new_depth_heading <= MAXIMUM_DEPTH):
+
                 compound_routine = sw3.CompoundRoutine([
                     yaw_routine, depth_routine, forward_routine
                 ])
+
             else:
                 compound_routine = sw3.CompoundRoutine([
                     yaw_routine, forward_routine

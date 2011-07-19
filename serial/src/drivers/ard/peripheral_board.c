@@ -1,6 +1,8 @@
 
 #include "seawolf.h"
 
+#include "math.h"
+
 #define CTRL_LIGHTS  0x01
 #define CTRL_DROPPER 0x02
 #define CTRL_TORPEDO 0x03
@@ -9,6 +11,12 @@
 #define PSI_PER_FOOT 0.4335
 #define AIR_PRESSURE 14.23
 #define DEPTH_ZERO 0.57
+
+/* Ignore changes in depth greater than this. */
+#define MAX_DEPTH_DELTA 2
+
+/* Stops depth from running. */
+#define DISABLE_DEPTH
 
 void manage(SerialPort sp);
 
@@ -88,6 +96,9 @@ void manage(SerialPort _sp) {
                 Logging_log(ERROR, Util_format("Unknown event 0x%02X 0x%02X", data[1], data[2]));
             }
         } else if(data[0] == 0x02) {
+            #ifdef DISABLE_DEPTH
+                continue;
+            #endif
             /* Compute depth */
             raw_depth = (data[1] * 256) + data[2];
             voltage = raw_depth * (5.0/1024.0);
@@ -98,8 +109,8 @@ void manage(SerialPort _sp) {
                 good_depth_seeded = true;
                 last_good_depth = depth;
             }
-            
-            if(abs(depth - last_good_depth) > 2) {
+
+            if(fabs(depth - last_good_depth) > MAX_DEPTH_DELTA) {
                 Logging_log(ERROR, Util_format("Extraodinary depth value. (%.2f, 0x%04x)", depth, raw_depth));
                 continue;
             }

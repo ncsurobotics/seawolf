@@ -58,6 +58,7 @@
 #define BLUE_WEIGHT 1
 #define REL_SEPARATION_THRESHOLD .2 //how low the histogram must drop relative to current peak
 #define ABS_SEPARATION_THRESHOLD 100 //how absolutely low the histogram must drop in order to consider a blob 'isolated' 
+#define STDDEV_THRESHOLD 40 //required stddev of histogram to accept a blob
 
 struct RGBPixel_s {
     unsigned char r;
@@ -81,6 +82,8 @@ IplImage* find_target_color_rgb(IplImage* frame, int red, int green, int blue, i
     double imgAverage_r=0; //hold average colors for this image as doubles
     double imgAverage_g=0;
     double imgAverage_b=0;
+    double variance = 0; //the variance of the histogram
+    int sample_size = 0; //the sample used to compute variance
     RGBPixel imgAverage;
     RGBPixel tempPixel;
    
@@ -163,34 +166,51 @@ IplImage* find_target_color_rgb(IplImage* frame, int red, int green, int blue, i
 
     //first see if a large group is isolated from the rest of the histogram
     //if that failed, use a differential approach to locate the first peak
-    for( i=smallestr; i<maxr && i<dev_threshold && i<raverage; i+=3){
-        //keep up a few basic values
-        int cur_sum = radii[i] + radii[i+1] + radii[i+2]; 
-        if(cur_sum > max_peak) max_peak = cur_sum;
-        tot_sum += cur_sum;
+    for( i=smallestr; i<maxr; i+=3){
+        //compute variance / standard deviation
+        variance += (radii[i])*(i-raverage)*(i-raverage);
+        sample_size += radii[i];
 
-        //test differential threshold(looks for first peak)
-        if (cur_sum < prev_sum && tot_sum > min_blobsize && !target_sum ) {
-            target_sum = tot_sum + tot_sum * precision_threshold;
-        }
-        if (target_sum && tot_sum >= target_sum && !check_dif) { 
-            rlimit_dif = i;
-            check_dif = 1;
-        }
-        prev_sum = cur_sum; 
+        if (i<dev_threshold && i<raverage){
+            //keep up a few basic values
+            int cur_sum = radii[i] + radii[i+1] + radii[i+2]; 
+            if(cur_sum > max_peak) max_peak = cur_sum;
+            tot_sum += cur_sum;
 
-        //test valley threshold(looks for first valley)
-        int in_valley = 0;
-        if( cur_sum < REL_SEPARATION_THRESHOLD*max_peak || cur_sum < ABS_SEPARATION_THRESHOLD){
-            in_valley = 1;
-        }
-        if ( tot_sum > min_blobsize && in_valley && !check_thresh ){
-            rlimit_thresh = i;
-            check_thresh = 1;
-        }
+            //test differential threshold(looks for first peak)
+            if (cur_sum < prev_sum && tot_sum > min_blobsize && !target_sum ) {
+                target_sum = tot_sum + tot_sum * precision_threshold;
+            }
+            if (target_sum && tot_sum >= target_sum && !check_dif) { 
+                rlimit_dif = i;
+                check_dif = 1;
+            }
+            prev_sum = cur_sum; 
 
-        if( check_dif && check_thresh )
-            break;
+            //test valley threshold(looks for first valley)
+            int in_valley = 0;
+            if( cur_sum < REL_SEPARATION_THRESHOLD*max_peak || cur_sum < ABS_SEPARATION_THRESHOLD){
+                in_valley = 1;
+            }
+            if ( tot_sum > min_blobsize && in_valley && !check_thresh ){
+                rlimit_thresh = i;
+                check_thresh = 1;
+            }
+
+            if( check_dif && check_thresh )
+                break;
+        }
+    }
+
+    //compute standard deviation
+    variance /= sample_size;
+    int stddev = pow(variance,(double)0.5);
+
+    //verify that stddev is large enough that 
+    //  we could be seeing a correctly colored blob
+    if(stddev < STDDEV_THRESHOLD){
+        rlimit_thresh = 0;
+        rlimit_dif = 0;
     }
 
     if(rlimit_thresh){
@@ -211,7 +231,18 @@ IplImage* find_target_color_rgb(IplImage* frame, int red, int green, int blue, i
         CvPoint pt2 = {rlimit,299};
         CvScalar cutoffline_color = {254,254,254};
         cvLine(rgram,pt1,pt2,cutoffline_color,1,8,0);
+#if 0
+        CvPoint pt1 = {raverage - stddev,0};
+        CvPoint pt2 = {raverage - stddev,299};
+        CvScalar stddevline_color = {254,254,254};
+        cvLine(rgram,pt1,pt2,stddevline_color,1,8,0);
 
+        CvPoint pt3 = {raverage,0};
+        CvPoint pt4 = {raverage,299};
+        CvScalar raverageline_color = {100,100,100};
+        cvLine(rgram,pt3,pt4,raverageline_color,1,8,0);
+
+#endif 
         cvNamedWindow("Rgram", CV_WINDOW_AUTOSIZE);
         cvShowImage("Rgram", rgram);
     #endif

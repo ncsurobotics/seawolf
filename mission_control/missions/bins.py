@@ -14,8 +14,8 @@ from sw3 import util
 
 #bins we are supposed to mark.
 # 1=X  2=O  3=x  4=o 
-BIN1 = 1
-BIN2 = 2
+BIN1 = 2
+BIN2 = 1
 # If the bin's position is off by more than this much, turn towards it
 APPROACH_VELOCITY = .35  #speed while looking for the bins
 TRACKING_VELOCITY = .27  #speed while on top of the bins
@@ -27,8 +27,8 @@ RADIAL_CENTERING_THRESHOLD = 30  #radial displacement tolerance for alligning wi
 MISSION_TIMEOUT = 800 #blindly restart the mission if we see nothing for this long
 CENTERED_TIME_THRESHOLD = 5 #how long we must stay centered before acknowledging it 
 APPROACH_DEPTH = 4 #how deep when approaching obstacle
-EXAM_DEPTH = 4     #how deep when walkign along row of bins
-DROP_DEPTH = 4   #how deep when dropping a marker 
+EXAM_DEPTH = 5     #how deep when walkign along row of bins
+DROP_DEPTH = 5   #how deep when dropping a marker 
 DEPTH_ERROR_THRESHOLD = .6 #how far from target depth we may be
 BIN_SEARCH_TIMEOUT = 7 #how many secodns we must not see a new bin for in order to time out
 DROP_DELAY = 2 #how many seconds to spend dropping a ball
@@ -58,7 +58,7 @@ class BinsMission(MissionBase):
         self.obstacle_angle = 0
         self.patrol_direction = 1
         #be sure step always gets called
-        self.set_entity_timeout(.001)
+        self.set_entity_timeout(.5)
 
     def reset_timeouts(self):
         self.state_timeout = 0
@@ -241,11 +241,13 @@ class BinsMission(MissionBase):
             #if we are alligned with our target angle, continue
             ang_error = abs(util.circular_distance(self.obstacle_angle,sw3.data.imu.yaw,180,-180))
             if ang_error < ANGULAR_CENTERING_THRESHOLD: 
+                print "angle error correct"
                 self.state += 1
                 self.state_timeout = time()
-                sw3.nav.do(sw3.Forward(TRACKING_SPEED))
+                sw3.nav.do(sw3.Forward(TRACKING_VELOCITY))
 
         if(self.state == 5):
+            print "looking for a new bin"
             #we are moving forward, looking for a new bin
             sw3.nav.do(sw3.Forward(self.patrol_direction * TRACKING_VELOCITY))
 
@@ -254,6 +256,7 @@ class BinsMission(MissionBase):
             #take note and begin to track it
             for i, a_bin in enumerate(entity_found.known_bins):
                 if not self.target or not a_bin.id == self.target.id:
+                    self.state = 1
                     self.target = a_bin
                     found_new_bin = True
                     print "found new bin with ID = ", a_bin.id
@@ -269,9 +272,6 @@ class BinsMission(MissionBase):
             #start centering on target bin
             self.center_on_target(True)
             self.centering = True
-
-            #initialization finished
-            self.state = 1
 
     def center_on_target(self, target_visible):
 

@@ -24,15 +24,22 @@ import missions
 from mission_controller import MissionController
 
 MISSION_ORDER = [
-    missions.GateMission(),
-    missions.PathMission(),
-    missions.BuoysMission(),
-    missions.BuoyBumpMission(),
-    missions.PathMission(),
-    missions.LoveLaneMission(),
-    missions.DoublePathMission(),
-    missions.BinsMission(),
-    missions.PathMission(),
+    missions.GateMission,
+    missions.PathMission,
+    missions.BuoysMission,
+    missions.BuoyBumpMission,
+    missions.PathMission,
+    missions.AngleChangeMission,
+    missions.LoveLaneMission,
+    #missions.FinishHedgeMission,
+    missions.DoublePathMission,
+    missions.BinsMission,
+
+    missions.DepthChangeMission,
+    missions.PathMission,
+    missions.LoveLaneMission,
+    missions.PathMission,
+    missions.DepthChangeMission2,
 ]
 
 def unbreak_firewire():
@@ -105,8 +112,8 @@ if __name__ == "__main__":
         )
 
         # Add missions
-        for mission in MISSION_ORDER[options.initial_mission:]:
-            mission_controller.append_mission(mission)
+        for mission_cls in MISSION_ORDER[options.initial_mission:]:
+            mission_controller.append_mission(mission_cls())
 
         try:
             mission_controller.execute_all()
