@@ -99,6 +99,7 @@ while True:
         elif event.name == "button1":
             print "Zeroing thrusters"
             sw3.nav.do(sw3.ZeroThrusters())
+            depth_heading = 0
 
         elif event.name == "button4":
             while js.poll().name != "button4":
@@ -107,6 +108,7 @@ while True:
             if js.poll().name == "button4":
                 print "Breeching!"
                 sw3.nav.do(sw3.EmergencyBreech())
+                depth_heading = 0
             else:
                 print "Canceled."
 
