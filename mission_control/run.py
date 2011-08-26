@@ -19,27 +19,12 @@ sys.path.append(parent_directory)
 sys.path.append(vision_directory)
 
 import vision
-from entities import get_all_used_cameras
 import missions
 from mission_controller import MissionController
 
 MISSION_ORDER = [
+    missions.TestMission,
     missions.GateMission,
-    missions.PathMission,
-    missions.BuoysMission,
-    missions.BuoyBumpMission,
-    missions.PathMission,
-    missions.AngleChangeMission,
-    missions.LoveLaneMission,
-    #missions.FinishHedgeMission,
-    missions.DoublePathMission,
-    missions.BinsMission,
-
-    missions.DepthChangeMission,
-    missions.PathMission,
-    missions.LoveLaneMission,
-    missions.PathMission,
-    missions.DepthChangeMission2,
 ]
 
 def unbreak_firewire():
@@ -69,12 +54,6 @@ if __name__ == "__main__":
         dest="delay", default=10,
         help="Delay between frames, in milliseconds, or -1 to wait for "
             "keypress")
-    opt_parser.add_option("-c", "--camera", nargs=2, action="append",
-        type="string", metavar="<camera> <index/filename>",
-        dest="cameras", default=[],
-        help="Specifies that the camera given should use the given index or "
-            "file to capture its frames.  Camera names should be one of: %s" %
-            vision.entities.get_all_used_cameras())
     opt_parser.add_option("-r", "--record", action="store_true",
         default="true", dest="record",
         help="All images captured from cameras will be recorded.")
@@ -89,25 +68,15 @@ if __name__ == "__main__":
         help="Indicates that no graphical windows will be displayed.")
     options, args = opt_parser.parse_args(sys.argv)
 
-    # Put camera option into dictionary format
-    camera_dict = {}
-    for camera_name, camera_index in options.cameras:
-        camera_dict[camera_name] = camera_index
-
     unbreak_firewire()
     sleep(1)
 
-    entity_searcher = vision.EntitySearcher(
-        camera_indexes=camera_dict,
-        is_graphical=options.graphical,
-        record=options.record,
-        delay=options.delay,
-    )
+    process_manager = vision.ProcessManager()
 
     while True:
 
         mission_controller = MissionController(
-            entity_searcher,
+            process_manager,
             options.wait_for_go,
         )
 
@@ -124,6 +93,6 @@ if __name__ == "__main__":
         else:
             break
 
-    entity_searcher.kill()
+    process_manager.kill()
     mission_controller.kill()
 

@@ -1,13 +1,12 @@
 
-from missions.base import MissionBase
 import entities
+from missions.base import MissionBase
 
 class TestMission(MissionBase):
-
+    
     def init(self):
-        self.entity_searcher.start_search([
-            entities.PathEntity(),
-        ])
+        print "inititalizing TestEntity"
+        self.process_manager.start_process(entities.TestEntity, "test", 1)
 
-    def step(self, entity_found):
-        print "Found Object: %s" % entity_found
+    def step(self, vision_data):
+        print "vision data =", vision_data

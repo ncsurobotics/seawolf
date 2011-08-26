@@ -17,15 +17,14 @@ Error: Could not import library "seawolf".
 class MissionController(object):
     '''Orchestrates the execution of a queue of missions.'''
 
-    def __init__(self, entity_searcher, wait_for_go=False):
+    def __init__(self, process_manager, wait_for_go=False):
         '''
         Arguments:
 
-        entity_searcher - An EntitySearcher object.
-
+        process_manager
         '''
 
-        self.entity_searcher = entity_searcher
+        self.process_manager = process_manager
         self.wait_for_go = wait_for_go
         self.mission_queue = deque()
         self.current_mission = None
@@ -38,14 +37,10 @@ class MissionController(object):
             seawolf.init(application_name)
             seawolf.notify.filter(seawolf.FILTER_ACTION, "GO")
 
-        # Zero Heading
-        #TODO
 
-        # Set Reference Angle
-        self.reference_angle = None #TODO
 
     def kill(self):
-        self.entity_searcher.start_search([])
+        self.process_manager.kill()
         sw3.nav.do(sw3.NullRoutine())
     __del__ = kill
 
@@ -58,7 +53,7 @@ class MissionController(object):
             while not seawolf.notify.available():
                 seawolf.var.set("MissionReset", 0)
                 sleep(0.1)
-                self.entity_searcher.ping()
+                self.process_manager.ping()
             action, param = seawolf.notify.get()
 
         # Run missions
@@ -91,6 +86,6 @@ class MissionController(object):
             print "MISSION FINISHED"
         except ExitSignal:
             sys.exit(0)
-        self.entity_searcher.start_search([])
+        self.process_manager.kill()
         return True
 

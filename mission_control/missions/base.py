@@ -13,7 +13,7 @@ class MissionBase(object):
     def register_mission_controller(self, mission_controller):
         ''' Called by the mission controller when the mission is added.'''
         self.mission_controller = mission_controller
-        self.entity_searcher = mission_controller.entity_searcher
+        self.process_manager = mission_controller.process_manager
 
     def init(self):
         '''Called once right before the mission is executed.'''
@@ -44,17 +44,14 @@ class MissionBase(object):
             if seawolf.var.get("MissionReset"):
                 raise MissionControlReset()
 
-            entity = self.entity_searcher.get_entity(0.1)
+            vision_data  = self.process_manager.get_data()
 
-            if entity:
-                last_entity_timestamp = time()
-                if self.step(entity):
-                    break
-
-            elif self._entity_timeout and time()-last_entity_timestamp > self._entity_timeout:
-                last_entity_timestamp = time()
-                if self.step(None):
-                    break
+            if vision_data == None: 
+                ''' no new fram has been processed ''' 
+                pass
+            else:
+                ''' at least one process has new information '''
+                self.step(vision_data)
 
     def finish_mission(self, *args, **kwargs):
         '''Marks the mission complete so self.execute() will return.
