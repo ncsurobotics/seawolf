@@ -2,6 +2,7 @@ import process_manager
 import libvision
 import cv
 import os
+from fake_svr import FakeSVR
 
 class VisionEntity(object):
     '''Defines an entity, or object that can be located.
@@ -22,13 +23,13 @@ class VisionEntity(object):
     # The camera name should be a string.
     camera_name = None
 
-    def __init__(self, child_conn, camera_index, *args, **kwargs):
+    def __init__(self, child_conn, camera_name, *args, **kwargs):
 
         #the line of communication down which info will be passed
         self.child_conn = child_conn
 
         #camera of interest
-        self.camera_index = camera_index
+        self.svr = FakeSVR(camera_name)
 
         #perform additional initialization steps
         self.init()
@@ -44,14 +45,6 @@ class VisionEntity(object):
         #open specified camera
 
         record_path = get_record_path()
-        camera = libvision.Camera(self.camera_index, record_path=record_path, display=True)
-        camera.open_capture()
-        if isinstance(camera.identifier, int) and camera.identifier < 300:
-            # Logitech Quickcam Pro 4000
-            # These settings should be persistent on the Logitechs, but they
-            # might occasionally need to be reset.
-            cv.SetCaptureProperty(camera.capture, cv.CV_CAP_PROP_FRAME_WIDTH, 320);
-            cv.SetCaptureProperty(camera.capture, cv.CV_CAP_PROP_FRAME_HEIGHT, 240);
 
         try:
 
@@ -60,11 +53,11 @@ class VisionEntity(object):
                 #check for a kill signal
                 if self.child_conn.poll():
                    if isinstance(self.child_conn.recv(), process_manager.KillSignal):
-                       camera.close()
+                       self.svr.close()
                        return
 
                 #check if a new frame has been captured
-                frame = camera.get_frame()
+                frame = self.svr.get_frame()
 
                 #process any new frame
                 self.process_frame(frame)
@@ -74,7 +67,8 @@ class VisionEntity(object):
 
         # Always close camera, even if an exception was raised
         finally:
-           camera.close()
+           self.svr.close()
+           self.child_conn.send(process_manager.KillSignal())
 
 
     def process_frame(self, frame, debug=True):

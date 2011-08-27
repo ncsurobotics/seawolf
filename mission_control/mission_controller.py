@@ -56,9 +56,13 @@ class MissionController(object):
                 self.process_manager.ping()
             action, param = seawolf.notify.get()
 
-        # Run missions
-        while self.execute_next():
-            pass
+        try :
+            # Run missions
+            while self.execute_next():
+                pass
+        except Exception:
+            self.process_manager.kill()
+            raise 
 
     def append_mission(self, mission):
         '''Adds a mission to the queue.

@@ -13,7 +13,7 @@ class TestEntity(entities.VisionEntity):
             print frame
             cv.ShowImage("Test", frame)
             print "displaying frame"
-            cv.WaitKey(1)
+            cv.WaitKey(10)
         
         self.output = "test data"
 

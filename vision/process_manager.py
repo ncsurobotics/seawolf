@@ -40,7 +40,10 @@ class ProcessManager(object):
 
     def kill(self):
         ''' kill all running sub processes ''' 
-        pass
+        for process in self.process_list:
+            process.kill()
+            
+        self.process_list = []
 
 class VisionProcess(object):
 
@@ -58,7 +61,6 @@ class VisionProcess(object):
     def kill(self):
         '''kills this process'''
         self.parent_conn.send(KillSignal())
-        pass
 
     def run(self, *args, **kwargs):
         '''runs this process'''
@@ -71,6 +73,7 @@ def run_entity(child_conn, entity_cls, *args, **kwargs):
     '''perpetually loops the vision class entity_cls, and outputs data
        through the child_conn pipe '''
     entity = entity_cls(child_conn, *args, **kwargs)
+    print "running", entity
     entity.run()
 
 class KillSignal(Exception):

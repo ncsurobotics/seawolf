@@ -14,6 +14,7 @@ from test import TestEntity
 from gate import GateEntity, GATE_BLACK, GATE_WHITE
 
 entity_classes = {
+    "test": TestEntity,
     "gate": GateEntity,
 }
 
