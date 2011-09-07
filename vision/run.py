@@ -13,6 +13,7 @@ python run.py ENTITY_NAME CAMERA_NAME [CAMERA_NAME ...]
 import sys
 import process_manager
 import entities
+import time
 
 #spawn a process manager, and start the correct vision process
 
@@ -24,14 +25,18 @@ if __name__ == "__main__":
     pm = process_manager.ProcessManager()
 
     #start the requested vision entity
-    pm.start_process(entities.entity_classes[entity_name], entity_name, camera_name )
+    pm.start_process(entities.entity_classes[entity_name], entity_name, camera_name, debug = True )
 
     try:
         while True:
             #for debugging, print out entity output
             output = pm.get_data()
+            if output: 
+                print output
+
     except process_manager.KillSignal:
         # Exit if the subprocess tells us to
         pass
     except Exception:
         pm.kill()
+        raise

@@ -4,6 +4,12 @@ import cv
 import os
 from fake_svr import FakeSVR
 
+class Container(object):
+    '''a blank container object'''
+
+    def __repr__(self):
+        return str(self.__dict__)
+
 class VisionEntity(object):
     '''Defines an entity, or object that can be located.
 
@@ -30,6 +36,13 @@ class VisionEntity(object):
 
         #camera of interest
         self.svr = FakeSVR(camera_name)
+        
+        #handle debug
+        self.debug = False
+        if "debug" in kwargs and kwargs["debug"] == True:
+            self.debug = True
+        
+        self.output = Container()
 
         #perform additional initialization steps
         self.init()
@@ -64,6 +77,11 @@ class VisionEntity(object):
 
                 #return output
                 self.child_conn.send(self.output)
+
+                #wait for gui process
+                if cv.WaitKey(10) == ord('q'):
+                    self.svr.close()
+                    return
 
         # Always close camera, even if an exception was raised
         finally:

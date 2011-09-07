@@ -55,8 +55,12 @@ class VisionProcess(object):
     def get_data(self):
         '''check for incoming data from this process'''
         #return any new data from the queue
-        if self.parent_conn.poll():
-            return self.parent_conn.recv()
+        if self.parent_conn.poll(.1):
+            data =  self.parent_conn.recv()
+            if isinstance(data,KillSignal):
+                raise data
+            else:
+                return data
 
     def kill(self):
         '''kills this process'''
