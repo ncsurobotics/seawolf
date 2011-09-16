@@ -1,0 +1,23 @@
+# Standard ignores
+*.o
+*.so
+*.pyc
+*.db
+*.log
+*~
+*.swp
+
+# Binary output folders
+/serial/bin/
+/applications/bin/
+/acoustics/bfin/bin/
+/acoustics/bfin/acoustics_bundle.tar
+/acoustics/libseawolf/
+
+# Vision
+*.jpg
+*.jpeg
+/vision/libvision/doc/
+/vision/libvision/c/interface.py
+/vision/libvision/c/interface_wrap.c
+/vision/footage/
