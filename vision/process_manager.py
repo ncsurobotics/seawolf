@@ -8,7 +8,7 @@ class ProcessManager(object):
         #holds the list currently running processes
         self.process_list = []
 
-    def start_process(self, proc_cls, name,  *args, **kwargs):
+    def start_process(self, proc_cls, name, *args, **kwargs):
         '''Initiates a process of the class proc_cls.'''
         vision_process = VisionProcess(proc_cls, name)
         self.process_list.append(vision_process)
@@ -20,19 +20,21 @@ class ProcessManager(object):
            package the output into a dictionary '''
 
         vision_data = {}
+        vision_data_empty = True
 
         for process in self.process_list:
             output = process.get_data()
 
-            if output != None:
-                #add this data to the dictionary
-                vision_data[process.name] = output
-                
+            if output != None
+                vision_data_empty = False
+
+            vision_data[process.name] = output
+
         #if vision_data is empty, return None
-        if vision_data: 
-            return vision_data
-        else:
+        if vision_data_empty:
             return None
+        else:
+            return vision_data
 
     def ping(self):
         '''verify that all processes are alive'''

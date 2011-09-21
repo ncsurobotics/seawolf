@@ -41,6 +41,7 @@ class VisionEntity(object):
         self.debug = False
         if "debug" in kwargs and kwargs["debug"] == True:
             self.debug = True
+            print "Base: self.debug = ",self.debug
         
         self.output = Container()
 

@@ -74,7 +74,8 @@ class MissionController(object):
 
         '''
         self.mission_queue.append(mission)
-        mission.register_mission_controller(self)
+        if not isinstance(mission, sw3.NavRoutine):
+            mission.register_mission_controller(self)
 
     def execute_next(self):
         '''Runs the next mission on the queue.'''
@@ -84,12 +85,22 @@ class MissionController(object):
         except IndexError: # deque raises IndexError when it is empty
             return False
         print "Starting mission:", self.current_mission
-        self.current_mission.init()
-        try:
-            self.current_mission.execute()
-            print "MISSION FINISHED"
-        except ExitSignal:
-            sys.exit(0)
+
+        if isinstance(self.current_mission, sw3.NavRoutine):
+            try:
+                sw3.nav.do(self.current_mission)
+                self.current_mission.wait()
+                print "NAV ROUTINE FINISHED"
+            except ExitSignal:
+                sys.exit(0)
+        else:
+            self.current_mission.init()
+            try:
+                self.current_mission.execute()
+                print "MISSION FINISHED"
+            except ExitSignal:
+                sys.exit(0)
+
         self.process_manager.kill()
         return True
 

@@ -9,6 +9,7 @@ import os
 from optparse import OptionParser
 from time import sleep
 import subprocess
+import sw3
 
 parent_directory = os.path.realpath(os.path.join(
     os.path.abspath(__file__),
@@ -22,7 +23,10 @@ import vision
 import missions
 from mission_controller import MissionController
 
+#This is the list of missions, it may contain either missions
+# or NavRoutines 
 MISSION_ORDER = [
+    sw3.Forward(.5,10),
     missions.TestMission,
     missions.GateMission,
 ]
@@ -82,7 +86,10 @@ if __name__ == "__main__":
 
         # Add missions
         for mission_cls in MISSION_ORDER[options.initial_mission:]:
-            mission_controller.append_mission(mission_cls())
+            if isinstance(mission_cls, sw3.NavRoutine):
+                mission_controller.append_mission(mission_cls)
+            else:
+                mission_controller.append_mission(mission_cls())
 
         try:
             mission_controller.execute_all()
