@@ -34,8 +34,16 @@ class VisionEntity(object):
         #the line of communication down which info will be passed
         self.child_conn = child_conn
 
+        #camera name
+        self.camera_name = camera_name
+
         #camera of interest
-        self.svr = FakeSVR(camera_name)
+        self.svr = FakeSVR(self.camera_name)
+
+        if "waitforsync" in kwargs:
+            self.waitforsync = kwargs["waitforsync"]
+        else:
+            self.waitforsync = False
         
         #handle debug
         self.debug = False
@@ -64,12 +72,28 @@ class VisionEntity(object):
 
             while(True):
 
-                #check for a kill signal
-                if self.child_conn.poll():
-                   if isinstance(self.child_conn.recv(), process_manager.KillSignal):
+                #if sync required, do not continue until we receive a message
+                if self.waitforsync and self.child_conn.poll(None):   
+                   signal = self.child_conn.recv()
+                   if isinstance(signal, process_manager.KillSignal):
                        self.svr.close()
                        return
 
+                   elif isinstance(signal, CaptureFrameSignal):
+                       #there's our signal
+                       pass
+
+                   else:
+                       #passed signal at the wrong time 
+                       raise ValueError("Expecting CaptureFrameSignal or KillSignal")
+
+                #else, simply check for kill signal
+                elif self.child_conn.poll():
+                   signal = self.child_conn.recv()
+                   if isinstance(signal, process_manager.KillSignal):
+                       self.svr.close()
+                       return
+                
                 #check if a new frame has been captured
                 frame = self.svr.get_frame()
 
@@ -89,6 +113,8 @@ class VisionEntity(object):
            self.svr.close()
            self.child_conn.send(process_manager.KillSignal())
 
+    def send_message(self, data):
+        self.child_conn.send(data)
 
     def process_frame(self, frame, debug=True):
         ''' process this frame, then place output in self.output'''
@@ -110,9 +136,82 @@ class VisionEntity(object):
             lambda value: setattr(self, var, value))
 
 class MultiCameraVisionEntity(VisionEntity):
-    def __init__(self, child_conn, *args, **kwargs):
-        '''TODO: initialize multiple cameras '''
+    '''spawns and communicates with subprocess, each of which controls a camera'''
+    subprocess = None
+    
+    def __init__(self, child_conn, *cameras, **kwargs):
+
+        #Communication to the process manager 
+        self.child_conn = child_conn
+
+        #start a process manager to handle sub-processes 
+        self.process_manager = process_manager.ProcessManager()
+
+        #store the cameras.  Order will determine camera positions
+        self.cameras = cameras
+
+        #handle debug
+        self.debug = False
+        if "debug" in kwargs and kwargs["debug"] == True:
+            self.debug = True
+            print "Base: self.debug = ",self.debug
+
+        #start a subprocess for every camera
+        for camera_name in cameras:
+            self.process_manager.start_process(self.subprocess,camera_name,camera_name,debug = self.debug)
+        
+        self.output = Container()
+
+        #perform additional initialization steps
+        self.init()
         pass
+
+    def run(self):
+        '''handles running of this entity.  Interfaces with subprocesses, and manages
+            connections. '''
+
+        try:
+
+            while(True):
+
+                #check for a kill signal
+                if self.child_conn.poll():
+                   if isinstance(self.child_conn.recv(), process_manager.KillSignal):
+                       self.process_manager.kill()
+                       return
+
+                #walk workers through processing a frame
+                self.manage_workers()
+
+                #return output
+                self.child_conn.send(self.output)
+
+                #wait for gui process
+                if cv.WaitKey(10) == ord('q'):
+                    self.svr.close()
+                    return
+
+        # Always close camera, even if an exception was raised
+        finally:
+           self.process_manager.kill()
+           self.child_conn.send(process_manager.KillSignal())
+    
+    def sync_capture(self):
+        #send frame sync
+        for process in self.process_manager.process_list:
+            process.send_data(CaptureFrameSignal())
+
+    def wait_for_workers(self):
+        #wait for workers all workers to return data
+        data = self.process_manager.get_data(force = True) 
+        return data
+
+    def manage_workers(self):
+        raise NotImplementedError()
+
+class CaptureFrameSignal():
+    '''used to send frame sync signals to subprocesses'''
+    pass
 
 def get_record_path():
     if not os.path.exists("capture"):

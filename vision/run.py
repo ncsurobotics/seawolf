@@ -19,13 +19,13 @@ import time
 
 if __name__ == "__main__":
     entity_name = sys.argv[1]
-    camera_name = sys.argv[2]
+    camera_names = sys.argv[2:]
 
     #spawn a process manager
     pm = process_manager.ProcessManager()
 
     #start the requested vision entity
-    pm.start_process(entities.entity_classes[entity_name], entity_name, camera_name, debug = True )
+    pm.start_process(entities.entity_classes[entity_name], entity_name, *camera_names, debug = True )
 
     try:
         while True:
