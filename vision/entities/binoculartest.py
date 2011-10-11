@@ -4,15 +4,16 @@ import cv
 
 class BinocularTestWorker(entities.VisionEntity):
     
+    def init(self):
+        cv.NamedWindow(self.camera_name)
+
     def process_frame(self,frame):
         
         if self.debug:
-            #display frame
-            cv.NamedWindow(self.camera_name)
             print frame
-            cv.ShowImage("Test", frame)
+            #display frame
+            cv.ShowImage(self.camera_name, frame)
             print "displaying frame from worker", self.camera_name
-            cv.WaitKey(10)
 
             #return that we have finished processing 
             self.send_message("Finished")

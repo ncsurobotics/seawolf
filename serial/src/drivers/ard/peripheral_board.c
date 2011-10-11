@@ -10,13 +10,13 @@
 /* Air and water pressure constants. Varies by location (calibration recommended) */
 #define PSI_PER_FOOT 0.4335
 #define AIR_PRESSURE 14.23
-#define DEPTH_ZERO 0.57
+#define DEPTH_ZERO 0.0
 
 /* Ignore changes in depth greater than this. */
 #define MAX_DEPTH_DELTA 2
 
 /* Stops depth from running. */
-#define DISABLE_DEPTH
+//#define DISABLE_DEPTH
 
 void manage(SerialPort sp);
 
@@ -108,6 +108,7 @@ void manage(SerialPort _sp) {
             if(good_depth_seeded == false) {
                 good_depth_seeded = true;
                 last_good_depth = depth;
+                continue;
             }
 
             if(fabs(depth - last_good_depth) > MAX_DEPTH_DELTA) {

@@ -24,11 +24,15 @@ import missions
 from mission_controller import MissionController
 
 #This is the list of missions, it may contain either missions
-# or NavRoutines 
+# or NavRoutines
 MISSION_ORDER = [
-    sw3.Forward(.5,10),
-    missions.TestMission,
-    missions.GateMission,
+    #missions.GateMission,
+    sw3.RelativeYaw(-90),
+    sw3.Forward(.5,5),
+    sw3.Forward(0,1),
+    sw3.RelativeYaw(-90),
+    sw3.Forward(.5,5),
+    #missions.TestMission,
 ]
 
 def unbreak_firewire():

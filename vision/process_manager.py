@@ -70,7 +70,7 @@ class ProcessManager(object):
 
     def kill(self):
         ''' kill all running sub processes ''' 
-        for process in self.process_list:
+        for process in self.process_list.values():
             process.kill()
             
         self.process_list = {}
@@ -83,7 +83,7 @@ class VisionProcess(object):
         self.name = name
 
     def get_data(self, delay = 0):
-        '''check for incoming data from this process'''
+        '''check for incoming data from this process''';
         #return any new data from the queue
         if self.parent_conn.poll(delay):
             data =  self.parent_conn.recv()

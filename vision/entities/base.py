@@ -76,23 +76,25 @@ class VisionEntity(object):
                 if self.waitforsync and self.child_conn.poll(None):   
                    signal = self.child_conn.recv()
                    if isinstance(signal, process_manager.KillSignal):
-                       self.svr.close()
-                       return
+                        self.svr.close()
+                        self.child_conn.send(process_manager.KillSignal())
+                        return
 
                    elif isinstance(signal, CaptureFrameSignal):
-                       #there's our signal
-                       pass
+                        #there's our signal
+                        pass
 
                    else:
-                       #passed signal at the wrong time 
-                       raise ValueError("Expecting CaptureFrameSignal or KillSignal")
+                        #passed signal at the wrong time 
+                        raise ValueError("Expecting CaptureFrameSignal or KillSignal")
 
                 #else, simply check for kill signal
                 elif self.child_conn.poll():
-                   signal = self.child_conn.recv()
-                   if isinstance(signal, process_manager.KillSignal):
-                       self.svr.close()
-                       return
+                    signal = self.child_conn.recv()
+                    if isinstance(signal, process_manager.KillSignal):
+                        self.svr.close()
+                        self.child_conn.send(process_manager.KillSignal())
+                        return
                 
                 #check if a new frame has been captured
                 frame = self.svr.get_frame()
@@ -106,12 +108,13 @@ class VisionEntity(object):
                 #wait for gui process
                 if cv.WaitKey(10) == ord('q'):
                     self.svr.close()
+                    self.child_conn.send(process_manager.KillSignal())
                     return
 
         # Always close camera, even if an exception was raised
         finally:
-           self.svr.close()
-           self.child_conn.send(process_manager.KillSignal())
+            self.child_conn.send(process_manager.KillSignal())
+            self.svr.close()
 
     def send_message(self, data):
         self.child_conn.send(data)
@@ -174,11 +177,11 @@ class MultiCameraVisionEntity(VisionEntity):
 
             while(True):
 
-                #check for a kill signal
+                #check for a kill signal from above
                 if self.child_conn.poll():
                    if isinstance(self.child_conn.recv(), process_manager.KillSignal):
                        self.process_manager.kill()
-                       return
+                       break
 
                 #walk workers through processing a frame
                 self.manage_workers()
@@ -189,7 +192,7 @@ class MultiCameraVisionEntity(VisionEntity):
                 #wait for gui process
                 if cv.WaitKey(10) == ord('q'):
                     self.svr.close()
-                    return
+                    break
 
         # Always close camera, even if an exception was raised
         finally:
@@ -198,7 +201,7 @@ class MultiCameraVisionEntity(VisionEntity):
     
     def sync_capture(self):
         #send frame sync
-        for process in self.process_manager.process_list:
+        for process in self.process_manager.process_list.values():
             process.send_data(CaptureFrameSignal())
 
     def wait_for_workers(self):

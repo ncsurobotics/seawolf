@@ -55,9 +55,6 @@ class GateEntity(VisionEntity):
 
     def process_frame(self, frame):
 
-        if self.debug:
-            cv.ShowImage("Gate Debug", cv.CloneImage(frame))
-
         # Resize image to 320x240
         copy = cv.CreateImage(cv.GetSize(frame), 8, 3)
         cv.Copy(frame, copy)
@@ -180,6 +177,8 @@ class GateEntity(VisionEntity):
             cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
             libvision.misc.draw_lines(frame, vertical_lines)
             libvision.misc.draw_lines(frame, horizontal_lines)
+
+            cv.ShowImage("Gate Debug", cv.CloneImage(frame))
 
         #populate self.output with infos
         self.output.seen_crossbar = self.seen_crossbar

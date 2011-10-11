@@ -44,7 +44,7 @@ class MissionBase(object):
             if seawolf.var.get("MissionReset"):
                 raise MissionControlReset()
 
-            vision_data  = self.process_manager.get_data()
+            vision_data = self.process_manager.get_data()
 
             if vision_data == None: 
                 ''' no new fram has been processed ''' 

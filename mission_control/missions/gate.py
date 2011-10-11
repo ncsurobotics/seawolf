@@ -4,6 +4,7 @@ from __future__ import division
 
 import entities
 from missions.base import MissionBase
+from vision import process_manager
 import sw3
 
 MISSION_TIMEOUT = 3
@@ -16,7 +17,6 @@ class GateMission(MissionBase):
     def __init__(self, gate_type=entities.GATE_WHITE):
         self.gate_type = gate_type
         self.gate_seen = 0
-        self.heading_locked = False
 
     def init(self):
         self.process_manager.start_process(entities.GateEntity,"gate", "forward", debug = True)
@@ -32,9 +32,6 @@ class GateMission(MissionBase):
         if isinstance(gate_data, process_manager.KillSignal):
             raise gate_data 
 
-        if self.heading_locked:
-            return  # Do nothing while heading is locked
-
         if gate_data and gate_data.left_pole and gate_data.right_pole:
             gate_center = DEGREE_PER_PIXEL*(gate_data.left_pole + gate_data.right_pole)/2  # degrees
 
@@ -47,9 +44,10 @@ class GateMission(MissionBase):
                     sw3.Forward(FORWARD_SPEED),
                     sw3.HoldYaw()
                 ]))
-                if self.gate_seen > 30:
-                    self.heading_locked = True
+                if self.gate_seen > 10:
                     print "Heading Locked"
+                    self.finish_mission()
+                    return
             else:
                 print "Correcting Yaw", gate_center
                 sw3.nav.do(sw3.CompoundRoutine([
