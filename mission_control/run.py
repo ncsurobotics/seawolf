@@ -26,12 +26,8 @@ from mission_controller import MissionController
 #This is the list of missions, it may contain either missions
 # or NavRoutines
 MISSION_ORDER = [
-    #missions.GateMission,
-    sw3.RelativeYaw(-90),
-    sw3.Forward(.5,5),
-    sw3.Forward(0,1),
-    sw3.RelativeYaw(-90),
-    sw3.Forward(.5,5),
+    missions.GateMission,
+    missions.PathMission,
     #missions.TestMission,
 ]
 
@@ -81,29 +77,31 @@ if __name__ == "__main__":
 
     process_manager = vision.ProcessManager()
 
-    while True:
+    try:
+        while True:
 
-        mission_controller = MissionController(
-            process_manager,
-            options.wait_for_go,
-        )
+            mission_controller = MissionController(
+                process_manager,
+                options.wait_for_go,
+            )
 
-        # Add missions
-        for mission_cls in MISSION_ORDER[options.initial_mission:]:
-            if isinstance(mission_cls, sw3.NavRoutine):
-                mission_controller.append_mission(mission_cls)
+            # Add missions
+            for mission_cls in MISSION_ORDER[options.initial_mission:]:
+                if isinstance(mission_cls, sw3.NavRoutine):
+                    mission_controller.append_mission(mission_cls)
+                else:
+                    mission_controller.append_mission(mission_cls())
+
+            try:
+                mission_controller.execute_all()
+            except missions.MissionControlReset:
+                mission_controller.kill()
+                sleep(2)
+                continue
             else:
-                mission_controller.append_mission(mission_cls())
+                break
 
-        try:
-            mission_controller.execute_all()
-        except missions.MissionControlReset:
-            mission_controller.kill()
-            sleep(2)
-            continue
-        else:
-            break
-
-    process_manager.kill()
-    mission_controller.kill()
+    finally:
+        process_manager.kill()
+        mission_controller.kill()
 

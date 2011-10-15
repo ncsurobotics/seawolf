@@ -1,4 +1,5 @@
 
+import sys
 import time
 from multiprocessing import Process, Pipe
 
@@ -87,8 +88,10 @@ class VisionProcess(object):
         #return any new data from the queue
         if self.parent_conn.poll(delay):
             data =  self.parent_conn.recv()
-            if isinstance(data,KillSignal):
-                raise data
+            #if isinstance(data,KillSignal):
+            if data.__repr__() == KillSignal().__repr__():
+                self.kill()
+                sys.exit()
             else:
                 return data
 
