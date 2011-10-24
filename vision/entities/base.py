@@ -1,8 +1,8 @@
-import process_manager
-import libvision
+from vision import process_manager
+from vision import libvision
 import cv
 import os
-from fake_svr import FakeSVR
+from vision.fake_svr import FakeSVR
 
 class Container(object):
     '''a blank container object'''

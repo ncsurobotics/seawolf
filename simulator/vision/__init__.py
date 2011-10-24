@@ -6,5 +6,5 @@ the same way that the vision system normally would.
 
 '''
 
-from process_manager import ProcessManager
+from process_manager import ProcessManager, KillSignal
 import entities

@@ -2,7 +2,7 @@
 
 from __future__ import division
 
-import entities
+from vision import entities
 from missions.base import MissionBase
 from vision import process_manager
 import sw3

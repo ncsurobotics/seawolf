@@ -1,5 +1,5 @@
 
-import entities
+from vision import entities
 from missions.base import MissionBase
 
 class TestMission(MissionBase):

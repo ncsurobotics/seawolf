@@ -1,7 +1,7 @@
 import cv
 import os
 
-import libvision
+from vision import libvision
 
 CONFIG_FILE = "../cameras.conf"
 
@@ -28,8 +28,8 @@ class FakeSVR(object):
             # These settings should be persistent on the Logitechs, but they
             # might occasionally need to be reset.
             self.camera.open_capture()
-            cv.SetCaptureProperty(self.camera.capture, cv.CV_CAP_PROP_FRAME_WIDTH, 320);
-            cv.SetCaptureProperty(self.camera.capture, cv.CV_CAP_PROP_FRAME_HEIGHT, 240);
+            cv.SetCaptureProperty(self.camera.capture, cv.CV_CAP_PROP_FRAME_WIDTH, 320)
+            cv.SetCaptureProperty(self.camera.capture, cv.CV_CAP_PROP_FRAME_HEIGHT, 240)
 
     def get_frame(self):
         return self.camera.get_frame()

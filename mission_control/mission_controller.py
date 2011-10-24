@@ -3,7 +3,7 @@ import sys
 from collections import deque
 from time import sleep
 
-from vision import ExitSignal
+from vision import KillSignal
 import sw3
 
 try:
@@ -91,14 +91,14 @@ class MissionController(object):
                 sw3.nav.do(self.current_mission)
                 self.current_mission.wait()
                 print "NAV ROUTINE FINISHED"
-            except ExitSignal:
+            except KillSignal:
                 sys.exit(0)
         else:
             self.current_mission.init()
             try:
                 self.current_mission.execute()
                 print "MISSION FINISHED"
-            except ExitSignal:
+            except KillSignal:
                 sys.exit(0)
 
         self.process_manager.kill()

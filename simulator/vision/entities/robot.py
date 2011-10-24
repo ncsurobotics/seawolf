@@ -3,12 +3,12 @@ from math import radians, sin, cos
 
 import seawolf
 
-from .base import ModelEntity
+from base import ModelEntity
 
 class RobotEntity(ModelEntity):
 
-    DEPTH_CONSTANT = 0.3
-    VELOCITY_CONSTANT = 0.3
+    DEPTH_CONSTANT = 1.5
+    VELOCITY_CONSTANT = 0.7
     YAW_CONSTANT = 40
 
     def __init__(self, *args, **kwargs):
@@ -40,6 +40,8 @@ class RobotEntity(ModelEntity):
 
         # Depth
         self.depth = self.depth + (bow+stern) * self.DEPTH_CONSTANT * dt
+        if self.depth < 0:
+            self.depth = self.depth + 1.0*dt
         self.pos[2] = -1*self.depth
         seawolf.var.set("Depth", self.depth)
 
@@ -56,5 +58,20 @@ class RobotEntity(ModelEntity):
         seawolf.var.set("SEA.Yaw", self.yaw)
         seawolf.notify.send("UPDATED", "IMU")
 
-    def find_entity(self, entity_name, camera):
-        pass
+    def find_entity(self, entity_cls):
+
+        entity_found = False
+        for entity in self.simulator.entities:
+            if entity.__class__.__name__ == entity_cls.__name__:
+
+                entity_found = True
+                print "FOUND MATCHING CLASS:", entity, entity_cls
+                data = entity.find(self)
+                if data:
+                    return data
+
+        if not entity_found:
+            print "Warning: Entity %s is being searched for, but none exists in the simulator." % entity_cls
+
+        return None
+

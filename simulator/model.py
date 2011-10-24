@@ -1,3 +1,9 @@
+'''Wavefront .obj model file parser.
+
+Taken with permission from brownan's asteroids game:
+    https://github.com/brownan/asteroids
+'''
+
 from OpenGL.GL import *
 from OpenGL.GLUT import glutSolidSphere
 

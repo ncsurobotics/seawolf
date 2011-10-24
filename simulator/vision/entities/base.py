@@ -2,6 +2,12 @@
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 
+class Container(object):
+    '''a blank container object'''
+
+    def __repr__(self):
+        return str(self.__dict__)
+
 class Entity(object):
 
     def __init__(self, pos, color=(0.5,0.5,0.5), yaw_offset=0, yaw=0, pitch=0, roll=0):
@@ -38,6 +44,9 @@ class Entity(object):
     def post_draw(self):
         glPopMatrix()
 
+    def find(self, robot):
+        raise NotImplementedError("This entity is not searchable.  Implement the find method to add this functionality.")
+
 class ModelEntity(Entity):
     def __init__(self, model, *args, **kwargs):
         self.model = model
@@ -58,3 +67,4 @@ class CubeEntity(Entity):
         #glutWireCube(self.size)
         glutSolidCube(self.size)
         self.post_draw()
+

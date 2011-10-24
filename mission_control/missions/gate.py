@@ -2,7 +2,7 @@
 
 from __future__ import division
 
-import entities
+from vision import entities
 from missions.base import MissionBase
 from vision import process_manager
 import sw3
@@ -14,8 +14,7 @@ FORWARD_SPEED = 0.4
 
 class GateMission(MissionBase):
 
-    def __init__(self, gate_type=entities.GATE_WHITE):
-        self.gate_type = gate_type
+    def __init__(self):
         self.gate_seen = 0
 
     def init(self):
@@ -30,7 +29,7 @@ class GateMission(MissionBase):
         print vision_data
         gate_data = vision_data['gate']
         if isinstance(gate_data, process_manager.KillSignal):
-            raise gate_data 
+            raise gate_data
 
         if gate_data and gate_data.left_pole and gate_data.right_pole:
             gate_center = DEGREE_PER_PIXEL*(gate_data.left_pole + gate_data.right_pole)/2  # degrees

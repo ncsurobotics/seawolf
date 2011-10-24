@@ -1,39 +1,41 @@
 
 import time
+from multiprocessing.connection import Client
 
 class ProcessManager(object):
 
     def __init__(self):
-        self.process_list = []
 
-    def start_process(self, proc_cls, name,  *args, **kwargs):
+        # Maps entity class name -> (entity class, process name)
+        self.processes = {}
+
+        # Initialize pipe to simulator
+        self.simulator_pipe = Client(("localhost", 3829))
+
+    def start_process(self, entity_class, name,  *args, **kwargs):
         '''Initiates a process of the class proc_cls.'''
-        vision_process = VisionProcess(proc_cls, name)
-        self.process_list.append(vision_process)
-        vision_process.run(*args, **kwargs)
-        return vision_process
+        self.processes[entity_class.__name__] = (entity_class, name)
+        self.simulator_pipe.send(
+            map(lambda x: x[0], self.processes.itervalues())
+        )
 
     def get_data(self):
         '''get data from all running processes and
            package the output into a dictionary '''
 
         vision_data = {}
-        vision_data_empty = True
+        if self.simulator_pipe.poll():
+            for entity_cls, data in self.simulator_pipe.recv():
+                entity_cls, process_name = self.processes[entity_cls.__name__]
+                vision_data[process_name] = data
 
-        for process in self.process_list:
-            output = process.get_data()
-
-            if output != None:
-                vision_data_empty = False
-
-            #add this data to the dictionary
-            vision_data[process.name] = output
-
-        #if vision_data is empty, return None
-        if vision_data_empty:
-            return None
-        else:
+        if vision_data:
+            for entity_cls_name, process_name in self.processes.itervalues():
+                if process_name not in vision_data:
+                    vision_data[process_name] = None
             return vision_data
+        else:
+            return None
 
     def ping(self):
         '''verify that all processes are alive'''
@@ -41,29 +43,7 @@ class ProcessManager(object):
 
     def kill(self):
         ''' kill all running sub processes '''
-        for process in self.process_list:
-            process.kill()
+        self.simulator_pipe.send([])
 
-        self.process_list = []
-
-class VisionProcess(object):
-
-    def __init__(self, entity_cls, name):
-        #assign the vision entity this process handles
-        self.entity_cls = entity_cls
-        self.name = name
-
-    def get_data(self):
-        '''check for incoming data from this process'''
-        #return any new data from the queue
-        self.entity.get_data()
-
-    def kill(self):
-        '''kills this process'''
-        pass
-
-    def run(self, *args, **kwargs):
-        '''runs this process'''
-        # Simulator doesn't need to actually create a new process
-        self.entity = self.entity_cls(*args, **kwargs)
-
+class KillSignal(Exception):
+    pass
