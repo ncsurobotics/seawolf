@@ -22,7 +22,7 @@ class JoystickDriver(object):
     def get_event(self):
         s = self.dev.read(self.struct.size)
         return self._unpack(s)
-    
+
     def close(self):
         self.dev.close()
 
@@ -104,7 +104,7 @@ class Joystick(object):
 
         event_number = event["number"]
         event_value = event["value"]
-        
+
         if event_type & JoystickDriver.EVENT_BUTTON:
             button = self.buttons[event_number]
             button.value = event_value
@@ -144,3 +144,16 @@ LOGITECH = (Axis((0, 1), "leftStick"),
             Button(9, "button10"),
             Button(10, "leftStickButton"),
             Button(11, "rightStickButton"))
+STEERINGWHEEL = (Axis((0, 1), "wheelAndThrottle"),
+                 Axis((2, 3), "padX"),
+                 Axis((4, 5), "padY"),
+                 Button(0, "button1"),
+                 Button(1, "button2"),
+                 Button(2, "button3"),
+                 Button(3, "button4"),
+                 Button(4, "button5"),
+                 Button(5, "button6"),
+                 Button(6, "button7"),
+                 Button(7, "button8"),
+                 Button(8, "button9"),
+                 Button(9, "button10"))
