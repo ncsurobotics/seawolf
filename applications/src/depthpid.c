@@ -2,6 +2,8 @@
 #include "seawolf.h"
 #include "seawolf3.h"
 
+#include <math.h>
+
 #define THRUSTER_CAP 0.8  // Thrusters capped at this unless panicing
 #define PANIC_DEPTH  12.0 // At what depth we panic and go up full force
 #define PANIC_TIME   10.0 // Time in seconds that we panic
@@ -11,6 +13,14 @@
  * initial downward force when the pid starts.
  */
 #define BASE_I 0.1
+
+static double initial_e_dt(double integral) {
+    if (fabs(integral) < 0.00001) {
+        return 0;
+    } else {
+        return BASE_I / integral;
+    }
+}
 
 static void dataOut(double mv) {
     float out = Util_inRange(-1.0, mv, 1.0);
@@ -37,7 +47,7 @@ int main(void) {
                   Var_get("DepthPID.p"),
                   Var_get("DepthPID.i"),
                   Var_get("DepthPID.d"));
-    pid->e_dt = BASE_I / pid->i;
+    pid->e_dt = initial_e_dt(pid->i);
     dataOut(0.0);
 
     while(true) {
@@ -59,7 +69,7 @@ int main(void) {
                                 Var_get("DepthPID.i"),
                                 Var_get("DepthPID.d"));
             //PID_resetIntegral(pid);
-            pid->e_dt = BASE_I / pid->i;
+            pid->e_dt = initial_e_dt(pid->i);
         }
 
         /* Update Heading */
@@ -93,7 +103,7 @@ int main(void) {
                 dataOut(0.0);
                 Notify_send("PIDPAUSED", "Depth");
                 PID_pause(pid);
-                pid->e_dt = BASE_I / pid->i;
+                pid->e_dt = initial_e_dt(pid->i);
             }
         }
 
