@@ -11,35 +11,7 @@ from time import sleep
 import subprocess
 import sw3
 
-parent_directory = os.path.realpath(os.path.join(
-    os.path.abspath(__file__),
-    "../.."
-))
-vision_directory = os.path.join(parent_directory, "vision/")
-sys.path.append(parent_directory)
-sys.path.append(vision_directory)
-
-import vision
-import missions
-from mission_controller import MissionController
-
-#This is the list of missions, it may contain either missions
-# or NavRoutines
-MISSION_ORDER = [
-    missions.GateMission,
-    missions.PathMission,
-    #missions.TestMission,
-]
-
-def unbreak_firewire():
-    try:
-        ret = subprocess.call(["dc1394_reset_bus"])
-    except OSError:
-        print "Warning: You don't have the dc1394_reset_bus command. " \
-            "Cannot reset firewire bus."
-        return
-    if ret != 0:
-        print "Warning: Could not reset firewire bus."
+simulator = False
 
 if __name__ == "__main__":
 
@@ -70,7 +42,49 @@ if __name__ == "__main__":
     opt_parser.add_option("-G", "--non-graphical", action="store_false",
         default="true", dest="graphical",
         help="Indicates that no graphical windows will be displayed.")
+    opt_parser.add_option("-s", "--simulator", action="store_true",
+        default=False, dest="simulator",
+        help="Connect to the simulator instead of starting vision processes.")
     options, args = opt_parser.parse_args(sys.argv)
+
+    simulator = options.simulator
+
+parent_directory = os.path.realpath(os.path.join(
+    os.path.abspath(__file__),
+    "../.."
+))
+vision_directory = os.path.join(parent_directory, "vision/")
+sys.path.append(vision_directory)
+if simulator:
+    print "Using Simulator..."
+    simulator_directory = os.path.join(parent_directory, "simulator/")
+    sys.path.append(simulator_directory)
+else:
+    sys.path.append(parent_directory)
+
+import vision
+import missions
+from mission_controller import MissionController
+
+#This is the list of missions, it may contain either missions
+# or NavRoutines
+MISSION_ORDER = [
+    missions.GateMission,
+    missions.PathMission,
+    #missions.TestMission,
+]
+
+def unbreak_firewire():
+    try:
+        ret = subprocess.call(["dc1394_reset_bus"])
+    except OSError:
+        print "Warning: You don't have the dc1394_reset_bus command. " \
+            "Cannot reset firewire bus."
+        return
+    if ret != 0:
+        print "Warning: Could not reset firewire bus."
+
+if __name__ == "__main__":
 
     unbreak_firewire()
     sleep(1)
