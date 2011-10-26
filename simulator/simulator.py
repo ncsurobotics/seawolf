@@ -37,7 +37,7 @@ class Simulator(object):
         self.init_graphics()
 
         self.robot = entities.RobotEntity(
-            model.ObjModel(file("seawolf5.obj")),
+            model.ObjModel(file("models/seawolf5.obj")),
             pos = robot_pos,
             yaw_offset = -90,
             yaw = robot_yaw,
