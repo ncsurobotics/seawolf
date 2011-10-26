@@ -15,7 +15,7 @@ import model
 
 class Simulator(object):
 
-    def __init__(self, robot_pos=[0,0,0], robot_yaw=0, bind_address="localhost", bind_port=3829):
+    def __init__(self, robot_pos=[0,0,0], robot_yaw=0, cam_pos=[0,0,0], cam_pitch=0, cam_yaw=0, bind_address="localhost", bind_port=3829):
 
         self.entities = []
         self.bind_address = bind_address
@@ -28,9 +28,9 @@ class Simulator(object):
         self.view_height = 400
         self.fov = 70  # Degrees
 
-        self.cam_pos = [0,0,0]
-        self.cam_pitch = 0  # Degrees
-        self.cam_yaw = 0  # Degrees
+        self.cam_pos = cam_pos
+        self.cam_pitch = cam_pitch  # Degrees
+        self.cam_yaw = cam_yaw  # Degrees
 
         self.left_mouse_down = False
 

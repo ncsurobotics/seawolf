@@ -1,5 +1,9 @@
 
-from math import radians, sin, cos
+from __future__ import division
+from math import radians, degrees, sin, cos, pi, atan2
+import numpy
+
+from OpenGL.GL import *
 
 import seawolf
 
@@ -8,7 +12,7 @@ from base import ModelEntity
 class RobotEntity(ModelEntity):
 
     DEPTH_CONSTANT = 1.5
-    VELOCITY_CONSTANT = 0.7
+    VELOCITY_CONSTANT = 1
     YAW_CONSTANT = 40
 
     def __init__(self, *args, **kwargs):
@@ -16,6 +20,7 @@ class RobotEntity(ModelEntity):
 
         self.depth = -1*self.pos[2]
         self.tracked_vars = {}
+        self.forward_fov = 53
 
         seawolf.var.subscribe("Port")
         seawolf.var.subscribe("Star")
@@ -54,9 +59,38 @@ class RobotEntity(ModelEntity):
 
         # Yaw
         self.yaw = self.yaw + (port-star) * self.YAW_CONSTANT * dt
-        self.yaw = (self.yaw+180) % 360 - 180
+        self.yaw = (self.yaw+180) % 360 - 180  # Range -180 to 180
         seawolf.var.set("SEA.Yaw", self.yaw)
         seawolf.notify.send("UPDATED", "IMU")
+
+    def draw(self):
+        self.pre_draw()
+        self.model.draw()
+
+        # Lines to show fov
+        half_fov = radians(self.forward_fov/2)
+        height = 1
+        glColor(0, 1, 0)
+        glBegin(GL_LINES)
+
+        glVertex(0, 0, height)
+        glVertex( 0, -4, height)
+
+        glVertex(0, 0, height)
+        glVertex(
+            sin(half_fov)*5,
+            -cos(half_fov)*5,
+            height)
+
+        glVertex(0, 0, height)
+        glVertex(
+            sin(-half_fov)*5,
+            -cos(-half_fov)*5,
+            height)
+
+        glEnd()
+
+        self.post_draw()
 
     def find_entity(self, entity_cls):
 
@@ -65,7 +99,6 @@ class RobotEntity(ModelEntity):
             if entity.__class__.__name__ == entity_cls.__name__:
 
                 entity_found = True
-                print "FOUND MATCHING CLASS:", entity, entity_cls
                 data = entity.find(self)
                 if data:
                     return data
@@ -74,4 +107,50 @@ class RobotEntity(ModelEntity):
             print "Warning: Entity %s is being searched for, but none exists in the simulator." % entity_cls
 
         return None
+
+    def find_point(self, camera, point):
+        assert len(point) == 3 or len(point) == 2
+        point = numpy.array(point)
+
+        if camera == "forward":
+            if len(point) == 2:
+                return self._find_point_forward_2d(point)
+            else:
+                return self._find_point_forward_3d(point)
+
+        elif camera == "down":
+            if len(point) == 2:
+                return self._find_point_down_2d(point)
+            else:
+                return self._find_point_down_3d(point)
+
+        else:
+            raise ValueError('Unknown camera: "%s"' % camera)
+
+    def _find_point_forward_2d(self, point):
+        delta = point - self.pos[0:2]
+        print
+        print "point:", point
+        print "self.pos:", self.pos
+        print "self.yaw:", self.yaw
+        print "delta:", delta
+        angle_to_point = degrees(atan2(-delta[1], delta[0]))
+        #angle_to_point = 90 - angle_to_point  # Convert to clockwise positive, straight ahead=0
+        print "angle_to_point:", angle_to_point
+        relative_angle = angle_to_point - self.yaw
+        relative_angle = (relative_angle+180) % 360 - 180  # Range -180 to 180
+        print "relative_angle:", relative_angle
+        if abs(relative_angle) < self.forward_fov/2:
+            return relative_angle / (self.forward_fov/2)
+        else:
+            return None
+
+    def _find_point_forward_3d(self, point):
+        raise NotImplementedError()
+
+    def _find_point_down_2d(self, point):
+        raise NotImplementedError()
+
+    def _find_point_down_3d(self, point):
+        raise NotImplementedError()
 
