@@ -1,9 +1,16 @@
 
 import sys
 import os
+import random
 
 import seawolf
 
+from simulator import Simulator
+from interface import Interface
+from vision import entities
+import model
+
+# Add mission_control/ to sys.path
 parent_directory = os.path.realpath(os.path.join(
     os.path.abspath(__file__),
     "../.."
@@ -11,27 +18,39 @@ parent_directory = os.path.realpath(os.path.join(
 mission_control_directory = os.path.join(parent_directory, "mission_control/")
 sys.path.append(mission_control_directory)
 
-from simulator import Simulator
-from vision import entities
-import model
-
+# libseawolf Init
 seawolf.loadConfig("../conf/seawolf.conf")
 seawolf.init("Simulator")
 
-s = Simulator(
-    robot_pos = [0, 0, 0],
-    cam_pos = [13, 0, 25],
-    cam_yaw = 90,
-    cam_pitch = -90,
+# Parse argument for mission
+if len(sys.argv) < 2:
+    entity = "gate1"
+else:
+    entity = argv[1]
+
+# Determine initial parameters
+if entity == "gate1":
+    cam_pos = [13, 0, 25]
+    cam_yaw = 90
+    cam_pitch = -90
+    robot_pos = [0, 0, 0]
+    robot_yaw = random.uniform(-20, 20)
+
+# Initialize everything!
+interface = Interface(
+    cam_pos = cam_pos,
+    cam_yaw = cam_yaw,
+    cam_pitch = cam_pitch,
 )
-s.add_entities( [
-    #entities.CubeEntity(1, (1, -2, 0), (1, 1, 1)),
-    #entities.CubeEntity(1, (2, -2, 0)),
-    #entities.CubeEntity(1, (3, -2, 0)),
-    #entities.CubeEntity(1, (4, -2, 0)),
-    #entities.CubeEntity(1, (5, -2, 0)),
-    #entities.CubeEntity(1, (6, -2, 0), (1, 1, 1)),
+robot = entities.RobotEntity(
+    model.ObjModel(file("models/seawolf5.obj")),
+    pos = robot_pos,
+    yaw = robot_yaw,
+    yaw_offset = -90,
+)
+simulator = Simulator(interface, robot, entities=[
     entities.GateEntity((25, 0, 0)),
     entities.AxisEntity(),
 ])
-s.run()
+
+simulator.run()

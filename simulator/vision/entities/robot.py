@@ -109,6 +109,13 @@ class RobotEntity(ModelEntity):
         return None
 
     def find_point(self, camera, point):
+        '''Finds a point viewed from the given camera.
+
+        All angles that are returned are expressed as a number from -1 to 1.  0
+        is straight ahead, -1 is maximum fov to the left or down, 1 is maximum
+        fov to the right or up.
+
+        '''
         assert len(point) == 3 or len(point) == 2
         point = numpy.array(point)
 
@@ -119,27 +126,19 @@ class RobotEntity(ModelEntity):
                 return self._find_point_forward_3d(point)
 
         elif camera == "down":
-            if len(point) == 2:
-                return self._find_point_down_2d(point)
-            else:
-                return self._find_point_down_3d(point)
+            assert len(point) == 3
+            return self._find_point_down(point)
 
         else:
             raise ValueError('Unknown camera: "%s"' % camera)
 
     def _find_point_forward_2d(self, point):
+        # TODO: Take into account roll
         delta = point - self.pos[0:2]
-        print
-        print "point:", point
-        print "self.pos:", self.pos
-        print "self.yaw:", self.yaw
-        print "delta:", delta
         angle_to_point = degrees(atan2(-delta[1], delta[0]))
         #angle_to_point = 90 - angle_to_point  # Convert to clockwise positive, straight ahead=0
-        print "angle_to_point:", angle_to_point
         relative_angle = angle_to_point - self.yaw
         relative_angle = (relative_angle+180) % 360 - 180  # Range -180 to 180
-        print "relative_angle:", relative_angle
         if abs(relative_angle) < self.forward_fov/2:
             return relative_angle / (self.forward_fov/2)
         else:
@@ -148,9 +147,6 @@ class RobotEntity(ModelEntity):
     def _find_point_forward_3d(self, point):
         raise NotImplementedError()
 
-    def _find_point_down_2d(self, point):
-        raise NotImplementedError()
-
-    def _find_point_down_3d(self, point):
+    def _find_point_down(self, point):
         raise NotImplementedError()
 
