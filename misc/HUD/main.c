@@ -25,7 +25,7 @@
 //Defines
 #define PI 3.1415927
 
-#define WINDOW_X 640 
+#define WINDOW_X 640
 #define WINDOW_Y 480
 #define SCREEN_X 1024
 #define SCREEN_Y 600
@@ -33,7 +33,7 @@
 //Depth Meter
 #define DEPTH_SKY 20
 #define DEPTH_GND 20
-#define DEPTH_SLDR_OFST 8 
+#define DEPTH_SLDR_OFST 8
 #define DEPTH_SLDR_WIDTH 10
 #define DEPTH_SLDR_HEIGHT 20
 #define DEPTH_METER_MAX 11.0//Set the maximum depth represented on-screen
@@ -60,10 +60,10 @@
 #define SET_PITCH 6
 #define SET_YAW 7
 
-#define PLOT_RES 0.5 
+#define PLOT_RES 0.5
 
 //Acoustic Plot Defines
-#define XRES 10 
+#define XRES 10
 #define XSPEED 10
 
 
@@ -98,7 +98,7 @@ static XWindowAttributes       gwa;
 static float i;
 static int numPlotPoints;
 
-static DATA_POINT **plot; 
+static DATA_POINT **plot;
 
 //Heading variable
 static float currentRoll;
@@ -130,13 +130,13 @@ void Render()
     DrawDepthGuage();
     DrawLevelGuage();
     DrawPlots();
-} 
- 
+}
 
 
 
 
-int main(int argc, char *argv[]) 
+
+int main(int argc, char *argv[])
 {
 
     i=0.0;
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     //Allocate memory for the plot
     plot = (DATA_POINT**)calloc( MAX_PLOTS, sizeof(DATA_POINT*));
 
-#ifdef seawolf 
+#ifdef seawolf
     Seawolf_loadConfig("../../conf/seawolf.conf");
     Seawolf_init("HUD");
 #endif
@@ -153,25 +153,25 @@ int main(int argc, char *argv[])
     currentDepth=0;
 
     dpy = XOpenDisplay(NULL);
- 
-    if(dpy == NULL) 
+
+    if(dpy == NULL)
         {
             printf("\n\tcannot connect to X server\n\n");
-            exit(0); 
+            exit(0);
         }
-        
+
     root = DefaultRootWindow(dpy);
 
     vi = glXChooseVisual(dpy, 0, att);
 
-    if(vi == NULL) 
+    if(vi == NULL)
         {
             printf("\n\tno appropriate visual found\n\n");
-            exit(0); 
-        } 
-    else 
+            exit(0);
+        }
+    else
         {
-            printf("\n\tvisual %p selected\n", vi->visualid); 
+            //printf("\n\tvisual %p selected\n", vi->visualid);
         }/* %p creates hexadecimal output like in glxinfo */
 
 
@@ -179,16 +179,16 @@ int main(int argc, char *argv[])
 
     swa.colormap = cmap;
     swa.event_mask = ExposureMask | KeyPressMask;
- 
+
     win = XCreateWindow(dpy, root, (SCREEN_X-WINDOW_X)/2,(SCREEN_Y-WINDOW_Y)/2 , WINDOW_X, WINDOW_Y, 0, vi->depth, InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
 
     XMapWindow(dpy, win);
     XStoreName(dpy, win, "Seawolf HUD");
- 
+
     glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
     glXMakeCurrent(dpy, win, glc);
- 
-    glEnable(GL_DEPTH_TEST); 
+
+    glEnable(GL_DEPTH_TEST);
 
 #ifdef seawolf
     Var_bind("Depth", &currentDepth);
@@ -198,7 +198,7 @@ int main(int argc, char *argv[])
     Var_bind("SEA.Yaw", &currentYaw);
 #endif
 
-    while(1) 
+    while(1)
         {
 
 #ifdef seawolf
@@ -210,7 +210,6 @@ int main(int argc, char *argv[])
             currentYaw = 180.0*cos((i+90.0)*PI/180.0);
 
             desiredDepth=4*cos(i*PI/180.0);
-            desiredRoll =180.0*cos((i+45.0)*PI/180.0) ;
             desiredPitch=180.0*sin((i+30.0f)*PI/180.0);
             desiredYaw = 180.0*cos((i+90.0)*PI/180.0);
 #endif
@@ -233,9 +232,9 @@ int main(int argc, char *argv[])
             XGetWindowAttributes(dpy, win, &gwa);
             //glViewport(0, 0, gwa.width, gwa.height);
             glViewport(0,0, WINDOW_X, WINDOW_Y);
-            Render(); 
+            Render();
             glXSwapBuffers(dpy, win);
-                
+
         }
 }
 
@@ -258,29 +257,29 @@ void DrawDepthGuage()
 
     depth = (currentDepth/DEPTH_METER_MAX)*((WINDOW_Y-WINDOW_Y/DEPTH_SKY)-(WINDOW_Y/2+WINDOW_Y/DEPTH_GND));
 
-    //(WINDOW_Y-WINDOW_Y/DEPTH_SKY)-(WINDOW_Y/2+WINDOW_Y/DEPTH_GND)-(currentDepth/DEPTH_METER_MAX)*((WINDOW_Y-WINDOW_Y/DEPTH_SKY)-(WINDOW_Y/2+WINDOW_Y/DEPTH_GND)); 
+    //(WINDOW_Y-WINDOW_Y/DEPTH_SKY)-(WINDOW_Y/2+WINDOW_Y/DEPTH_GND)-(currentDepth/DEPTH_METER_MAX)*((WINDOW_Y-WINDOW_Y/DEPTH_SKY)-(WINDOW_Y/2+WINDOW_Y/DEPTH_GND));
 
     //Depth Guage
     glColor3f(0.8f , 0.8f, 1.0f );
     glBegin(GL_TRIANGLES);
-    glVertex3f( WINDOW_X/3 , WINDOW_Y , 0 ); 
+    glVertex3f( WINDOW_X/3 , WINDOW_Y , 0 );
     glVertex3f( WINDOW_X/3 , WINDOW_Y-(WINDOW_Y/DEPTH_SKY) , 0 );
     glVertex3f( WINDOW_X/3*2 , WINDOW_Y-(WINDOW_Y/DEPTH_SKY) , 0 );
 
-    glVertex3f( WINDOW_X/3 , WINDOW_Y , 0 ); 
+    glVertex3f( WINDOW_X/3 , WINDOW_Y , 0 );
     glVertex3f( WINDOW_X/3*2 , WINDOW_Y , 0 );
     glVertex3f( WINDOW_X/3*2 , WINDOW_Y-(WINDOW_Y/DEPTH_SKY) , 0 );
 
 
     glColor3f(0.0f, 0.5f, 1.0f);
-    glVertex3f( WINDOW_X/3 , WINDOW_Y-(WINDOW_Y/DEPTH_SKY) , 0 ); 
+    glVertex3f( WINDOW_X/3 , WINDOW_Y-(WINDOW_Y/DEPTH_SKY) , 0 );
     glColor3f(0.0f, 0.0f, 0.5f);
     glVertex3f( WINDOW_X/3 , WINDOW_Y-(WINDOW_Y/DEPTH_SKY) -((WINDOW_Y/2)-(WINDOW_Y/DEPTH_SKY)-(WINDOW_Y/DEPTH_GND)), 0 );
     glVertex3f( WINDOW_X/3*2 , WINDOW_Y-(WINDOW_Y/DEPTH_SKY)-((WINDOW_Y/2)-(WINDOW_Y/DEPTH_SKY)-(WINDOW_Y/DEPTH_GND)) , 0 );
 
 
     glColor3f(0.0f, 0.5f, 1.0f);
-    glVertex3f( WINDOW_X/3 , WINDOW_Y-(WINDOW_Y/DEPTH_SKY) , 0 ); 
+    glVertex3f( WINDOW_X/3 , WINDOW_Y-(WINDOW_Y/DEPTH_SKY) , 0 );
     glVertex3f( WINDOW_X/3*2 , WINDOW_Y-(WINDOW_Y/DEPTH_SKY), 0 );
     glColor3f(0.0f, 0.0f, 0.5f);
     glVertex3f( WINDOW_X/3*2 , WINDOW_Y-(WINDOW_Y/DEPTH_SKY)-((WINDOW_Y/2)-(WINDOW_Y/DEPTH_SKY)-(WINDOW_Y/DEPTH_GND)) , 0 );
@@ -288,11 +287,11 @@ void DrawDepthGuage()
 
     glColor3f(0.3f, 0.3, 0.3f);
 
-    glVertex3f( WINDOW_X/3 , WINDOW_Y/2+(WINDOW_Y/DEPTH_SKY) , 0 ); 
+    glVertex3f( WINDOW_X/3 , WINDOW_Y/2+(WINDOW_Y/DEPTH_SKY) , 0 );
     glVertex3f( WINDOW_X/3 , WINDOW_Y/2 , 0 );
     glVertex3f( WINDOW_X/3*2 , WINDOW_Y/2 , 0 );
 
-    glVertex3f( WINDOW_X/3 , WINDOW_Y/2+(WINDOW_Y/DEPTH_SKY) , 0 ); 
+    glVertex3f( WINDOW_X/3 , WINDOW_Y/2+(WINDOW_Y/DEPTH_SKY) , 0 );
     glVertex3f( WINDOW_X/3*2 , WINDOW_Y/2+(WINDOW_Y/DEPTH_SKY) , 0 );
     glVertex3f( WINDOW_X/3*2 , WINDOW_Y/2 , 0 );
 
@@ -300,14 +299,14 @@ void DrawDepthGuage()
     //Yard stick...thing
 
     glColor3f(DEPTH_METER_TOP_COLOR);
-    glVertex3f( WINDOW_X/3 + ((WINDOW_X/DEPTH_SLDR_WIDTH)/4) , WINDOW_Y - (WINDOW_Y/DEPTH_SKY)/2 , 5 ); 
+    glVertex3f( WINDOW_X/3 + ((WINDOW_X/DEPTH_SLDR_WIDTH)/4) , WINDOW_Y - (WINDOW_Y/DEPTH_SKY)/2 , 5 );
 
     glColor3f(DEPTH_METER_BOTTOM_COLOR);
     glVertex3f( WINDOW_X/3 + ((WINDOW_X/DEPTH_SLDR_WIDTH)/4) , WINDOW_Y/2 + (WINDOW_Y/DEPTH_GND) , 5 );
     glVertex3f( WINDOW_X/3 + ((WINDOW_X/DEPTH_SLDR_WIDTH/4)*2) , WINDOW_Y/2 + (WINDOW_Y/DEPTH_GND) , 5 );
 
     glColor3f(DEPTH_METER_TOP_COLOR);
-    glVertex3f( WINDOW_X/3 + ((WINDOW_X/DEPTH_SLDR_WIDTH)/4) ,  WINDOW_Y - (WINDOW_Y/DEPTH_SKY)/2 , 5 ); 
+    glVertex3f( WINDOW_X/3 + ((WINDOW_X/DEPTH_SLDR_WIDTH)/4) ,  WINDOW_Y - (WINDOW_Y/DEPTH_SKY)/2 , 5 );
     glVertex3f( WINDOW_X/3 + (((WINDOW_X/DEPTH_SLDR_WIDTH)/4)*2) , WINDOW_Y - (WINDOW_Y/DEPTH_SKY)/2 , 5 );
 
     glColor3f(DEPTH_METER_BOTTOM_COLOR);
@@ -386,7 +385,7 @@ void DrawLevelGuage()
 
     char buffer[255];
 
-    //Draw the horizion 
+    //Draw the horizion
     glColor3f(0.0f, 0.0f, 1.0f);
 
 
@@ -800,7 +799,7 @@ void DrawPlots()
 
                     j+=PLOT_RES;
 
-                    current = current->next; 
+                    current = current->next;
                 }
 
             glEnd();
