@@ -15,12 +15,11 @@ class Container(object):
 
 class Entity(object):
 
-    def __init__(self, pos, color=(0.5,0.5,0.5), yaw_offset=0, yaw=0, pitch=0, roll=0):
+    def __init__(self, pos, color=(0.5,0.5,0.5), yaw=0, pitch=0, roll=0):
         assert len(pos)==3
         assert len(color)==3 or len(color)==4
         self.pos = pos
         self.color = color
-        self.yaw_offset = yaw_offset
         self.yaw = yaw
         self.pitch = pitch
         self.roll = roll
@@ -51,14 +50,12 @@ class Entity(object):
             return abs_position
 
         else:
-            #TODO: This doesn't work right!
-            raise NotImplementedError()
 
-            # Convert to homogeneous coordinates
-            point = numpy.array([point[0], point[1], point[2], 1])
+            # Convert to homogeneous coordinates (column matrix)
+            point = numpy.matrix([point[0], point[1], point[2], 1]).transpose()
 
             # Get modelview matrix for this entity
-            # Load the identity first so camera positioning doesn't affect this
+            # Load the identity first so camera location doesn't affect this
             glMatrixMode(GL_MODELVIEW)
             glPushMatrix()
             glLoadIdentity()
@@ -70,7 +67,10 @@ class Entity(object):
             # Change from column major to row major
             modelview = modelview.transpose()
 
-            new_point = numpy.dot(point, modelview)
+            new_point = numpy.dot(modelview, point)
+            # Convert from a column matrix to array
+            new_point = numpy.array(new_point.transpose())[0]
+
             return new_point[0:3] / new_point[3]
 
     def pre_draw(self):
@@ -80,7 +80,6 @@ class Entity(object):
         glTranslate(self.pos[0], self.pos[1], self.pos[2])
         glRotate(self.pitch, 0, 1, 0)
         glRotate(self.roll, 1, 0, 0)
-        glRotate(self.yaw_offset, 0, 0, -1)
         glRotate(self.yaw, 0, 0, -1)
 
     def draw(self):
@@ -88,18 +87,21 @@ class Entity(object):
         self.post_draw()
 
     def post_draw(self):
+        glMatrixMode(GL_MODELVIEW)
         glPopMatrix()
 
     def find(self, robot):
         raise NotImplementedError("This entity is not searchable.  Implement the find method to add this functionality.")
 
 class ModelEntity(Entity):
-    def __init__(self, model, *args, **kwargs):
+    def __init__(self, model, yaw_offset=0, *args, **kwargs):
         self.model = model
+        self.yaw_offset = yaw_offset
         super(ModelEntity, self).__init__(*args, **kwargs)
 
     def draw(self):
         self.pre_draw()
+        glRotate(self.yaw_offset, 0, 0, -1)
         self.model.draw()
         self.post_draw()
 

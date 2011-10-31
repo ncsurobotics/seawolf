@@ -24,17 +24,25 @@ seawolf.init("Simulator")
 
 # Parse argument for mission
 if len(sys.argv) < 2:
-    entity = "gate1"
+    parameter_set = "gate"
 else:
-    entity = argv[1]
+    parameter_set = sys.argv[1]
 
 # Determine initial parameters
-if entity == "gate1":
+if parameter_set == "gate" or parameter_set == "gate-straight":
+    cam_pos = [13, 0, 25]
+    cam_yaw = 90
+    cam_pitch = -90
+    robot_pos = [0, 0, 0]
+    robot_yaw = 0
+elif parameter_set == "gate-random":
     cam_pos = [13, 0, 25]
     cam_yaw = 90
     cam_pitch = -90
     robot_pos = [0, 0, 0]
     robot_yaw = random.uniform(-20, 20)
+else:
+    raise ValueError("Unknown starting parameters: %s" % parameter_set)
 
 # Initialize everything!
 interface = Interface(

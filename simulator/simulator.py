@@ -6,6 +6,8 @@ from multiprocessing.connection import Listener
 
 class Simulator(object):
 
+    # yaw=0 pitch=0 is looking down the +X axis.  +Z is up.
+
     def __init__(self, interface, robot, entities=[], bind_address="localhost", bind_port=3829):
 
         self.interface = interface

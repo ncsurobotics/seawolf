@@ -4,6 +4,8 @@ from math import radians, degrees, sin, cos, pi, atan2
 import numpy
 
 from OpenGL.GL import *
+from OpenGL.GLU import *
+from OpenGL.GLUT import *
 
 import seawolf
 
@@ -65,27 +67,31 @@ class RobotEntity(ModelEntity):
 
     def draw(self):
         self.pre_draw()
+        glPushMatrix()
+        glRotate(self.yaw_offset, 0, 0, -1)
         self.model.draw()
+        glPopMatrix()
 
         # Lines to show fov
         half_fov = radians(self.forward_fov/2)
-        height = 1
+        height = 0
         glColor(0, 1, 0)
+        glTranslate(1.5, 0, 0)
         glBegin(GL_LINES)
 
         glVertex(0, 0, height)
-        glVertex( 0, -4, height)
+        glVertex(4, 0, height)
 
         glVertex(0, 0, height)
         glVertex(
+            cos(half_fov)*5,
             sin(half_fov)*5,
-            -cos(half_fov)*5,
             height)
 
         glVertex(0, 0, height)
         glVertex(
+            cos(-half_fov)*5,
             sin(-half_fov)*5,
-            -cos(-half_fov)*5,
             height)
 
         glEnd()
@@ -150,3 +156,18 @@ class RobotEntity(ModelEntity):
     def _find_point_down(self, point):
         raise NotImplementedError()
 
+    def camera_transform(self, camera):
+
+        if camera == "forward":
+            ref_point = self.absolute_point((1, 0, 0))
+            up = self.absolute_point((0, 0, 1)) - self.pos
+            gluLookAt(
+                self.pos[0], self.pos[1], self.pos[2],
+                ref_point[0], ref_point[1], ref_point[2],
+                up[0], up[1], up[2])
+
+        elif camera == "down":
+            raise NotImplementedError()
+
+        else:
+            raise ValueError('Unknown camera: "%s"' % camera)

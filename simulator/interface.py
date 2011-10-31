@@ -9,17 +9,17 @@ from OpenGL.GLUT import *
 
 class Interface(object):
 
-    ####################### Graphics #######################
-    #TODO: Move this comment somewhere more applicable.
-    # Camera starts at the origin looking down the +X axis.  This is yaw=0
-    # pitch=0 and position=0,0,0.  +Z is up.
-
     def __init__(self, cam_pos=(0,0,0), cam_pitch=0, cam_yaw=0):
 
         self.cam_pos = cam_pos
         self.cam_pitch = cam_pitch  # Degrees
         self.cam_yaw = cam_yaw  # Degrees
 
+        self.camera_modes = [
+            "freecam",
+            "robot_forward",
+        ]
+        self.camera_mode = self.camera_modes[0]
         self.simulator = None
         self.left_mouse_down = False
         self.view_width = 800
@@ -42,13 +42,19 @@ class Interface(object):
         glDisable(GL_BLEND)
 
         # Lighting
-        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (0.4, 0.4, 0.4, 0.1))
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (0.2, 0.2, 0.2, 0.1))
         glLightfv(GL_LIGHT0, GL_POSITION, (0, 1, -1, 0))
         glLightfv(GL_LIGHT0, GL_AMBIENT, (0, 0, 0, 1))
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, (1, 1, 1, 1))
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, (0.5, 0.5, 0.5, 1))
         glLightfv(GL_LIGHT0, GL_SPECULAR, (0.1, 0.1, 0.1, 0.1))
+        glLightfv(GL_LIGHT1, GL_POSITION, (0.5, -1, -1, 0))
+        glLightfv(GL_LIGHT1, GL_AMBIENT, (0, 0, 0, 1))
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, (0.5, 0.5, 0.5, 1))
+        glLightfv(GL_LIGHT1, GL_SPECULAR, (0.1, 0.1, 0.1, 0.1))
+        #glShadeModel(GL_SMOOTH)
         glEnable(GL_LIGHTING)
         glEnable(GL_LIGHT0)
+        glEnable(GL_LIGHT1)
 
         # Callbacks
         glutDisplayFunc(self.draw)
@@ -77,28 +83,34 @@ class Interface(object):
         glViewport(0, 0, self.view_width, self.view_height)
         gluPerspective(self.fov,
                        self.view_width/self.view_height,  # Aspect ratio
-                       1, 4000)  # Near and far
+                       0.1, 4000)  # Near and far
 
     def init_camera(self):
+
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
-        # If camera is straight up or down, prevent up vector from being
-        # parallel to the viewing angle.
-        if abs(self.cam_pitch) >= 90:
-            up_vector = (
-                -cos(radians(self.cam_yaw)) * self.cam_pitch/90,
-                -sin(radians(self.cam_yaw)) * self.cam_pitch/90,
-                0,
-            )
-        else:
-            up_vector = (0, 0, 1)
-        camera_direction = self.get_camera_direction()
-        gluLookAt(
-            self.cam_pos[0], self.cam_pos[1], self.cam_pos[2],
-            self.cam_pos[0] + camera_direction[0],
-            self.cam_pos[1] + camera_direction[1],
-            self.cam_pos[2] + camera_direction[2],
-            up_vector[0], up_vector[1], up_vector[2])
+
+        if self.camera_mode == "freecam":
+            # If camera is straight up or down, prevent up vector from being
+            # parallel to the viewing angle.
+            if abs(self.cam_pitch) >= 90:
+                up_vector = (
+                    -cos(radians(self.cam_yaw)) * self.cam_pitch/90,
+                    -sin(radians(self.cam_yaw)) * self.cam_pitch/90,
+                    0,
+                )
+            else:
+                up_vector = (0, 0, 1)
+            camera_direction = self.get_camera_direction()
+            gluLookAt(
+                self.cam_pos[0], self.cam_pos[1], self.cam_pos[2],
+                self.cam_pos[0] + camera_direction[0],
+                self.cam_pos[1] + camera_direction[1],
+                self.cam_pos[2] + camera_direction[2],
+                up_vector[0], up_vector[1], up_vector[2])
+
+        elif self.camera_mode == "robot_forward":
+            self.simulator.robot.camera_transform("forward")
 
     def get_camera_direction(self):
         return (
@@ -137,13 +149,17 @@ class Interface(object):
         glutPostRedisplay()
 
     def keyboard_callback(self, key, x, y):
-        if key == 'u':
+        if key == 'u':  # Pitch Up
             self.camera_move_pitch(5)
-        elif key == 'd':
+        elif key == 'd':  # Pitch down
             self.camera_move_pitch(-5)
-        elif key == 'f':
+        elif key == 'f':  # Freecam look forward
             self.cam_yaw = 0
             self.cam_pitch = 0
+        elif key == 'v':  # Cycle camera mode
+            current_index = self.camera_modes.index(self.camera_mode)
+            next_index = (current_index+1) % len(self.camera_modes)
+            self.camera_mode = self.camera_modes[next_index]
 
     def special_keyboard_callback(self, key, x, y):
         if key == GLUT_KEY_UP:
