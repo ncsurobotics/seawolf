@@ -41,6 +41,12 @@ elif parameter_set == "gate-random":
     cam_pitch = -90
     robot_pos = [0, 0, 0]
     robot_yaw = random.uniform(-20, 20)
+elif parameter_set == "path1":
+    cam_pos = [30, 0, 25]
+    cam_yaw = 90
+    cam_pitch = -90
+    robot_pos = [22, 0, 0]
+    robot_yaw = 0
 else:
     raise ValueError("Unknown starting parameters: %s" % parameter_set)
 
@@ -57,8 +63,9 @@ robot = entities.RobotEntity(
     yaw_offset = -90,
 )
 simulator = Simulator(interface, robot, entities=[
-    entities.GateEntity((25, 0, 0)),
     entities.AxisEntity(),
+    entities.GateEntity((25, 0, 0)),
+    entities.PathEntity((30, 0, -8), yaw=-45),
 ])
 
 simulator.run()

@@ -71,10 +71,11 @@ class RobotEntity(ModelEntity):
         self.model.draw()
         glPopMatrix()
 
-        # Lines to show fov
+        # Lines to show forward fov
         half_fov = radians(self.get_camera_fov("forawrd")/2)
         height = 0
         glColor(0, 1, 0)
+        glPushMatrix()
         glTranslate(1.5, 0, 0)
         glBegin(GL_LINES)
 
@@ -92,6 +93,29 @@ class RobotEntity(ModelEntity):
             cos(-half_fov)*5,
             sin(-half_fov)*5,
             height)
+
+        glEnd()
+        glPopMatrix()
+
+        # Lines to show down fov
+        half_fov = radians(self.get_camera_fov("down")/2)
+        glColor(1, 1, 0)
+        glBegin(GL_LINES)
+
+        glVertex(0, 0, 0)
+        glVertex(0, 0, -4)
+
+        glVertex(0, 0, 0)
+        glVertex(
+            0,
+            sin(half_fov)*5,
+            -cos(half_fov)*5)
+
+        glVertex(0, 0, 0)
+        glVertex(
+            0,
+            sin(-half_fov)*5,
+            -cos(-half_fov)*5)
 
         glEnd()
 
@@ -124,8 +148,10 @@ class RobotEntity(ModelEntity):
 
         # Convert to homogeneous coordinates (column matrix)
         if len(point) == 3:
+            dimmensions = 3
             point = numpy.matrix([point[0], point[1], point[2], 1]).transpose()
         elif len(point) == 2:
+            dimmensions = 2
             point = numpy.matrix([point[0], point[1], 0, 1]).transpose()
         else:
             raise ValueError("point must be length 2 or 3.")
@@ -139,21 +165,23 @@ class RobotEntity(ModelEntity):
         # OpenGL camera is at the origin pointing down the -Z axis.  Using
         # arctargent we can get the spherical angles of the point.
         theta = degrees(atan2(new_point[0], -new_point[2]))
-        phi = degrees(atan2(new_point[0], -new_point[1]))
+        phi = degrees(atan2(new_point[1], -new_point[2]))
 
         # Scale from -fov to fov
         half_horizontal_fov = self.get_camera_fov(camera, vertical=False)/2
         half_vertical_fov = self.get_camera_fov(camera, vertical=True)/2
-        theta = theta/half_horizontal_fov
-        phi = phi/half_vertical_fov
+        theta = theta / half_horizontal_fov
+        phi = phi / half_vertical_fov
 
         # Make None if outside fov
-        if abs(theta) > self.get_camera_fov(camera)/2:
+        if abs(theta) > 1:
             theta = None
-        if abs(phi) > self.get_camera_fov(camera, vertical=True)/2:
+        if abs(phi) > 1:
             phi = None
 
-        if len(point) == 2:
+        if dimmensions == 2:
+            return theta
+        else:
             return theta, phi
 
     def get_camera_fov(self, camera, vertical=False):
@@ -186,7 +214,12 @@ class RobotEntity(ModelEntity):
                 up[0], up[1], up[2])
 
         elif camera == "down":
-            raise NotImplementedError()
+            ref_point = self.absolute_point((0, 0, -1))
+            up = self.absolute_point((1, 0, 0)) - self.pos
+            gluLookAt(
+                self.pos[0], self.pos[1], self.pos[2],
+                ref_point[0], ref_point[1], ref_point[2],
+                up[0], up[1], up[2])
 
         else:
             raise ValueError('Unknown camera: "%s"' % camera)

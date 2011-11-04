@@ -18,6 +18,7 @@ class Interface(object):
         self.camera_modes = [
             "freecam",
             "robot_forward",
+            "robot_down",
         ]
         self.camera_mode = self.camera_modes[0]
         self.simulator = None
@@ -111,6 +112,8 @@ class Interface(object):
 
         elif self.camera_mode == "robot_forward":
             self.simulator.robot.camera_transform("forward")
+        elif self.camera_mode == "robot_down":
+            self.simulator.robot.camera_transform("down")
 
     def get_camera_direction(self):
         return (

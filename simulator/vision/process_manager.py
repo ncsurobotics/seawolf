@@ -44,6 +44,7 @@ class ProcessManager(object):
     def kill(self):
         ''' kill all running sub processes '''
         self.simulator_pipe.send([])
+        self.processes = {}
 
 class KillSignal(Exception):
     pass

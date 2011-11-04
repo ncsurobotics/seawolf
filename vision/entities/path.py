@@ -48,7 +48,7 @@ class PathEntity(VisionEntity):
         found_path = False
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
-        #use RGB color finder 
+        #use RGB color finder
         binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,1500,800,.3)
 
         if self.debug:
@@ -101,7 +101,7 @@ class PathEntity(VisionEntity):
             self.seen_in_a_row += 1
         else:
             self.seen_in_a_row = 0
-        
+
         #stores whether or not we are confident about the path's presence
         object_present = False
 
@@ -147,7 +147,7 @@ class PathEntity(VisionEntity):
         self.output.theta = self.theta
         if self.center:
             #scale center coordinates of path based on frame size
-            self.output.x = self.center[0]/(frame.width/2) 
+            self.output.x = self.center[0]/(frame.width/2)
             self.output.y = self.center[1]/(frame.height/2)
         else:
             self.output.x = None

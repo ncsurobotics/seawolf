@@ -1,8 +1,8 @@
 
-from base import Entity, Container
-
 from OpenGL.GL import *
 from OpenGL.GLU import *
+
+from base import Entity, Container
 
 class GateEntity(Entity):
 
