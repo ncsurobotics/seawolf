@@ -22,7 +22,6 @@ class RobotEntity(ModelEntity):
 
         self.depth = -1*self.pos[2]
         self.tracked_vars = {}
-        self.forward_fov = 53
 
         seawolf.var.subscribe("Port")
         seawolf.var.subscribe("Star")
@@ -73,7 +72,7 @@ class RobotEntity(ModelEntity):
         glPopMatrix()
 
         # Lines to show fov
-        half_fov = radians(self.forward_fov/2)
+        half_fov = radians(self.get_camera_fov("forawrd")/2)
         height = 0
         glColor(0, 1, 0)
         glTranslate(1.5, 0, 0)
@@ -122,39 +121,59 @@ class RobotEntity(ModelEntity):
         fov to the right or up.
 
         '''
-        assert len(point) == 3 or len(point) == 2
-        point = numpy.array(point)
 
-        if camera == "forward":
-            if len(point) == 2:
-                return self._find_point_forward_2d(point)
-            else:
-                return self._find_point_forward_3d(point)
-
-        elif camera == "down":
-            assert len(point) == 3
-            return self._find_point_down(point)
-
+        # Convert to homogeneous coordinates (column matrix)
+        if len(point) == 3:
+            point = numpy.matrix([point[0], point[1], point[2], 1]).transpose()
+        elif len(point) == 2:
+            point = numpy.matrix([point[0], point[1], 0, 1]).transpose()
         else:
-            raise ValueError('Unknown camera: "%s"' % camera)
+            raise ValueError("point must be length 2 or 3.")
 
-    def _find_point_forward_2d(self, point):
-        # TODO: Take into account roll
-        delta = point - self.pos[0:2]
-        angle_to_point = degrees(atan2(-delta[1], delta[0]))
-        #angle_to_point = 90 - angle_to_point  # Convert to clockwise positive, straight ahead=0
-        relative_angle = angle_to_point - self.yaw
-        relative_angle = (relative_angle+180) % 360 - 180  # Range -180 to 180
-        if abs(relative_angle) < self.forward_fov/2:
-            return relative_angle / (self.forward_fov/2)
+        camera_transform = self.get_camera_matrix(camera)
+        new_point = numpy.dot(camera_transform, point)
+
+        # Convert from a column matrix to array
+        new_point = numpy.array(new_point.transpose())[0]
+
+        # OpenGL camera is at the origin pointing down the -Z axis.  Using
+        # arctargent we can get the spherical angles of the point.
+        theta = degrees(atan2(new_point[0], -new_point[2]))
+        phi = degrees(atan2(new_point[0], -new_point[1]))
+
+        # Scale from -fov to fov
+        half_horizontal_fov = self.get_camera_fov(camera, vertical=False)/2
+        half_vertical_fov = self.get_camera_fov(camera, vertical=True)/2
+        theta = theta/half_horizontal_fov
+        phi = phi/half_vertical_fov
+
+        # Make None if outside fov
+        if abs(theta) > self.get_camera_fov(camera)/2:
+            theta = None
+        if abs(phi) > self.get_camera_fov(camera, vertical=True)/2:
+            phi = None
+
+        if len(point) == 2:
+            return theta, phi
+
+    def get_camera_fov(self, camera, vertical=False):
+        #TODO: What are the real FOVs for the cameras we use?
+        if vertical:
+            return 53
         else:
-            return None
+            return 53
 
-    def _find_point_forward_3d(self, point):
-        raise NotImplementedError()
+    def get_camera_matrix(self, camera):
+        '''Gets the modelview matrix for the given camera.'''
+        glMatrixMode(GL_MODELVIEW)
+        glPushMatrix()
+        glLoadIdentity()
+        self.camera_transform(camera)
+        # Transpose to format into row major order
+        modelview = glGetDouble(GL_MODELVIEW_MATRIX).transpose()
+        glPopMatrix()
 
-    def _find_point_down(self, point):
-        raise NotImplementedError()
+        return modelview
 
     def camera_transform(self, camera):
 

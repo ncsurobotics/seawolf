@@ -60,12 +60,10 @@ class Entity(object):
             glPushMatrix()
             glLoadIdentity()
             self.pre_draw()
-            modelview = glGetDouble(GL_MODELVIEW_MATRIX)
+            # Transpose to format into row major order
+            modelview = glGetDouble(GL_MODELVIEW_MATRIX).transpose()
             self.post_draw()
             glPopMatrix()
-
-            # Change from column major to row major
-            modelview = modelview.transpose()
 
             new_point = numpy.dot(modelview, point)
             # Convert from a column matrix to array
