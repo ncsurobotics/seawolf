@@ -10,7 +10,6 @@ class PathEntity(Entity):
 
     def __init__(self, *args, **kwargs):
         super(PathEntity, self).__init__(*args, **kwargs)
-        self.image_width = 640
         self.output = Container()
 
     def draw(self):
@@ -35,6 +34,5 @@ class PathEntity(Entity):
             self.output.y = y
             self.output.theta = radians(self.yaw-robot.yaw) % pi
         else:
-            print "Missed: x=%s y=%s" % (x, y)
             self.output.found = False
         return self.output

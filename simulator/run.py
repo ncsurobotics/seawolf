@@ -48,7 +48,7 @@ elif parameter_set == "path1":
     robot_pos = [22, 0, 0]
     robot_yaw = 0
 else:
-    raise ValueError("Unknown starting parameters: %s" % parameter_set)
+    raise ValueError("Unknown starting parameter set: %s" % parameter_set)
 
 # Initialize everything!
 interface = Interface(
@@ -63,9 +63,15 @@ robot = entities.RobotEntity(
     yaw_offset = -90,
 )
 simulator = Simulator(interface, robot, entities=[
+
     entities.AxisEntity(),
+
     entities.GateEntity((25, 0, 0)),
-    entities.PathEntity((30, 0, -8), yaw=-45),
+    entities.PathEntity((30, 0, -12), yaw=-45),
+    entities.BuoysEntity((40, 10, -4), yaw=-45,
+                         pos_red=(0, 0, 1.5),
+                         pos_yellow=(0, 4, 0),
+                         pos_green=(0, -4, -1.5))
 ])
 
 simulator.run()
