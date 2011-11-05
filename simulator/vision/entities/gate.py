@@ -17,19 +17,19 @@ class GateEntity(Entity):
 
         # Right Pole
         glPushMatrix()
-        glTranslate(0, 5, 0)
+        glTranslate(0, 5, -6)
         gluCylinder(gluNewQuadric(), 0.2, 0.2, 6, 10, 1)
         glPopMatrix()
 
         # Left Pole
         glPushMatrix()
-        glTranslate(0, -5, 0)
+        glTranslate(0, -5, -6)
         gluCylinder(gluNewQuadric(), 0.2, 0.2, 6, 10, 1)
         glPopMatrix()
 
         # Cross Pole
         glPushMatrix()
-        glTranslate(0, 5, 6)
+        glTranslate(0, 5, 0)
         glRotate(90, 1, 0, 0)
         gluCylinder(gluNewQuadric(), 0.2, 0.2, 10, 10, 1)
         glPopMatrix()

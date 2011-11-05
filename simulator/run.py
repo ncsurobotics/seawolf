@@ -41,11 +41,12 @@ elif parameter_set == "gate-random":
     cam_pitch = -90
     robot_pos = [0, 0, 0]
     robot_yaw = random.uniform(-20, 20)
+    print "Starting at yaw =", robot_yaw
 elif parameter_set == "path1":
     cam_pos = [30, 0, 25]
     cam_yaw = 90
     cam_pitch = -90
-    robot_pos = [22, 0, 0]
+    robot_pos = [22, 0, -2]
     robot_yaw = 0
 else:
     raise ValueError("Unknown starting parameter set: %s" % parameter_set)
@@ -57,18 +58,16 @@ interface = Interface(
     cam_pitch = cam_pitch,
 )
 robot = entities.RobotEntity(
-    model.ObjModel(file("models/seawolf5.obj")),
     pos = robot_pos,
     yaw = robot_yaw,
-    yaw_offset = -90,
 )
 simulator = Simulator(interface, robot, entities=[
 
     entities.AxisEntity(),
 
     entities.GateEntity((25, 0, 0)),
-    entities.PathEntity((30, 0, -12), yaw=-45),
-    entities.BuoysEntity((40, 10, -4), yaw=-45,
+    entities.PathEntity((35, 0, -12), yaw=-45),
+    entities.BuoysEntity((45, 10, -4), yaw=-45,
                          pos_red=(0, 0, 1.5),
                          pos_yellow=(0, 4, 0),
                          pos_green=(0, -4, -1.5))

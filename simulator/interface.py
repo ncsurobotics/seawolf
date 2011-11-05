@@ -40,7 +40,7 @@ class Interface(object):
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_COLOR_MATERIAL)
         glDisable(GL_CULL_FACE)
-        glDisable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
         # Lighting
         glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (0.2, 0.2, 0.2, 0.1))

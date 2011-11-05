@@ -1,6 +1,6 @@
 
 from __future__ import division
-from math import radians, degrees, sin, cos, pi, atan2
+from math import radians, degrees, sin, cos, pi, atan2, tan
 import numpy
 
 from OpenGL.GL import *
@@ -9,9 +9,10 @@ from OpenGL.GLUT import *
 
 import seawolf
 
-from base import ModelEntity
+from base import Entity
+import model
 
-class RobotEntity(ModelEntity):
+class RobotEntity(Entity):
 
     DEPTH_CONSTANT = 1.5
     VELOCITY_CONSTANT = 1
@@ -20,6 +21,8 @@ class RobotEntity(ModelEntity):
     def __init__(self, *args, **kwargs):
         super(RobotEntity, self).__init__(*args, **kwargs)
 
+        self.yaw_offset = -90
+        self.model = model.ObjModel(file("models/seawolf5.obj"))
         self.depth = -1*self.pos[2]
         self.tracked_vars = {}
 
@@ -66,60 +69,84 @@ class RobotEntity(ModelEntity):
 
     def draw(self):
         self.pre_draw()
+
+        # Account for model offsets and draw the model
         glPushMatrix()
+        glTranslate(0, 0, -1)
         glRotate(self.yaw_offset, 0, 0, -1)
         self.model.draw()
         glPopMatrix()
 
-        # Lines to show forward fov
-        half_fov = radians(self.get_camera_fov("forawrd")/2)
-        height = 0
-        glColor(0, 1, 0)
+        # Down camera guides
+        glColor(1, 1, 0, 0.2)
         glPushMatrix()
-        glTranslate(1.5, 0, 0)
-        glBegin(GL_LINES)
-
-        glVertex(0, 0, height)
-        glVertex(4, 0, height)
-
-        glVertex(0, 0, height)
-        glVertex(
-            cos(half_fov)*5,
-            sin(half_fov)*5,
-            height)
-
-        glVertex(0, 0, height)
-        glVertex(
-            cos(-half_fov)*5,
-            sin(-half_fov)*5,
-            height)
-
-        glEnd()
+        glRotate(90, 0, 1, 0)
+        self.draw_camera_guides(
+            self.get_camera_fov("down", vertical=False),
+            self.get_camera_fov("down", vertical=True)
+        )
         glPopMatrix()
 
-        # Lines to show down fov
-        half_fov = radians(self.get_camera_fov("down")/2)
-        glColor(1, 1, 0)
+        # Forward camera guides
+        glColor(0, 1, 0, 0.2)
+        glTranslate(1.5, 0, 0)
+        self.draw_camera_guides(
+            self.get_camera_fov("forward", vertical=False),
+            self.get_camera_fov("forward", vertical=True)
+        )
+
+        self.post_draw()
+
+    def draw_camera_guides(self, horizontal_fov, vertical_fov, box_dist=4):
+
+        half_horizontal_fov = radians(horizontal_fov) / 2
+        half_vertical_fov = radians(vertical_fov) / 2
+
+        right = tan(half_horizontal_fov) * box_dist
+        left = -right
+        top = tan(half_vertical_fov) * box_dist
+        bottom = -top
+
+        # Draw box
+        glBegin(GL_LINE_LOOP)
+        glVertex(box_dist, left, top)
+        glVertex(box_dist, right, top)
+        glVertex(box_dist, right, bottom)
+        glVertex(box_dist, left, bottom)
+        glEnd()
+
         glBegin(GL_LINES)
 
+        # Middle line
         glVertex(0, 0, 0)
-        glVertex(0, 0, -4)
+        glVertex(box_dist, 0, 0)
 
+        # Lines from box to camera
         glVertex(0, 0, 0)
-        glVertex(
-            0,
-            sin(half_fov)*5,
-            -cos(half_fov)*5)
-
+        glVertex(box_dist, left, top)
         glVertex(0, 0, 0)
-        glVertex(
-            0,
-            sin(-half_fov)*5,
-            -cos(-half_fov)*5)
+        glVertex(box_dist, right, top)
+        glVertex(0, 0, 0)
+        glVertex(box_dist, right, bottom)
+        glVertex(0, 0, 0)
+        glVertex(box_dist, left, bottom)
 
         glEnd()
 
-        self.post_draw()
+        # Fill in the fruscum
+        # Enable blending, but put the setting back when we're done.
+        blend_setting = glGetBooleanv(GL_BLEND)
+        glEnable(GL_BLEND)
+        glBegin(GL_TRIANGLE_FAN)
+        glVertex(0, 0, 0)
+        glVertex(box_dist, left, top)
+        glVertex(box_dist, right, top)
+        glVertex(box_dist, right, bottom)
+        glVertex(box_dist, left, bottom)
+        glVertex(box_dist, left, top)
+        glEnd()
+        if not blend_setting:
+            glDisable(GL_BLEND)
 
     def find_entity(self, entity_cls):
 
@@ -185,11 +212,18 @@ class RobotEntity(ModelEntity):
             return theta, phi
 
     def get_camera_fov(self, camera, vertical=False):
-        #TODO: What are the real FOVs for the cameras we use?
-        if vertical:
-            return 53
+        if camera == "forward":
+            if vertical:
+                return 40
+            else:
+                return 53
+        elif camera == "down":
+            if vertical:
+                return 38  #TODO: We've never measured this, so this is a guess
+            else:
+                return 42
         else:
-            return 53
+            raise ValueError('Unknown camera: "%s"' % camera)
 
     def get_camera_matrix(self, camera):
         '''Gets the modelview matrix for the given camera.'''
@@ -206,10 +240,11 @@ class RobotEntity(ModelEntity):
     def camera_transform(self, camera):
 
         if camera == "forward":
-            ref_point = self.absolute_point((1, 0, 0))
+            ref_point = self.absolute_point((2.5, 0, 0))
+            cam_point = self.absolute_point((1.5, 0, 0))
             up = self.absolute_point((0, 0, 1)) - self.pos
             gluLookAt(
-                self.pos[0], self.pos[1], self.pos[2],
+                cam_point[0], cam_point[1], cam_point[2],
                 ref_point[0], ref_point[1], ref_point[2],
                 up[0], up[1], up[2])
 

@@ -37,7 +37,7 @@ class BuoysEntity(Entity):
             glMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color)
             glPushMatrix()
             glTranslate(*pos)
-            glutSolidSphere(0.75, 5, 5)  # 9 inch diameter
+            glutSolidSphere(0.75, 8, 8)  # 9 inch diameter
             glPopMatrix()
 
         self.post_draw()
