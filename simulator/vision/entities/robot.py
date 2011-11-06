@@ -134,9 +134,12 @@ class RobotEntity(Entity):
         glEnd()
 
         # Fill in the fruscum
-        # Enable blending, but put the setting back when we're done.
+        # Enable blending for transparency effect.  Disable writing to depth
+        # buffer with glDepthMask so objects that are behind this will still be
+        # drawn.
         blend_setting = glGetBooleanv(GL_BLEND)
         glEnable(GL_BLEND)
+        glDepthMask(False)
         glBegin(GL_TRIANGLE_FAN)
         glVertex(0, 0, 0)
         glVertex(box_dist, left, top)
@@ -145,6 +148,7 @@ class RobotEntity(Entity):
         glVertex(box_dist, left, bottom)
         glVertex(box_dist, left, top)
         glEnd()
+        glDepthMask(True)
         if not blend_setting:
             glDisable(GL_BLEND)
 
