@@ -48,6 +48,12 @@ elif parameter_set == "path1":
     cam_pitch = -90
     robot_pos = [22, 0, -2]
     robot_yaw = 0
+elif parameter_set == "buoys":
+    cam_pos = [35, 0, 4]
+    cam_yaw = 45
+    cam_pitch = -20
+    robot_pos = [35, 0, -2]
+    robot_yaw = -45
 else:
     raise ValueError("Unknown starting parameter set: %s" % parameter_set)
 
@@ -67,7 +73,7 @@ simulator = Simulator(interface, robot, entities=[
 
     entities.GateEntity((25, 0, 0)),
     entities.PathEntity((35, 0, -12), yaw=-45),
-    entities.BuoysEntity((45, 10, -4), yaw=-45,
+    entities.BuoysEntity((55, 20, -4), yaw=-45,
                          pos_red=(0, 0, 1.5),
                          pos_yellow=(0, 4, 0),
                          pos_green=(0, -4, -1.5))

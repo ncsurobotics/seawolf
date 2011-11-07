@@ -49,8 +49,12 @@ class BuoysEntity(Entity):
 
         new_buoys = []
         for pos, color in izip(self.positions, self.color_names):
-            theta, phi = robot.find_point("forward", self.absolute_point(pos))
-            if theta != None and phi != None:
+            absolute_pos = self.absolute_point(pos)
+            theta, phi = robot.find_point("forward", absolute_pos)
+            dist = numpy.linalg.norm(absolute_pos-robot.pos)
+            if dist > 6 and dist < 25 and \
+                    theta != None and \
+                    phi != None:
                 theta *= robot.get_camera_fov("forward", vertical=False)/2
                 phi *= robot.get_camera_fov("forward", vertical=True)/2
 
@@ -59,20 +63,25 @@ class BuoysEntity(Entity):
                 for buoy in self.output.buoys:
                     if buoy.color == color:
                         similar_buoy_found = True
+
+                        buoy.found = True
                         buoy.theta = theta
                         buoy.phi = phi
-                        buoy.found = True
+                        buoy.r = dist
+
                         break
 
                 # Create new buoy
                 if not similar_buoy_found:
                     buoy = Container()
+                    buoy.found = True
                     buoy.theta = theta
                     buoy.phi = phi
+                    buoy.r = dist
+                    buoy.color = color
                     buoy.id = self.id_counter
                     self.id_counter += 1
-                    buoy.color = color
-                    buoy.found = True
+
                     new_buoys.append(buoy)
 
         self.output.buoys.extend(new_buoys)
