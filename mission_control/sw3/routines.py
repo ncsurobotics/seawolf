@@ -1,9 +1,11 @@
 
 import threading
 import time
+import collections
 
 import seawolf as sw
 
+import sw3
 import pid
 import util
 from mixer import mixer
@@ -40,17 +42,13 @@ class NavRoutine(object):
 
     def start(self):
         with self.routine_lock:
-            if self.state == NavRoutine.CANCELED:
-                self.__finished(NavRoutine.CANCELED)
-            elif self.state == NavRoutine.RESET:
-                self.state = NavRoutine.RUNNING
-                if self.timeout_length > 0:
-                    threading.Timer(self.timeout_length, self.timeout).start()
-                self._start()
-                if hasattr(self, "_poll"):
-                    self.__start_poller()
-            else:
-                raise Exception("Routine state exception")
+            self.done_event.clear()
+            self.state = NavRoutine.RUNNING
+            if self.timeout_length > 0:
+                threading.Timer(self.timeout_length, self.timeout).start()
+            self._start()
+            if hasattr(self, "_poll"):
+                self.__start_poller()
 
     def __poller(self):
         """ Polling thread. Will call self._poll every self.polling_interval
@@ -79,8 +77,8 @@ class NavRoutine(object):
                 for callback in self.on_done_callbacks:
                     callback(new_state)
 
-            self.state = new_state
-            self.done_event.set()
+                self.state = new_state
+                self.done_event.set()
 
     def cancel(self):
         self.__finished(NavRoutine.CANCELED)
@@ -108,7 +106,21 @@ class NavRoutine(object):
     def wait(self):
         self.done_event.wait()
 
-    def on_done(self, callback):
+    def on_done(self, action):
+
+        # NavRoutine
+        if isinstance(action, NavRoutine):
+            def callback(state):
+                if state == NavRoutine.COMPLETED or state == NavRoutine.TIMEDOUT:
+                    sw3.nav.do(action)
+
+        # Callback Function
+        elif callable(action):
+            callback = action
+
+        else:
+            raise ValueError("Argument must be a nav routine or a callable accepting one argument")
+
         self.on_done_callbacks.append(callback)
 
     def on_done_clear_callbacks(self):
@@ -120,16 +132,28 @@ class CompoundInterferenceException(Exception):
 class CompoundRoutine(NavRoutine):
     """ Run multiple routines simultaneously """
 
-    def __init__(self, routines, timeout=-1):
+    def __init__(self, *args, **kwargs):
+        timeout = kwargs.pop("timeout", -1)
+        if kwargs != {}:
+            raise ValueError("Unexpected keyward arguments: %s" % kwargs)
         super(CompoundRoutine, self).__init__(timeout)
-        self.routines = routines
 
-        interactions = [r.get_interactions() for r in routines]
+        # If there is only one argument and it is iterable, assume that the
+        # user passed in a list of routines.  Otherwise assume that *args is a
+        # list of routines.
+        if len(args) == 0:
+            raise ValueError("CompoundRoutine requires at least one argument.")
+        elif len(args) == 1 and isinstance(args[0], collections.Iterable):
+            self.routines = args[0]
+        else:
+            self.routines = args
+
+        interactions = [r.get_interactions() for r in self.routines]
         if not util.pairwise_disjoint(*interactions):
             raise CompoundInterferenceException("Illegal conflict in navigation routine interactions")
 
         self.interactions = set().union(*interactions)
-        
+
     def _poll(self):
         # A CompoundRoutine is completed when all its constituent parts have
         # finished and it has not been canceled
@@ -145,7 +169,7 @@ class CompoundRoutine(NavRoutine):
     def _start(self):
         for routine in self.routines:
             routine.start()
-            
+
     def _cleanup(self):
         for routine in self.routines:
             routine.reset()
@@ -166,14 +190,14 @@ class ZeroThrusters(NavRoutine):
         pid.rotate.pause()
         pid.pitch.pause()
         pid.depth.pause()
-        
+
         # Zero the mixer
         mixer.depth = 0
         mixer.pitch = 0
         mixer.yaw = 0
         mixer.forward = 0
         mixer.strafe = 0
-        
+
         # Zero the thrusters
         for v in ("Port", "Star", "Bow", "Stern", "Strafe"):
             sw.var.set(v, 0)
@@ -250,7 +274,7 @@ class SetYaw(NavRoutine):
             target_yaw = (target_yaw + 180) % 360
             current_yaw = (current_yaw + 180) % 360
             diff = abs(target_yaw - current_yaw)
-            
+
         if diff <= self.tolerance:
             self.i += 1
         else:
@@ -272,7 +296,7 @@ class RelativeYaw(NavRoutine):
         self.tolerance = tolerance
         if amount > 180 or amount < -180:
             raise ValueError("Invalid relative yaw value of %.2f" % (amount,))
-        
+
     def _poll(self):
         target_yaw = self.target_yaw + 180
         current_yaw = data.imu.yaw + 180
@@ -282,7 +306,7 @@ class RelativeYaw(NavRoutine):
             target_yaw = (target_yaw + 180) % 360
             current_yaw = (current_yaw + 180) % 360
             diff = abs(target_yaw - current_yaw)
-            
+
         if diff <= self.tolerance:
             return NavRoutine.COMPLETED
         return NavRoutine.RUNNING
@@ -310,7 +334,7 @@ def TurnLeft():
 
 class Forward(NavRoutine):
     interactions = ("Forward",)
-    
+
     def __init__(self, rate, timeout=-1):
         super(Forward, self).__init__(timeout)
         self.rate = rate
@@ -320,7 +344,7 @@ class Forward(NavRoutine):
 
 class Strafe(NavRoutine):
     interactions = ("Strafe",)
-    
+
     def __init__(self, rate, timeout=-1):
         super(Strafe, self).__init__(timeout)
         self.rate = rate
@@ -336,7 +360,7 @@ class EmergencyBreech(ZeroThrusters):
         # Zero the thrusters by calling to the super class
         super(EmergencyBreech, self)._start()
         mixer.depth = -1.0
-        
+
     def _poll(self):
         # Set the mixer depth value each time polled incase a rogue program puts
         # it back
@@ -346,3 +370,19 @@ class EmergencyBreech(ZeroThrusters):
     def _stop(self):
         # Zero depth thrusters
         mixer.depth = 0.0;
+
+def SequentialRoutine(*routines):
+    # TODO: Calling on_done on the return value doesn't do what you'd expect it
+    # to.  The solution is probably to make this a legit class instead of
+    # function.
+    for i in xrange(1, len(routines)-1):
+        routines[i-1].on_done(routines[i])
+    return routines[0]
+
+def LoopRoutine(*routines):
+    # TODO: Calling on_done on the return value doesn't do what you'd expect it
+    # to.  The solution is probably to make this a legit class instead of
+    # function.
+    for i in xrange(len(routines)):
+        routines[i-1].on_done(routines[i])
+    return routines[0]
