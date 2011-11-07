@@ -25,9 +25,8 @@ class BuoysEntity(Entity):
         ]
         self.color_names = ("red", "green", "yellow")
         self.output = Container()
-        self.output.red = None
-        self.output.green = None
-        self.output.yellow = None
+        self.output.buoys = []
+        self.id_counter = 0
 
     def draw(self):
         self.pre_draw()
@@ -44,14 +43,37 @@ class BuoysEntity(Entity):
 
     def find(self, robot):
 
-        for name, pos, color in izip(self.color_names, self.positions, self.colors):
-            x, y = robot.find_point("forward", self.absolute_point(pos))
-            if x != None and y != None:
-                value = Container()
-                value.x = x
-                value.y = y
-            else:
-                value = None
-            setattr(self.output, name, value)
+        self.output.buoys = filter(lambda x:x.found, self.output.buoys)
+        for buoy in self.output.buoys:
+            buoy.found = False
 
+        new_buoys = []
+        for pos, color in izip(self.positions, self.color_names):
+            theta, phi = robot.find_point("forward", self.absolute_point(pos))
+            if theta != None and phi != None:
+                theta *= robot.get_camera_fov("forward", vertical=False)/2
+                phi *= robot.get_camera_fov("forward", vertical=True)/2
+
+                # Find existing bouy with similar theta and phi
+                similar_buoy_found = False
+                for buoy in self.output.buoys:
+                    if buoy.color == color:
+                        similar_buoy_found = True
+                        buoy.theta = theta
+                        buoy.phi = phi
+                        buoy.found = True
+                        break
+
+                # Create new buoy
+                if not similar_buoy_found:
+                    buoy = Container()
+                    buoy.theta = theta
+                    buoy.phi = phi
+                    buoy.id = self.id_counter
+                    self.id_counter += 1
+                    buoy.color = color
+                    buoy.found = True
+                    new_buoys.append(buoy)
+
+        self.output.buoys.extend(new_buoys)
         return self.output
