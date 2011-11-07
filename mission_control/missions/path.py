@@ -62,7 +62,7 @@ class PathMission(MissionBase):
         position_rho = math.sqrt(x**2+y**2) #hypotenuse-distance from frame center to path center
         position_phi = math.atan2(x,y)*(180/pi) #angle of center of path from current position
         print "State:Centering  dist ",position_rho,"  angle from current ",position_phi
-        
+
         sw3.nav.do(sw3.Forward(0))
         yaw_routine = sw3.RelativeYaw(position_phi)
         forward_routine = sw3.Forward(FORWARD_SPEED,CENTER_TIME)
@@ -71,16 +71,16 @@ class PathMission(MissionBase):
 
         if position_rho <= CENTER_THRESHOLD:
             self.state = "orienting"
-   
+
     def state_orienting(self, path_data):
         current_yaw = sw3.data.imu.yaw*(pi/180) % (2*pi)
         path_angle = (path_data.theta + current_yaw) % pi
-        
+
         sw3.nav.do(sw3.Forward(0))
         opposite_angle = (pi + path_angle) % (2*pi)
 
         print "Status: Orienting   yaw ",current_yaw," path_angle ",path_angle," opposite_angle ",opposite_angle
-        
+
         if util.circular_distance(self.reference_angle, opposite_angle) < util.circular_distance(self.reference_angle, path_angle):
             path_angle = opposite_angle
 
@@ -94,9 +94,4 @@ class PathMission(MissionBase):
 
 
         if degree <=  MIN_ANGLE_THRESHOLD or degree >= MAX_ANGLE_THRESHOLD:
-            return True
-        else:
-            return False
-
-
-
+            self.finish_mission()
