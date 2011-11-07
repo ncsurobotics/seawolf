@@ -18,50 +18,63 @@ parent_directory = os.path.realpath(os.path.join(
 mission_control_directory = os.path.join(parent_directory, "mission_control/")
 sys.path.append(mission_control_directory)
 
+PARAMETER_SETS = {
+    "gate": {
+        "cam_pos": [13, 0, 25],
+        "cam_yaw": 90,
+        "cam_pitch": -90,
+        "robot_pos": [0, 0, 0],
+        "robot_yaw": 0,
+    },
+    "gate-random": {
+        "cam_pos": [13, 0, 25],
+        "cam_yaw": 90,
+        "cam_pitch": -90,
+        "robot_pos": [0, 0, 0],
+        "robot_yaw": random.uniform(-20, 20),
+    },
+    "path1": {
+        "cam_pos": [30, 0, 25],
+        "cam_yaw": 90,
+        "cam_pitch": -90,
+        "robot_pos": [22, 0, -2],
+        "robot_yaw": 0,
+    },
+    "buoys": {
+        "cam_pos": [35, 0, 4],
+        "cam_yaw": 45,
+        "cam_pitch": -20,
+        "robot_pos": [35, 0, -2],
+        "robot_yaw": -45,
+    },
+}
+
 # libseawolf Init
 seawolf.loadConfig("../conf/seawolf.conf")
 seawolf.init("Simulator")
 
-# Parse argument for mission
+# Parse argument for initial parameters
 if len(sys.argv) < 2:
-    parameter_set = "gate"
+    parameters = PARAMETER_SETS['gate']
+elif sys.argv[1] in PARAMETER_SETS:
+    parameters = PARAMETER_SETS[sys.argv[1]]
 else:
-    parameter_set = sys.argv[1]
+    print 'Parameter set "%s" not found!  Valid parameter sets:\n%s' % \
+            (sys.argv[1], PARAMETER_SETS.keys())
+    sys.exit(1)
 
-# Determine initial parameters
-if parameter_set == "gate" or parameter_set == "gate-straight":
-    cam_pos = [13, 0, 25]
-    cam_yaw = 90
-    cam_pitch = -90
-    robot_pos = [0, 0, 0]
-    robot_yaw = 0
-elif parameter_set == "gate-random":
-    cam_pos = [13, 0, 25]
-    cam_yaw = 90
-    cam_pitch = -90
-    robot_pos = [0, 0, 0]
-    robot_yaw = random.uniform(-20, 20)
-    print "Starting at yaw =", robot_yaw
-elif parameter_set == "path1":
-    cam_pos = [30, 0, 25]
-    cam_yaw = 90
-    cam_pitch = -90
-    robot_pos = [22, 0, -2]
-    robot_yaw = 0
-elif parameter_set == "buoys":
-    cam_pos = [35, 0, 4]
-    cam_yaw = 45
-    cam_pitch = -20
-    robot_pos = [35, 0, -2]
-    robot_yaw = -45
-else:
-    raise ValueError("Unknown starting parameter set: %s" % parameter_set)
+cam_pos = parameters["cam_pos"]
+cam_yaw = parameters["cam_yaw"]
+cam_pitch = parameters["cam_pitch"]
+robot_pos = parameters["robot_pos"]
+robot_yaw = parameters["robot_yaw"]
 
 # Initialize everything!
 interface = Interface(
     cam_pos = cam_pos,
     cam_yaw = cam_yaw,
     cam_pitch = cam_pitch,
+    parameter_sets = PARAMETER_SETS,
 )
 robot = entities.RobotEntity(
     pos = robot_pos,

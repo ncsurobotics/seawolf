@@ -7,13 +7,16 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
+import seawolf
+
 class Interface(object):
 
-    def __init__(self, cam_pos=(0,0,0), cam_pitch=0, cam_yaw=0):
+    def __init__(self, cam_pos=(0,0,0), cam_pitch=0, cam_yaw=0, parameter_sets={}):
 
         self.cam_pos = cam_pos
         self.cam_pitch = cam_pitch  # Degrees
         self.cam_yaw = cam_yaw  # Degrees
+        self.parameter_sets = parameter_sets
 
         self.camera_modes = [
             "freecam",
@@ -62,6 +65,18 @@ class Interface(object):
         glutKeyboardFunc(self.keyboard_callback)
         glutSpecialFunc(self.special_keyboard_callback)
         glutMouseFunc(self.mouse_callback)
+
+        # Parameter Set Menu
+        parameter_set_menu = glutCreateMenu(self.parameter_set_menu_callback)
+        for i, set_name in enumerate(self.parameter_sets.iterkeys()):
+            glutAddMenuEntry(set_name, i)
+
+        # Main menu
+        glutCreateMenu(self.main_menu_callback)
+        glutAddSubMenu("Initial Parameters", parameter_set_menu)
+        glutAddMenuEntry("Zero Thrusters", 2)
+        glutAddMenuEntry("Quit", 1)
+        glutAttachMenu(GLUT_RIGHT_BUTTON)
 
         self.init_viewport()
 
@@ -138,13 +153,15 @@ class Interface(object):
         self.cam_pos[1] += distance * camera_direction[1]
         self.cam_pos[2] += distance * camera_direction[2]
 
+    def register_simulator(self, simulator):
+        self.simulator = simulator
+
+    ####### Callbacks #######
+
     def reshape_callback(self, width, height):
         self.view_width = width
         self.view_height = height
         self.init_viewport()
-
-    def register_simulator(self, simulator):
-        self.simulator = simulator
 
     def timer_callback(self, delay):
         glutTimerFunc(delay, self.timer_callback, delay)
@@ -203,3 +220,35 @@ class Interface(object):
             else:
                 glutMotionFunc(None)
                 self.left_mouse_down = False
+
+    def main_menu_callback(self, item):
+
+        if item == 1:  # Quit
+            sys.exit(0)
+
+        elif item == 2:  # Zero Thrusters
+            seawolf.var.set("DepthPID.Paused", 1)
+            seawolf.var.set("PitchPID.Paused", 1)
+            seawolf.var.set("YawPID.Paused", 1)
+            seawolf.var.set("RotatePID.Paused", 1)
+
+            seawolf.notify.send("THRUSTER_REQUEST", "Depth 0 0 0")
+            seawolf.notify.send("THRUSTER_REQUEST", "Forward 0 0")
+
+            seawolf.var.set("Port", 0)
+            seawolf.var.set("Star", 0)
+            seawolf.var.set("Bow", 0)
+            seawolf.var.set("Stern", 0)
+            seawolf.var.set("Strafe", 0)
+
+        return 0
+
+    def parameter_set_menu_callback(self, parameter_set_index):
+        parameters = self.parameter_sets.values()[parameter_set_index]
+        self.cam_pos = parameters['cam_pos']
+        self.cam_pitch = parameters['cam_pitch']
+        self.cam_yaw = parameters['cam_yaw']
+        self.simulator.robot.pos = parameters['robot_pos']
+        self.simulator.robot.yaw = parameters['robot_yaw']
+        return 0
+
