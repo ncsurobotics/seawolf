@@ -16,9 +16,8 @@ class Container(object):
 class Entity(object):
 
     def __init__(self, pos, color=(0.5,0.5,0.5), yaw=0, pitch=0, roll=0):
-        assert len(pos)==3
         assert len(color)==3 or len(color)==4
-        self.pos = pos
+        self.set_pos(pos)
         self.color = color
         self.yaw = yaw
         self.pitch = pitch
@@ -27,6 +26,10 @@ class Entity(object):
 
     def _register_simulator(self, simulator):
         self.simulator = simulator
+
+    def set_pos(self, pos):
+        assert len(pos)==3
+        self.pos = numpy.array(pos, numpy.float)
 
     def step(self, dt):
         pass

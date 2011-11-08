@@ -196,7 +196,7 @@ class Interface(object):
         self.zero_thrusters()
         parameters = self.parameter_sets[set_name]
         self.last_parameter_set = set_name
-        self.simulator.robot.pos = parameters['robot_pos']
+        self.simulator.robot.set_pos(parameters['robot_pos'])
         self.simulator.robot.yaw = parameters['robot_yaw']
 
     ####### Callbacks #######

@@ -20,31 +20,31 @@ sys.path.append(mission_control_directory)
 
 PARAMETER_SETS = {
     "gate": {
-        "cam_pos": [13, 0, 25],
+        "cam_pos": (13, 0, 25),
         "cam_yaw": 90,
         "cam_pitch": -90,
-        "robot_pos": [0, 0, 0],
+        "robot_pos": (0, 0, 0),
         "robot_yaw": 0,
     },
     "gate-random": {
-        "cam_pos": [13, 0, 25],
+        "cam_pos": (13, 0, 25),
         "cam_yaw": 90,
         "cam_pitch": -90,
-        "robot_pos": [0, 0, 0],
+        "robot_pos": (0, 0, 0),
         "robot_yaw": random.uniform(-20, 20),
     },
     "path1": {
-        "cam_pos": [30, 0, 25],
+        "cam_pos": (30, 0, 25),
         "cam_yaw": 90,
         "cam_pitch": -90,
-        "robot_pos": [22, 0, -2],
+        "robot_pos": (22, 0, -2),
         "robot_yaw": 0,
     },
     "buoys": {
-        "cam_pos": [35, 0, 4],
+        "cam_pos": (35, 0, 4),
         "cam_yaw": 45,
         "cam_pitch": -20,
-        "robot_pos": [35, 0, -2],
+        "robot_pos": (35, 0, -2),
         "robot_yaw": -45,
     },
 }
