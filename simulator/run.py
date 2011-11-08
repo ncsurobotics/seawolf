@@ -56,8 +56,10 @@ seawolf.init("Simulator")
 # Parse argument for initial parameters
 if len(sys.argv) < 2:
     parameters = PARAMETER_SETS['gate']
+    parameter_set_name = 'gate'
 elif sys.argv[1] in PARAMETER_SETS:
     parameters = PARAMETER_SETS[sys.argv[1]]
+    parameter_set_name = sys.argv[1]
 else:
     print 'Parameter set "%s" not found!  Valid parameter sets:\n%s' % \
             (sys.argv[1], PARAMETER_SETS.keys())
@@ -92,4 +94,33 @@ simulator = Simulator(interface, robot, entities=[
                          pos_green=(0, -4, -1.5))
 ])
 
+print """
+This simulator replaces the physical environment with a simulation.  The
+simultor replaces the vision and serialapp applications.  Run mission control
+with the -s flag to tell it to connect to the simulator instead of starting
+vision processes.  All other applications should be run as normal.
+
+Camera Movement:
+    Look     Drag left mouse
+    Move    Drag middle mouse
+
+Actions:
+    Most of these actions can be accessed in the right click menu and a
+    keyboard shortcut.
+
+      Action        Key   Notes
+     ---------      ---   -----------
+
+       Reset         r    Reset the robot and camera to an initial state.
+                          Right click menu gives more reset options.
+
+    Camera Mode      m    Cycle between freecam and robot views.
+
+   Zero Thrusters    z
+
+       Quit               Only available through right click menu.  Closing the
+                          window also exits.
+"""
+
+interface.last_parameter_set = parameter_set_name
 simulator.run()

@@ -11,17 +11,19 @@ import seawolf
 
 class Interface(object):
 
-    def __init__(self, cam_pos=(0,0,0), cam_pitch=0, cam_yaw=0, parameter_sets={}):
+    def __init__(self, cam_pos=(0,0,0), cam_pitch=0, cam_yaw=0,
+                 parameter_sets={}):
 
         self.cam_pos = cam_pos
         self.cam_pitch = cam_pitch  # Degrees
         self.cam_yaw = cam_yaw  # Degrees
+        self.last_parameter_set = None
         self.parameter_sets = parameter_sets
 
         self.camera_modes = [
-            "freecam",
-            "robot_forward",
-            "robot_down",
+            "Free Cam",
+            "Forward Cam",
+            "Down Cam",
         ]
         self.camera_mode = self.camera_modes[0]
         self.simulator = None
@@ -71,9 +73,15 @@ class Interface(object):
         for i, set_name in enumerate(self.parameter_sets.iterkeys()):
             glutAddMenuEntry(set_name, i)
 
+        # Camera Mode Menu
+        camera_mode_menu = glutCreateMenu(self.camera_mode_callback)
+        for i, mode_name in enumerate(self.camera_modes):
+            glutAddMenuEntry(mode_name, i)
+
         # Main menu
         glutCreateMenu(self.main_menu_callback)
-        glutAddSubMenu("Initial Parameters", parameter_set_menu)
+        glutAddSubMenu("Reset", parameter_set_menu)
+        glutAddSubMenu("Cam Mode", camera_mode_menu)
         glutAddMenuEntry("Zero Thrusters", 2)
         glutAddMenuEntry("Quit", 1)
         glutAttachMenu(GLUT_RIGHT_BUTTON)
@@ -106,7 +114,7 @@ class Interface(object):
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
 
-        if self.camera_mode == "freecam":
+        if self.camera_mode == "Free Cam":
             # If camera is straight up or down, prevent up vector from being
             # parallel to the viewing angle.
             if abs(self.cam_pitch) >= 90:
@@ -125,10 +133,12 @@ class Interface(object):
                 self.cam_pos[2] + camera_direction[2],
                 up_vector[0], up_vector[1], up_vector[2])
 
-        elif self.camera_mode == "robot_forward":
+        elif self.camera_mode == "Forward Cam":
             self.simulator.robot.camera_transform("forward")
-        elif self.camera_mode == "robot_down":
+        elif self.camera_mode == "Down Cam":
             self.simulator.robot.camera_transform("down")
+        else:
+            raise ValueError("Error: Bad camera mode: "+self.camera_mode)
 
     def get_camera_direction(self):
         return (
@@ -149,12 +159,45 @@ class Interface(object):
 
     def camera_move_forward(self, distance):
         camera_direction = self.get_camera_direction()
-        self.cam_pos[0] += distance * camera_direction[0]
-        self.cam_pos[1] += distance * camera_direction[1]
-        self.cam_pos[2] += distance * camera_direction[2]
+        self.camera_move(camera_direction, distance)
+
+    def camera_move_right(self, distance):
+        right_vector = (
+            cos(radians(self.cam_yaw+90)),
+            sin(radians(self.cam_yaw+90)),
+            0,
+        )
+        self.camera_move(right_vector, distance)
+
+    def camera_move(self, direction, distance):
+        self.cam_pos[0] += direction[0] * distance
+        self.cam_pos[1] += direction[1] * distance
+        self.cam_pos[2] += direction[2] * distance
 
     def register_simulator(self, simulator):
         self.simulator = simulator
+
+    def zero_thrusters(self):
+        seawolf.var.set("DepthPID.Paused", 1)
+        seawolf.var.set("PitchPID.Paused", 1)
+        seawolf.var.set("YawPID.Paused", 1)
+        seawolf.var.set("RotatePID.Paused", 1)
+
+        seawolf.notify.send("THRUSTER_REQUEST", "Depth 0 0 0")
+        seawolf.notify.send("THRUSTER_REQUEST", "Forward 0 0")
+
+        seawolf.var.set("Port", 0)
+        seawolf.var.set("Star", 0)
+        seawolf.var.set("Bow", 0)
+        seawolf.var.set("Stern", 0)
+        seawolf.var.set("Strafe", 0)
+
+    def change_parameter_set(self, set_name):
+        self.zero_thrusters()
+        parameters = self.parameter_sets[set_name]
+        self.last_parameter_set = set_name
+        self.simulator.robot.pos = parameters['robot_pos']
+        self.simulator.robot.yaw = parameters['robot_yaw']
 
     ####### Callbacks #######
 
@@ -171,15 +214,27 @@ class Interface(object):
     def keyboard_callback(self, key, x, y):
         if key == 'u':  # Pitch Up
             self.camera_move_pitch(5)
+
         elif key == 'd':  # Pitch down
             self.camera_move_pitch(-5)
+
         elif key == 'f':  # Freecam look forward
             self.cam_yaw = 0
             self.cam_pitch = 0
-        elif key == 'v':  # Cycle camera mode
+
+        elif key == 'm':  # Cycle camera mode
             current_index = self.camera_modes.index(self.camera_mode)
             next_index = (current_index+1) % len(self.camera_modes)
             self.camera_mode = self.camera_modes[next_index]
+
+        elif key == 'r':  # Reset
+            if self.last_parameter_set:
+                self.change_parameter_set(self.last_parameter_set)
+            else:
+                print "No previous reset state.  Cannot reset!  Use the right click menu to reset once before using the shortcut."
+
+        elif key == 'z':  # Zero Thrusters
+            self.zero_thrusters()
 
     def special_keyboard_callback(self, key, x, y):
         if key == GLUT_KEY_UP:
@@ -187,9 +242,9 @@ class Interface(object):
         elif key == GLUT_KEY_DOWN:
             self.camera_move_forward(-0.1)
         elif key == GLUT_KEY_LEFT:
-            self.camera_move_yaw(5)
+            self.camera_move_yaw(1)
         elif key == GLUT_KEY_RIGHT:
-            self.camera_move_yaw(-5)
+            self.camera_move_yaw(-1)
 
     def mouse_motion_look_callback(self, x, y):
         self.camera_move_yaw((self.last_mouse_position[0] - x) * 0.5)
@@ -198,6 +253,7 @@ class Interface(object):
         glutPostRedisplay()
 
     def mouse_motion_move_callback(self, x, y):
+        self.camera_move_right((self.last_mouse_position[0] - x) * 0.1)
         self.camera_move_forward((self.last_mouse_position[1] - y) * 0.1)
         self.last_mouse_position = (x,y)
         glutPostRedisplay()
@@ -227,28 +283,15 @@ class Interface(object):
             sys.exit(0)
 
         elif item == 2:  # Zero Thrusters
-            seawolf.var.set("DepthPID.Paused", 1)
-            seawolf.var.set("PitchPID.Paused", 1)
-            seawolf.var.set("YawPID.Paused", 1)
-            seawolf.var.set("RotatePID.Paused", 1)
-
-            seawolf.notify.send("THRUSTER_REQUEST", "Depth 0 0 0")
-            seawolf.notify.send("THRUSTER_REQUEST", "Forward 0 0")
-
-            seawolf.var.set("Port", 0)
-            seawolf.var.set("Star", 0)
-            seawolf.var.set("Bow", 0)
-            seawolf.var.set("Stern", 0)
-            seawolf.var.set("Strafe", 0)
+            self.zero_thrusters()
 
         return 0
 
     def parameter_set_menu_callback(self, parameter_set_index):
-        parameters = self.parameter_sets.values()[parameter_set_index]
-        self.cam_pos = parameters['cam_pos']
-        self.cam_pitch = parameters['cam_pitch']
-        self.cam_yaw = parameters['cam_yaw']
-        self.simulator.robot.pos = parameters['robot_pos']
-        self.simulator.robot.yaw = parameters['robot_yaw']
+        set_name = self.parameter_sets.keys()[parameter_set_index]
+        self.change_parameter_set(set_name)
         return 0
 
+    def camera_mode_callback(self, mode_index):
+        self.camera_mode = self.camera_modes[mode_index]
+        return 0
