@@ -7,6 +7,8 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
+import numpy
+
 import seawolf
 
 class Interface(object):
@@ -14,7 +16,7 @@ class Interface(object):
     def __init__(self, cam_pos=(0,0,0), cam_pitch=0, cam_yaw=0,
                  parameter_sets={}):
 
-        self.cam_pos = cam_pos
+        self.cam_pos = numpy.array(cam_pos, numpy.float)
         self.cam_pitch = cam_pitch  # Degrees
         self.cam_yaw = cam_yaw  # Degrees
         self.last_parameter_set = None
