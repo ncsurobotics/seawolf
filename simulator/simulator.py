@@ -49,7 +49,7 @@ class Simulator(object):
             try:
                 while self.connection.poll():
                     self.searching_entities = self.connection.recv()
-            except EOFError:
+            except (EOFError, IOError):
                 # Other end has closed
                 self.searching_entities = []
                 self.connection = None
