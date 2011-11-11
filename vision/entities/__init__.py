@@ -14,11 +14,13 @@ from test import TestEntity
 from gate import GateEntity, GATE_BLACK, GATE_WHITE
 from binoculartest import BinocularTest
 from path import PathEntity
+from buoy import BuoyEntity
 
 entity_classes = {
     "test": TestEntity,
     "binocular_test": BinocularTest,
     "gate": GateEntity,
     "path": PathEntity,
+    "buoy": BuoyEntity,
 }
 

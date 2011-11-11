@@ -7,7 +7,7 @@ CONFIG_FILE = "../cameras.conf"
 
 class FakeSVR(object):
     def __init__(self, camera_name):
-        
+
         # Read config file to find camera index of this camera.
         # The config file is a standard python file that defines variables
         # which are passed into the local dictionary, defined here as
@@ -37,3 +37,7 @@ class FakeSVR(object):
     def close(self):
         return self.camera.close()
     __del__ = close
+
+def debug(name, frame):
+    cv.NamedWindow(name)
+    cv.ShowImage(name, frame)
