@@ -371,18 +371,129 @@ class EmergencyBreech(ZeroThrusters):
         # Zero depth thrusters
         mixer.depth = 0.0;
 
-def SequentialRoutine(*routines):
-    # TODO: Calling on_done on the return value doesn't do what you'd expect it
-    # to.  The solution is probably to make this a legit class instead of
-    # function.
+def sequence_routines(*routines):
+    """ Chains the given routines together with on_done callbacks such that
+    they run one after the other.
+
+    Return the first routine in the sequence.
+
+    """
     for i in xrange(1, len(routines)-1):
         routines[i-1].on_done(routines[i])
     return routines[0]
 
-def LoopRoutine(*routines):
-    # TODO: Calling on_done on the return value doesn't do what you'd expect it
-    # to.  The solution is probably to make this a legit class instead of
-    # function.
+
+def loop_routines(*routines):
+    """ Chains the given routines together with on_done callbacks such that
+    they run one after the other and loop infinitely.
+
+    Return the first routine in the sequence.
+
+    """
     for i in xrange(len(routines)):
         routines[i-1].on_done(routines[i])
     return routines[0]
+
+class LoopRoutine(NavRoutine):
+    """ Routine that executes the given routines in order then repeats. """
+
+    def __init__(self, *args, **kwargs):
+        timeout = kwargs.pop("timeout", -1)
+        if kwargs != {}:
+            raise ValueError("Unexpected keyward arguments: %s" % kwargs)
+        super(LoopRoutine, self).__init__(timeout)
+
+        self.routine_counter = 0
+
+        # If there is only one argument and it is iterable, assume that the
+        # user passed in a list of routines.  Otherwise assume that *args is a
+        # list of routines.
+        if len(args) == 0:
+            raise ValueError("LoopRoutine requires at least one argument.")
+        elif len(args) == 1 and isinstance(args[0], collections.Iterable):
+            self.routines = args[0]
+        else:
+            self.routines = args
+
+        # Calculate interactions
+        interactions = [r.get_interactions() for r in self.routines]
+        self.interactions = set().union(*interactions)
+
+    def _poll(self):
+
+        current_routine = self.routines[self.routine_counter]
+        if hasattr(current_routine, "_poll"):
+            new_state = current_routine._poll()
+        else:
+            new_state = current_routine.state
+
+        if new_state == NavRoutine.COMPLETED or new_state == NavRoutine.TIMEDOUT:
+            # Move to next routine
+            self.routine_counter = (self.routine_counter+1) % len(self.routines)
+            new_routine = self.routines[self.routine_counter]
+            new_routine.start()
+
+        elif new_state == NavRoutine.CANCELED:
+            self.cancel()
+
+        return self.state
+
+    def _start(self):
+        self.routines[self.routine_counter].start()
+
+    def _cleanup(self):
+        for routine in self.routines:
+            routine.reset()
+
+class SequentialRoutine(NavRoutine):
+    """ Routine that executes the given routines in order then exits. """
+
+    def __init__(self, *args, **kwargs):
+        timeout = kwargs.pop("timeout", -1)
+        if kwargs != {}:
+            raise ValueError("Unexpected keyward arguments: %s" % kwargs)
+        super(SequentialRoutine, self).__init__(timeout)
+
+        self.routine_counter = 0
+
+        # If there is only one argument and it is iterable, assume that the
+        # user passed in a list of routines.  Otherwise assume that *args is a
+        # list of routines.
+        if len(args) == 0:
+            raise ValueError("SequentialRoutine requires at least one argument.")
+        elif len(args) == 1 and isinstance(args[0], collections.Iterable):
+            self.routines = args[0]
+        else:
+            self.routines = args
+
+        # Calculate interactions
+        interactions = [r.get_interactions() for r in self.routines]
+        self.interactions = set().union(*interactions)
+
+    def _poll(self):
+
+        current_routine = self.routines[self.routine_counter]
+        if hasattr(current_routine, "_poll"):
+            new_state = current_routine._poll()
+        else:
+            new_state = current_routine.state
+
+        if new_state == NavRoutine.COMPLETED or new_state == NavRoutine.TIMEDOUT:
+            # Move to next routine
+            self.routine_counter += 1
+            if self.routine_counter == len(self.routines):
+                return NavRoutine.COMPLETED
+            new_routine = self.routines[self.routine_counter]
+            new_routine.start()
+
+        elif new_state == NavRoutine.CANCELED:
+            self.cancel()
+
+        return self.state
+
+    def _start(self):
+        self.routines[self.routine_counter].start()
+
+    def _cleanup(self):
+        for routine in self.routines:
+            routine.reset()
