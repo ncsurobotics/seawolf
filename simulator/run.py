@@ -88,7 +88,7 @@ simulator = Simulator(interface, robot, entities=[
 
     entities.GateEntity((25, 0, 0)),
     entities.PathEntity((35, 0, -12), yaw=-45),
-    entities.BuoysEntity((55, 20, -4), yaw=-45,
+    entities.BuoyEntity((55, 20, -4), yaw=-45,
                          pos_red=(0, 0, 1.5),
                          pos_yellow=(0, 4, 0),
                          pos_green=(0, -4, -1.5))
