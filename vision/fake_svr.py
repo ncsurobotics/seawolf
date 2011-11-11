@@ -1,7 +1,7 @@
 import cv
 import os
 
-from vision import libvision
+import libvision
 
 CONFIG_FILE = "../cameras.conf"
 
