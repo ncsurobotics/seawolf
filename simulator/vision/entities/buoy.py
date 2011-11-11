@@ -9,7 +9,7 @@ from OpenGL.GLUT import *
 
 from base import Entity, Container
 
-class BuoysEntity(Entity):
+class BuoyEntity(Entity):
 
     def __init__(self, *args, **kwargs):
         self.positions = [
@@ -17,7 +17,7 @@ class BuoysEntity(Entity):
             numpy.array(kwargs.pop("pos_green", (0,0,0))),
             numpy.array(kwargs.pop("pos_yellow", (0,0,0))),
         ]
-        super(BuoysEntity, self).__init__(*args, **kwargs)
+        super(BuoyEntity, self).__init__(*args, **kwargs)
         self.colors = [
             (1,0,0),
             (0,1,0),
