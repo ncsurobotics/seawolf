@@ -15,6 +15,7 @@ from gate import GateEntity, GATE_BLACK, GATE_WHITE
 from binoculartest import BinocularTest
 from path import PathEntity
 from buoy import BuoyEntity
+from buoytest import BuoyTestEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -22,5 +23,6 @@ entity_classes = {
     "gate": GateEntity,
     "path": PathEntity,
     "buoy": BuoyEntity,
+    "buoytest": BuoyTestEntity,
 }
 
