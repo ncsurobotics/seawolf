@@ -4,7 +4,7 @@ from time import time
 
 import cv
 
-import hist
+import libvision
 
 DEFAULT_MATCH_METHOD = cv.CV_TM_CCORR
 MIN = 2  # Indexes into cv.minmaxloc outputs.
@@ -189,7 +189,7 @@ class Tracker(object):
         cv.CalcHist([scale_32f_image(result)], hist)
         #XXX stddevs from mean should be calculated from either 0 or 255
         #    depending on min or max
-        distance = abs(hist.num_stddev_from_mean(hist, 255))
+        distance = abs(libvision.hist.num_stddev_from_mean(hist, 255))
         if distance < self.min_z_score:
             object_found = False
         else:
@@ -203,7 +203,7 @@ class Tracker(object):
             if object_found:
                 cv.Circle(result_8bit, match_in_result, 5, (0,255,0))
                 cv.Circle(search_image, match_in_search_region, 5, (0,255,0))
-            hist_image = hist.histogram_image(hist)
+            hist_image = libvision.hist.histogram_image(hist)
 
             cv.ShowImage("match", result_8bit)
             cv.ShowImage("template", scale_32f_image(self._template))
