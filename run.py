@@ -1,9 +1,9 @@
 
-import tty
+import resource
+import pty
 import select
-import fcntl
 import os
-import subprocess
+import signal
 
 import wx
 
@@ -33,6 +33,8 @@ class AppRunnerFrame(wx.Frame):
         self.app_tree = wx.TreeCtrl(self.panel_left, -1, wx.DefaultPosition, (-1,-1), wx.TR_FULL_ROW_HIGHLIGHT|wx.TR_HAS_BUTTONS|wx.TR_HIDE_ROOT)
         self.read_apps()
         self.app_tree.Bind(wx.EVT_TREE_SEL_CHANGED, self.on_app_select, id=self.app_tree.GetId())
+        self.app_tree.SetFocus()
+        self.app_tree.SelectItem(self.app_tree.GetFirstVisibleItem())
         self.panel_left_sizer.Add(self.app_tree, 1, wx.EXPAND)
 
         self.main_split.SplitVertically(self.panel_left, self.panel_right, 250)
@@ -52,10 +54,6 @@ class AppRunnerFrame(wx.Frame):
             "Misc": {
                 "Hub": AppPanel(self.panel_right, ["seawolf-hub","-c","../conf/hub.conf"], "db/"),
                 "Serial App": AppPanel(self.panel_right, ["./bin/serialapp"], "serial/"),
-            },
-            "Testing": {
-                "Yes": AppPanel(self.panel_right, ["yes","Hello World!"], ""),
-                "printwait": AppPanel(self.panel_right, ["bash", "./echowait.sh"], ""),
             },
             "PID": {
                 "Yaw PID": AppPanel(self.panel_right, ["./bin/yawpid"], "applications/"),
@@ -77,11 +75,28 @@ class AppRunnerFrame(wx.Frame):
                 # Add the app
                 app_item = self.app_tree.AppendItem(group_root, app_name)
                 self.app_tree.SetPyData(app_item, panel)
+                self.app_tree.Bind(wx.EVT_TREE_ITEM_MIDDLE_CLICK, self.on_app_middle_click)
+                self.app_tree.Bind(wx.EVT_TREE_KEY_DOWN, self.on_app_key_press)
                 panel.Show(False)
                 panel.register(self.app_tree, app_item)
                 self.app_panels.append(panel)
 
             self.app_tree.ExpandAll()
+
+    def on_app_key_press(self, event):
+        key_event = event.GetKeyEvent()
+        key = key_event.GetKeyCode()
+        if key == wx.WXK_NUMPAD_ENTER or key == wx.WXK_RETURN:
+            selected_app = self.app_tree.GetSelection()
+            app_panel = self.app_tree.GetPyData(selected_app)
+            if app_panel:
+                app_panel.on_run_toggle(None)
+        else:
+            event.Skip()
+
+    def on_app_middle_click(self, event):
+        app_panel = self.app_tree.GetPyData(event.GetItem())
+        app_panel.on_run_toggle(None)
 
     def on_app_select(self, event):
         '''Called when an app is selected from the app tree.'''
@@ -141,8 +156,8 @@ class AppPanel(wx.Panel):
         wx.Panel.__init__(self, parent_window, -1)
 
         self.command = command
-        #: subprocess Popen instance
-        self.process = None
+        self.pid = None
+        self.stdout = None
 
         head, tail = os.path.split(__file__)
         self.directory = os.path.abspath(os.path.join(head, directory))
@@ -177,7 +192,7 @@ class AppPanel(wx.Panel):
         self.tree_item = tree_item
 
     def on_run_toggle(self, event):
-        if self.run_button.GetValue():
+        if self.pid is None:
             self.run()
         else:
             self.stop()
@@ -185,49 +200,54 @@ class AppPanel(wx.Panel):
     def run(self):
 
         # Start Process
-        os.chdir(self.directory)
-        self.process = subprocess.Popen(
-            self.command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
+        self.pid, self.stdout = pty.fork()
 
-        # Make self.process.stdout nonblocking
-        # This isn't portable to Windows, but whatever.
-        fd = self.process.stdout.fileno()
-        fl = fcntl.fcntl(self.process.stdout, fcntl.F_GETFL)
-        fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
+        if self.pid == 0:  # Child
+
+            # Close open file descriptors
+            # This tidbit taken from pexpect
+            max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
+            for i in xrange(3, max_fd):
+                try:
+                    os.close(i)
+                except OSError:
+                    pass
+
+            os.chdir(self.directory)
+            os.execvp(self.command[0], self.command)
+            raise OSError("os.exec failed!")
 
         self.app_tree.SetItemBold(self.tree_item, True)
         self.output_box.SetValue("")
         self.run_button.SetLabel("Stop")
 
     def stop(self):
-        if self.process:
+        if self.pid:
             try:
-                self.process.terminate()
-                self.process.wait()
+                os.kill(self.pid, signal.SIGINT)
             except OSError:  # Process doesn't exist
                 pass
 
     def update(self):
 
-        if self.process:
+        if self.pid:
 
             # Get stdout
             text = None
-            self.process.stdout.flush()
-            if select.select([self.process.stdout], [], [], 0)[0]:
-                text = self.process.stdout.read()
+            if select.select([self.stdout], [], [], 0)[0]:
+                try:
+                    text = os.read(self.stdout, 65535)
+
+                except OSError:
+                    # Process exited
+                    self.pid = None
+                    self.stdout = None
+                    self.app_tree.SetItemBold(self.tree_item, False)
+                    self.run_button.SetValue(False)
+                    self.run_button.SetLabel("Run")
+
                 if text:
                     self.output_box.AppendText(text)
-
-            # See if process terminated
-            if self.process.poll() is not None:
-                self.process = None
-                self.app_tree.SetItemBold(self.tree_item, False)
-                self.run_button.SetValue(False)
-                self.run_button.SetLabel("Run")
 
 if __name__ == "__main__":
     app = wx.App(0)
