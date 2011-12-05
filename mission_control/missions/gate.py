@@ -19,17 +19,15 @@ class GateMission(MissionBase):
 
     def init(self):
         self.process_manager.start_process(entities.GateEntity,"gate", "forward", debug = True)
-        sw3.nav.do(sw3.CompoundRoutine([
+        sw3.nav.do(sw3.CompoundRoutine(
             sw3.Forward(FORWARD_SPEED),
             sw3.SetDepth(2),
             sw3.HoldYaw(),
-        ]))
+        ))
 
     def step(self, vision_data):
-        print vision_data
         gate_data = vision_data['gate']
-        if isinstance(gate_data, process_manager.KillSignal):
-            raise gate_data
+        print gate_data
 
         if gate_data and gate_data.left_pole and gate_data.right_pole:
             gate_center = DEGREE_PER_PIXEL*(gate_data.left_pole + gate_data.right_pole)/2  # degrees
