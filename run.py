@@ -54,6 +54,9 @@ class AppRunnerFrame(wx.Frame):
             "Misc": {
                 "Hub": AppPanel(self.panel_right, ["seawolf-hub","-c","../conf/hub.conf"], "db/"),
                 "Serial App": AppPanel(self.panel_right, ["./bin/serialapp"], "serial/"),
+                "Simulator": AppPanel(self.panel_right, ["python","run.py"], "simulator/"),
+                "SVR Watch": AppPanel(self.panel_right, ["python","svr_watch_all.py"], "misc/"),
+                "SVR": AppPanel(self.panel_right, ["svrd"], ""),
             },
             "PID": {
                 "Yaw PID": AppPanel(self.panel_right, ["./bin/yawpid"], "applications/"),
