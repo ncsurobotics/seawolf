@@ -37,8 +37,6 @@ class MissionController(object):
             seawolf.init(application_name)
             seawolf.notify.filter(seawolf.FILTER_ACTION, "GO")
 
-
-
     def kill(self):
         self.process_manager.kill()
         sw3.nav.do(sw3.NullRoutine())
@@ -62,7 +60,7 @@ class MissionController(object):
                 pass
         except Exception:
             self.process_manager.kill()
-            raise 
+            raise
 
     def append_mission(self, mission):
         '''Adds a mission to the queue.

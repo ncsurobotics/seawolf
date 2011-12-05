@@ -5,14 +5,21 @@ from multiprocessing import Process, Pipe
 
 class ProcessManager(object):
 
-    def __init__(self):
+    def __init__(self, extra_kwargs={}):
+        '''
+        :param extra_kwargs:
+            Keyward args that are passed to each process started.
+        '''
         #holds the list currently running processes
+        self.extra_kwargs = extra_kwargs
         self.process_list = {}
 
     def start_process(self, proc_cls, name, *args, **kwargs):
         '''Initiates a process of the class proc_cls.'''
         vision_process = VisionProcess(proc_cls, name)
         self.process_list[name] = vision_process
+        for key, value in self.extra_kwargs.iteritems():
+            kwargs[key] = value
         vision_process.run(*args, **kwargs)
         return vision_process
 
@@ -22,11 +29,7 @@ class ProcessManager(object):
 
         vision_data = {}
         vision_data_empty = True
-
-        if "force" in kwargs:
-            force = kwargs["force"]
-        else:
-            force = False
+        force = kwargs.pop("force", False)
 
         if not process_names:
             process_names = self.process_list.keys()
@@ -70,10 +73,10 @@ class ProcessManager(object):
         pass
 
     def kill(self):
-        ''' kill all running sub processes ''' 
+        ''' kill all running sub processes '''
         for process in self.process_list.values():
             process.kill()
-            
+
         self.process_list = {}
 
 class VisionProcess(object):

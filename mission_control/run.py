@@ -26,27 +26,28 @@ if __name__ == "__main__":
     opt_parser.add_option("-W", "--no-wait-for-go", action="store_false",
         dest="wait_for_go",
         help="Do not wait fo the go signal.")
+    opt_parser.add_option("-c", "--camera", nargs=2, action="append",
+        type="string", metavar="<camera> <index/filename>",
+        dest="cameras", default=[],
+        help="Specifies that the camera given should use the given index or "
+            "file to capture its frames.  If this option is not given for a "
+            "camera, SVR is used.")
     opt_parser.add_option("-d", "--delay", type="int",
-        dest="delay", default=10,
+        dest="delay", default=0,
         help="Delay between frames, in milliseconds, or -1 to wait for "
-            "keypress")
-    opt_parser.add_option("-r", "--record", action="store_true",
-        default="true", dest="record",
-        help="All images captured from cameras will be recorded.")
-    opt_parser.add_option("-R", "--not-record", action="store_false",
-        dest="record",
-        help="Images captured from cameras will not be recorded.")
+            "keypress.  Default is 0.")
     opt_parser.add_option("-g", "--graphical", action="store_true",
-        dest="graphical",
-        help="Indicates that graphical windows can be displayed.")
-    opt_parser.add_option("-G", "--non-graphical", action="store_false",
-        default="true", dest="graphical",
-        help="Indicates that no graphical windows will be displayed.")
+        dest="graphical", default=False,
+        help="Puts vision into debug mode and allows windows to be displayed.")
     opt_parser.add_option("-s", "--simulator", action="store_true",
         default=False, dest="simulator",
         help="Connect to the simulator instead of starting vision processes.")
     options, args = opt_parser.parse_args(sys.argv)
 
+    if len(args) > 1:
+        opt_parser.error("%prog accepts no positional arguments!")
+    # It seems silly to assign this to another variable, but options will not
+    # be defined if __name__ != "__main__".
     simulator = options.simulator
 
 parent_directory = os.path.realpath(os.path.join(
@@ -72,25 +73,23 @@ MISSION_ORDER = [
     missions.GateMission,
     missions.PathMission,
     missions.BuoyMission,
-    #missions.TestMission,
 ]
-
-def unbreak_firewire():
-    try:
-        ret = subprocess.call(["dc1394_reset_bus"])
-    except OSError:
-        print "Warning: You don't have the dc1394_reset_bus command. " \
-            "Cannot reset firewire bus."
-        return
-    if ret != 0:
-        print "Warning: Could not reset firewire bus."
 
 if __name__ == "__main__":
 
-    unbreak_firewire()
-    sleep(1)
+    # Put camera option into dictionary format
+    cameras_dict = {}
+    for name, index in options.cameras:
+        cameras_dict[name] = index
 
-    process_manager = vision.ProcessManager()
+    if options.graphical and options.delay == 0:
+        options.delay = 10
+
+    process_manager = vision.ProcessManager(extra_kwargs={
+        "delay": options.delay,
+        "cameras": cameras_dict,
+        "debug": options.graphical,
+    })
 
     try:
         while True:
