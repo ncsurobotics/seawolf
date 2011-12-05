@@ -47,8 +47,6 @@ if __name__ == "__main__":
         opt_parser.error("No entity given!  Valid entities are: "+str(entities.entity_classes.keys()))
     elif len(args) == 1:
         opt_parser.error("No camera given!")
-    if options.single_process:
-        opt_parser.error("Single process has not been implemented! ):")
     entity_name = args[0]
     camera_names = args[1:]
 
@@ -57,30 +55,48 @@ if __name__ == "__main__":
     for name, index in options.cameras:
         cameras_dict[name] = index
 
-    #spawn a process manager
-    pm = process_manager.ProcessManager(extra_kwargs={
-        "cameras": cameras_dict,
-        "delay": options.delay,
-        "debug": options.graphical,
-    })
+    if options.single_process:
 
-    #start the requested vision entity
-    pm.start_process(
-        entities.entity_classes[entity_name],
-        entity_name,
-        *camera_names
-    )
+        class FakePipe(object):
+            def poll(self):
+                return None
+            def send(self, data):
+                print data
+        process_manager.run_entity(
+            FakePipe(),
+            entities.entity_classes[entity_name],
+            *camera_names,
+            cameras = cameras_dict,
+            delay = options.delay,
+            debug = options.graphical
+        )
 
-    try:
-        while True:
-            #for debugging, print out entity output
-            output = pm.get_data()
-            if output:
-                print output
+    else:
 
-    except process_manager.KillSignal:
-        # Exit if the subprocess tells us to
-        pass
-    except Exception:
-        pm.kill()
-        raise
+        #spawn a process manager
+        pm = process_manager.ProcessManager(extra_kwargs={
+            "cameras": cameras_dict,
+            "delay": options.delay,
+            "debug": options.graphical,
+        })
+
+        #start the requested vision entity
+        pm.start_process(
+            entities.entity_classes[entity_name],
+            entity_name,
+            *camera_names
+        )
+
+        try:
+            while True:
+                #for debugging, print out entity output
+                output = pm.get_data()
+                if output:
+                    print output
+
+        except process_manager.KillSignal:
+            # Exit if the subprocess tells us to
+            pass
+        except Exception:
+            pm.kill()
+            raise
