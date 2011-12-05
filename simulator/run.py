@@ -2,6 +2,7 @@
 import sys
 import os
 import random
+from optparse import OptionParser
 
 import seawolf
 
@@ -53,16 +54,25 @@ PARAMETER_SETS = {
 seawolf.loadConfig("../conf/seawolf.conf")
 seawolf.init("Simulator")
 
-# Parse argument for initial parameters
-if len(sys.argv) < 2:
+opt_parser = OptionParser(
+    usage="%prog [options] [initial-parameter-set]",
+    description="Acts like the serialapp, but simulates the environment.",
+)
+opt_parser.add_option("-s", "--svr-source", action="store_true",
+    dest="svr_source", default=False,
+    help="Create an SVR source for each camera and stream what the robot is "
+    "seeing."
+)
+options, args = opt_parser.parse_args()
+if len(args) < 2:
     parameters = PARAMETER_SETS['gate']
     parameter_set_name = 'gate'
-elif sys.argv[1] in PARAMETER_SETS:
-    parameters = PARAMETER_SETS[sys.argv[1]]
-    parameter_set_name = sys.argv[1]
+elif args[1] in PARAMETER_SETS:
+    parameters = PARAMETER_SETS[args[1]]
+    parameter_set_name = args[1]
 else:
     print 'Parameter set "%s" not found!  Valid parameter sets:\n%s' % \
-            (sys.argv[1], PARAMETER_SETS.keys())
+            (args[1], PARAMETER_SETS.keys())
     sys.exit(1)
 
 cam_pos = parameters["cam_pos"]
@@ -77,6 +87,7 @@ interface = Interface(
     cam_yaw = cam_yaw,
     cam_pitch = cam_pitch,
     parameter_sets = PARAMETER_SETS,
+    svr_source = options.svr_source,
 )
 robot = entities.RobotEntity(
     pos = robot_pos,

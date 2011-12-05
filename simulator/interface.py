@@ -8,19 +8,23 @@ from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
 import numpy
+import cv
 
 import seawolf
+import svr
 
 class Interface(object):
 
     def __init__(self, cam_pos=(0,0,0), cam_pitch=0, cam_yaw=0,
-                 parameter_sets={}):
+                 parameter_sets={}, svr_source=False):
 
         self.cam_pos = numpy.array(cam_pos, numpy.float)
         self.cam_pitch = cam_pitch  # Degrees
         self.cam_yaw = cam_yaw  # Degrees
         self.last_parameter_set = None
         self.parameter_sets = parameter_sets
+        self.svr_source = svr_source
+        self.frame_number = 0
 
         self.camera_modes = [
             "Free Cam",
@@ -90,6 +94,15 @@ class Interface(object):
 
         self.init_viewport()
 
+        # Init SVR Sources
+        if self.svr_source:
+            svr.connect()
+            self.svr_sources = {}  # Map camera names to svr sources
+            for camera in ["forward", "down"]:
+                source = svr.Source(camera)
+                source.set_encoding("raw")
+                self.svr_sources[camera] = source
+
     def run(self, delay):
         glutTimerFunc(0, self.timer_callback, int(1000*delay))
         glutMainLoop()
@@ -102,6 +115,35 @@ class Interface(object):
             entity.draw()
         glFlush()
         glutSwapBuffers()
+
+        if self.svr_source and self.frame_number%2 == 0:
+            for camera in ["forward", "down"]:
+
+                # Create image and send it
+                size = (640, 480)
+                fovx = self.simulator.robot.get_camera_fov(camera, False)
+                fovy = self.simulator.robot.get_camera_fov(camera, True)
+                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+                glMatrixMode(GL_PROJECTION)
+                glLoadIdentity()
+                glViewport(0, 0, size[0], size[1])
+                gluPerspective(fovy, fovx/fovy, 0.1, 4000)
+                glMatrixMode(GL_MODELVIEW)
+                glLoadIdentity()
+                self.simulator.robot.camera_transform(camera)
+                for entity in self.simulator.entities:
+                    if entity is not self.simulator.robot:
+                        entity.draw()
+                glFlush()
+                data = glReadPixels(0,0, size[0], size[1], GL_BGR, GL_UNSIGNED_BYTE)
+                image = cv.CreateImage(size, cv.IPL_DEPTH_8U, 3)
+                cv.SetData(image, data, 640*3)
+                cv.Flip(image, flipMode=0)
+                self.svr_sources[camera].send_frame(image)
+
+            self.init_viewport()
+
+        self.frame_number += 1
 
     def init_viewport(self):
         glMatrixMode(GL_PROJECTION)
