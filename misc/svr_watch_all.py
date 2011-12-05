@@ -14,10 +14,14 @@ while True:
     for stream in all_streams:
         stream_name = stream.split(":")[1]
         if stream_name not in open_streams:
-            open_streams[stream_name] = svr.Stream(stream_name)
-            open_streams[stream_name].unpause()
-            cv.NamedWindow(stream_name)
-            print "Stream Opened:", stream_name
+            try:
+                open_streams[stream_name] = svr.Stream(stream_name)
+                open_streams[stream_name].unpause()
+                cv.NamedWindow(stream_name)
+                print "Stream Opened:", stream_name
+            except svr.StreamException:
+                if stream_name in open_streams:
+                    del open_streams[stream_name]
 
     # Show streams
     for stream_name, stream in open_streams.items():  # Cannot be iter because
