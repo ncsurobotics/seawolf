@@ -4,6 +4,7 @@ import pty
 import select
 import os
 import signal
+from copy import copy
 
 import wx
 
@@ -51,12 +52,23 @@ class AppRunnerFrame(wx.Frame):
     def read_apps(self):
         '''Populates the application tree.'''
         applications = {
-            "Misc": {
+            "Communication": {
                 "Hub": AppPanel(self.panel_right, ["seawolf-hub","-c","../conf/hub.conf"], "db/"),
                 "Serial App": AppPanel(self.panel_right, ["./bin/serialapp"], "serial/"),
+                "SVR": AppPanel(self.panel_right, ["svrd"], ""),
+            },
+            "Debugging": {
                 "Simulator": AppPanel(self.panel_right, ["python","run.py"], "simulator/"),
                 "SVR Watch": AppPanel(self.panel_right, ["python","svr_watch_all.py"], "misc/"),
-                "SVR": AppPanel(self.panel_right, ["svrd"], ""),
+                "Vision": AppPanel(self.panel_right, ["python","run.py"], "vision/",
+                    options=[
+                        TextOption("Entity: ", ignore_empty=False),
+                        CheckBoxOption("-s", None, "Single Process", False),
+                        CheckBoxOption(None, "-G", "Debug", True),
+                        TextOption("Delay: ", "10", "-d"),
+                        VisionCameraOption(),
+                    ]
+                ),
             },
             "PID": {
                 "Yaw PID": AppPanel(self.panel_right, ["./bin/yawpid"], "applications/"),
@@ -95,7 +107,7 @@ class AppRunnerFrame(wx.Frame):
             if app_panel:
                 app_panel.on_run_toggle(None)
         else:
-            event.Skip()
+            event.Skip()  # Continue to default key handler
 
     def on_app_middle_click(self, event):
         app_panel = self.app_tree.GetPyData(event.GetItem())
@@ -136,7 +148,7 @@ class AppPanel(wx.Panel):
     '''
 
     def __init__(self, parent_window, command, directory="", default_args="",
-                 help_text=""):
+                 options=[], help_text=""):
         '''Initialize the panel and its children in this hierarchy:
 
         AppPanel
@@ -159,9 +171,11 @@ class AppPanel(wx.Panel):
         wx.Panel.__init__(self, parent_window, -1)
 
         self.command = command
+        self.option_controls = options
         self.pid = None
         self.stdout = None
 
+        self.short_directory = directory
         head, tail = os.path.split(__file__)
         self.directory = os.path.abspath(os.path.join(head, directory))
 
@@ -171,6 +185,11 @@ class AppPanel(wx.Panel):
         self.run_button = wx.ToggleButton(self, -1, "Run")
         self.run_button.Bind(wx.EVT_TOGGLEBUTTON, self.on_run_toggle)
         self.control_box.Add(self.run_button, 0, wx.ALIGN_LEFT)
+        for i, control in enumerate(self.option_controls):
+            control.register(self)
+            if i is not 0:
+                self.control_box.AddSpacer(10)
+            self.control_box.Add(control, 0, wx.ALIGN_LEFT)
 
         # output_box to display app's stdout
         self.output_box = wx.TextCtrl(self, -1, '', style=
@@ -202,6 +221,10 @@ class AppPanel(wx.Panel):
 
     def run(self):
 
+        command = copy(self.command)
+        for control in self.option_controls:
+            command += control.get_options()
+
         # Start Process
         self.pid, self.stdout = pty.fork()
 
@@ -217,12 +240,12 @@ class AppPanel(wx.Panel):
                     pass
 
             os.chdir(self.directory)
-            os.execvp(self.command[0], self.command)
+            os.execvp(command[0], command)
             raise OSError("os.exec failed!")
 
         self.app_tree.SetItemBold(self.tree_item, True)
-        self.output_box.SetValue("")
         self.run_button.SetLabel("Stop")
+        self.output_box.SetValue(self.short_directory+" $ "+command_to_string(command)+"\n")
 
     def stop(self):
         if self.pid:
@@ -252,9 +275,166 @@ class AppPanel(wx.Panel):
                 if text:
                     self.output_box.AppendText(text)
 
+class AppOption(wx.Control):
+    '''A user configurable option for an application.
+
+    Instances will be displayed in their application panel.  The user can then
+    change the value of an option and get_options is called when the app is
+    run.
+    '''
+
+    def get_options(self):
+        '''Return a list of command line options.'''
+        raise NotImplementedError("This must be implemented by a subclass!")
+
+    def register(self, panel):
+        '''Called after the AppOption is passed to the AppPanel.
+
+        This is nessesary because AppOptions are initialized before the
+        AppPanel, even though the AppPanel needs to be given to the wx.Control
+        superclass as the parent window.
+
+        '''
+        raise NotImplementedError("This must be implemented by a subclass!")
+
+
+class CheckBoxOption(AppOption, wx.CheckBox):
+
+    def __init__(self, on_value, off_value, text, default=False):
+        '''
+
+        :param on_value:
+            The argument that will be included when running the program if the
+            checkbox is checked.  No argument will be included if this
+            evaluates to False.
+
+        :param off_value:
+            The argument that will be included when running the program if the
+            checkbox is unchecked.  No argument will be included if this
+            evaluates to False.
+
+        :param text:
+            The text displayed to the user next to the checkbox.
+
+        :param default:
+            If False (default), the checkbox will start unchecked.  If True, it
+            will start checked.
+
+        '''
+        self.on_value = on_value
+        self.off_value = off_value
+        self.text = text
+        self.default = default
+
+    def register(self, panel):
+        wx.CheckBox.__init__(self, panel, -1, self.text)
+        self.SetValue(self.default)
+
+    def get_options(self):
+
+        if self.GetValue():
+            value = self.on_value
+        else:
+            value = self.off_value
+
+        if value:
+            return [value]
+        else:
+            return []
+
+class TextOption(AppOption, wx.Panel):
+
+    def __init__(self, text, default="", option=None, ignore_empty=True):
+        '''
+        An AppOption that provides these options to the application:
+            [option] <textbox value>
+
+        :param text:
+            The text displayed to the user next to the text box.
+
+        :param default:
+            The value of the text box before it is changed by the user.
+
+        :param option:
+            The option that will precede the textbox value.  If this evaluates
+            to False, it will not be included.
+
+        :param allow_empty:
+            If True, an empty value will yield no arguments.  If False, an
+            empty value will yield one empty argument.
+
+        '''
+        self.text = text
+        self.default = default
+        self.option = option
+        self.ignore_empty = ignore_empty
+
+    def register(self, panel):
+        wx.Panel.__init__(self, panel, -1)
+        self.text = wx.StaticText(self, -1, self.text)
+        self.textbox = wx.TextCtrl(self, -1, self.default)
+
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer.Add(self.text)
+        self.sizer.Add(self.textbox)
+        self.SetSizer(self.sizer)
+
+    def get_options(self):
+        value = self.textbox.GetValue()
+        if value or not self.ignore_empty:
+            if self.option:
+                return [self.option, value]
+            else:
+                return [value]
+        else:
+            return []
+
+class VisionCameraOption(AppOption, wx.Panel):
+
+    def __init__(self):
+        pass  # wx.Panel.__init__ will be called in self.register()
+
+    def register(self, panel):
+        wx.Panel.__init__(self, panel, -1)
+        self.checkbox = wx.CheckBox(self, -1, "SVR")
+        self.text = wx.StaticText(self, -1, "Camera:")
+        self.textbox = wx.TextCtrl(self, -1, "")
+
+        self.sizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.sizer.Add(self.checkbox)
+        self.sizer.Add(self.text)
+        self.sizer.AddSpacer(10)
+        self.sizer.Add(self.textbox)
+        self.SetSizer(self.sizer)
+
+    def get_options(self):
+        if self.checkbox.GetValue():  # Use SVR
+            return [self.textbox.GetValue()]
+        else:  # No SVR
+            return ["camera","-c","camera",self.textbox.GetValue()]
+
+class ConstantOption(AppOption):
+
+    def __init__(self, option):
+        self.option = option
+
+    def register(self, panel):
+        pass
+
+    def get_options(self):
+        return [option]
+
+def command_to_string(command):
+    result = []
+    for arg in command:
+        if " " in arg or not arg:
+            arg = '"%s"' % arg
+        result.append(arg)
+    return " ".join(result)
+
 if __name__ == "__main__":
     app = wx.App(0)
-    frame = AppRunnerFrame(None, -1, "Application Runner", size=wx.Size(800, 400))
+    frame = AppRunnerFrame(None, -1, "Application Runner", size=wx.Size(1000, 400))
     frame.Show(True)
     app.SetTopWindow(frame)
     app.MainLoop()
