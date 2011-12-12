@@ -56,6 +56,7 @@ class AppRunnerFrame(wx.Frame):
                 "Hub": AppPanel(self.panel_right, ["seawolf-hub","-c","../conf/hub.conf"], "db/"),
                 "Serial App": AppPanel(self.panel_right, ["./bin/serialapp"], "serial/"),
                 "SVR": AppPanel(self.panel_right, ["svrd"], ""),
+                "SVR Record": AppPanel(self.panel_right, ["python","misc/svr_record_all.py","capture/"], ""),
             },
             "Debugging": {
                 "Simulator": AppPanel(self.panel_right, ["python","run.py"], "simulator/"),
@@ -80,7 +81,7 @@ class AppRunnerFrame(wx.Frame):
                 "Joystick Controller": AppPanel(self.panel_right, ["./bin/joystick_controller"], "applications/"),
                 "Steering Wheel Controller": AppPanel(self.panel_right, ["./bin/steering_controller"], "applications/"),
                 "Zero Thrusters": AppPanel(self.panel_right, ["./bin/zerothrusters"], "applications/"),
-            }
+            },
         }
         tree_root = self.app_tree.AddRoot("Applications")
         for group_name, app_dict in applications.iteritems():
