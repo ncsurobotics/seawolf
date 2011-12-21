@@ -185,6 +185,8 @@ class GateEntity(VisionEntity):
         self.output.left_pole = self.left_pole
         self.output.right_pole = self.right_pole
 
+        self.return_output()
+
     def __repr__(self):
         return "<GateEntity left_pole=%s right_pole=%s seen_crossbar=%s>" % \
             (self.left_pole, self.right_pole, self.seen_crossbar)

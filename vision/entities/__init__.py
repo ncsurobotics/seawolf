@@ -19,7 +19,7 @@ from buoytest import BuoyTestEntity
 
 entity_classes = {
     "test": TestEntity,
-    "binocular_test": BinocularTest,
+    "binoculartest": BinocularTest,
     "gate": GateEntity,
     "path": PathEntity,
     "buoy": BuoyEntity,

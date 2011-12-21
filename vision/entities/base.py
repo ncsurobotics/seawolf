@@ -31,14 +31,10 @@ class VisionEntity(object):
         self.cameras = kwargs.pop('cameras', {})
         self.debug = kwargs.pop('debug', False)
         self.delay = kwargs.pop('delay', 0)
+        self.waitforsync = kwargs.pop('waitforsync', False)
 
         # Line of communication to mission control
         self.child_conn = child_conn
-
-        if "waitforsync" in kwargs:
-            self.waitforsync = kwargs["waitforsync"]
-        else:
-            self.waitforsync = False
 
         # Open camera
         self.camera_name = camera_name
@@ -70,13 +66,10 @@ class VisionEntity(object):
             while(True):
 
                 #if sync required, do not continue until we receive a message
-                if self.waitforsync and self.child_conn.poll(None):
-                   signal = self.child_conn.recv()
-                   if isinstance(signal, process_manager.KillSignal):
-                        self.close()
-                        return
+                if self.waitforsync:
+                   signal = self.wait_for_parent(None)
 
-                   elif isinstance(signal, CaptureFrameSignal):
+                   if isinstance(signal, CaptureFrameSignal):
                         #there's our signal
                         pass
 
@@ -97,9 +90,6 @@ class VisionEntity(object):
                 #process any new frame
                 self.process_frame(frame)
 
-                #return output
-                self.child_conn.send(self.output)
-
                 #wait for gui process
                 if self.delay != 0 and cv.WaitKey(self.delay) == ord('q'):
                     self.close()
@@ -108,6 +98,23 @@ class VisionEntity(object):
         # Always close camera, even if an exception was raised
         finally:
             self.close()
+
+    def return_output(self):
+        #return output
+        self.child_conn.send(self.output)
+
+    def wait_for_parent(self, timeout):
+        if self.child_conn.poll(timeout):
+            signal = self.child_conn.recv()
+        else:
+            signal = None
+
+        #check if signal passed was kill signal
+        if isinstance(signal, process_manager.KillSignal):
+            self.close()
+            raise signal
+
+        return signal
 
     def close(self):
         self.child_conn.send(process_manager.KillSignal())
@@ -139,7 +146,11 @@ class MultiCameraVisionEntity(VisionEntity):
     '''spawns and communicates with subprocess, each of which controls a camera'''
     subprocess = None
 
-    def __init__(self, child_conn, *cameras, **kwargs):
+    def __init__(self, child_conn, *cameras_to_use, **kwargs):
+
+        self.cameras = kwargs.pop('cameras', {})  # Camera index dict
+        self.debug = kwargs.pop('debug', False)
+        self.delay = kwargs.pop('delay', 0)
 
         #Communication to the process manager
         self.child_conn = child_conn
@@ -148,17 +159,11 @@ class MultiCameraVisionEntity(VisionEntity):
         self.process_manager = process_manager.ProcessManager()
 
         #store the cameras.  Order will determine camera positions
-        self.cameras = cameras
-
-        #handle debug
-        self.debug = False
-        if "debug" in kwargs and kwargs["debug"] == True:
-            self.debug = True
-            print "Base: self.debug = ",self.debug
+        self.cameras_to_use = cameras_to_use
 
         #start a subprocess for every camera
-        for camera_name in cameras:
-            self.process_manager.start_process(self.subprocess,camera_name,camera_name,debug = self.debug)
+        for camera_name in cameras_to_use:
+            self.process_manager.start_process(self.subprocess,camera_name,camera_name,debug=self.debug, delay=self.delay, cameras=self.cameras, waitforsync=True)
 
         self.output = Container()
 
@@ -185,11 +190,6 @@ class MultiCameraVisionEntity(VisionEntity):
 
                 #return output
                 self.child_conn.send(self.output)
-
-                #wait for gui process
-                if cv.WaitKey(10) == ord('q'):
-                    self.close()
-                    break
 
         # Always close camera, even if an exception was raised
         finally:

@@ -153,6 +153,8 @@ class PathEntity(VisionEntity):
             self.output.x = None
             self.output.y = None
 
+        self.return_output()
+
     def find_centroid(self, binary):
         mat = cv.GetMat(binary)
         moments = cv.Moments(mat)
