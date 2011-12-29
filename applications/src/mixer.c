@@ -1,4 +1,20 @@
 
+/** mixer.c
+ *
+ * Recieves requests from PIDs and mixes them together.
+ *
+ * Notifications recieved have an action of THRUSTER_REQUEST and a value of
+ * "`pid` `value`".  `pid` is the name of the PID that sent the request, for
+ * example: "Depth".  `value` is a thruster request amount from -1 to 1.  After
+ * each request the mixer updates the libseawolf variables for the thrusters
+ * that have changed.
+ *
+ * A thruster request with value 1 or -1 does not guarentee that any thrusters
+ * will be set to max speed, because the mixing algorithm is not nessesarily as
+ * simple as adding requests from each PID together.
+ *
+ */
+
 #include "seawolf.h"
 #include "seawolf3.h"
 
