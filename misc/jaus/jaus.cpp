@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
     double yaw, linearDistance, linearVelocity;
  
     while(component.ManagementService()->GetStatus() != JAUS::Management::Status::Shutdown) {
-        linearVelocity = (Var_get("PortX") + Var_get("StarX")) / 2;
+        linearVelocity = (Var_get("Port") + Var_get("Star")) / 2;
         yaw = Var_get("SEA.Yaw");
  
         printf("%d\n", localPose.SetYaw(yaw * (3.14 / 180.0)));
