@@ -4,7 +4,7 @@ from multiprocessing.connection import Client
 
 class ProcessManager(object):
 
-    def __init__(self):
+    def __init__(self, extra_kwargs={}):
 
         # Maps entity class name -> (entity class, process name)
         self.processes = {}

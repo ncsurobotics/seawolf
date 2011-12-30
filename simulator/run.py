@@ -50,10 +50,6 @@ PARAMETER_SETS = {
     },
 }
 
-# libseawolf Init
-seawolf.loadConfig("../conf/seawolf.conf")
-seawolf.init("Simulator")
-
 opt_parser = OptionParser(
     usage="%prog [options] [initial-parameter-set]",
     description="Acts like the serialapp, but simulates the environment.",
@@ -80,6 +76,10 @@ cam_yaw = parameters["cam_yaw"]
 cam_pitch = parameters["cam_pitch"]
 robot_pos = parameters["robot_pos"]
 robot_yaw = parameters["robot_yaw"]
+
+# libseawolf Init
+seawolf.loadConfig("../conf/seawolf.conf")
+seawolf.init("Simulator")
 
 # Initialize everything!
 interface = Interface(
