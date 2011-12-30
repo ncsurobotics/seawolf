@@ -59,7 +59,10 @@ class AppRunnerFrame(wx.Frame):
                 "SVR Record": AppPanel(self.panel_right, ["python","misc/svr_record_all.py","capture/"], ""),
             },
             "Debugging": {
-                "Simulator": AppPanel(self.panel_right, ["python","run.py"], "simulator/"),
+                "Simulator": AppPanel(self.panel_right, ["python","run.py"], "simulator/",
+                    options=[
+                        CheckBoxOption("--svr-source", "", "SVR Source", False),
+                    ]),
                 "SVR Watch": AppPanel(self.panel_right, ["python","svr_watch_all.py"], "misc/"),
                 "Vision": AppPanel(self.panel_right, ["python","run.py"], "vision/",
                     options=[
@@ -74,7 +77,6 @@ class AppRunnerFrame(wx.Frame):
             "PID": {
                 "Yaw PID": AppPanel(self.panel_right, ["./bin/yawpid"], "applications/"),
                 "Depth PID": AppPanel(self.panel_right, ["./bin/depthpid"], "applications/"),
-                "Pitch PID": AppPanel(self.panel_right, ["./bin/pitchpid"], "applications/"),
                 "Mixer": AppPanel(self.panel_right, ["./bin/mixer"], "applications/"),
             },
             "Control": {
