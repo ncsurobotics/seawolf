@@ -14,8 +14,8 @@ Depth                = 0.0,  0,  0
 DepthPID.Heading     = 0.0,  0,  0
 DepthPID.Paused      = 1.0,  0,  0
 DepthPID.d           = 0.0,  1,  0
-DepthPID.i           = 0.0,  1,  0
-DepthPID.p           = 0.0,  1,  0
+DepthPID.i           = 0.015,1,  0
+DepthPID.p           = 0.8,  1,  0
 
 PitchPID.Heading     = 0.0,  0,  0
 PitchPID.Paused      = 1.0,  0,  0
@@ -25,9 +25,9 @@ PitchPID.p           = 0.0,  1,  0
 
 YawPID.Heading       = 0.0,  0,  0
 YawPID.Paused        = 1.0,  0,  0
-YawPID.d             = 0.0,  1,  0
+YawPID.d             = 0.01, 1,  0
 YawPID.i             = 0.0,  1,  0
-YawPID.p             = 0.0,  1,  0
+YawPID.p             = 0.04, 1,  0
 
 MissionReset         = 0.0,  0,  0
 StatusLight          = 0.0,  0,  0
