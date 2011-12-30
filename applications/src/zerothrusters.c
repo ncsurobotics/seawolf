@@ -12,7 +12,6 @@ int main(void) {
     Var_set("DepthPID.Paused", 1.0);
     Var_set("PitchPID.Paused", 1.0);
     Var_set("YawPID.Paused", 1.0);
-    Var_set("RotatePID.Paused", 1.0);
 
     /* Turn off drivers */
     Var_set("Port", 0);

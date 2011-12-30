@@ -3,7 +3,7 @@
 
 int main(int argc, char** argv) {
     if(!(argc == 3 || argc == 4)) {
-        printf("Usage: %s <depth|pitch|yaw|rot> <p|i|d> [<value>]\n", argv[0]);
+        printf("Usage: %s <depth|pitch|yaw> <p|i|d> [<value>]\n", argv[0]);
         exit(0);
     }
 
@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
         SET,
         GET
     } action = GET;
-    
+
     if(argc == 4) {
         value = atof(argv[3]);
         action = SET;
@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
             }
         }
         Notify_send("UPDATED", "YawPID.Coefficients");
-     } else if(strcmp(sensor, "pitch") == 0) {
+    } else if(strcmp(sensor, "pitch") == 0) {
         if(var == 'p') {
             if(action == SET) {
                 Var_set("PitchPID.p", value);
@@ -88,27 +88,6 @@ int main(int argc, char** argv) {
             }
         }
         Notify_send("UPDATED", "PitchPID.Coefficients");
-     } else if(strcmp(sensor, "rot") == 0) {
-        if(var == 'p') {
-            if(action == SET) {
-                Var_set("RotatePID.p", value);
-            } else {
-                printf("%.2f\n", Var_get("RotatePID.p"));
-            }
-        } else if(var == 'i') {
-            if(action == SET) {
-                Var_set("RotatePID.i", value);
-            } else {
-                printf("%.2f\n", Var_get("RotatePID.i"));
-            }
-        } else if(var == 'd') {
-            if(action == SET) {
-                Var_set("RotPID.d", value);
-            } else {
-                printf("%.2f\n", Var_get("RotatePID.d"));
-            }
-        }
-        Notify_send("UPDATED", "RotatePID.Coefficients");
     } else {
         printf("Invalid arguments\n");
     }

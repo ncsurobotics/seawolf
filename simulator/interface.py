@@ -225,7 +225,6 @@ class Interface(object):
         seawolf.var.set("DepthPID.Paused", 1)
         seawolf.var.set("PitchPID.Paused", 1)
         seawolf.var.set("YawPID.Paused", 1)
-        seawolf.var.set("RotatePID.Paused", 1)
 
         seawolf.notify.send("THRUSTER_REQUEST", "Depth 0 0 0")
         seawolf.notify.send("THRUSTER_REQUEST", "Forward 0 0")

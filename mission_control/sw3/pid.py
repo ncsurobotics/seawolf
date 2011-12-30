@@ -1,7 +1,7 @@
 
 import seawolf as sw
 
-__all__ = ["yaw", "pitch", "rotate", "depth"]
+__all__ = ["yaw", "pitch", "depth"]
 
 class PIDInterface(object):
     def __init__(self, namespace, setter=None):
@@ -24,7 +24,6 @@ class PIDInterface(object):
 
 def set_yaw(value):
     if -180.0 <= value <= 180.0:
-        sw.var.set("RotatePID.Paused", 1.0)
         sw.var.set("YawPID.Heading", value)
     else:
         raise ValueError("Value for yaw heading out of range!")
@@ -35,13 +34,6 @@ def set_pitch(value):
     else:
         raise ValueError("That sort of pitch is total suicide!")
 
-def set_rotate(value):
-    if -20.0 <= value <= 20.0:
-        sw.var.set("YawPID.Paused", 1.0)
-        sw.var.set("RotatePID.Heading", value)
-    else:
-        raise ValueError("Value for rotate heading complete senseless you silly baffoon!")
-
 def set_depth(value):
     if 0.0 <= value <= 20.0:
         sw.var.set("DepthPID.Heading", value)
@@ -50,5 +42,4 @@ def set_depth(value):
 
 yaw = PIDInterface("YawPID", set_yaw)
 pitch = PIDInterface("PitchPID", set_pitch)
-rotate = PIDInterface("RotatePID", set_rotate)
 depth = PIDInterface("DepthPID", set_depth)

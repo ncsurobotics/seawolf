@@ -29,19 +29,9 @@ YawPID.d             = 0.0,  1,  0
 YawPID.i             = 0.0,  1,  0
 YawPID.p             = 0.0,  1,  0
 
-RotatePID.Heading    = 0.0,  0,  0
-RotatePID.Paused     = 1.0,  0,  0
-RotatePID.d          = 0.0,  1,  0
-RotatePID.i          = 0.0,  1,  0
-RotatePID.p          = 0.0,  1,  0
-
-CountDownStatus      = 0.0,  0,  0
 MissionReset         = 0.0,  0,  0
 StatusLight          = 0.0,  0,  0
 
 SEA.Pitch            = 0.0,  0,  0
 SEA.Roll             = 0.0,  0,  0
 SEA.Yaw              = 0.0,  0,  0
-
-Position.x           = 0.0,  0,  0
-Position.y           = 0.0,  0,  0
