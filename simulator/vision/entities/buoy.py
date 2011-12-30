@@ -25,6 +25,7 @@ class BuoyEntity(Entity):
         ]
         self.color_names = ("red", "green", "yellow")
         self.output = Container()
+        self.buoys = []
         self.output.buoys = []
         self.id_counter = 0
 
@@ -43,8 +44,8 @@ class BuoyEntity(Entity):
 
     def find(self, robot):
 
-        self.output.buoys = filter(lambda x:x.found, self.output.buoys)
-        for buoy in self.output.buoys:
+        self.buoys = filter(lambda x:x.found, self.buoys)
+        for buoy in self.buoys:
             buoy.found = False
 
         new_buoys = []
@@ -60,7 +61,7 @@ class BuoyEntity(Entity):
 
                 # Find existing bouy with similar theta and phi
                 similar_buoy_found = False
-                for buoy in self.output.buoys:
+                for buoy in self.buoys:
                     if buoy.color == color:
                         similar_buoy_found = True
 
@@ -83,6 +84,11 @@ class BuoyEntity(Entity):
                     self.id_counter += 1
 
                     new_buoys.append(buoy)
+        self.buoys.extend(new_buoys)
 
-        self.output.buoys.extend(new_buoys)
+        # Copy self.buoys to self.output.buoys
+        self.output.buoys = []
+        for buoy in self.buoys:
+            if buoy.found:
+                self.output.buoys.append(buoy)
         return self.output
