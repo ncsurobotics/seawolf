@@ -16,7 +16,6 @@
  */
 
 #include "seawolf.h"
-#include "seawolf3.h"
 
 #include <ncurses.h>
 #include <pthread.h>
@@ -109,7 +108,7 @@ int main(void) {
 
     /* Thruster values */
     float out[] = {0.0, 0.0, 0.0, 0.0, 0.0};
-    
+
     /* Value requests from PID's */
     float req_strafe  = 0.0;
     float req_pitch   = 0.0;
@@ -126,7 +125,7 @@ int main(void) {
 
     /* Notify filters */
     Notify_filter(FILTER_ACTION, "THRUSTER_REQUEST");
-    
+
     count = 0;
     Task_background(rate);
 
@@ -155,11 +154,11 @@ int main(void) {
         mix(req_pitch, req_depth, req_forward, req_yaw, req_strafe, out);
 
         /* Check bounds on all output values */
-        out[BOW]    = Util_inRange(-THRUSTER_MAX, out[BOW], THRUSTER_MAX);
-        out[STERN]  = Util_inRange(-THRUSTER_MAX, out[STERN], THRUSTER_MAX);
-        out[STRAFE] = Util_inRange(-THRUSTER_MAX, out[STRAFE], THRUSTER_MAX);
-        out[PORT]   = Util_inRange(-THRUSTER_MAX, out[PORT], THRUSTER_MAX);
-        out[STAR]   = Util_inRange(-THRUSTER_MAX, out[STAR], THRUSTER_MAX);
+        out[BOW]    = Util_inRange(-1, out[BOW], 1);
+        out[STERN]  = Util_inRange(-1, out[STERN], 1);
+        out[STRAFE] = Util_inRange(-1, out[STRAFE], 1);
+        out[PORT]   = Util_inRange(-1, out[PORT], 1);
+        out[STAR]   = Util_inRange(-1, out[STAR], 1);
 
         /* Output new thruster values */
         setThrusters(out);

@@ -1,6 +1,5 @@
 
 #include "seawolf.h"
-#include "seawolf3.h"
 
 #include <math.h>
 

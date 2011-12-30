@@ -1,6 +1,5 @@
 
 #include "seawolf.h"
-#include "seawolf3.h"
 
 #include <ncurses.h>
 #include <pthread.h>
@@ -100,16 +99,16 @@ static void updateThrusters(float magnitude, float rotate) {
     rot_f = pow(rot_f, R_POWER_FACTOR);
 
     /* Calculate rotational offset */
-    offset = (int)(rot_f * R_FRAC_MAX * THRUSTER_MAX);
-    star = port = (int) (mag_f * mag_sign * (THRUSTER_MAX-offset));
+    offset = (int)(rot_f * R_FRAC_MAX * 1);
+    star = port = (int) (mag_f * mag_sign * (1-offset));
 
     /* Add in offset with correct sign */
     star += offset * rot_sign;
     port -= offset * rot_sign;
 
     /* Bound for good measure */
-    star = Util_inRange(-THRUSTER_MAX, star, THRUSTER_MAX);
-    port = Util_inRange(-THRUSTER_MAX, port, THRUSTER_MAX);
+    star = Util_inRange(-1, star, 1);
+    port = Util_inRange(-1, port, 1);
 
     /* Send out */
     Notify_send("THRUSTER_REQUEST", Util_format("Forward %d %d", (int)star, (int)port));
@@ -137,7 +136,7 @@ int main(void) {
     while(running) {
         /* Copy key and clear. There is a race condition here but I don't care */
         c = getch();
-    
+
         if(c == KEY_UP || c == 'w') {
             /* Increase speed */
             magnitude = Util_inRange(-F_MAX, magnitude + F_INC, F_MAX);
@@ -157,7 +156,7 @@ int main(void) {
             /* Turn counterclockwise */
             rotate = Util_inRange(-R_MAX, rotate - R_INC, R_MAX);
             updateThrusters(magnitude, rotate);
-           
+
         } else if(c == '0') {
             /* Reset xy motion */
             magnitude = 0;

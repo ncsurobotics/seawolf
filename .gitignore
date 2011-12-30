@@ -7,13 +7,14 @@
 *~
 *.swp
 
-# Binary output
+# Compile output
 /serial/bin/
 /applications/bin/
 /acoustics/bfin/bin/
 /acoustics/bfin/acoustics_bundle.tar
 /acoustics/libseawolf/
 /misc/HUD/HUD
+/doc/build/
 
 # Vision
 *.jpg

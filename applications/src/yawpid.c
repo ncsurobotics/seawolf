@@ -1,6 +1,5 @@
 
 #include "seawolf.h"
-#include "seawolf3.h"
 
 #include <math.h>
 
@@ -23,7 +22,7 @@ static double angleError(double a1, double a2) {
         if(error < 0) {
             return (360.0 - fabs(error));
         }
-        
+
         return -(360.0 - fabs(error));
     }
 
