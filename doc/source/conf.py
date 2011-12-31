@@ -24,7 +24,7 @@ sys.path.append(os.path.abspath('../..'))  # Project base
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'autoc', 'autocommand']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.graphviz', 'autoc', 'autocommand']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -93,7 +93,7 @@ pygments_style = 'sphinx'
 
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
-html_theme = 'default'
+html_theme = 'sphinxdoc'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -196,6 +196,8 @@ latex_documents = [
 #latex_use_modindex = True
 
 
+# -- Options for Extensions --------------------------------------------------
+
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'http://docs.python.org/': None}
 
@@ -205,3 +207,5 @@ todo_include_todos = True
 
 # Run autocommand in base seawolf directory
 autocommand_base_path = os.path.abspath(os.path.join(__file__, "../../../"))
+
+graphviz_output_format = "svg"

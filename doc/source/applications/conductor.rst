@@ -1,5 +1,0 @@
-
-Conductor
-===================================
-
-.. todo:: Document conductor
