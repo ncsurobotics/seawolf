@@ -1,10 +1,9 @@
 
-DRIVERS=altimeter.c imu.c imu_cont.c
+DRIVERS=imu.c imu_cont.c
 OBJECTS=$(DRIVERS:%.c=%.o)
 BINS=$(DRIVERS:%.c=../../$(BIN_DIR)/%)
 
 all: $(BINS)
-	$(MAKE) -C ard
 
 ../../$(BIN_DIR)/%: %.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
@@ -16,6 +15,5 @@ clean:
 	    rm $$_f; \
 	  fi; \
 	done;
-	$(MAKE) -C ard clean
 
 .PHONY: all clean

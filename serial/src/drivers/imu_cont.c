@@ -1,3 +1,6 @@
+/**
+ * Continuous version of IMU driver.
+ */
 
 #include "seawolf.h"
 
@@ -56,7 +59,7 @@ int main(int argc, char** argv) {
             break;
         }
     }
-    
+
     while(true) {
         /* Instantatious Euler Angles */
         Serial_get(sp, imu_buff, 11);
@@ -113,7 +116,7 @@ int main(int argc, char** argv) {
     }
 
     Serial_closePort(sp);
-    
+
     Logging_log(INFO, "IMU Controller Exiting");
 
     Seawolf_close();

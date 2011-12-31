@@ -31,7 +31,7 @@ static int restart_driver(SerialPort sp, char** argv) {
     Logging_log(ERROR, "Error limit exceded. Restarting driver");
     Seawolf_close();
 
-    return execl(argv[0], argv[0], argv[1], NULL); 
+    return execl(argv[0], argv[0], argv[1], NULL);
 }
 
 int main(int argc, char** argv) {
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     Serial_sendByte(sp, 0xF0);
     Util_usleep(1.0);
     Serial_flush(sp);
-    
+
     for(int i = 0; ; i = (i+1) % SUM_SIZE) {
         /* Check error count */
         if(error_count > PATIENCE) {

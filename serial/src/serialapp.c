@@ -9,14 +9,7 @@
 
 /* Device types */
 typedef enum{PT_UNMANAGED,
-             PT_IMU,
-             PT_DEPTH,
-             PT_THRUSTER12,
-             PT_THRUSTER3,
-             PT_THRUSTER45,
-             PT_THRUSTER_BOARD,
-             PT_PERIPH_BOARD,
-             PT_MISSIONSTATUS} PeripheralType;
+             PT_IMU} PeripheralType;
 
 /* Represents and open serial port */
 struct comm_device {
@@ -32,15 +25,17 @@ struct comm_assignment {
 };
 
 /* Cycle the DTR line on the given serial port */
+/*
 static void cycleDTR(SerialPort sp) {
     Serial_setDTR(sp, 0);
     Util_usleep(0.1);
     Serial_setDTR(sp, 1);
     Util_usleep(0.1);
 }
+*/
 
 static int getPeripheralType(SerialPort sp) {
-    char id[32];
+    /* char id[32]; */
     int n;
 
     /* Set to IMU's baud rate */
@@ -53,7 +48,7 @@ static int getPeripheralType(SerialPort sp) {
         Logging_log(ERROR, "Unable to send data");
         return -1;
     }
-    
+
     Util_usleep(0.1);
     if(Serial_available(sp) > 0) {
         n = Serial_getByte(sp);
@@ -65,7 +60,10 @@ static int getPeripheralType(SerialPort sp) {
         }
     }
 
-    /* Fallback to Arduino, get ID */
+    /* Fallback to Serial Device, get ID */
+    Logging_log(ERROR, "No Microcontrollers set up in the serial app!!!!!!!!!!!!!!!");
+    // When you remove this block of code, please remove "char id[32]" at the beginning of the function, and the cycleDTR function.
+    /*
     Serial_setBaud(sp, 9600);
     Serial_flush(sp);
     cycleDTR(sp);
@@ -74,18 +72,6 @@ static int getPeripheralType(SerialPort sp) {
         if(ArdComm_getId(sp, id) != -1) {
             if(strcmp(id, "ThrusterBoard") == 0) {
                 return PT_THRUSTER_BOARD;
-            } else if(strcmp(id, "PeriphBoard") == 0) {
-                return PT_PERIPH_BOARD;
-            } else if(strcmp(id, "Thruster12") == 0) {
-                return PT_THRUSTER12;
-            } else if(strcmp(id, "Thruster3") == 0) {
-                return PT_THRUSTER3;
-            } else if(strcmp(id, "Thruster45") == 0) {
-                return PT_THRUSTER45;
-            } else if(strcmp(id, "MissionStatus") == 0) {
-                return PT_MISSIONSTATUS;
-            } else if(strcmp(id, "Depth") == 0) {
-                return PT_DEPTH;
             } else {
                 Logging_log(ERROR, Util_format("Received unknown ID '%s'", id));
             }
@@ -94,6 +80,7 @@ static int getPeripheralType(SerialPort sp) {
             Util_usleep(0.5);
         }
     }
+    */
 
     /* Fingerprinting failed */
     Logging_log(DEBUG, "Could not ID");
@@ -122,14 +109,7 @@ int main(void) {
     const int device_count = sizeof(device_pool) / sizeof(struct comm_device);
 
     /* App to executable mappings */
-    struct comm_assignment app_pool[] = {[PT_DEPTH]          = {"./bin/depth",            false},
-                                         [PT_THRUSTER12]     = {"./bin/thruster12-bin",   false},
-                                         [PT_THRUSTER3]      = {"./bin/thruster3-bin",    false},
-                                         [PT_THRUSTER45]     = {"./bin/thruster45-bin",   false},
-                                         [PT_THRUSTER_BOARD] = {"./bin/thruster_board",   false},
-                                         [PT_PERIPH_BOARD]   = {"./bin/peripheral_board", false},
-                                         [PT_IMU]            = {"./bin/imu",              false},
-                                         [PT_MISSIONSTATUS]  = {"./bin/status",           false}};
+    struct comm_assignment app_pool[] = {[PT_IMU]            = {"./bin/imu",              false}};
     const int app_count = sizeof(app_pool) / sizeof(struct comm_assignment);
 
     int i = 0;
@@ -155,7 +135,7 @@ int main(void) {
             Logging_log(DEBUG, Util_format("Fingerprinting %s", device_pool[i].device));
             if(device_pool[i].sp != -1 && (pt = getPeripheralType(device_pool[i].sp)) != -1) {
                 Logging_log(DEBUG, Util_format("Serial port ready %s", device_pool[i].device));
-                
+
                 /* Close port and copy device */
                 Serial_closePort(device_pool[i].sp);
                 unassigned_ports--;
@@ -163,7 +143,7 @@ int main(void) {
                 if(app_pool[pt].started == false) {
                     /* Fork and execute subprocess in child */
                     if(fork() == 0) {
-                        Logging_log(INFO, Util_format("Connected to Arduino on %s with identifier %d. Spawning %s", 
+                        Logging_log(INFO, Util_format("Connected to device on %s with identifier %d. Spawning %s",
                                                       device_pool[i].device, pt, app_pool[pt].bin));
                         execl(app_pool[pt].bin, app_pool[pt].bin, device_pool[i].device, NULL);
                     }
@@ -196,7 +176,7 @@ int main(void) {
 
     /* Send notification of completion */
     Notify_send("COMPLETED", "Serial identification");
-    
+
     while(true) {
         Util_usleep(5.0);
     }
