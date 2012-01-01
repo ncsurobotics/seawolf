@@ -7,13 +7,13 @@ Overview
 Application Model
 -----------------
 
-Seawolf's software is organized into different applications.  Each application
-runs in a separate process.  They can be run independently, making for a highly
-modular design.  These applications communicate through a custom made
-interprocess communication (IPC) library called `libseawolf
+Seawolf's software is organized into many independent applications.  Each
+application runs in a separate process.  They can be run independently, making
+for a highly modular design.  These applications communicate through a custom
+made interprocess communication (IPC) library called `libseawolf
 <http://opensource.ncsurobotics.com/docs/libseawolf/>`_.  libseawolf provides
 shared variables and notifications between applications.  Each application
-talks directly with a central server called the hub:
+talks directly with a central server called the hub, as shown in this diagram:
 
 .. graph:: hubgraph
 
@@ -35,68 +35,89 @@ talks directly with a central server called the hub:
    }
    hub [label="{Hub server|{libseawolf | db}}", fillcolor="#aaaaff"];
 
+In Seawolf the term "Application" means a software component that uses the
+libseawolf hub to communicate with other applications.  Although most
+components in Seawolf use libseawolf, some do not.  Most notably SVR and vision
+do not use libseawolf.
+
 libseawolf is an open source project.  The `source code
 <https://github.com/ncsurobotics/libseawolf>`_ and `documentation
 <http://opensource.ncsurobotics.com/docs/libseawolf/>`_ are available online.
 
-Application Structure
----------------------
+Software Components
+-------------------
 
-Although applications never communicate to eachother directly, it is useful to
-think of how information flows between them.  This diagram shows information
-flow for seawolf's main applications:
+This diagram shows information flow for Seawolf's main components:
 
-.. digraph:: completeapp
+.. digraph:: components
 
    node [shape=Mrecord, style="filled", height=0.3, fillcolor="#aaddff", fontname="Sans"];
    edge [arrowsize=0.9, color="#101020"];
    fontname="Sans";
 
-   subgraph cluster_applications {
-     label = "Applications";
+   subgraph cluster_software {
+      label = "Software";
 
-     svr [label="SVR"];
-     vision [label="Vision"];
-     missioncontrol [label="Mission Control"];
-     mixer [label="Mixer", href="applications/mixer.html"];
-     serialapp [label="Serial App"];
+      vision [label="Vision", fillcolor="#aaffdd", href="vision/index.html"];
+      missioncontrol [label="Mission Control", href="mission_control/index.html"];
+      svr [label="SVR", fillcolor="#aaffdd"];
+      serialapp [label="Serial App", href="applications.html#serial-app"];
+      mixer [label="Mixer", href="applications.html#mixer"];
+      subgraph pid {
+         rank = same;
+         depthpid [label="Depth PID", href="applications.html#pid-controllers"];
+         yawpid [label="Yaw PID", href="applications.html#pid-controllers"];
+      }
 
-     depthpid [label="Depth PID"];
-     yawpid [label="Yaw PID"];
-
-     svr -> vision;
-     vision -> missioncontrol;
-     missioncontrol -> depthpid;
-     missioncontrol -> yawpid;
-     depthpid -> mixer;
-     yawpid -> mixer;
-     mixer -> serialapp;
-     serialapp -> missioncontrol;
+      svr -> vision;
+      vision -> missioncontrol;
+      missioncontrol -> depthpid;
+      missioncontrol -> yawpid;
+      depthpid -> mixer;
+      yawpid -> mixer;
+      mixer -> serialapp;
+      serialapp -> depthpid;
+      serialapp -> yawpid;
    }
 
-   cameras -> svr;
-   imu -> serialapp;
-   serialapp -> thrusters;
+   subgraph cluster_hardware {
+      label = "Hardware";
+      style = filled;
+      color = lightgrey;
+      cameras [label="Cameras", fillcolor="#ffddaa"];
+      subgraph {
+        rank = sink;
+        sensors [label="Sensors", fillcolor="#ffddaa"];
+        thrusters [label="Thrusters", fillcolor="#ffddaa"];
+      }
 
-   subgraph cluster_environment {
-     style = filled;
-     color = lightgrey;
-
-     // Invisible arrows to arrange the bubbles nicely.
-     edge [style=invisible, arrowtype=none, arrowsize=0];
-     cameras -> thrusters -> imu;
-
-     cameras [label="Cameras", fillcolor="#ffddaa"];
-
-     // Show thrusters and IMU on same row
-     subgraph {
-       rank = same;
-
-       imu [label="IMU", fillcolor="#ffddaa"];
-       thrusters [label="Thrusters", fillcolor="#ffddaa"];
-     }
-
-     label = "Environment";
+      cameras -> svr;
+      serialapp -> thrusters;
+      sensors -> serialapp;
    }
 
-.. todo:: Application structure
+The :ref:`Serial App <app_serial>` and :ref:`SVR <svr>` are the only software
+components that communicate with the physical world.  The serial app handles
+both input and output for microcontrollers, sensors and other peripherals.  SVR
+captures frames from cameras and distributes them to any component that
+requests a camera's input.
+
+The :ref:`vision` component interprets images to give useful output to mission
+control.  This is where almost all of Seawolf's processing time is spent.
+Vision is usually run implicitly by mission control, although it can be run
+separately for debugging purposes.
+
+:ref:`mission_control` makes all navigational decisions.  It uses input from
+vision as well as sensors.  Mission Control sets the PID setpoints to
+accomplish this.
+
+Together the :ref:`PID Controllers <app_pid>` and the mixer are used to control
+the robot's movement.  The PIDs are given a desired sensor value (called the
+setpoint) and they output thruster values that will move the robot accordingly.
+The mixer then considers all of the thruster requests from the PIDs and mixes
+them to produce the final thruster values (each from -1 to 1).
+
+There are also many minor applications that are used on a daily basis while
+running the software.  Some are self explanatory, such as :ref:`zerothrusters
+<app_zerothrusters>`.  Most applications are described in the
+:ref:`applications` section.

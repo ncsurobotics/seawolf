@@ -1,4 +1,6 @@
 
+.. _mission_control:
+
 Mission Control
 ===================================
 
