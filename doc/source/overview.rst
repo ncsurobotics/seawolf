@@ -55,6 +55,23 @@ This diagram shows information flow for Seawolf's main components:
    edge [arrowsize=0.9, color="#101020"];
    fontname="Sans";
 
+   subgraph cluster_hardware {
+      rank = same;
+      label = "Hardware";
+      style = filled;
+      color = lightgrey;
+
+      thrusters [label="Thrusters", fillcolor="#ffddaa"];
+      sensors [label="Sensors", fillcolor="#ffddaa"];
+      cameras [label="Cameras", fillcolor="#ffddaa"];
+
+      // Invisible nodes to make things look decent
+      invis1 [style=invis];
+      invis2 [style=invis];
+      invis3 [style=invis];
+      cameras -> invis1 -> invis2 -> invis3 -> sensors -> thrusters [style=invis];
+   }
+
    subgraph cluster_software {
       label = "Software";
 
@@ -80,21 +97,9 @@ This diagram shows information flow for Seawolf's main components:
       serialapp -> yawpid;
    }
 
-   subgraph cluster_hardware {
-      label = "Hardware";
-      style = filled;
-      color = lightgrey;
-      cameras [label="Cameras", fillcolor="#ffddaa"];
-      subgraph {
-        rank = sink;
-        sensors [label="Sensors", fillcolor="#ffddaa"];
-        thrusters [label="Thrusters", fillcolor="#ffddaa"];
-      }
-
-      cameras -> svr;
-      serialapp -> thrusters;
-      sensors -> serialapp;
-   }
+   cameras -> svr;
+   serialapp -> thrusters;
+   sensors -> serialapp;
 
 The :ref:`Serial App <app_serial>` and :ref:`SVR <svr>` are the only software
 components that communicate with the physical world.  The serial app handles
@@ -118,6 +123,5 @@ The mixer then considers all of the thruster requests from the PIDs and mixes
 them to produce the final thruster values (each from -1 to 1).
 
 There are also many minor applications that are used on a daily basis while
-running the software.  Some are self explanatory, such as :ref:`zerothrusters
-<app_zerothrusters>`.  Most applications are described in the
+running the software.  All applications are described in full in the
 :ref:`applications` section.
