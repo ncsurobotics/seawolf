@@ -1,0 +1,14 @@
+
+@import "sphinxdoc.css";
+
+.document h1 {
+    font-size: 2.3em;
+}
+.document h2 {
+    color: #11557C;
+    margin-top: 1.5em;
+    font-size: 2.0em;
+}
+.document h3 {
+    font-size: 1.5em;
+}

@@ -16,9 +16,9 @@ import sys, os
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.append(os.path.abspath('.'))
 sys.path.append(os.path.abspath('../exts'))  # Local extensions
-sys.path.append(os.path.abspath('../..'))  # Project base
+project_base_dir = os.path.abspath('../..')
+sys.path.append(project_base_dir)
 
 # -- General configuration -----------------------------------------------------
 
@@ -162,6 +162,8 @@ html_static_path = ['_static']
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Seawolfdoc'
 
+html_style = "style.css"
+
 
 # -- Options for LaTeX output --------------------------------------------------
 
@@ -198,11 +200,10 @@ latex_documents = [
 
 # -- Options for Extensions --------------------------------------------------
 
-autoc_base_path = os.path.abspath(os.path.join(__file__, "../../.."))
+autoc_base_path = project_base_dir
 
 todo_include_todos = True
 
-# Run autocommand in base seawolf directory
-autocommand_base_path = os.path.abspath(os.path.join(__file__, "../../../"))
+autocommand_base_path = project_base_dir
 
 graphviz_output_format = "svg"
