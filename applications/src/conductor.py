@@ -55,7 +55,7 @@ def main():
                 sleep(1)
 
             # Start
-            seawolf.notify.send("GO", "Vision")
+            seawolf.notify.send("GO", "Mission Control")
             seawolf.var.set("StatusLight", STATUS_LIGHT_ON)
             running = True
 
@@ -83,7 +83,7 @@ def main():
 if __name__ == "__main__":
 
     seawolf.loadConfig("../conf/seawolf.conf")
-    seawolf.init("Python Conductor")
+    seawolf.init("Conductor")
 
     zero_thrusters()
     app_processes = {}
@@ -94,7 +94,6 @@ if __name__ == "__main__":
     try:
         main()
     except Exception:
-        #TODO: This never runs because Seawolf catches all signals \:
         print "TERMINATING APPLICATIONS..."
         for app in app_processes.itervalues:
             app.terminate()

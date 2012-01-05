@@ -116,7 +116,7 @@ separately for debugging purposes.
 vision as well as sensors.  Mission Control sets the PID setpoints to
 accomplish this.
 
-Together the :ref:`PID Controllers <app_pid>` and the mixer are used to control
+Together the :ref:`PID Controllers <app_pid>` and the :ref:`app_mixer` are used to control
 the robot's movement.  The PIDs are given a desired sensor value (called the
 setpoint) and they output thruster values that will move the robot accordingly.
 The mixer then considers all of the thruster requests from the PIDs and mixes
