@@ -36,9 +36,9 @@ if __name__ == "__main__":
         dest="delay", default=0,
         help="Delay between frames, in milliseconds, or -1 to wait for "
             "keypress.  Default is 0.")
-    opt_parser.add_option("-g", "--graphical", action="store_true",
-        dest="graphical", default=False,
-        help="Puts vision into debug mode and allows windows to be displayed.")
+    opt_parser.add_option("-G", "--non-graphical", action="store_false",
+        dest="graphical", default=True,
+        help="Takes vision out of debug mode, disallowing windows to be displayed.")
     opt_parser.add_option("-s", "--simulator", action="store_true",
         default=False, dest="simulator",
         help="Connect to the simulator instead of starting vision processes.")
