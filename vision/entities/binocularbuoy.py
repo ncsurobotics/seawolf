@@ -26,6 +26,10 @@ CANDIDATE_SEEN_THRESH = 3
 #dictionaries of colors
 COLORS = {0: cv.RGB(127, 127, 127),1:cv.RGB(255, 0, 0), 2: cv.RGB(0, 255, 0), 3: cv.RGB(255, 255, 0)}
 
+#define left and right as indecies
+LEFT = 0
+RIGHT = 1
+
 class WorkerData(object):
     ''' used to pass data from worker to manager '''
     def __init__(self):
@@ -86,7 +90,7 @@ class BinocularBuoyWorker(entities.VisionEntity):
 
         if self.debug:
             #windows
-            cv.NamedWindow("Buoy Debug")
+            cv.NamedWindow("Buoy Debug " + self.camera_name)
 
             #random number generator used for choosing debug colors
             self.rng = cv.RNG()
@@ -104,26 +108,30 @@ class BinocularBuoyWorker(entities.VisionEntity):
         self.send_message(buoy_data)
 
         #---------- BLOCK 2: DEBUG ----------- #
-
-        '''
-        #######  DEBUG #######
         if self.debug:
 
+            #wait for debug information from parent
+            debug_info = self.wait_for_parent(None)
+
             #display confirmed buoys
-            for confirmed in self.confirmed:
-                x = confirmed.x
-                y = confirmed.y
+            for confirmed in debug_info.confirmed:
+
+                if debug_info.camera == LEFT:
+                    x = confirmed.lx
+                    y = confirmed.ly
+
+                if debug_info.camera == RIGHT:
+                    x = confirmed.rx
+                    y = confirmed.ry
+
                 w = confirmed.width
 
                 #draw rectangles on frame
                 cv.Rectangle(frame, (x,y), (x+w, y+w), confirmed.debug_color, thickness = 6)
-                cv.Rectangle(frame, (x,y), (x+w, y+w), COLORS[confirmed.color], thickness = -1)
+                #cv.Rectangle(frame, (x,y), (x+w, y+w), COLORS[confirmed.color], thickness = -1)
 
             #show debug frame
-            cv.ShowImage("Buoy Debug", frame)
-
-        ####### END DEBUG #######
-        '''
+            cv.ShowImage("Buoy Debug " + self.camera_name, frame)
 
     def find_buoys(self, frame):
         # Get Channels
@@ -207,8 +215,8 @@ class BinocularBuoy(entities.MultiCameraVisionEntity):
 
         #assign new buoy data to self.newLeft and self.newRight
         #NOTE: FIRST CAMERA SPECIFIED == LEFT, SECOND CAMERA == RIGHT
-        self.newLeft = worker_data[self.cameras_to_use[0]].new_buoys
-        self.newRight = worker_data[self.cameras_to_use[1]].new_buoys
+        self.newLeft = worker_data[self.cameras_to_use[LEFT]].new_buoys
+        self.newRight = worker_data[self.cameras_to_use[RIGHT]].new_buoys
 
         print self.newLeft, self.newRight
 
@@ -221,7 +229,21 @@ class BinocularBuoy(entities.MultiCameraVisionEntity):
         #compute the distance from confirmed buoys
         #update average disparity
 
-        #pass debug information to workers for display
+        if self.debug:
+
+            #pass debug information to workers for display
+            debug_info = ManagerData()
+            debug_info.confirmed = self.confirmed
+
+            #pass debug information back to left camera
+            debug_info.camera = LEFT
+            process = self.process_manager.process_list[self.cameras_to_use[LEFT]]
+            process.send_data(debug_info)
+
+            #pass debug information back to right camera
+            debug_info.camera = RIGHT
+            process = self.process_manager.process_list[self.cameras_to_use[RIGHT]]
+            process.send_data(debug_info)
 
         #return the output attribute
         self.return_output()
