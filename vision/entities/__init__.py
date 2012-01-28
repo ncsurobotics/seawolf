@@ -16,10 +16,12 @@ from binoculartest import BinocularTest
 from path import PathEntity
 from buoy import BuoyEntity
 from buoytest import BuoyTestEntity
+from binocularbuoy import BinocularBuoy
 
 entity_classes = {
     "test": TestEntity,
     "binoculartest": BinocularTest,
+    "binocularbuoy": BinocularBuoy,
     "gate": GateEntity,
     "path": PathEntity,
     "buoy": BuoyEntity,
