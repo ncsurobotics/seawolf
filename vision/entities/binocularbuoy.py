@@ -1,15 +1,21 @@
 
 from __future__ import division
 import math
-import entities
+from base import VisionEntity, MultiCameraVisionEntity
 import cv
 
 import libvision
 from sw3.util import circular_average
 
+#distance in feet between cameras
+CAMERA_DISTANCE = 1.5
+
+#radians per pixel
+PIXELS_TO_RADIANS = .001636
+
 #maximum buoy translation allowed between frames
-MAX_X_TRANS = 40
-MAX_Y_TRANS = 40
+MAX_X_TRANS = 100
+MAX_Y_TRANS = 100
 
 #maximum allowed change in width
 MAX_CHANGE_WIDTH = 40
@@ -77,7 +83,7 @@ class Buoy(object):
         #Color used in debug windows
         self.debug_color = None
 
-class BinocularBuoyWorker(entities.VisionEntity):
+class BinocularBuoyWorker(VisionEntity):
 
     def init(self):
 
@@ -126,9 +132,11 @@ class BinocularBuoyWorker(entities.VisionEntity):
 
                 w = confirmed.width
 
+                x = int(x)
+                y = int(y)
+
                 #draw rectangles on frame
                 cv.Rectangle(frame, (x,y), (x+w, y+w), confirmed.debug_color, thickness = 6)
-                #cv.Rectangle(frame, (x,y), (x+w, y+w), COLORS[confirmed.color], thickness = -1)
 
             #show debug frame
             cv.ShowImage("Buoy Debug " + self.camera_name, frame)
@@ -183,7 +191,7 @@ class BinocularBuoyWorker(entities.VisionEntity):
 
         return new_buoy
 
-class BinocularBuoy(entities.MultiCameraVisionEntity):
+class BinocularBuoy(MultiCameraVisionEntity):
     subprocess = BinocularBuoyWorker
 
     def init(self):
@@ -218,8 +226,6 @@ class BinocularBuoy(entities.MultiCameraVisionEntity):
         self.newLeft = worker_data[self.cameras_to_use[LEFT]].new_buoys
         self.newRight = worker_data[self.cameras_to_use[RIGHT]].new_buoys
 
-        print self.newLeft, self.newRight
-
         #sort new buoys into existing buoys
         self.sort_buoys()
 
@@ -227,7 +233,7 @@ class BinocularBuoy(entities.MultiCameraVisionEntity):
         self.create_candidates()
 
         #compute the distance from confirmed buoys
-        #update average disparity
+        self.measure_distances()
 
         if self.debug:
 
@@ -247,6 +253,35 @@ class BinocularBuoy(entities.MultiCameraVisionEntity):
 
         #return the output attribute
         self.return_output()
+
+    def measure_distances(self):
+
+        #if there is nothing to measure, then exit
+        if not self.confirmed:
+            return
+
+        self.avg_disparity = 0
+        for confirmed in self.confirmed:
+
+            #measure how far this buoy is from the right camera
+            angL = confirmed.lx * PIXELS_TO_RADIANS
+            angR = confirmed.rx * PIXELS_TO_RADIANS
+            confirmed.distance = self.compute_distance(angL,angR)
+            self.avg_disparity += abs(confirmed.lx - confirmed.rx)
+            print "distance = ", confirmed.distance
+
+        self.avg_disparity /= len(self.confirmed)
+        print "avg_disparity = ", self.avg_disparity
+
+    def compute_distance(self, angL, angR):
+
+        phiL = math.pi-angL
+
+        #TODO handle angL and angR being very close
+        if math.sin(angL - angR) == 0:
+            return 100
+        else:
+            return CAMERA_DISTANCE * math.sin(phiL) / math.sin(angL-angR)
 
     def sort_buoys(self):
 

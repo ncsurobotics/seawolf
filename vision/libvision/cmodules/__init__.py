@@ -95,7 +95,21 @@ shape_detect = CModule("shape_detect.so", [
     CFunction("match_letters",ctypes.c_int,[IplImage_p,ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]),
     CFunction("find_bins", cRect_p_p,[IplImage_p, ctypes.POINTER(ctypes.c_int)]),
     CFunction("free_bins", None, [cRect_p_p, ctypes.c_int])
-])  
+])
+
+# Buoy Analysis Module
+class BuoyROIStruct(ctypes.Structure):
+    _fields_ = [
+        ("x", ctypes.c_int),
+        ("y", ctypes.c_int),
+        ("w", ctypes.c_int),
+        ("h", ctypes.c_int),
+    ]
+BuoyROIStruct_p = ctypes.POINTER(BuoyROIStruct)
+BuoyROIStruct_p_p = ctypes.POINTER(BuoyROIStruct_p)
+buoy_analyzer = CModule("buoy_analyzer.so",[
+    CFunction("buoy_color", ctypes.POINTER(ctypes.c_int),[IplImage_p, BuoyROIStruct_p_p, ctypes.c_int])
+])
 
 # Instantiate CModule objects below:
 

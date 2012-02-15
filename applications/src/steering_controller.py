@@ -51,7 +51,7 @@ def update_axis(event):
         ]))
 
     else:
-        yaw_heading = sw3.data.imu.yaw
+        yaw_heading = sw3.data.imu.yaw()
         sw3.nav.do(sw3.CompoundRoutine([
             sw3.SetYaw(yaw_heading),
             sw3.Forward(forward_rate)
@@ -79,7 +79,7 @@ def print_help():
 sw.loadConfig("../conf/seawolf.conf")
 sw.init("Steering Wheel Controller")
 
-yaw_heading = sw3.data.imu.yaw
+yaw_heading = sw3.data.imu.yaw()
 
 devices = joystick.get_devices()
 if len(devices) == 0:

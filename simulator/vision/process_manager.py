@@ -19,7 +19,7 @@ class ProcessManager(object):
             map(lambda x: x[0], self.processes.itervalues())
         )
 
-    def get_data(self):
+    def get_data(self, **kwargs):
         '''get data from all running processes and
            package the output into a dictionary '''
 

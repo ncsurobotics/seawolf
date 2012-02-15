@@ -1,8 +1,8 @@
 
-import entities
+from base import VisionEntity, MultiCameraVisionEntity
 import cv
 
-class BinocularTestWorker(entities.VisionEntity):
+class BinocularTestWorker(VisionEntity):
 
     def init(self):
         cv.NamedWindow(self.camera_name)
@@ -23,7 +23,7 @@ class BinocularTestWorker(entities.VisionEntity):
             cv.ShowImage(self.camera_name, frame)
             print "displaying frame from worker", self.camera_name
 
-class BinocularTest(entities.MultiCameraVisionEntity):
+class BinocularTest(MultiCameraVisionEntity):
     subprocess = BinocularTestWorker
 
     def manage_workers(self):

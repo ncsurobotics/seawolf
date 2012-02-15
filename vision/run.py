@@ -8,9 +8,17 @@ given for binocular entities.
 '''
 
 import sys
+import os.path
 if sys.version_info < (2, 6):
     raise RuntimeError("Python version 2.6 or greater required.")
 from optparse import OptionParser
+
+# Add repository root to sys.path
+parent_directory = os.path.realpath(os.path.join(
+    os.path.abspath(__file__),
+    "../.."
+))
+sys.path.append(parent_directory)
 
 import entities
 import process_manager
@@ -92,7 +100,8 @@ if __name__ == "__main__":
                 #for debugging, print out entity output
                 output = pm.get_data()
                 if output:
-                    print output
+                    #print output
+                    pass
 
         except process_manager.KillSignal:
             # Exit if the subprocess tells us to

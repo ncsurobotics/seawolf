@@ -78,7 +78,7 @@ IplImage* find_target_color_rgb(IplImage* frame, int red, int green, int blue, i
     int blobsize = 0; //current number of pixels found in color "blob" (not necceserily a single blob)
     int rlimit=0; // stddev; //the computed maximum allowable stddev
     int raverage; //the average stddev from target color
-    int smallestr; //the smallest stddev found  
+    int smallestr; //the smallest stddev found
     double imgAverage_r=0; //hold average colors for this image as doubles
     double imgAverage_g=0;
     double imgAverage_b=0;
@@ -87,15 +87,15 @@ IplImage* find_target_color_rgb(IplImage* frame, int red, int green, int blue, i
     RGBPixel imgAverage;
     RGBPixel tempPixel;
    
-    //Initialize Images  
+    //Initialize Images
     IplImage* out = cvCreateImage(cvGetSize(frame),8,1);
     IplImage* in = cvCloneImage(frame);
 
     uchar* ptrIn = (uchar*) in->imageData;
     uchar* ptrOut = (uchar*) out->imageData;
    
-    //Compile target color 
-    RGBPixel color; 
+    //Compile target color
+    RGBPixel color;
     color.r = red;
 	color.g = green;
 	color.b = blue;
@@ -113,7 +113,6 @@ IplImage* find_target_color_rgb(IplImage* frame, int red, int green, int blue, i
         radii[i] = 0;
     }
 
-
     //Fill the accumulator table / histogram
     smallestr = maxr;
     int peakr = 0;
@@ -125,7 +124,7 @@ IplImage* find_target_color_rgb(IplImage* frame, int red, int green, int blue, i
         radii[s]++;
         if(radii[s] > peakr) peakr = radii[s]; 
         if(s < smallestr) smallestr = s;
-        
+
         // Update the average color
         imgAverage_r = (imgAverage_r*(i)+tempPixel.r)/(i+1);
         imgAverage_g = (imgAverage_g*(i)+tempPixel.g)/(i+1);
@@ -285,7 +284,7 @@ float Pixel_dist_rgb(RGBPixel* px_1, RGBPixel* px_2) {
 int min(int a, int b) {
     int min;
     if (a < b ) 
-	min = a;
+    min = a;
     else
         min = b;
     return min;

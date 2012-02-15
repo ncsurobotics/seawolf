@@ -7,3 +7,4 @@ import filters
 import hist
 import misc
 from tracking import Tracker
+from buoy_analyzer import buoy_analyzer

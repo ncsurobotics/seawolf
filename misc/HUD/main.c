@@ -7,7 +7,7 @@
  *
  */
 
-#define seawolf
+/*#define seawolf*/
 
 #include "seawolf.h"
 

@@ -17,6 +17,7 @@ from path import PathEntity
 from buoy import BuoyEntity
 from buoytest import BuoyTestEntity
 from binocularbuoy import BinocularBuoy
+from weapons import WeaponsEntity 
 
 entity_classes = {
     "test": TestEntity,
@@ -26,5 +27,6 @@ entity_classes = {
     "path": PathEntity,
     "buoy": BuoyEntity,
     "buoytest": BuoyTestEntity,
+    "weapons": WeaponsEntity,
 }
 

@@ -44,14 +44,11 @@ class MissionBase(object):
             if seawolf.var.get("MissionReset"):
                 raise MissionControlReset()
 
-            vision_data = self.process_manager.get_data()
+            vision_data = self.process_manager.get_data(delay=0.05)
+            if vision_data is not None:
+                print vision_data
 
-            if vision_data == None: 
-                ''' no new fram has been processed ''' 
-                pass
-            else:
-                ''' at least one process has new information '''
-                self.step(vision_data)
+            self.step(vision_data)
 
     def finish_mission(self, *args, **kwargs):
         '''Marks the mission complete so self.execute() will return.
