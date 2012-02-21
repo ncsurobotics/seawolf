@@ -23,7 +23,7 @@ def update_axis(event):
     total = abs(forward) + abs(rate)
 
     if total == 0:
-        yaw_heading = sw3.data.imu.yaw
+        yaw_heading = sw3.data.imu.yaw()
         sw3.nav.do(sw3.CompoundRoutine((sw3.SetYaw(yaw_heading), sw3.Forward(forward))))
     else:
         for_p = forward / total
@@ -61,7 +61,7 @@ def print_help():
 sw.loadConfig("../conf/seawolf.conf")
 sw.init("Joystick Controller")
 
-yaw_heading = sw3.data.imu.yaw
+yaw_heading = sw3.data.imu.yaw()
 
 devices = joystick.get_devices()
 if len(devices) == 0:

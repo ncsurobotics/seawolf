@@ -2,7 +2,7 @@
 import os
 
 import libvision
-import process_manager
+import vision
 import svr
 
 import cv
@@ -14,7 +14,7 @@ class Container(object):
         return str(self.__dict__)
 
 class VisionEntity(object):
-    '''Defines an entity, or object that can be located.
+    '''Defines an entity, an object that can be located.
 
     Subclasses must:
         - Implement a find() method.
@@ -32,6 +32,7 @@ class VisionEntity(object):
         self.debug = kwargs.pop('debug', False)
         self.delay = kwargs.pop('delay', 0)
         self.waitforsync = kwargs.pop('waitforsync', False)
+        self.binocular_child = kwargs.pop('binocularworker', False)
 
         # Line of communication to mission control
         self.child_conn = child_conn
@@ -80,9 +81,13 @@ class VisionEntity(object):
                 #else, simply check for kill signal
                 elif self.child_conn.poll():
                     signal = self.child_conn.recv()
-                    if isinstance(signal, process_manager.KillSignal):
+                    if isinstance(signal, vision.process_manager.KillSignal):
                         self.close()
                         return
+
+                # Tell mission control we are capturing a frame, and it should capture sensor data
+                if not self.binocular_child:
+                    self.child_conn.send(vision.process_manager.SensorCapture())
 
                 #check if a new frame has been captured
                 frame = self.capture.get_frame()
@@ -110,14 +115,14 @@ class VisionEntity(object):
             signal = None
 
         #check if signal passed was kill signal
-        if isinstance(signal, process_manager.KillSignal):
+        if isinstance(signal, vision.process_manager.KillSignal):
             self.close()
             raise signal
 
         return signal
 
     def close(self):
-        self.child_conn.send(process_manager.KillSignal())
+        self.child_conn.send(vision.process_manager.KillSignal())
         self.capture = None
 
     def send_message(self, data):
@@ -158,12 +163,21 @@ class MultiCameraVisionEntity(VisionEntity):
         #start a process manager to handle sub-processes
         self.process_manager = process_manager.ProcessManager()
 
-        #store the cameras.  Order will determine camera positions
+        #store the cameras.  Order will determine camera positions First is left, second is right
         self.cameras_to_use = cameras_to_use
 
         #start a subprocess for every camera
         for camera_name in cameras_to_use:
-            self.process_manager.start_process(self.subprocess,camera_name,camera_name,debug=self.debug, delay=self.delay, cameras=self.cameras, waitforsync=True)
+            self.process_manager.start_process(
+                    self.subprocess,
+                    camera_name,
+                    camera_name,
+                    debug=self.debug,
+                    delay=self.delay,
+                    cameras=self.cameras,
+                    waitforsync=True,
+                    binocularworker=True,
+            )
 
         self.output = Container()
 
@@ -181,14 +195,16 @@ class MultiCameraVisionEntity(VisionEntity):
 
                 #check for a kill signal from above
                 if self.child_conn.poll():
-                   if isinstance(self.child_conn.recv(), process_manager.KillSignal):
-                       self.process_manager.kill()
-                       break
+                    if isinstance(self.child_conn.recv(), vision.process_manager.KillSignal):
+                        self.process_manager.kill()
+                        break
 
                 #walk workers through processing a frame
                 self.manage_workers()
 
-                #return output
+                # Tell mission control we are capturing a frame, and it should capture sensor data
+                self.child_conn.send(SensorCapture())
+
                 self.child_conn.send(self.output)
 
         # Always close camera, even if an exception was raised
@@ -203,7 +219,11 @@ class MultiCameraVisionEntity(VisionEntity):
 
     def wait_for_workers(self):
         #wait for workers all workers to return data
-        data = self.process_manager.get_data(force = True)
+        try:
+            data = self.process_manager.get_data(force = True)
+        except KillSignal:
+            self.child_conn.send(KillSignal())
+            raise
         return data
 
     def manage_workers(self):

@@ -5,7 +5,7 @@ from itertools import combinations
 
 import cv
 
-from entities.base import VisionEntity, Container
+from base import VisionEntity, Container
 import libvision
 import fake_svr as svr
 
@@ -38,9 +38,9 @@ class BuoyEntity(VisionEntity):
 
         # Scale image to reduce processing
         scale = 0.7
-        frame_scaled = cv.CreateImage((frame.width*scale, frame.height*scale), 8, 3)
+        frame_scaled = cv.CreateImage((int(frame.width*scale), int(frame.height*scale)), 8, 3)
         cv.Resize(frame, frame_scaled)
-        cv.SetImageROI(frame, (0, 0, frame.width*scale, frame.height*scale))
+        cv.SetImageROI(frame, (0, 0, int(frame.width*scale), int(frame.height*scale)))
 
         # Create debug_frame
         if self.debug:

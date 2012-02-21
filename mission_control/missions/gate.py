@@ -18,7 +18,7 @@ class GateMission(MissionBase):
         self.gate_seen = 0
 
     def init(self):
-        self.process_manager.start_process(entities.GateEntity,"gate", "forward", debug = True)
+        self.process_manager.start_process(entities.GateEntity, "gate", "forward", debug=True)
         sw3.nav.do(sw3.CompoundRoutine(
             sw3.Forward(FORWARD_SPEED),
             sw3.SetDepth(2),

@@ -211,7 +211,7 @@ class SetDepth(NavRoutine):
         self.depth = depth
 
     def _poll(self):
-        if abs(self.depth - data.depth) <= self.tolerance:
+        if abs(self.depth - data.depth()) <= self.tolerance:
             return NavRoutine.COMPLETED
         return NavRoutine.RUNNING
 
@@ -228,12 +228,12 @@ class RelativeDepth(NavRoutine):
         self.target_depth = None
 
     def _poll(self):
-        if abs(self.target_depth - data.depth) <= self.tolerance:
+        if abs(self.target_depth - data.depth()) <= self.tolerance:
             return NavRoutine.COMPLETED
         return NavRoutine.RUNNING
 
     def _start(self):
-        self.target_depth = max(data.depth + self.amount, 0)
+        self.target_depth = max(data.depth() + self.amount, 0)
         pid.depth.heading = self.target_depth
 
 class HoldDepth(RelativeDepth):
@@ -267,7 +267,7 @@ class SetYaw(NavRoutine):
 
     def _poll(self):
         target_yaw = self.angle + 180
-        current_yaw = data.imu.yaw + 180
+        current_yaw = data.imu.yaw() + 180
 
         diff = abs(target_yaw - current_yaw)
         if diff > 180:
@@ -299,7 +299,7 @@ class RelativeYaw(NavRoutine):
 
     def _poll(self):
         target_yaw = self.target_yaw + 180
-        current_yaw = data.imu.yaw + 180
+        current_yaw = data.imu.yaw() + 180
 
         diff = abs(target_yaw - current_yaw)
         if diff > 180:
@@ -312,7 +312,7 @@ class RelativeYaw(NavRoutine):
         return NavRoutine.RUNNING
 
     def _start(self):
-        self.target_yaw = data.imu.yaw + self.amount
+        self.target_yaw = data.imu.yaw() + self.amount
         if self.target_yaw > 180:
             self.target_yaw = (self.target_yaw - 360)
         elif self.target_yaw < -180:

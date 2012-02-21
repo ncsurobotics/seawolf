@@ -5,7 +5,7 @@ import math
 
 import cv
 
-from entities.base import VisionEntity
+from base import VisionEntity
 import libvision
 from sw3.util import circular_average
 

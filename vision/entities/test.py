@@ -1,9 +1,11 @@
-import entities
+
 import math
 import cv
-import libvision
 
-class TestEntity(entities.VisionEntity):
+import libvision
+from base import VisionEntity
+
+class TestEntity(VisionEntity):
 
     def init(self):
         cv.NamedWindow("Frame")

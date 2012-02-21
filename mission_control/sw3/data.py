@@ -3,29 +3,45 @@ import seawolf as sw
 
 __all__ = ["data"]
 
+VARS_TO_FREEZE = ["SEA.Yaw", "Depth"]
+
 class Imu(object):
-    @property
-    def yaw(self):
-        return sw.var.get("SEA.Yaw")
-    
-    @property
+    def __init__(self, data):
+        self.data = data
+
+    def yaw(self, freeze_name=None):
+        return self.data.var_get("SEA.Yaw", freeze_name=None)
+
     def pitch(self):
-        return sw.var.get("SEA.Pitch")
-    
-    @property
+        return self.data.var_get("SEA.Pitch")
+
     def roll(self):
-        return sw.var.get("SEA.Roll")
+        return self.data.var_get("SEA.Roll")
 
 class Data(object):
     def __init__(self):
-        self.imu = Imu()
+        self.imu = Imu(self)
+        self.freezes = {}  # Map freeze name to variable dictionary
 
-    @property
-    def depth(self):
-        return sw.var.get("Depth")
+    def depth(self, freeze_name=None):
+        return self.var_get("Depth", freeze_name=None)
 
-    @property
     def power_status(self):
-        return sw.var.get("PowerStatus")
+        return self.var_get("PowerStatus")
+
+    def var_get(self, var, freeze_name=None):
+        if freeze_name in self.freezes and var in self.freezes[freeze_name]:
+            return self.freezes[freeze_name][var]
+        else:
+            return sw.var.get(var)
+
+    def freeze(self, freeze_name=None):
+        variables = {}
+        for var in VARS_TO_FREEZE:
+            variables[var] = sw.var.get(var)
+        self.freezes[freeze_name] = variables
+
+        # Set Default Freeze
+        self.freezes[None] = variables
 
 data = Data()

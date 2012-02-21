@@ -31,7 +31,7 @@ class PathMission(MissionBase):
         self.process_manager.start_process(entities.PathEntity,"path", "down", debug = True)
         sw3.nav.do(sw3.CompoundRoutine([sw3.Forward(FORWARD_SPEED)]))
 
-        self.reference_angle = sw3.data.imu.yaw*(pi/180) % (2*pi)
+        self.reference_angle = sw3.data.imu.yaw()*(pi/180) % (2*pi)
         self.state = "centering"
 
 
@@ -46,7 +46,7 @@ class PathMission(MissionBase):
         theta_x = path_data.x*FIELD_OF_VIEW * pi / 180 #path_data.x is percent of fram view . multiplying them gives you theta_x
         theta_y = path_data.y*FIELD_OF_VIEW * pi / 180 #path_data.y is percent of frame view . multiplying them gives you theta
 
-        d = PATH_DEPTH-sw3.data.depth #depth between path and camera
+        d = PATH_DEPTH-sw3.data.depth() #depth between path and camera
 
         x = d*math.sin(theta_x) #gives you the x distance from the frame center to path center
         y = d*math.sin(theta_y) #gives you the y distance from the frame center to path center
@@ -73,7 +73,7 @@ class PathMission(MissionBase):
             self.state = "orienting"
 
     def state_orienting(self, path_data):
-        current_yaw = sw3.data.imu.yaw*(pi/180) % (2*pi)
+        current_yaw = sw3.data.imu.yaw()*(pi/180) % (2*pi)
         path_angle = (path_data.theta + current_yaw) % pi
 
         sw3.nav.do(sw3.Forward(0))

@@ -26,7 +26,7 @@ def circular_average(numbers, high=2*math.pi, low=0):
     # Since we will be using sin and cos, we scale the numbers from the range
     # high-low to the range 2*pi-0.
     linear_factor = 2*math.pi / (high - low)
-    
+
     total_x = 0
     total_y = 0
     for number in numbers:
