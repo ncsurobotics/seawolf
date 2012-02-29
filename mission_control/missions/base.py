@@ -35,6 +35,8 @@ class MissionBase(object):
         This is a blocking call that returns when the mission completes.
         '''
 
+        self.timers = {}
+
         self._entity_timeout = getattr(self, "_entity_timeout", None)
         self._mission_done = getattr(self, "_mission_done", False)
         last_entity_timestamp = time()
@@ -45,10 +47,15 @@ class MissionBase(object):
                 raise MissionControlReset()
 
             vision_data = self.process_manager.get_data(delay=0.05)
-            if vision_data is not None:
-                print vision_data
 
             self.step(vision_data)
+
+            # Timer callbacks
+            current_time = time()
+            for name, (t, delay, callback, args) in self.timers.items():
+                if t + delay <= current_time:
+                    self.delete_timer(name)
+                    callback(*args)
 
     def finish_mission(self, *args, **kwargs):
         '''Marks the mission complete so self.execute() will return.
@@ -70,3 +77,13 @@ class MissionBase(object):
         This is the only function that needs to be implemented in a subclass.
         '''
         raise NotImplementedError("A subclass must implement this method.")
+
+    def set_timer(self, name, delay, callback, *args):
+        if not hasattr(self, "timers"):
+            self.timers = {}
+        self.timers[name] = (time(), delay, callback, args)
+
+    def delete_timer(self, name):
+        if not hasattr(self, "timers"):
+            self.timers = {}
+        del self.timers[name]

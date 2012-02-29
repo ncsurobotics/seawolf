@@ -187,7 +187,6 @@ class ZeroThrusters(NavRoutine):
     def _start(self):
         # Pause the PIDs
         pid.yaw.pause()
-        pid.rotate.pause()
         pid.pitch.pause()
         pid.depth.pause()
 
