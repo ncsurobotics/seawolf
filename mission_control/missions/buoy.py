@@ -9,149 +9,161 @@ import math
 from math import pi
 from sw3 import util
 
-MISSION_TIMEOUT = 5
+MISSION_TIMEOUT = 10
 FORWARD_SPEED = 0.5
-
+BACKWARD_SPEED = -0.3
 CENTER_TIME = 5
 
-BUOY_FIRST = 1 #first buoy to bump(1 is left, 2 is center, 3 is right)
-BUOY_SECOND = 3 #second buoy to bump
+BUOY_FIRST = 0 #first buoy to bump(0 is left, 1 is center, 2 is right)
+BUOY_SECOND = 2 #second buoy to bump
 BUMP_TIME = 5 #time to move forward in bump routine
-OVER_DEPTH = 3 #depth to pass over the center buoy
+OVER_DEPTH = 0 #depth to pass over the center buoy
 RUNOVER_TIME = 8 #
-DIST_THRESHOLD = 5
+DIST_THRESHOLD =  7
 CENTER_THRESHOLD = 2
+APPROACH_TIMEOUT = 4
+BUMP_TIMEOUT = 7
+BACKUP_TIME = 3
 
+#TODO: depth control, check findpath, check if second buoy is center, testing for different buoy arrangements
 class BuoyMission(MissionBase):
 
     def __init__(self):
-        print "__init__"
         self.bump_count = 0
-        self.pointing_to = False
+
     def init(self):
-        print "BuoyMission: initializing "
         '''runs at start of mission '''
+        self.set_timer("mission_timeout", MISSION_TIMEOUT, self.mission_timeout)
         self.process_manager.start_process(entities.BuoyEntity, "buoy", "forward", debug=True)
         sw3.nav.do(sw3.Forward(FORWARD_SPEED,5))
 
-        self.reference_angle = sw3.data.imu.yaw()*(pi/180) % (2*pi)
+        #self.reference_angle = sw3.data.imu.yaw()*(pi/180) % (2*pi)
+        self.reference_angle = sw3.data.imu.yaw()
 
         self.tracking_id = None
-        self.state = "centering"
+
+        self.states = [
+            "first_approach",
+            "bump",
+            "second_approach",
+            "bump",
+            "center_approach",
+            "findpath"
+        ]
+        self.state_num = 0
+        self.state = self.states[self.state_num]
+
+    def next_state(self):
+        self.state_num += 1
+        if self.state_num >= len(self.states):
+            self.finish_mission()
+        self.state = self.states[self.state_num]
+        print "State:", self.state
+
+    def sweep_routine(self,approach_angle):
+        return sw3.LoopRoutine(
+            sw3.Forward(BACKWARD_SPEED, BACKUP_TIME),
+            sw3.Forward(0,2),
+            sw3.SetYaw(self.reference_angle),
+            sw3.SetYaw(approach_angle),
+            )
+    def mission_timeout(self):
+        ''' mission has timed out, progress to next task'''
+        #TODO fill this in with delicious cream
+        print "BUOY TIMEOUT REACHED"
+
     def step(self, vision_data):
 
         if vision_data == None:
-            return
+            buoys = []
+        else:
+            buoys = vision_data['buoy'].buoys
 
-        buoy_data = vision_data['buoy'].buoys
-        print buoy_data
-
-
-        if self.state == "centering":
-            self.state_centering(buoy_data)
-        if self.state == "bump_buoy":
-            self.state_bump_buoy(buoy_data)
-        if self.state == "stepto":
-            self.state_stepto(buoy_data)
+        if self.state == "first_approach":
+            self.state_approach(BUOY_FIRST, buoys)
+        if self.state == "second_approach":
+            self.state_approach(BUOY_SECOND, buoys)
+        if self.state == "center_approach":
+            self.state_approach(1, buoys)
+        if self.state == "bump":
+            self.state_bump(buoys)
         if self.state == "findpath":
             self.state_findpath()
 
-    def state_centering(self,buoy_data):
-        if self.tracking_id == None:
-            if len(buoy) == 3:
-                bouy.sort(lambda x: x.theta)
-                self.tracking_id = buoy[1].id
-        if self.tracking_id != None:
-            track_buoy = None
-            for buoy in buoys:
-                if buoy.id == self.tracking_id:
-                    track_buoy = buoy
+
+    def state_approach(self, buoy_to_bump, buoys):
+        #TODO: include depth routine
+        if len(buoys)==3:
+            buoys.sort(key=lambda x: x.theta)
+            self.tracking_id = buoys[buoy_to_bump].id
+
+        track_buoy = None
+        for buoy in buoys:
+            if buoy.id == self.tracking_id:
+                track_buoy = buoy
 
         if not track_buoy:
             return
-
-        print "State: Centering  dist: ",track_buoy.r," x angle from current: ",track_buoy.theta, " y angle from current: ",track_buoy.phi
-
-        sw3.nav.do(sw3.Forward(0))
+        self.set_timer("Approach_Timeout", APPROACH_TIMEOUT, self.approach_timeout, sw3.data.imu.yaw())
+        print "track_buoy.r:", track_buoy.r
+        #print "State: BuoyBump  dist: ",track_buoy.r, " x angle from current: ",track_buoy.theta, " y angle from current: ", track_buoy.phi
         yaw_routine = sw3.RelativeYaw(track_buoy.theta)
-        sw3.nav.do(yaw_routine)
+        forward_routine = sw3.Forward(FORWARD_SPEED)
+        stop_routine = sw3.Forward(0,0)
+        backup_routine = sw3.Forward(BACKWARD_SPEED)
+        reset_routine = sw3.SetYaw(self.reference_angle)
+        depth_routine = sw3.SetDepth(4)
 
-        forward_routine = sw3.Forward(FORWARD_SPEED, CENTER_TIME)
-        #yaw_routine.on_done(forward_routine)
+        centered = False
+        if abs(track_buoy.theta) <= CENTER_THRESHOLD:
+            centered = True
 
-        if track_buoy.theta <= CENTER_THRESHOLD:
-            self.state = "bump_buoy"
+        if centered:
+            sw3.nav.do(sw3.CompoundRoutine(
+                    forward_routine,
+                    yaw_routine,
+                    ))
+            if abs(track_buoy.r) <= DIST_THRESHOLD:
+                self.delete_timer("Approach_Timeout")
+                self.next_state()
+        else:
+           sw3.nav.do(sw3.CompoundRoutine(
+                stop_routine,
+                yaw_routine
+                ))
+    def approach_timeout(self,approach_angle):
+        sw3.nav.do(sw3.SequentialRoutine(
+            sw3.Forward(BACKWARD_SPEED, 5),
+            self.sweep_routine(approach_angle)
+            ))
 
-    def state_bump_buoy(self,buoy_data):
-        print "State: BuoyBump bumpcount: ",self.bump_count
-        if len(buoy_data)==3:
-            buoy_data.sort(lambda x: x.theta)
-            if self.bump_count == 0:
-                self.tracking_id = buoy_data[FIRST_BUOY].id
-            if self.bump_count == 1:
-                self.tracking_id = buoy_data[SECOND_BUOY].id
+    def state_bump(self,buoys):
 
         track_buoy = None
-        for buoy in buoy_data:
-            if buoy.id ==self.tracking_id:
+        for buoy in buoys:
+            if buoy.id == self.tracking_id:
                 track_buoy = buoy
 
         if not track_buoy:
             return
 
-        print "State: BuoyBump  dist: ",track_buoy.r, " x angle from current: ",track_buoy.theta, " y angle from current: ", track_buoy.phi
-        yaw_routine = sw3.RelativeYaw(track_buoy.theta)
-        forward_routine = sw3.Forward(FORWARD_SPEED,CENTER_TIME)
-        bump_routine = sw3.Forward(FORWARD_SPEED,BUMP_TIME)
-        stop_routine = sw3.Forward(0,0)
-        backup_routine = sw3.Forward(BACKWARD_SPEED,BUMP_TIME)
-        reset_routine = sw3.SetYaw(self.reference_angle)
+        self.set_timer("Bump_Timeout", BUMP_TIMEOUT, self.bump_timeout,sw3.data.imu.yaw())
 
-
-        if abs(track_buoy.theta) <= CENTER_THRESHOLD:
-            self.pointing_to = True
-
-        if self.pointing_to:
-            sw3.nav.do(SequentialRoutine(
-                    forward_routine,
-                    stop_routine
-                    ))
-           
-        else:
-           sw3.nav.do(CompoundRoutine(
-                stop_routine,
-                yaw_routine
-                ))
-       
-        if abs(track_buoy.r) <= DIST_THRESHOLD:
-            sw3.nav.do(SequentialRoutine(
-                bump_routine,
-                backup_routine,
-                stop_routine,
-                reset_routine,
-                stop_routine
-                ))
-            self.state = "stepto"
-
-
+    def bump_timeout(self,approach_angle):
+        sw3.nav.do(sw3.SequentialRoutine(
+            sw3.Forward(BACKWARD_SPEED, 5),
+            self.sweep_routine(approach_angle)
+            ))
+        self.next_state()
 
     #after bumping buoys go over center buoy and end mission, the next mission is to find path with bottom camera
     def state_findpath(self):
+        #TODO: check if the second buoy was center, if so, dont do another approach
         riseup_routine = sw3.SetDepth(OVER_DEPTH)
         runover_routine = sw3.Forward(FORWARD_SPEED)
         stop_routine = sw3.Forward(0)
-
-        sw3.nav.do(SequentialRoutine(
+        print "findpath"
+        sw3.nav.do(sw3.SequentialRoutine(
             riseup_routine,
             runover_routine
             ))
-    #use to increment the buoy bump counter 1
-    def state_stepto(self):
-        self.bump_count += 1
-
-        if self.bump_count == 1:
-            self.state = "centering"
-
-        elif self.bump_count == 2:
-            self.state = "findpath"
-
