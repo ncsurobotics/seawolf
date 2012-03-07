@@ -1,21 +1,32 @@
 
 MCU= atxmega32a4
 CC= avr-gcc
-CFLAGS= -mmcu=$(MCU) -std=c99 -O2
+CFLAGS= -mmcu=$(MCU) -std=c99 -O2 -I.
 
-seawolf_avr.elf: main.c
-	$(CC) $(CFLAGS) -o $@ $<
+OUTPUT= seawolf_avr
+HEX_OUTPUT= $(OUTPUT).hex
+SOURCES= main.c servo.c motor.c uart.c
+OBJS= $(SOURCES:%.c=%.o)
+
+$(HEX_OUTPUT): $(OUTPUT)
+	avr-objcopy -O ihex $< $@
+
+$(OUTPUT): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(OBJS)
+
+%.o: %.c sw.h
+	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm seawolf_avr.elf
+	rm $(OUTPUT) $(HEX_OUTPUT) $(OBJS)
 
 erase:
-	avarice --pdi --dragon --erase
+	avrdude -p x32a4 -c dragon_pdi -P usb -e
 
-program: seawolf_avr.elf
-	avarice --pdi --dragon --erase --program --file $<
+program: $(HEX_OUTPUT)
+	avrdude -p x32a4 -c dragon_pdi -P usb -U $(HEX_OUTPUT)
 
-debug: seawolf_avr.elf
-	avarice --pdi --dragon --erase --program --file $< 127.0.0.1:4242
+debug: program
+	avarice --pdi --dragon 127.0.0.1:4242
 
 .PHONY: erase clean program
