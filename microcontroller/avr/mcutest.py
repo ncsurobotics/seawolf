@@ -1,5 +1,6 @@
 
 import time
+import sys
 import seawolf as sw
 
 serial = sw.Serial("/dev/ttyUSB1")
@@ -19,6 +20,8 @@ while i < 16:
         i += 1
     else:
         i = 0
+    sys.stdout.write(".")
+    sys.stdout.flush()
 
 # Send zero to terminate initialization
 serial.sendByte(0x00)
@@ -41,5 +44,27 @@ def read_string():
         l.append(n)
     return ''.join(l)
 
+vl = []
+
+def read_depth():
+    global vl
+    message = serial.getByte(), serial.getByte(), serial.getByte()
+
+    adc_res = message[1] << 8 | message[2]
+    voltage = ((float(adc_res - 200) / (4095 - 200)) * 0.95)
+    psi = 100 * ((2 * voltage - 0.5) / 4)
+    depth = (psi - 14.73) / 0.4335
+
+    vl.append(voltage)
+    stddev = 0
+    mean = 0
+    if len(vl) > 1:
+        mean = sum(vl) / len(vl)
+        stddev = (sum([(v - mean) ** 2 for v in vl]) / (len(vl) - 1))**0.5
+
+    print "0x%02x 0x%03x %6.3f (%6.3f %6.3f) %6.2f %6.2f" % (message[0], adc_res, voltage, mean, stddev, psi, depth)
+
+print "Connected"
+
 while True:
-    print read_string()
+    read_depth()

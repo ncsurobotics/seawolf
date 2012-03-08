@@ -14,10 +14,13 @@
 #include <util/delay.h>
 
 enum Commands {
-    SW_RESET = 0x72,  /* 'r' full reset */
-    SW_NOP   = 0x00,
-    SW_MOTOR = 0x01,
-    SW_SERVO = 0x02
+    SW_RESET    = 0x72,  /* 'r' full reset */
+    SW_NOP      = 0x00,
+    SW_MOTOR    = 0x01,
+    SW_SERVO    = 0x02,
+    SW_STATUS   = 0x03,
+    SW_DEPTH    = 0x04,
+    SW_TEMP     = 0x05
 };
 
 typedef enum {

@@ -45,7 +45,8 @@ void serial_send_byte(char c) {
 void serial_send_bytes(char* s, int n) {
     cli();
     while(n) {
-        serial_send_byte(*s++);
+        serial_send_byte(*s);
+        s++;
         n--;
     }
     sei();
