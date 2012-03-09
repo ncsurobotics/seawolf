@@ -61,7 +61,7 @@ int serial_available(void) {
     if(rindex <= windex) {
         return (windex - rindex);
     } else {
-        (UART_RX_BUFF_SIZE - rindex) + windex;
+        return (UART_RX_BUFF_SIZE - rindex) + windex;
     }
 }
 

@@ -1,8 +1,6 @@
 
 #include <sw.h>
 
-static volatile unsigned int ticks = 0;
-
 ISR(TCE0_CCA_vect) {
     /* Clear PA3 (SER1) */
     PORTA.OUTCLR = 0x08;
@@ -16,13 +14,6 @@ ISR(TCE0_CCB_vect) {
 ISR(TCE0_OVF_vect) {
     /* Turn on both servo outputs */
     PORTA.OUTSET = 0x18;
-
-    /* Run depth calculation routine at 10 Hz */
-    ticks = (ticks + 1) % 50;
-
-    if(ticks == 0) {
-        send_depth();
-    }
 }
 
 /* Initialize servo control. Since the servo outputs are not on compare output

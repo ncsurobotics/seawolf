@@ -1,11 +1,11 @@
 
 MCU= atxmega32a4
 CC= avr-gcc
-CFLAGS= -mmcu=$(MCU) -std=c99 -O2 -I.
+CFLAGS= -mmcu=$(MCU) -Wall -g -std=c99 -O2 -I.
 
 OUTPUT= seawolf_avr
 HEX_OUTPUT= $(OUTPUT).hex
-SOURCES= main.c servo.c motor.c uart.c
+SOURCES= main.c servo.c motor.c uart.c analog.c
 OBJS= $(SOURCES:%.c=%.o)
 
 $(HEX_OUTPUT): $(OUTPUT)

@@ -29,11 +29,11 @@ typedef enum {
 } Servo;
 
 typedef enum {
-    MOTOR1 = 0,
-    MOTOR2 = 1,
-    MOTOR3 = 2,
-    MOTOR4 = 3,
-    MOTOR5 = 4
+    BOW    = 0,
+    STERN  = 1,
+    STRAFE = 2,
+    PORT   = 3,
+    STAR   = 4
 } Motor;
 
 void init_servos(void);
@@ -50,6 +50,6 @@ int serial_available(void);
 int serial_read_byte(void);
 void serial_read_bytes(char* s, int n);
 
-void send_depth(void);
+void init_analog(void);
 
 #endif // #ifndef __SEAWOLF_MICRO_AVR_H

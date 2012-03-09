@@ -8,7 +8,7 @@ static volatile bool depth_enabled = false;
 
 void enable_interrupts(void) {
     /* Enable all interrupt levels */
-    PMIC.CTRL |= 0x07;
+    PMIC.CTRL |= (PMIC_HILVLEN_bm | PMIC_MEDLVLEN_bm | PMIC_LOLVLEN_bm);
 
     /* Enable interrupts globally */
     sei();
@@ -16,24 +16,7 @@ void enable_interrupts(void) {
 
 void software_reset(void) {
     CCP = CCP_IOREG_gc;
-    RST.CTRL = 0x01;
-}
-
-ISR(ADCA_CH0_vect) {
-    uint8_t message[3];
-
-    message[0] = SW_DEPTH;
-    message[1] = ADCA.CH0.RESH;
-    message[2] = ADCA.CH0.RESL;
-
-    serial_send_bytes(message, 3);
-}
-
-void send_depth(void) {
-    if(depth_enabled) {
-        /* Start conversion */
-        ADCA.CH0.CTRL |= 0x80;
-    }
+    RST.CTRL = RST_SWRST_bm;
 }
 
 /* Synchronize with computer. Send a stream of 0xff bytes until a 0x00 byte is
@@ -52,32 +35,23 @@ void synchronize_comm(void) {
     depth_enabled = true;
 }
 
-void init_adc(void) {
-    ADCA.REFCTRL = ADC_REFSEL_INT1V_gc;
-    ADCA.PRESCALER = ADC_PRESCALER_DIV64_gc;
-    
-    ADCA.CH0.CTRL = ADC_CH_INPUTMODE_SINGLEENDED_gc;
-    ADCA.CH0.MUXCTRL = ADC_CH_MUXPOS_PIN0_gc;
-    ADCA.CH0.INTCTRL = ADC_CH_INTLVL_LO_gc;
-
-    /* Enable ADC */
-    ADCA.CTRLA |= 0x01;
-}
-
-void main(void) {
-    uint8_t command[3];
+int main(void) {
+    char command[3];
 
     /* Lock clock. Default clock rate of 2Mhz */
-    CLK.LOCK = 1;
+    CLK.LOCK = CLK_LOCK_bm;
 
     init_servos();
     init_motors();
     init_serial();
-    init_adc();
 
     enable_interrupts();
 
     synchronize_comm();
+
+    /* Wait until after initializing the serial link to start sending depth and
+       temperature information */
+    init_analog();
 
     while(true) {
         serial_read_bytes(command, 3);
@@ -103,8 +77,10 @@ void main(void) {
             break;
 
         case SW_TEMP:
-            // send_temp();
+            ADCA.CH1.CTRL |= ADC_CH_START_bm;
             break;
         }
     }
+
+    return 0;
 }

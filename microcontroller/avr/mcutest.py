@@ -50,6 +50,10 @@ def read_depth():
     global vl
     message = serial.getByte(), serial.getByte(), serial.getByte()
 
+    if message[0] == 0x05:
+        print message
+        return
+
     adc_res = message[1] << 8 | message[2]
     voltage = ((float(adc_res - 200) / (4095 - 200)) * 0.95)
     psi = 100 * ((2 * voltage - 0.5) / 4)
@@ -64,7 +68,13 @@ def read_depth():
 
     print "0x%02x 0x%03x %6.3f (%6.3f %6.3f) %6.2f %6.2f" % (message[0], adc_res, voltage, mean, stddev, psi, depth)
 
+def get_temp():
+    serial.sendByte(0x05)
+    serial.sendByte(0x00)
+    serial.sendByte(0x00)
+
 print "Connected"
 
 while True:
+    get_temp()
     read_depth()
