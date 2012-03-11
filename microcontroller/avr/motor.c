@@ -6,21 +6,21 @@ void init_motors(void) {
     PORTD.DIRSET = 0x1f;
 
     /* Set PC1 -> PC5 as output (these are the motor direction outputs) */
-    PORTC.DIRSET = 0x37;
+    PORTC.DIRSET = 0x3e;
 
-    /* Clock divider of 1 (from 2MHz) */
-    TCD0.CTRLA = 0x01;
-    TCD1.CTRLA = 0x01;
+    /* Clock divider of 8 (from 2MHz) */
+    TCD0.CTRLA = TC_CLKSEL_DIV8_gc;
+    TCD1.CTRLA = TC_CLKSEL_DIV8_gc;
 
     /* Enable all output compare OC0x pins and set waveform generation mode to
        single slope PWM */
     TCD0.CTRLB = 0xf3;
     TCD1.CTRLB = 0x13;
 
-    /* Set period to 64 which at 2MHz gives an output clock of approximately
-       31.25 KHz */
-    TCD0.PER = 0x0040;
-    TCD1.PER = 0x0040;
+    /* Set period to 128 which at 2MHz/8 gives an output clock of approximately
+       2 KHz */
+    TCD0.PER = 0x0080;
+    TCD1.PER = 0x0080;
 
     /* Set duty cycle to 0 */
     TCD0.CCA = 0x0000;
@@ -30,7 +30,7 @@ void init_motors(void) {
     TCD1.CCA = 0x0000;
 }
 
-/* Set speed of motor. Value is -64 to 64 */
+/* Set speed of motor. Value is -128 to 128 */
 void set_motor_speed(Motor motor, int speed) {
     unsigned int duty_cycle = speed < 0 ? -speed : speed;
     unsigned int dir_bit;
