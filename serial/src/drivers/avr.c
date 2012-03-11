@@ -10,6 +10,8 @@
    for Raleigh */
 #define AIR_PRESSURE 14.782
 
+#define MOTOR_RANGE 128
+
 enum Commands {
     SW_RESET    = 0x72,  /* 'r' full reset */
     SW_NOP      = 0x00,
@@ -69,7 +71,7 @@ static void set_depth(int16_t raw_adc_value) {
 }
 
 static void set_temp(int16_t raw_adc_value) {
-    Var_set("Temperature", (float) raw_adc_value);
+    Var_set("Temperature", (float) raw_adc_value / 2047.0);
 }
 
 static void* receive_thread(void* _sp) {
@@ -138,37 +140,36 @@ int main(int argc, char** argv) {
         if(Var_poked("Bow")) {
             command[0] = SW_MOTOR;
             command[1] = BOW;
-            command[2] = (int) (64 * Var_get("Bow"));
+            command[2] = (int) (MOTOR_RANGE * Var_get("Bow"));
             Serial_send(sp, command, 3);
         } 
 
         if(Var_poked("Stern")) {
             command[0] = SW_MOTOR;
             command[1] = STERN;
-            command[2] = (int) (64 * Var_get("Stern"));
+            command[2] = (int) (MOTOR_RANGE * Var_get("Stern"));
             Serial_send(sp, command, 3);
         } 
 
         if(Var_poked("Strafe")) {
             command[0] = SW_MOTOR;
             command[1] = STRAFE;
-            command[2] = (int) (64 * Var_get("Strafe"));
+            command[2] = (int) (MOTOR_RANGE * Var_get("Strafe"));
             Serial_send(sp, command, 3);
         } 
 
         if(Var_poked("Port")) {
             command[0] = SW_MOTOR;
             command[1] = PORT;
-            command[2] = (int) (64 * Var_get("Port"));
+            command[2] = (int) (MOTOR_RANGE * Var_get("Port"));
             Serial_send(sp, command, 3);
         } 
 
         if(Var_poked("Star")) {
             command[0] = SW_MOTOR;
             command[1] = STAR;
-            command[2] = (int) (64 * Var_get("Star"));
+            command[2] = (int) (MOTOR_RANGE * Var_get("Star"));
             Serial_send(sp, command, 3);
-            Logging_log(ERROR, "Hi");
         } 
     }
 
