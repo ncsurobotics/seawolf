@@ -1,6 +1,7 @@
 
 #include "seawolf.h"
 
+#include <glob.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,35 +9,17 @@
 #include <unistd.h>
 
 /* Device types */
-typedef enum{PT_UNMANAGED,
-             PT_IMU} PeripheralType;
-
-/* Represents and open serial port */
-struct comm_device {
-    const char* device;
-    SerialPort sp;
-    PeripheralType peripheral_type;
-};
-
-/* Represents a driver */
-struct comm_assignment {
-    const char* bin;
-    bool started;
-};
-
-/* Cycle the DTR line on the given serial port */
-/*
-static void cycleDTR(SerialPort sp) {
-    Serial_setDTR(sp, 0);
-    Util_usleep(0.1);
-    Serial_setDTR(sp, 1);
-    Util_usleep(0.1);
-}
-*/
+typedef enum{
+    PT_UNMANAGED = 0,
+    PT_IMU = 1,
+    PT_AVR = 2
+} PeripheralType;
 
 static int getPeripheralType(SerialPort sp) {
-    /* char id[32]; */
     int n;
+    int bytes_received;
+    int good_count;
+    int error_count;
 
     /* Set to IMU's baud rate */
     Serial_setBaud(sp, 38400);
@@ -60,30 +43,54 @@ static int getPeripheralType(SerialPort sp) {
         }
     }
 
-    /* Fallback to Serial Device, get ID */
-    Logging_log(ERROR, "No Microcontrollers set up in the serial app!!!!!!!!!!!!!!!");
-    // When you remove this block of code, please remove "char id[32]" at the beginning of the function, and the cycleDTR function.
-    /*
-    Serial_setBaud(sp, 9600);
-    Serial_flush(sp);
-    cycleDTR(sp);
+    /* IMU fingerprint failed, attempt AVR */
 
-    for(int i = 0; i < 3; i++) {
-        if(ArdComm_getId(sp, id) != -1) {
-            if(strcmp(id, "ThrusterBoard") == 0) {
-                return PT_THRUSTER_BOARD;
-            } else {
-                Logging_log(ERROR, Util_format("Received unknown ID '%s'", id));
-            }
-            break;
-        } else {
-            Util_usleep(0.5);
+    /* Set to AVR baud rate */
+    Serial_setBaud(sp, 57600);
+
+    /* Send reset sequence */
+    for(int i = 0; i < 5; i++) {
+        n = Serial_sendByte(sp, 'r');
+
+        if(n == -1) {
+            Logging_log(ERROR, "Unable to send data");
+            return -1;
         }
     }
-    */
 
-    /* Fingerprinting failed */
-    Logging_log(DEBUG, "Could not ID");
+    /* Number of bytes received */
+    bytes_received = 0;
+
+    /* Number of consecutive 0xff bytes received */
+    good_count = 0;
+
+    /* Number of consecutive failures to get a byte */
+    error_count = 0;
+
+    do {
+        if(Serial_available(sp) > 0) {
+            n = Serial_getByte(sp);
+            bytes_received++;
+
+            error_count = 0;
+
+            if(n == 0xff) {
+                good_count++;
+            } else {
+                good_count = 0;
+            }
+
+            if(good_count == 16) {
+                return PT_AVR;
+            }
+        } else {
+            Util_usleep(0.1);
+            error_count++;
+        }
+    } while(error_count < 5 && bytes_received < 512);
+
+    /* Give up after 5 attempts to receive data or 1024 bytes received total */
+
     return -1;
 }
 
@@ -92,86 +99,47 @@ int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("Serial");
 
-    /* Peripheral type */
+    const char* port_path;
+    SerialPort sp;
     PeripheralType pt;
 
-    /* Device/app mappings */
-    struct comm_device device_pool[] = {{"/dev/ttyUSB0", 0, PT_UNMANAGED},
-                                        {"/dev/ttyUSB1", 0, PT_UNMANAGED},
-                                        {"/dev/ttyUSB2", 0, PT_UNMANAGED},
-                                        {"/dev/ttyUSB3", 0, PT_UNMANAGED},
-                                        {"/dev/ttyUSB4", 0, PT_UNMANAGED},
-                                        {"/dev/ttyUSB5", 0, PT_UNMANAGED},
-                                        {"/dev/ttyUSB6", 0, PT_UNMANAGED},
-                                        {"/dev/ttyUSB7", 0, PT_UNMANAGED},
-                                        {"/dev/ttyUSB8", 0, PT_UNMANAGED},
-                                        {"/dev/ttyUSB9", 0, PT_UNMANAGED}};
-    const int device_count = sizeof(device_pool) / sizeof(struct comm_device);
+    /* Glob type for serial interface search */
+    glob_t globbuff;
 
     /* App to executable mappings */
-    struct comm_assignment app_pool[] = {[PT_IMU]            = {"./bin/imu",              false}};
-    const int app_count = sizeof(app_pool) / sizeof(struct comm_assignment);
+    char* drivers[] = {
+        [PT_IMU] = "./bin/imu",
+        [PT_AVR] = "./bin/avr",
+    };
 
-    int i = 0;
-    int apps_waiting = app_count;
-    int unassigned_ports = 10;
+    /* Find serial ports */
+    glob("/dev/ttyUSB*", 0, NULL, &globbuff);
+    //glob("/dev/ttyS*", GLOB_APPEND, NULL, &globbuff);
 
-    /* Open serial ports */
-    for(i = 0; i < device_count; i++) {
-        /* Open serial device */
-        device_pool[i].sp = Serial_open(device_pool[i].device);
-        if(device_pool[i].sp != -1) {
-            Logging_log(DEBUG, Util_format("Opening %s", device_pool[i].device));
-            Serial_setBlocking(device_pool[i].sp);
-        } else {
-            unassigned_ports--;
+    for(int i = 0; i < globbuff.gl_pathc; i++) {
+        port_path = globbuff.gl_pathv[i];
+        sp = Serial_open(port_path);
+        
+        if(sp == -1) {
+            Logging_log(ERROR, Util_format("Error opening %s", port_path));
+            continue;
         }
-    }
 
-    i = 0;
-    while(apps_waiting > 0 && unassigned_ports > 0) {
-        if(device_pool[i].peripheral_type == PT_UNMANAGED && device_pool[i].sp != -1) {
-            /* Serial port is now open, attempt to fingerprint */
-            Logging_log(DEBUG, Util_format("Fingerprinting %s", device_pool[i].device));
-            if(device_pool[i].sp != -1 && (pt = getPeripheralType(device_pool[i].sp)) != -1) {
-                Logging_log(DEBUG, Util_format("Serial port ready %s", device_pool[i].device));
+        pt = getPeripheralType(sp);
+        Serial_closePort(sp);
 
-                /* Close port and copy device */
-                Serial_closePort(device_pool[i].sp);
-                unassigned_ports--;
+        if(pt == -1) {
+            Logging_log(ERROR, Util_format("Unable to identify device on %s", port_path));
+        } else {
+            Logging_log(INFO, Util_format("Identified device on %s. Spawning %s", port_path, drivers[pt]));
 
-                if(app_pool[pt].started == false) {
-                    /* Fork and execute subprocess in child */
-                    if(fork() == 0) {
-                        Logging_log(INFO, Util_format("Connected to device on %s with identifier %d. Spawning %s",
-                                                      device_pool[i].device, pt, app_pool[pt].bin));
-                        execl(app_pool[pt].bin, app_pool[pt].bin, device_pool[i].device, NULL);
-                    }
-
-                    /* Decrease number of waiting apps */
-                    apps_waiting -= 1;
-
-                    /* Set the device as attached, and the application as running */
-                    device_pool[i].peripheral_type = pt;
-                    app_pool[pt].started = true;
-                } else {
-                    Logging_log(ERROR, Util_format("Error, attempt to connect %s twice", device_pool[i].device));
-                }
+            /* Fork and execute subprocess in child */
+            if(fork() == 0) {
+                execl(drivers[pt], drivers[pt], port_path, NULL);
+                fprintf(stderr, "Unable to spawn application (%s)\n", drivers[pt]);
+                _exit(1);
             }
         }
-
-        i = (i + 1) % device_count;
-        if(i == 0) {
-            /* Sleep 500 milliseconds after exhausting device list */
-            Util_usleep(0.5);
-        }
-    }
-
-    /* Finished identifying all devices */
-    if(apps_waiting > 0) {
-        Logging_log(WARNING, "All available devices handled but applications remain unhandled");
-    } else {
-        Logging_log(INFO, "Identified and properly handled all devices");
     }
 
     /* Send notification of completion */

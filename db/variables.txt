@@ -35,3 +35,5 @@ StatusLight          = 0.0,  0,  0
 SEA.Pitch            = 0.0,  0,  0
 SEA.Roll             = 0.0,  0,  0
 SEA.Yaw              = 0.0,  0,  0
+
+Temperature          = 0.0,  0,  0
