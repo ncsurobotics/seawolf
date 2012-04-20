@@ -3,8 +3,6 @@ import os
 
 import cv
 
-from dc1394 import DC1394Camera
-
 class Camera(object):
     '''An wrapper for OpenCV's camera functionality.
 
@@ -122,8 +120,6 @@ class Camera(object):
         if isinstance(self.identifier, basestring):
             self.capture = cv.CaptureFromFile(self.identifier)
             self.record_path = False # Don't re-record avi files
-        elif self.identifier >= 300 and self.identifier < 400:
-            self.dc1394_capture = DC1394Camera(self.identifier - 300)
         else:
             self.capture = cv.CaptureFromCAM(self.identifier)
 
