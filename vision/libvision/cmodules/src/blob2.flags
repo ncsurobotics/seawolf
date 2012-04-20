@@ -1,1 +1,1 @@
---std=c99 -Wall -lseawolf -I/usr/include/python2.7 -D__SW_LIBVISION
+--std=c99 -Wall -lseawolf `python-config --includes --libs` -D__SW_LIBVISION
