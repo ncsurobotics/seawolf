@@ -87,3 +87,26 @@ class MissionBase(object):
         if not hasattr(self, "timers"):
             self.timers = {}
         del self.timers[name]
+
+
+class SearchMission(MissionBase):
+    '''
+    Does nothing but search and print entity results.  Useful for testing
+    simulated entities.
+    '''
+
+    def __init__(self, entity_class, camera="forward"):
+        self.entity_class = entity_class
+        self.camera = camera
+
+    def init(self):
+        self.process_manager.start_process(self.entity_class, "search", self.camera, debug=True)
+
+    def step(self, vision_data):
+
+        if not vision_data:
+            return
+
+        data = vision_data['search']
+        if data:
+            print data

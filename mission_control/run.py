@@ -67,8 +67,12 @@ import vision
 import missions
 from mission_controller import MissionController
 
-#This is the list of missions, it may contain either missions
-# or NavRoutines
+# Ordered list of tasks.  Can be one of the following types:
+#  * Mission Class - Found in ``missions.<name>Mission``.  Instantiated with no
+#                    arguments.
+#  * Nav routine - Found in ``sw3.nav.<name>``.
+#  * Tuple - First item must be a mission class.  The rest of the tuple is
+#            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
     missions.GateMission,
     missions.PathMission,
@@ -100,11 +104,17 @@ if __name__ == "__main__":
             )
 
             # Add missions
-            for mission_cls in MISSION_ORDER[options.initial_mission:]:
-                if isinstance(mission_cls, sw3.NavRoutine):
-                    mission_controller.append_mission(mission_cls)
+            for mission in MISSION_ORDER[options.initial_mission:]:
+                if isinstance(mission, sw3.NavRoutine):
+                    mission_controller.append_mission(mission)
                 else:
-                    mission_controller.append_mission(mission_cls())
+                    if type(mission) is tuple:
+                        mission_cls = mission[0]
+                        args = mission[1:]
+                    else:
+                        mission_cls = mission
+                        args = ()
+                    mission_controller.append_mission(mission_cls(*args))
 
             try:
                 mission_controller.execute_all()
