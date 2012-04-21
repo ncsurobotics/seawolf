@@ -213,6 +213,14 @@ class Interface(object):
         )
         self.camera_move(right_vector, distance)
 
+    def camera_move_up(self, distance):
+        up_vector = (
+            cos(radians(self.cam_yaw)) * sin(radians(-1*self.cam_pitch)),
+            sin(radians(self.cam_yaw)) * sin(radians(-1*self.cam_pitch)),
+            cos(radians(-1*self.cam_pitch)),
+        )
+        self.camera_move(up_vector, distance)
+
     def camera_move(self, direction, distance):
         self.cam_pos[0] += direction[0] * distance
         self.cam_pos[1] += direction[1] * distance
@@ -281,9 +289,9 @@ class Interface(object):
 
     def special_keyboard_callback(self, key, x, y):
         if key == GLUT_KEY_UP:
-            self.camera_move_forward(0.1)
+            self.camera_move_forward(0.8)
         elif key == GLUT_KEY_DOWN:
-            self.camera_move_forward(-0.1)
+            self.camera_move_forward(-0.8)
         elif key == GLUT_KEY_LEFT:
             self.camera_move_yaw(1)
         elif key == GLUT_KEY_RIGHT:
@@ -297,7 +305,7 @@ class Interface(object):
 
     def mouse_motion_move_callback(self, x, y):
         self.camera_move_right((self.last_mouse_position[0] - x) * 0.1)
-        self.camera_move_forward((self.last_mouse_position[1] - y) * 0.1)
+        self.camera_move_up((self.last_mouse_position[1] - y) * 0.1)
         self.last_mouse_position = (x,y)
         glutPostRedisplay()
 
@@ -319,6 +327,14 @@ class Interface(object):
             else:
                 glutMotionFunc(None)
                 self.left_mouse_down = False
+
+        # Wheel forward and backward
+        # Constants for this seem to be undefined.  They should be
+        # GLUT_WHEEL_(UP|DOWN).
+        elif state == GLUT_UP and button == 3:
+            self.camera_move_forward(1.2)
+        elif state == GLUT_UP and button == 4:
+            self.camera_move_forward(-1.2)
 
     def main_menu_callback(self, item):
 

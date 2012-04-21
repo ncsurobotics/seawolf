@@ -114,8 +114,9 @@ with the -s flag to tell it to connect to the simulator instead of starting
 vision processes.  All other applications should be run as normal.
 
 Camera Movement:
-    Look     Drag left mouse
-    Move    Drag middle mouse
+    Forward/Backward    Mouse Wheel or up and down keys
+          Look          Drag left mouse
+          Pan           Drag middle mouse
 
 Actions:
     Most of these actions can be accessed in the right click menu and a
