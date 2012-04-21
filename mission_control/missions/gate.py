@@ -25,7 +25,9 @@ class GateMission(MissionBase):
         ))
 
     def step(self, vision_data):
+        if not vision_data: return
         gate_data = vision_data['gate']
+        if not gate_data: return
         print gate_data
 
         if gate_data and gate_data.left_pole and gate_data.right_pole:

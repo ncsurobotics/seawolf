@@ -37,8 +37,9 @@ class PathMission(MissionBase):
 
     def step(self, vision_data):
 
-        print vision_data
+        if not vision_data: return
         path_data = vision_data['path']
+        print vision_data
 
         if not path_data.found:
             return
