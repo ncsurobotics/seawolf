@@ -14,10 +14,11 @@ FORWARD_SPEED = 0.5
 BACKWARD_SPEED = -0.3
 CENTER_TIME = 5
 
+DEPTH_THRESHOLD = .02
 BUOY_FIRST = 0 #first buoy to bump(0 is left, 1 is center, 2 is right)
 BUOY_SECOND = 2 #second buoy to bump
 BUMP_TIME = 5 #time to move forward in bump routine
-OVER_DEPTH = 0 #depth to pass over the center buoy
+OVER_DEPTH = 1 #depth to pass over the center buoy
 RUNOVER_TIME = 8 #
 DIST_THRESHOLD =  7
 CENTER_THRESHOLD = 2
@@ -112,7 +113,16 @@ class BuoyMission(MissionBase):
         stop_routine = sw3.Forward(0,0)
         backup_routine = sw3.Forward(BACKWARD_SPEED)
         reset_routine = sw3.SetYaw(self.reference_angle)
-        depth_routine = sw3.SetDepth(4)
+        
+        track_depth_angle = (track_buoy.phi)
+        if abs(track_depth_angle) > DEPTH_THRESHOLD:
+            if (track_depth_angle > 0):
+                depth_routine = sw3.RelativeDepth(-0.5)
+            if (track_depth_angle < 0):
+                depth_routine = sw3.RelativeDepth(0.5)
+
+        else:
+            depth_routine = NullRoutine()
 
         centered = False
         if abs(track_buoy.theta) <= CENTER_THRESHOLD:
@@ -122,6 +132,7 @@ class BuoyMission(MissionBase):
             sw3.nav.do(sw3.CompoundRoutine(
                     forward_routine,
                     yaw_routine,
+                    depth_routine
                     ))
             if abs(track_buoy.r) <= DIST_THRESHOLD:
                 self.delete_timer("Approach_Timeout")
@@ -138,7 +149,6 @@ class BuoyMission(MissionBase):
             ))
 
     def state_bump(self,buoys):
-
         track_buoy = None
         for buoy in buoys:
             if buoy.id == self.tracking_id:
