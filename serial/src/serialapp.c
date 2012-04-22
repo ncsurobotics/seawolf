@@ -12,10 +12,20 @@
 typedef enum{
     PT_UNMANAGED = 0,
     PT_IMU = 1,
-    PT_AVR = 2
+    PT_AVR = 2,
+    PT_DEPTH = 3
 } PeripheralType;
 
+/* Cycle the DTR line on the given serial port */
+static void cycleDTR(SerialPort sp) {
+    Serial_setDTR(sp, 0);
+    Util_usleep(0.1);
+    Serial_setDTR(sp, 1);
+    Util_usleep(0.1);
+}
+
 static int getPeripheralType(SerialPort sp) {
+    char id[32];
     int n;
     int bytes_received;
     int good_count;
@@ -40,6 +50,24 @@ static int getPeripheralType(SerialPort sp) {
             Logging_log(DEBUG, "IMU Found");
             Serial_flush(sp);
             return PT_IMU;
+        }
+    }
+
+    /* IMU fingerprint failed, attempt Arduino */
+    Serial_setBaud(sp, 9600);
+    Serial_flush(sp);
+    cycleDTR(sp);
+
+    for(int i = 0; i < 4; i++) {
+        if(ArdComm_getId(sp, id) != -1) {
+            if(strcmp(id, "Depth") == 0) {
+                return PT_DEPTH;
+            } else {
+                Logging_log(ERROR, Util_format("Received unknown ID '%s'", id));
+            }
+            break;
+        } else {
+            Util_usleep(0.5);
         }
     }
 
@@ -110,6 +138,7 @@ int main(void) {
     char* drivers[] = {
         [PT_IMU] = "./bin/imu",
         [PT_AVR] = "./bin/avr",
+        [PT_DEPTH] = "./bin/depth",
     };
 
     /* Find serial ports */
@@ -119,7 +148,7 @@ int main(void) {
     for(int i = 0; i < globbuff.gl_pathc; i++) {
         port_path = globbuff.gl_pathv[i];
         sp = Serial_open(port_path);
-        
+
         if(sp == -1) {
             Logging_log(ERROR, Util_format("Error opening %s", port_path));
             continue;
