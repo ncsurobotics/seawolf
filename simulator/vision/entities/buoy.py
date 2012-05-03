@@ -87,8 +87,10 @@ class BuoyEntity(Entity):
         self.buoys.extend(new_buoys)
 
         # Copy self.buoys to self.output.buoys
+        buoy_found = False
         self.output.buoys = []
         for buoy in self.buoys:
             if buoy.found:
+                buoy_found = True
                 self.output.buoys.append(buoy)
-        return self.output
+        return buoy_found, self.output

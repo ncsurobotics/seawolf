@@ -35,4 +35,4 @@ class PathEntity(Entity):
             self.output.theta = radians(self.yaw-robot.yaw) % pi
         else:
             self.output.found = False
-        return self.output
+        return self.output.found, self.output

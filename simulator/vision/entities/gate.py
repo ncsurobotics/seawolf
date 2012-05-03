@@ -37,6 +37,7 @@ class GateEntity(Entity):
         self.post_draw()
 
     def find(self, robot):
+
         c = Container()
         c.left_pole = robot.find_point("forward", self.absolute_point((0, 5)))
         c.right_pole = robot.find_point("forward", self.absolute_point((0, -5)))
@@ -44,4 +45,9 @@ class GateEntity(Entity):
             c.left_pole *= self.image_width/2
         if c.right_pole:
             c.right_pole *= self.image_width/2
-        return c
+
+        gate_found = False
+        if c.left_pole is not None or c.right_pole is not None:
+            gate_found = True
+
+        return gate_found, c

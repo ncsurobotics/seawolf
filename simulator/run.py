@@ -52,8 +52,8 @@ PARAMETER_SETS = {
         "cam_pos": (30, 0, 25),
         "cam_yaw": 90,
         "cam_pitch": -90,
-        "robot_pos": (22, 0, -2),
-        "robot_yaw": 0,
+        "robot_pos": (56, 20, -2),
+        "robot_yaw": -45,
     },
     "hedge": {
         "cam_pos": (35, 0, 4),

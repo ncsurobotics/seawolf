@@ -67,4 +67,8 @@ class HedgeEntity(Entity):
         else:
             c.crossbar_depth = None
 
-        return c
+        hedge_found = False
+        if c.left_pole is not None or c.right_pole is not None:
+            hedge_found = True
+
+        return hedge_found, c

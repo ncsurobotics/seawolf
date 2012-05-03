@@ -154,19 +154,20 @@ class RobotEntity(Entity):
 
     def find_entity(self, entity_cls):
 
-        entity_found = False
+        data = None
+        entity_class_found = False
         for entity in self.simulator.entities:
             if entity.__class__.__name__ == entity_cls.__name__:
 
-                entity_found = True
-                data = entity.find(self)
-                if data:
-                    return data
+                entity_class_found = True
+                found, data = entity.find(self)
+                if found:
+                    break
 
-        if not entity_found:
+        if not entity_class_found:
             print "Warning: Entity %s is being searched for, but none exists in the simulator." % entity_cls
 
-        return None
+        return data
 
     def find_point(self, camera, point):
         '''Finds a point viewed from the given camera.
