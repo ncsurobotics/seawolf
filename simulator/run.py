@@ -48,6 +48,20 @@ PARAMETER_SETS = {
         "robot_pos": (35, 0, -2),
         "robot_yaw": -45,
     },
+    "path2": {
+        "cam_pos": (30, 0, 25),
+        "cam_yaw": 90,
+        "cam_pitch": -90,
+        "robot_pos": (22, 0, -2),
+        "robot_yaw": 0,
+    },
+    "hedge": {
+        "cam_pos": (35, 0, 4),
+        "cam_yaw": 45,
+        "cam_pitch": -20,
+        "robot_pos": (60, 25, -3),
+        "robot_yaw": -90,
+    }
 }
 
 opt_parser = OptionParser(
