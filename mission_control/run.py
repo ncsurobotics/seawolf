@@ -77,6 +77,9 @@ MISSION_ORDER = [
     missions.GateMission,
     missions.PathMission,
     missions.BuoyMission,
+    missions.PathMission,
+    sw3.RelativeDepth(4),
+    missions.HedgeMission
 ]
 
 if __name__ == "__main__":

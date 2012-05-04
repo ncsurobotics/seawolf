@@ -14,25 +14,27 @@ DEPTH_OVERBAR = 2
 
 class HedgeMission(MissionBase):
 
-    def __init__(self):
+  #  def __init__(self):
 
     def init(self):
         self.process_manager.start_process(entities.HedgeEntity, "hedge", "forward", debug=True)
         sw3.nav.do(sw3.CompoundRoutine(
             sw3.Forward(FORWARD_SPEED),
-            sw3.SetDepth(2),
-            sw3.HoldYaw(),
+            sw3.HoldYaw()
         ))
 
     def step(self, vision_data):
+        if not vision_data: return
         hedge_data = vision_data['hedge']
+        
         print hedge_data
-        current_depth = sw3.data.depth
-        desired_depth = current_depth + hedge_data.crossbar_depth - DEPTH_OVERBAR
+        current_depth = sw3.data.depth()
+
+     #   desired_depth = current_depth + hedge_data.crossbar_depth - DEPTH_OVERBAR
         
         if hedge_data and hedge_data.left_pole and hedge_data.right_pole:
             hedge_center = (hedge_data.left_pole + hedge_data.right_pole)/2  # degrees
-
+            desired_depth = current_depth + hedge_data.crossbar_depth - DEPTH_OVERBAR
             # If both poles are seen, point toward it then go forward.
             self.set_entity_timeout(MISSION_TIMEOUT)
             

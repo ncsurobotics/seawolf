@@ -14,17 +14,21 @@ FORWARD_SPEED = 0.5
 BACKWARD_SPEED = -0.3
 CENTER_TIME = 5
 
-DEPTH_THRESHOLD = .02
+DEPTH_THRESHOLD = .06
+DEPTH_UNIT = 0.2
+
+
 BUOY_FIRST = 0 #first buoy to bump(0 is left, 1 is center, 2 is right)
 BUOY_SECOND = 2 #second buoy to bump
+
 BUMP_TIME = 5 #time to move forward in bump routine
-OVER_DEPTH = 1 #depth to pass over the center buoy
+OVER_DEPTH = -4 #depth to pass over the center buoy
 RUNOVER_TIME = 8 #
 DIST_THRESHOLD =  7
 CENTER_THRESHOLD = 2
-APPROACH_TIMEOUT = 4
+APPROACH_TIMEOUT = 6
 BUMP_TIMEOUT = 7
-BACKUP_TIME = 3
+BACKUP_TIME = 6
 
 #TODO: depth control, check findpath, check if second buoy is center, testing for different buoy arrangements
 class BuoyMission(MissionBase):
@@ -42,6 +46,8 @@ class BuoyMission(MissionBase):
         self.reference_angle = sw3.data.imu.yaw()
 
         self.tracking_id = None
+        
+        self.depth_seen = None
 
         self.states = [
             "first_approach",
@@ -97,6 +103,10 @@ class BuoyMission(MissionBase):
         if len(buoys)==3:
             buoys.sort(key=lambda x: x.theta)
             self.tracking_id = buoys[buoy_to_bump].id
+            
+            if self.depth_seen == None:
+                self.depth_seen = sw3.data.depth()
+
 
         track_buoy = None
         for buoy in buoys:
@@ -117,12 +127,12 @@ class BuoyMission(MissionBase):
         track_depth_angle = (track_buoy.phi)
         if abs(track_depth_angle) > DEPTH_THRESHOLD:
             if (track_depth_angle > 0):
-                depth_routine = sw3.RelativeDepth(-0.5)
+                depth_routine = sw3.RelativeDepth(-DEPTH_UNIT)
             if (track_depth_angle < 0):
-                depth_routine = sw3.RelativeDepth(0.5)
+                depth_routine = sw3.RelativeDepth(DEPTH_UNIT)
 
         else:
-            depth_routine = NullRoutine()
+            depth_routine = sw3.NullRoutine()
 
         centered = False
         if abs(track_buoy.theta) <= CENTER_THRESHOLD:
@@ -169,11 +179,15 @@ class BuoyMission(MissionBase):
     #after bumping buoys go over center buoy and end mission, the next mission is to find path with bottom camera
     def state_findpath(self):
         #TODO: check if the second buoy was center, if so, dont do another approach
-        riseup_routine = sw3.SetDepth(OVER_DEPTH)
+        riseup_routine = sw3.RelativeDepth(OVER_DEPTH)
         runover_routine = sw3.Forward(FORWARD_SPEED)
         stop_routine = sw3.Forward(0)
+        depth_goto = sw3.SetDepth(self.depth_seen)
         print "findpath"
         sw3.nav.do(sw3.SequentialRoutine(
+            depth_goto,
             riseup_routine,
             runover_routine
             ))
+
+        self.finish_mission()
