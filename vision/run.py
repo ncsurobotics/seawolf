@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 '''Searches for entities until killed.  Mainly a test script for vision.
 
 The entity argument is the name of the entity to search for.  The camera name
