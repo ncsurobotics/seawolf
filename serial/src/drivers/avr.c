@@ -24,10 +24,10 @@ enum Commands {
 
 enum Motors {
     PORT   = 0,
-    STAR   = 1
+    STAR   = 1,
     STERN  = 2,
     BOW    = 3,
-    STRAFE = 4,
+    STRAFE = 4
 };
 
 static void avr_synchronize(SerialPort sp) {
