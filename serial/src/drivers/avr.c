@@ -10,7 +10,8 @@
    for Raleigh */
 #define AIR_PRESSURE 14.782
 
-#define MOTOR_RANGE 128
+/* XXX: Make this 128 when the avr works right */
+#define MOTOR_RANGE 127
 
 enum Commands {
     SW_RESET    = 0x72,  /* 'r' full reset */
@@ -47,7 +48,7 @@ static void avr_synchronize(SerialPort sp) {
     }
 
     Serial_sendByte(sp, 0x00);
-    
+
     while(Serial_getByte(sp) != 0xf0);
 }
 
@@ -59,7 +60,7 @@ static void set_depth(int16_t raw_adc_value) {
     /* Ground starts at 200 and 4095 is 0.95 (max reading) volts approximately */
     //voltage = ((raw_adc_value - 200.0) / (4095.0 - 200.0)) * 0.95;
     voltage = raw_adc_value / 2047.0;
-    
+
     /* Depth sensor output has been halved. The depth sensor outputs between 0.5
        and 4.5 volts. This 4V range corresponds linearly to 0 to 100 PSI */
     psi = (((voltage * 2) - 0.5) / 4.0) * 100;
@@ -67,7 +68,7 @@ static void set_depth(int16_t raw_adc_value) {
     /* Compute depth based on surface pressure and PSI per foot */
     depth = (psi - AIR_PRESSURE) / PSI_PER_FOOT;
 
-    Var_set("Depth", depth);
+    //Var_set("Depth", depth);
 }
 
 static void set_temp(int16_t raw_adc_value) {
@@ -77,10 +78,10 @@ static void set_temp(int16_t raw_adc_value) {
 static void* receive_thread(void* _sp) {
     SerialPort sp = *((SerialPort*)_sp);
     uint8_t frame[3];
-    
+
     while(true) {
         Serial_get(sp, frame, 3);
-        
+
         switch(frame[0]) {
         case SW_DEPTH:
             set_depth(frame[1] << 8 | frame[2]);
@@ -94,7 +95,16 @@ static void* receive_thread(void* _sp) {
 
     return NULL;
 }
- 
+
+static void set_thruster(SerialPort sp, enum Motors motor, float value) {
+    char command[3];
+    command[0] = SW_MOTOR;
+    command[1] = motor;
+    command[2] = (int) (MOTOR_RANGE * value);
+    Serial_send(sp, command, 3);
+    Util_usleep(0.01); /* XXX: Remove this when the avr works right */
+}
+
 int main(int argc, char** argv) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("Serial : AVR");
@@ -107,9 +117,6 @@ int main(int argc, char** argv) {
 
     /* Receive thread */
     pthread_t thread;
-
-    /* Command */
-    char command[3];
 
     /* Open and initialize the serial port */
     sp = Serial_open(device_real);
@@ -138,39 +145,25 @@ int main(int argc, char** argv) {
         Var_sync();
 
         if(Var_poked("Bow")) {
-            command[0] = SW_MOTOR;
-            command[1] = BOW;
-            command[2] = (int) (MOTOR_RANGE * Var_get("Bow"));
-            Serial_send(sp, command, 3);
-        } 
+            set_thruster(sp, BOW, Var_get("Bow"));
+        }
 
         if(Var_poked("Stern")) {
-            command[0] = SW_MOTOR;
-            command[1] = STERN;
-            command[2] = (int) (MOTOR_RANGE * Var_get("Stern"));
-            Serial_send(sp, command, 3);
-        } 
+            set_thruster(sp, STERN, Var_get("Stern"));
+        }
 
         if(Var_poked("Strafe")) {
-            command[0] = SW_MOTOR;
-            command[1] = STRAFE;
-            command[2] = (int) (MOTOR_RANGE * Var_get("Strafe"));
-            Serial_send(sp, command, 3);
-        } 
+            set_thruster(sp, STRAFE, Var_get("Strafe"));
+        }
 
         if(Var_poked("Port")) {
-            command[0] = SW_MOTOR;
-            command[1] = PORT;
-            command[2] = (int) (MOTOR_RANGE * Var_get("Port"));
-            Serial_send(sp, command, 3);
-        } 
+            set_thruster(sp, PORT, Var_get("Port"));
+        }
 
         if(Var_poked("Star")) {
-            command[0] = SW_MOTOR;
-            command[1] = STAR;
-            command[2] = (int) (MOTOR_RANGE * Var_get("Star"));
-            Serial_send(sp, command, 3);
-        } 
+            set_thruster(sp, STAR, Var_get("Star"));
+        }
+
     }
 
     Serial_closePort(sp);
