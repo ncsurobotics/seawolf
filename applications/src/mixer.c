@@ -17,7 +17,7 @@
 /* Trim bow/stern values to compensate for pitch from diving/surfacing.
    Higher values make bow go faster.
  */
-#define PITCH_TRIM 0.15
+#define PITCH_TRIM 0
 
 #define UPDATE_TOLERANCE 0.01
 

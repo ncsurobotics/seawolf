@@ -2,7 +2,7 @@
 ./bin/mixer &
 ./bin/yawpid &
 ./bin/depthpid &
+./bin/pitchpid &
 
 #./bin/rotpid &
-#./bin/pitchpid &
 #./bin/rollpid &

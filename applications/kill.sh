@@ -6,5 +6,5 @@ killall depthpid
 killall yawpid
 #killall rotpid
 #killall rollpid
-#killall pitchpid
+killall pitchpid
 ./bin/zerothrusters

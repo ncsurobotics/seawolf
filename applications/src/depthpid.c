@@ -77,6 +77,7 @@ int main(void) {
             // Automatically unpause if heading is updated
             if (paused) {
                 Var_set("DepthPID.Paused", 0.0);
+                Var_set("PitchPID.Paused", 0.0);
             }
         }
 
