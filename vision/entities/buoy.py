@@ -7,7 +7,9 @@ import cv
 
 from base import VisionEntity, Container
 import libvision
-import fake_svr as svr
+import svr
+
+svr.connect()
 
 Point = namedtuple("Point", ["x", "y"])
 
