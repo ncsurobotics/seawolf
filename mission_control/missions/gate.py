@@ -15,6 +15,7 @@ class GateMission(MissionBase):
 
     def __init__(self):
         self.gate_seen = 0
+        self.gate_lost = 0
 
     def init(self):
         self.process_manager.start_process(entities.GateEntity, "gate", "forward", debug=True)
@@ -36,19 +37,23 @@ class GateMission(MissionBase):
             # If both poles are seen, point toward it then go forward.
             self.set_entity_timeout(MISSION_TIMEOUT)
             self.gate_seen += 1
+            self.gate_lost = 0
 
             if abs(gate_center) < STRAIGHT_TOLERANCE:
                 sw3.nav.do(sw3.CompoundRoutine([
                     sw3.Forward(FORWARD_SPEED),
                     sw3.HoldYaw()
                 ]))
-                if self.gate_seen > 10:
-                    print "Heading Locked"
-                    self.finish_mission()
-                    return
             else:
                 print "Correcting Yaw", gate_center
                 sw3.nav.do(sw3.CompoundRoutine([
                     sw3.RelativeYaw(gate_center),
                     sw3.Forward(0.4)
                 ]))
+        elif self.gate_seen > 30:
+            self.gate_lost += 1
+
+        if self.gate_lost > 30:
+            print "Heading Locked"
+            self.finish_mission()
+            return

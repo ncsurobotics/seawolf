@@ -39,7 +39,7 @@ class GateEntity(VisionEntity):
         self.hough_threshold = 51
         self.adaptive_thresh_blocksize = 19
         self.adaptive_thresh = 4
-        self.max_range = 60
+        self.max_range = 135
 
         self.left_pole = None
         self.right_pole = None
@@ -56,10 +56,10 @@ class GateEntity(VisionEntity):
     def process_frame(self, frame):
 
         # Resize image to 320x240
-        copy = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        cv.Copy(frame, copy)
-        cv.SetImageROI(frame, (0, 0, 320, 240))
-        cv.Resize(copy, frame, cv.CV_INTER_NN)
+        #copy = cv.CreateImage(cv.GetSize(frame), 8, 3)
+        #cv.Copy(frame, copy)
+        #cv.SetImageROI(frame, (0, 0, 320, 240))
+        #cv.Resize(copy, frame, cv.CV_INTER_NN)
 
         found_gate = False
 
