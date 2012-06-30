@@ -20,13 +20,22 @@ enum Commands {
     SW_SERVO    = 0x02,
     SW_STATUS   = 0x03,
     SW_DEPTH    = 0x04,
-    SW_TEMP     = 0x05
+    SW_TEMP     = 0x05,
+    SW_SOLENOID = 0x06,
+    SW_BATTERY  = 0x07,
+    SW_KILL     = 0x08
 };
 
 typedef enum {
     SERVO1 = 0,
     SERVO2 = 1
 } Servo;
+
+typedef enum {
+    SOLENOID0 = 0,
+    SOLENOID1 = 1,
+    SOLENOID2 = 2
+} Solenoid;
 
 typedef enum {
     BOW    = 0,
@@ -36,8 +45,22 @@ typedef enum {
     STAR   = 4
 } Motor;
 
+typedef enum {
+    SLA1 = 0,
+    SLA2 = 1,
+    LIPO = 2
+} Battery;
+
+typedef enum {
+    KILLED = 0,
+    NOT_KILLED = 1
+} KillStatus;
+
 void init_servos(void);
 void set_servo_position(Servo servo, unsigned int value);
+
+void init_solenoids(void);
+void set_solenoid(Solenoid solenoid, bool value);
 
 void init_motors(void);
 void set_motor_speed(Motor motor, int speed);
@@ -51,5 +74,15 @@ int serial_read_byte(void);
 void serial_read_bytes(char* s, int n);
 
 void init_analog(void);
+void get_depth_reading(void);
+
+void init_status(void);
+void update_status(int counter);
+void set_status(int value);
+
+void init_scheduler(void);
+
+void check_kill(void);
+void check_batteries(void);
 
 #endif // #ifndef __SEAWOLF_MICRO_AVR_H

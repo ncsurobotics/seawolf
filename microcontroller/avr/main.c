@@ -4,7 +4,7 @@
 
 #include <sw.h>
 
-static volatile bool depth_enabled = false;
+static int kill_status = -1;
 
 void enable_interrupts(void) {
     /* Enable all interrupt levels */
@@ -32,7 +32,42 @@ void synchronize_comm(void) {
     }
 
     serial_send_byte(0xF0);
-    depth_enabled = true;
+}
+
+void check_batteries(void) {
+    char message[3];
+
+    message[0] = SW_BATTERY;
+    message[2] = 0;
+
+    if((PORTB.IN & 0x1) == 0) {
+        message[1] = SLA2;
+        serial_send_bytes(message, 3);
+    }
+
+    if((PORTB.IN & 0x2) == 0) {
+        message[1] = SLA1;
+        serial_send_bytes(message, 3);
+    }
+
+    if((PORTB.IN & 0x8) == 0) {
+        message[1] = LIPO;
+        serial_send_bytes(message, 3);
+    }
+}
+
+void check_kill(void) {
+    int stat = (PORTB.IN & 0x4) >> 2;
+    char message[3];
+
+    message[0] = SW_KILL;
+    message[1] = 0;
+
+    if(stat != kill_status) {
+        kill_status = stat;
+        message[2] = kill_status;
+        serial_send_bytes(message, 3);
+    }
 }
 
 int main(void) {
@@ -42,8 +77,13 @@ int main(void) {
     CLK.LOCK = CLK_LOCK_bm;
 
     init_servos();
+    init_solenoids();
     init_motors();
     init_serial();
+    init_analog();
+    init_status();
+
+    PORTB.DIRCLR = 0x0f;
 
     enable_interrupts();
 
@@ -51,7 +91,7 @@ int main(void) {
 
     /* Wait until after initializing the serial link to start sending depth and
        temperature information */
-    init_analog();
+    init_scheduler();
 
     while(true) {
         serial_read_bytes(command, 3);
@@ -72,8 +112,11 @@ int main(void) {
             set_servo_position(command[1], command[2]);
             break;
 
+        case SW_SOLENOID:
+            set_solenoid(command[1], command[2]);
+
         case SW_STATUS:
-            // send_status();
+            set_status((unsigned char)command[2]);
             break;
 
         case SW_TEMP:

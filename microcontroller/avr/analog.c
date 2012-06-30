@@ -1,8 +1,6 @@
 
 #include <sw.h>
 
-static volatile int counter = 0;
-
 /* Temperature */
 ISR(ADCA_CH1_vect) {
     char message[3];
@@ -14,7 +12,7 @@ ISR(ADCA_CH1_vect) {
     serial_send_bytes(message, 3);
 }
 
-static void get_depth_reading(void) {
+void get_depth_reading(void) {
     char message[3];
 
     message[0] = SW_DEPTH;
@@ -38,22 +36,6 @@ static void get_depth_reading(void) {
     TWIE.MASTER.CTRLC = 0x7;
 
     serial_send_bytes(message, 3);
-}
-
-/* 100 Hz timer */
-ISR(TCC0_OVF_vect) {
-    /* Increment counter, roll over at 100 (once a second) */
-    counter = (counter + 1) % 100;
-
-    /* Send depth at 10 Hz */
-    if(counter % 10 == 0) {
-        get_depth_reading();
-    }
-
-    /* Send temperature once a second */
-    if(counter % 100 == 0) {
-        ADCA.CH1.CTRL |= ADC_CH_START_bm;
-    }
 }
 
 void init_analog(void) {
@@ -80,13 +62,4 @@ void init_analog(void) {
     /* Enable ADC */
     ADCA.CTRLA |= ADC_ENABLE_bm;
 
-    /* Enable timer 0 on port C. Run timer at 1/4 system clock (500kHz) */
-    TCC0.CTRLA = TC_CLKSEL_DIV4_gc;
-    TCC0.CTRLB = TC_WGMODE_SS_gc;
-
-    /* Run at frequency of 100 Hz */
-    TCC0.PER = 5000;
-
-    /* Enable overflow interrupt at low level */
-    TCC0.INTCTRLA = TC_OVFINTLVL_LO_gc;
 }
