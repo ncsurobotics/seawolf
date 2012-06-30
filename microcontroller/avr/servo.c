@@ -49,7 +49,7 @@ void set_servo_position(Servo servo, unsigned int value) {
     case SERVO1:
         TCE0.CCA = value;
         break;
-        
+
     case SERVO2:
         TCE0.CCB = value;
         break;
