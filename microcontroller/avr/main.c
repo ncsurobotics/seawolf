@@ -63,11 +63,11 @@ int main(void) {
 
         case SW_NOP:
             break;
-            
+
         case SW_MOTOR:
             set_motor_speed(command[1], command[2]);
             break;
-            
+
         case SW_SERVO:
             set_servo_position(command[1], command[2]);
             break;
