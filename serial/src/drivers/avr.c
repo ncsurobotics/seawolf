@@ -53,24 +53,21 @@ static void avr_synchronize(SerialPort sp) {
 }
 
 static void set_depth(int16_t raw_adc_value) {
-    /*
     float voltage;
     float psi;
     float depth;
 
-    // Ground starts at 200 and 4095 is 0.95 (max reading) volts approximately
-    //voltage = ((raw_adc_value - 200.0) / (4095.0 - 200.0)) * 0.95;
-    voltage = raw_adc_value / 2047.0;
+    /* Convert 12 bit unsigned ADC reading to a voltage */
+    voltage = 5.004 * (raw_adc_value / 4095.0);
 
-    // Depth sensor output has been halved. The depth sensor outputs between
-    // 0.5 and 4.5 volts. This 4V range corresponds linearly to 0 to 100 PSI
-    psi = (((voltage * 2) - 0.5) / 4.0) * 100;
+    /* The pressure sensor produces output between 0.5 and 4.5 volts. This range
+       maps linearly to the 0-100psi range */
+    psi = ((voltage - 0.5) / 4.0) * 100;
 
-    // Compute depth based on surface pressure and PSI per foot
+    /* Compute depth based on surface pressure and PSI per foot */
     depth = (psi - AIR_PRESSURE) / PSI_PER_FOOT;
 
     Var_set("Depth", depth);
-    */
 }
 
 static void set_temp(int16_t raw_adc_value) {
