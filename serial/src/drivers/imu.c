@@ -27,6 +27,15 @@
 #define X 0
 #define Y 1
 
+/* The reset line for the AVR microcontroller was accidently put on the IMU bus
+   so we toggle the reset for it here */
+static void reset_microntroller(SerialPort sp) {
+    /* Toggle DTR */
+    Serial_setDTR(sp, 0);
+    Util_usleep(0.1);
+    Serial_setDTR(sp, 1);
+}
+
 static int restart_driver(SerialPort sp, char** argv) {
     Logging_log(ERROR, "Error limit exceded. Restarting driver");
     Seawolf_close();
@@ -74,6 +83,9 @@ int main(int argc, char** argv) {
         Logging_log(ERROR, "Could not open serial port for IMU! Exiting.");
         Seawolf_exitError();
     }
+
+    /* Reset the AVR to work around a hardware bug */
+    reset_microntroller(sp);
 
     /* Set options */
     Serial_setBaud(sp, 38400);
