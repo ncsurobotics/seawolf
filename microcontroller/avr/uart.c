@@ -19,13 +19,10 @@ static enum BufferState state = NORMAL;
 static int marker_count = 0;
 
 ISR(USARTC1_RXC_vect) {
-    int next_windex;
-    unsigned char c;
+    int next_windex = (windex + 1) % UART_RX_BUFF_SIZE;
 
     switch(state) {
     case NORMAL:
-        next_windex = (windex + 1) % UART_RX_BUFF_SIZE;
-
         if((USARTC1.STATUS & USART_BUFOVF_bm) || next_windex == rindex) {
             char message[3];
 
@@ -39,7 +36,7 @@ ISR(USARTC1_RXC_vect) {
             }
 
             serial_send_bytes(message, 3);
-
+            realign_buffer();
         }
 
         buffer[windex] = USARTC1.DATA;
@@ -47,9 +44,9 @@ ISR(USARTC1_RXC_vect) {
         break;
 
     case REALIGN:
-        c = USARTC1.DATA;
+        buffer[windex] = USARTC1.DATA;
 
-        if(c == SW_MARKER) {
+        if(buffer[windex] == SW_MARKER) {
             marker_count++;
 
             if(marker_count == 3) {
@@ -60,6 +57,7 @@ ISR(USARTC1_RXC_vect) {
             }
         } else {
             marker_count = 0;
+            windex = next_windex;
         }
         break;
     }
@@ -85,6 +83,10 @@ void init_serial(void) {
 
 void realign_buffer(void) {
     char message[3];
+
+    if(state == REALIGN) {
+        return;
+    }
 
     message[0] = SW_REALIGN;
     message[1] = 0;
