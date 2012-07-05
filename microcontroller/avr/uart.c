@@ -87,7 +87,7 @@ void serial_read_bytes(char* s, int n) {
     }
 
     cli();
-    if(rindex <= windex) {
+    if(rindex + n <= UART_RX_BUFF_SIZE) {
         memcpy(s, (void*) buffer + rindex, n);
     } else {
         /* Size of first chunk */
