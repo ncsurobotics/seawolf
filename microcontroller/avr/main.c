@@ -24,14 +24,24 @@ void software_reset(void) {
 void synchronize_comm(void) {
     /* Send 0xFF until 0x00 is received */
     while(true) {
-        serial_send_byte(0xFF);
+        serial_send_byte(0xff);
 
         if(serial_available() && serial_read_byte() == 0x00) {
             break;
         }
     }
 
-    serial_send_byte(0xF0);
+    if(serial_available()) {
+        char command[3] = {
+            SW_ERROR,
+            SYNC_ERROR,
+            0
+        };
+
+        serial_send_bytes(command, 3);
+    }
+
+    serial_send_byte(0xf0);
 }
 
 void check_batteries(void) {
@@ -68,6 +78,16 @@ void check_kill(void) {
         message[2] = kill_status;
         serial_send_bytes(message, 3);
     }
+}
+
+static void invalid_request(char command) {
+    char message[3];
+
+    message[0] = SW_ERROR;
+    message[1] = INVALID_REQUEST;
+    message[2] = command;
+
+    serial_send_bytes(message, 3);
 }
 
 int main(void) {
