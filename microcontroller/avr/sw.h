@@ -23,7 +23,10 @@ enum Commands {
     SW_TEMP     = 0x05,
     SW_SOLENOID = 0x06,
     SW_BATTERY  = 0x07,
-    SW_KILL     = 0x08
+    SW_KILL     = 0x08,
+    SW_REALIGN  = 0x09,
+    SW_ERROR    = 0xaa,
+    SW_MARKER   = 0xbb
 };
 
 typedef enum {
@@ -56,6 +59,13 @@ typedef enum {
     NOT_KILLED = 1
 } KillStatus;
 
+typedef enum {
+    INVALID_REQUEST = 0,
+    SERIAL_ERROR = 1,
+    TWI_ERROR = 2,
+    SYNC_ERROR = 3
+} Error;
+
 void init_servos(void);
 void set_servo_position(Servo servo, unsigned int value);
 
@@ -66,6 +76,7 @@ void init_motors(void);
 void set_motor_speed(Motor motor, int speed);
 
 void init_serial(void);
+void realign_buffer(void);
 void serial_send_byte(char c);
 void serial_send_bytes(char* s, int n);
 void serial_print(char* s);
@@ -74,7 +85,7 @@ int serial_read_byte(void);
 void serial_read_bytes(char* s, int n);
 
 void init_analog(void);
-void get_depth_reading(void);
+void start_depth_reading(void);
 
 void init_status(void);
 void update_status(int counter);
