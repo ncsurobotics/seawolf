@@ -10,7 +10,7 @@ ISR(TCC0_OVF_vect) {
 
     /* Send depth at 10 Hz */
     if(counter % 10 == 0) {
-        get_depth_reading();
+        start_depth_reading();
     }
 
     /* Send temperature once a second */

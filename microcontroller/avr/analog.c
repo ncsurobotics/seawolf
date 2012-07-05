@@ -1,6 +1,15 @@
 
 #include <sw.h>
 
+enum DepthState {
+    NOT_RUNNING = 0,
+    BYTE1 = 1,
+    BYTE2 = 2
+};
+
+static enum DepthState depth_state = NOT_RUNNING;
+static char depth_message[3] = {SW_DEPTH, 0, 0};
+
 /* Temperature */
 ISR(ADCA_CH1_vect) {
     char message[3];
@@ -12,7 +21,68 @@ ISR(ADCA_CH1_vect) {
     serial_send_bytes(message, 3);
 }
 
-void get_depth_reading(void) {
+static bool twi_is_error(void) {
+    uint8_t status;
+    bool rxack;
+    bool arblost;
+    bool rif;
+    bool wif;
+    bool buserr;
+
+    status = TWIE.MASTER.STATUS;
+
+    rxack =  (status & TWI_MASTER_RXACK_bm) != 0;
+    arblost = (status & TWI_MASTER_ARBLOST_bm) != 0;
+    buserr = (status & TWI_MASTER_BUSERR_bm) != 0;
+    rif = (status & TWI_MASTER_RIF_bm) != 0;
+    wif = (status & TWI_MASTER_WIF_bm) != 0;
+
+    if((wif && arblost) || (wif && rxack) || buserr) {
+        return true;
+    } else if(rif && !rxack) {
+        return false;
+    }
+
+    return true;
+}
+
+static void twi_error(void) {
+    char message[3];
+
+    message[0] = SW_ERROR;
+    message[1] = TWI_ERROR;
+    message[2] = TWIE.MASTER.STATUS;
+
+    serial_send_bytes(message, 3);
+}
+
+ISR(TWIE_TWIM_vect) {
+    if(twi_is_error()) {
+        twi_error();
+        depth_state = NOT_RUNNING;
+        return;
+    }
+
+    switch(depth_state) {
+    case NOT_RUNNING:
+        return;
+
+    case BYTE1:
+        depth_message[1] = TWIE.MASTER.DATA;
+        TWIE.MASTER.CTRLC = TWI_MASTER_CMD_RECVTRANS_gc;
+        depth_state = BYTE2;
+        break;
+
+    case BYTE2:
+        depth_message[2] = TWIE.MASTER.DATA;
+        TWIE.MASTER.CTRLC = TWI_MASTER_CMD_STOP_gc | TWI_MASTER_ACKACT_bm;
+        serial_send_bytes(depth_message, 3);
+        depth_state = NOT_RUNNING;
+        break;
+    }
+}
+
+void start_depth_reading(void) {
     char message[3];
 
     message[0] = SW_DEPTH;
@@ -22,20 +92,11 @@ void get_depth_reading(void) {
     /* Force bus to idle */
     TWIE.MASTER.STATUS = TWI_MASTER_BUSSTATE_IDLE_gc;
 
+    /* Set state */
+    depth_state = BYTE1;
+
     /* Start transmission */
     TWIE.MASTER.ADDR = 0x9b;
-
-    /* Wait for first byte, then send an ACK */
-    while((TWIE.MASTER.STATUS & TWI_MASTER_RIF_bm) == 0);
-    message[1] = TWIE.MASTER.DATA;
-    TWIE.MASTER.CTRLC = 0x2;
-
-    /* Wait for second byte, then send a NACK and a STOP bit */
-    while((TWIE.MASTER.STATUS & TWI_MASTER_RIF_bm) == 0);
-    message[2] = TWIE.MASTER.DATA;
-    TWIE.MASTER.CTRLC = 0x7;
-
-    serial_send_bytes(message, 3);
 }
 
 void init_analog(void) {
@@ -57,9 +118,8 @@ void init_analog(void) {
 
     /* Enable TWI interface for communicating with the depth sensor ADC */
     TWIE.MASTER.BAUD = 5;
-    TWIE.MASTER.CTRLA = TWI_MASTER_ENABLE_bm;
+    TWIE.MASTER.CTRLA = TWI_MASTER_INTLVL_LO_gc | TWI_MASTER_RIEN_bm | TWI_MASTER_WIEN_bm | TWI_MASTER_ENABLE_bm;
 
     /* Enable ADC */
     ADCA.CTRLA |= ADC_ENABLE_bm;
-
 }
