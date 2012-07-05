@@ -23,7 +23,10 @@ enum Commands {
     SW_TEMP     = 0x05,
     SW_SOLENOID = 0x06,
     SW_BATTERY  = 0x07,
-    SW_KILL     = 0x08
+    SW_KILL     = 0x08,
+    SW_REALIGN  = 0x09,
+    SW_ERROR    = 0xaa,
+    SW_MARKER   = 0xbb
 };
 
 typedef enum {
@@ -56,16 +59,37 @@ typedef enum {
     NOT_KILLED = 1
 } KillStatus;
 
+typedef enum {
+    INVALID_REQUEST = 0,
+    SERIAL_ERROR = 1,
+    TWI_ERROR = 2,
+    SYNC_ERROR = 3
+} Error;
+
+static const char* error_messages[] = {
+    [INVALID_REQUEST] = "Invalid request",
+    [SERIAL_ERROR] = "Serial error",
+    [TWI_ERROR] = "I2C error",
+    [SYNC_ERROR] = "Synchronization error"
+};
+
+static pthread_mutex_t send_lock = PTHREAD_MUTEX_INITIALIZER;
+
 static void avr_synchronize(SerialPort sp) {
     int i;
+    int n;
 
     for(i = 0; i < 5; i++) {
         Serial_sendByte(sp, SW_RESET);
     }
 
+    Logging_log(DEBUG, "Sent reset sequence");
+
     i = 0;
-    while(i < 8) {
-        if(Serial_getByte(sp) == 0xff) {
+    while(i < 10) {
+        n = Serial_getByte(sp);
+
+        if(n == 0xff) {
             i++;
         } else{
             i = 0;
@@ -97,6 +121,18 @@ static void set_depth(int16_t raw_adc_value) {
 
 static void set_temp(int16_t raw_adc_value) {
     Var_set("Temperature", (float) raw_adc_value / 2047.0);
+}
+
+static void send_message(SerialPort sp, unsigned char cmd, unsigned char arg1, unsigned char arg2) {
+    unsigned char command[3];
+
+    command[0] = cmd;
+    command[1] = arg1;
+    command[2] = arg2;
+
+    pthread_mutex_lock(&send_lock);
+    Serial_send(sp, command, 3);
+    pthread_mutex_unlock(&send_lock);
 }
 
 static void* receive_thread(void* _sp) {
@@ -141,75 +177,24 @@ static void* receive_thread(void* _sp) {
                 Notify_send("EVENT", "SystemReset");
             }
             break;
+
+        case SW_ERROR:
+            Logging_log(ERROR, Util_format("AVR error: %s (0x%02x)", error_messages[frame[1]], frame[2]));
+            break;
+
+        case SW_REALIGN:
+            Logging_log(ERROR, "Realigning");
+            send_message(sp, SW_MARKER, SW_MARKER, SW_MARKER);
+            break;
+
+        default:
+            Logging_log(CRITICAL, Util_format("Invalid packet from AVR! (0x%02x, 0x%02x, 0x%02x)",
+                                              frame[0], frame[1], frame[2]));
+            break;
         }
     }
 
     return NULL;
-}
-
-static void set_thruster(SerialPort sp, Motor motor, float value) {
-    char command[3];
-
-    command[0] = SW_MOTOR;
-    command[1] = motor;
-    command[2] = (int) (MOTOR_RANGE * value);
-
-    Serial_send(sp, command, 3);
-    Util_usleep(0.01); /* XXX: Remove this when the avr works right */
-}
-
-#if 0
-
-static void set_solenoid(SerialPort sp, Solenoid solenoid, float value) {
-    char command[3];
-
-    command[0] = SW_SOLENOID;
-    command[1] = solenoid;
-    command[2] = (int) value;
-
-    Serial_send(sp, command, 3);
-}
-
-static void set_servo(SerialPort sp, Servo servo, float value) {
-    char command[3];
-
-    command[0] = SW_SERVO;
-    command[1] = servo;
-    command[2] = (int) value;
-
-    Serial_send(sp, command, 3);
-}
-
-#endif
-
-static void set_status(SerialPort sp, int value) {
-    unsigned char command[3];
-
-    command[0] = SW_STATUS;
-    command[1] = 0;
-
-    switch(value) {
-    case 0:
-        command[2] = 200;
-        break;
-
-    case 1:
-        command[2] = 100;
-        break;
-
-    case 2:
-        command[2] = 0;
-        break;
-
-    case 3:
-        command[2] = 180;
-        break;
-
-    default:
-        Logging_log(ERROR, "Invalid StatusLight value!");
-    }
-
-    Serial_send(sp, command, 3);
 }
 
 int main(int argc, char** argv) {
@@ -227,7 +212,7 @@ int main(int argc, char** argv) {
 
     /* Open and initialize the serial port */
     sp = Serial_open(device_real);
-    Serial_setBlocking(sp);
+
     if(sp == -1) {
         Logging_log(ERROR, "Could not open serial port for AVR! Exiting.");
         Seawolf_exitError();
@@ -235,12 +220,17 @@ int main(int argc, char** argv) {
 
     /* Set options */
     Serial_setBaud(sp, 57600);
+    Serial_setBlocking(sp);
+    Serial_flush(sp);
 
     avr_synchronize(sp);
     Logging_log(DEBUG, "Synchronized");
 
     /* Spawn receive thread */
     pthread_create(&thread, NULL, receive_thread, &sp);
+
+    /* Reset status light */
+    Var_set("StatusLight", 0);
 
     Var_subscribe("Bow");
     Var_subscribe("Stern");
@@ -262,50 +252,69 @@ int main(int argc, char** argv) {
         Var_sync();
 
         if(Var_poked("Bow")) {
-            set_thruster(sp, BOW, Var_get("Bow"));
+            send_message(sp, SW_MOTOR, BOW, (int) (MOTOR_RANGE * Var_get("Bow")));
         }
 
         if(Var_poked("Stern")) {
-            set_thruster(sp, STERN, Var_get("Stern"));
+            send_message(sp, SW_MOTOR, STERN, (int) (MOTOR_RANGE * Var_get("Stern")));
         }
 
         if(Var_poked("Strafe")) {
-            set_thruster(sp, STRAFE, Var_get("Strafe"));
+            send_message(sp, SW_MOTOR, STRAFE, (int) (MOTOR_RANGE * Var_get("Strafe")));
         }
 
         if(Var_poked("Port")) {
-            set_thruster(sp, PORT, Var_get("Port"));
+            send_message(sp, SW_MOTOR, PORT, (int) (MOTOR_RANGE * Var_get("Port")));
         }
 
         if(Var_poked("Star")) {
-            set_thruster(sp, STAR, Var_get("Star"));
+            send_message(sp, SW_MOTOR, STAR, (int) (MOTOR_RANGE * Var_get("Star")));
+        }
+
+        if(Var_stale("StatusLight")) {
+            switch((int)Var_get("StatusLight")) {
+            case 0:
+                send_message(sp, SW_STATUS, 0, 200);
+                break;
+
+            case 1:
+                send_message(sp, SW_STATUS, 0, 100);
+                break;
+
+            case 2:
+                send_message(sp, SW_STATUS, 0, 0);
+                break;
+
+            case 3:
+                send_message(sp, SW_STATUS, 0, 180);
+                break;
+
+            default:
+                Logging_log(ERROR, "Invalid StatusLight value!");
+            }
         }
 
 #if 0
         if(Var_poked("Solenoid.0")) {
-            set_solenoid(sp, SOLENOID1, Var_get("Solenoid.0"));
+            send_message(sp, SW_SOLENOID, SOLENOID1, (int) Var_get("Solenoid.0"));
         }
 
         if(Var_poked("Solenoid.1")) {
-            set_solenoid(sp, SOLENOID2, Var_get("Solenoid.1"));
+            send_message(sp, SW_SOLENOID, SOLENOID2, (int) Var_get("Solenoid.1"));
         }
 
         if(Var_poked("Solenoid.2")) {
-            set_solenoid(sp, SOLENOID3, Var_get("Solenoid.2"));
+            send_message(sp, SW_SOLENOID, SOLENOID3, (int) Var_get("Solenoid.2"));
         }
 
         if(Var_poked("Servo.0")) {
-            set_servo(sp, SERVO1, Var_get("Servo.0"));
+            send_message(sp, SW_SERVO, SERVO1, (int) Var_get("Servo.0"));
         }
 
         if(Var_poked("Servo.1")) {
-            set_servo(sp, SERVO2, Var_get("Servo.1"));
+            send_message(sp, SW_SERVO, SERVO2, (int) Var_get("Servo.1"));
         }
 #endif
-
-        if(Var_poked("StatusLight")) {
-            set_status(sp, Var_get("StatusLight"));
-        }
     }
 
     Serial_closePort(sp);
