@@ -77,7 +77,7 @@ void init_serial(void) {
     USARTC1.CTRLC = 0x03;
 
     /* Enable Rx interrupt */
-    USARTC1.CTRLA = USART_RXCINTLVL_LO_gc;
+    USARTC1.CTRLA = USART_RXCINTLVL_MED_gc;
 
     /* Enable transmit and receive */
     USARTC1.CTRLB = 0x18;
