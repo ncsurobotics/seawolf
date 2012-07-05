@@ -122,10 +122,17 @@ void serial_print(char* s) {
 }
 
 int serial_available(void) {
-    if(rindex <= windex) {
-        return (windex - rindex);
+    volatile int r, w;
+
+    cli();
+    r = rindex;
+    w = windex;
+    sei();
+
+    if(r <= w) {
+        return (w - r);
     } else {
-        return (UART_RX_BUFF_SIZE - rindex) + windex;
+        return (UART_RX_BUFF_SIZE - r) + w;
     }
 }
 
