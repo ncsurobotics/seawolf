@@ -117,7 +117,7 @@ void init_analog(void) {
     ADCA.CH1.INTCTRL = ADC_CH_INTLVL_LO_gc;
 
     /* Enable TWI interface for communicating with the depth sensor ADC */
-    TWIE.MASTER.BAUD = 5;
+    TWIE.MASTER.BAUD = 155;
     TWIE.MASTER.CTRLA = TWI_MASTER_INTLVL_LO_gc | TWI_MASTER_RIEN_bm | TWI_MASTER_WIEN_bm | TWI_MASTER_ENABLE_bm;
 
     /* Enable ADC */

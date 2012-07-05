@@ -4,7 +4,7 @@
 
 /* CPU speed defined before inclusion of util/delay.h so the delay routines
    are with respect to the the actual clock rate */
-#define F_CPU 2000000UL
+#define F_CPU 32000000UL
 
 #include <stdbool.h>
 

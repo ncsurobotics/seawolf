@@ -67,9 +67,9 @@ void init_serial(void) {
     PORTC.OUTSET = 0x80;
     PORTC.DIRSET = 0x80;
 
-    /* Set baud to 57600 approximately (57554 exactly) */
-    USARTC1.BAUDCTRLA = 150;
-    USARTC1.BAUDCTRLB = 0x90;
+    /* Set baud to 57600 approximately (57606 exactly) */
+    USARTC1.BAUDCTRLA = 110;
+    USARTC1.BAUDCTRLB = 0xa8;
 
     /* UART, 1 stop bit, no parity bits, 8 data bits (8N1) */
     USARTC1.CTRLC = 0x03;

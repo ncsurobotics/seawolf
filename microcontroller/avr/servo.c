@@ -24,9 +24,9 @@ void init_servos(void) {
     /* Enable output pins */
     PORTA.DIRSET = 0x18;
 
-    /* Set clock divider of 4 from input of 2MHz for a timer input clock of
+    /* Set clock divider of 64 from input of 32MHz for a timer input clock of
        500Khz */
-    TCE0.CTRLA = 0x03;
+    TCE0.CTRLA = TC_CLKSEL_DIV64_gc;
 
     /* Set single slope PWM mode */
     TCE0.CTRLB = 0x03;

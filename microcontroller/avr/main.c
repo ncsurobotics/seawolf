@@ -93,7 +93,13 @@ static void invalid_request(char command) {
 int main(void) {
     char command[3];
 
-    /* Lock clock. Default clock rate of 2Mhz */
+    /* Enable 32Mhz clock and wait for it to be ready */
+    OSC.CTRL |= OSC_RC32MEN_bm;
+    while((OSC.STATUS & OSC_RC32MRDY_bm) == 0x00);
+
+    /* Set clock to 32Mhz and then lock it */
+    CCP = CCP_IOREG_gc;
+    CLK.CTRL = CLK_SCLKSEL_RC32M_gc;
     CLK.LOCK = CLK_LOCK_bm;
 
     init_servos();

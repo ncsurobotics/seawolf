@@ -32,8 +32,8 @@ ISR(TCC0_OVF_vect) {
 }
 
 void init_scheduler(void) {
-    /* Enable timer 0 on port C. Run timer at 1/4 system clock (500kHz) */
-    TCC0.CTRLA = TC_CLKSEL_DIV4_gc;
+    /* Enable timer 0 on port C. Run timer at 1/64 system clock (500kHz) */
+    TCC0.CTRLA = TC_CLKSEL_DIV64_gc;
     TCC0.CTRLB = TC_WGMODE_SS_gc;
 
     /* Run at frequency of 100 Hz */
