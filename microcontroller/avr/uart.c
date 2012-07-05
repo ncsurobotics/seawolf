@@ -5,13 +5,64 @@
 
 #define UART_RX_BUFF_SIZE 128
 
+enum BufferState {
+    NORMAL = 0,
+    REALIGN = 1
+};
+
+/* Rx buffer */
 static volatile unsigned char buffer[UART_RX_BUFF_SIZE];
 static volatile int windex = 0;
 static volatile int rindex = 0;
 
+static enum BufferState state = NORMAL;
+static int marker_count = 0;
+
 ISR(USARTC1_RXC_vect) {
-    buffer[windex] = USARTC1.DATA;
-    windex = (windex + 1) % UART_RX_BUFF_SIZE;
+    int next_windex;
+    unsigned char c;
+
+    switch(state) {
+    case NORMAL:
+        next_windex = (windex + 1) % UART_RX_BUFF_SIZE;
+
+        if((USARTC1.STATUS & USART_BUFOVF_bm) || next_windex == rindex) {
+            char message[3];
+
+            message[0] = SW_ERROR;
+            message[1] = SERIAL_ERROR;
+
+            if(next_windex == rindex) {
+                message[2] = 0;
+            } else {
+                message[2] = 1;
+            }
+
+            serial_send_bytes(message, 3);
+
+        }
+
+        buffer[windex] = USARTC1.DATA;
+        windex = next_windex;
+        break;
+
+    case REALIGN:
+        c = USARTC1.DATA;
+
+        if(c == SW_MARKER) {
+            marker_count++;
+
+            if(marker_count == 3) {
+                state = NORMAL;
+
+                /* Clear buffer */
+                rindex = windex;
+            }
+        } else {
+            marker_count = 0;
+        }
+        break;
+    }
 }
 
 void init_serial(void) {
@@ -30,6 +81,19 @@ void init_serial(void) {
 
     /* Enable transmit and receive */
     USARTC1.CTRLB = 0x18;
+}
+
+void realign_buffer(void) {
+    char message[3];
+
+    message[0] = SW_REALIGN;
+    message[1] = 0;
+    message[2] = 0;
+
+    state = REALIGN;
+    marker_count = 0;
+
+    serial_send_bytes(message, 3);
 }
 
 /* Send a single byte of data */

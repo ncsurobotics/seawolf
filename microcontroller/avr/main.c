@@ -122,6 +122,11 @@ int main(void) {
         case SW_TEMP:
             ADCA.CH1.CTRL |= ADC_CH_START_bm;
             break;
+
+        default:
+            invalid_request(command[0]);
+            realign_buffer();
+            break;
         }
     }
 
