@@ -10,6 +10,7 @@ import libvision
 from sw3.util import circular_average
 
 class PathEntity(VisionEntity):
+    name = "Path"
 
     def init(self):
 
@@ -24,7 +25,7 @@ class PathEntity(VisionEntity):
         self.theta_threshold = 0.1
         self.hough_threshold = 55
         self.lines_to_consider = 4 # Only consider the strongest so many lines
-        self.seen_in_a_row_threshold = 2 # Must see path this many times in a row before reporting it
+        self.seen_in_a_row_threshold = 3 # Must see path this many times in a row before reporting it
 
         # Position/orientation
         self.theta = None
@@ -33,7 +34,8 @@ class PathEntity(VisionEntity):
         self.seen_in_a_row = 0
 
         if self.debug:
-            cv.NamedWindow("Path Debug")
+            cv.NamedWindow("Path")
+            '''
             self.create_trackbar("lower_hue", 360)
             self.create_trackbar("upper_hue", 360)
             self.create_trackbar("hue_bandstop", 1)
@@ -43,6 +45,7 @@ class PathEntity(VisionEntity):
             self.create_trackbar("max_value")
             self.create_trackbar("hough_threshold", 100)
             self.create_trackbar("lines_to_consider", 10)
+            '''
 
     def process_frame(self, frame):
         found_path = False
@@ -132,15 +135,15 @@ class PathEntity(VisionEntity):
             # Show lines
             if self.seen_in_a_row >= self.seen_in_a_row_threshold:
                 rounded_center = (
-                    round(self.image_coordinate_center[0]),
-                    round(self.image_coordinate_center[1]),
+                    int(round(self.image_coordinate_center[0])),
+                    int(round(self.image_coordinate_center[1])),
                 )
                 cv.Circle(frame, rounded_center, 5, (0,255,0))
                 libvision.misc.draw_lines(frame, [(frame.width/2, self.theta)])
             else:
                 libvision.misc.draw_lines(frame, lines)
 
-            cv.ShowImage("Path Debug", frame)
+            cv.ShowImage("Path", frame)
 
         #populate self.output with infos
         self.output.found = object_present
@@ -152,6 +155,9 @@ class PathEntity(VisionEntity):
         else:
             self.output.x = None
             self.output.y = None
+
+        if self.output.found and self.center:
+            print self.output
 
         self.return_output()
 

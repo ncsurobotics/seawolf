@@ -39,33 +39,37 @@ class BuoyEntity(VisionEntity):
         buoy_locations = []
 
         # Scale image to reduce processing
+        '''
         scale = 0.7
         frame_scaled = cv.CreateImage((int(frame.width*scale), int(frame.height*scale)), 8, 3)
         cv.Resize(frame, frame_scaled)
         cv.SetImageROI(frame, (0, 0, int(frame.width*scale), int(frame.height*scale)))
+        '''
 
         # Create debug_frame
         if self.debug:
-            debug_frame = cv.CloneImage(frame_scaled)
+            debug_frame = cv.CloneImage(frame)
         else:
             debug_frame = False
 
         # Look for buoys if there aren't any trackers yet
         if not self.trackers:
-            self.trackers = self.initial_search(frame_scaled, debug_frame)
+            self.trackers = self.initial_search(frame, debug_frame)
             if self.trackers:
 
-                buoy_locations = map(lambda x: adjust_location(x.object_center, frame_scaled.width, frame_scaled.height), self.trackers)
+                buoy_locations = map(lambda x: adjust_location(x.object_center, frame.width, frame.height), self.trackers)
                 if debug_frame:
-                    svr.debug("Buoy", debug_frame)
+                    cv.NamedWindow("Buoy")
+                    cv.ShowImage("Buoy", debug_frame)
                 return
 
         # Tracking
         else:
-            num_buoys_found, buoy_locations = self.buoy_track(frame_scaled, self.trackers, debug_frame)
+            num_buoys_found, buoy_locations = self.buoy_track(frame, self.trackers, debug_frame)
 
         if debug_frame:
-            svr.debug("Buoy", debug_frame)
+            cv.NamedWindow("Buoy")
+            cv.ShowImage("Buoy", debug_frame)
 
         # Convert to output format
         self.output.buoys = []
@@ -108,7 +112,7 @@ class BuoyEntity(VisionEntity):
 
         # Debug info
         if debug_frame and middle_buoy:
-            cv.Circle(debug_frame, middle_buoy, buoy_dist*TRACKING_TEMPLATE_MULTIPLIER/2, (0,255,0), 2)
+            cv.Circle(debug_frame, (int(middle_buoy[0]),int(middle_buoy[1])), int(buoy_dist*TRACKING_TEMPLATE_MULTIPLIER/2), (0,255,0), 2)
 
         if tracker:
             return [tracker]
@@ -189,7 +193,7 @@ class BuoyEntity(VisionEntity):
 
             for corner in corners:
                 corner_color = (0,0,255)
-                cv.Circle(debug_image, corner, 15, corner_color, 2,8,0)
+                cv.Circle(debug_image, (int(corner[0]),int(corner[1])), 15, corner_color, 2,8,0)
 
         return corners
 

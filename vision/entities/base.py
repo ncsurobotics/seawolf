@@ -161,7 +161,7 @@ class MultiCameraVisionEntity(VisionEntity):
         self.child_conn = child_conn
 
         #start a process manager to handle sub-processes
-        self.process_manager = process_manager.ProcessManager()
+        self.process_manager = vision.process_manager.ProcessManager()
 
         #store the cameras.  Order will determine camera positions First is left, second is right
         self.cameras_to_use = cameras_to_use
@@ -203,14 +203,14 @@ class MultiCameraVisionEntity(VisionEntity):
                 self.manage_workers()
 
                 # Tell mission control we are capturing a frame, and it should capture sensor data
-                self.child_conn.send(SensorCapture())
+                self.child_conn.send(vision.process_manager.SensorCapture())
 
                 self.child_conn.send(self.output)
 
         # Always close camera, even if an exception was raised
         finally:
            self.process_manager.kill()
-           self.child_conn.send(process_manager.KillSignal())
+           self.child_conn.send(vision.process_manager.KillSignal())
 
     def sync_capture(self):
         #send frame sync
@@ -221,8 +221,8 @@ class MultiCameraVisionEntity(VisionEntity):
         #wait for workers all workers to return data
         try:
             data = self.process_manager.get_data(force = True)
-        except KillSignal:
-            self.child_conn.send(KillSignal())
+        except vision.process_manager.KillSignal:
+            self.child_conn.send(vision.process_manager.KillSignal())
             raise
         return data
 

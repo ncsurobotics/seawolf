@@ -8,14 +8,15 @@ import libvision
 from sw3.util import circular_average
 
 #distance in feet between cameras
-CAMERA_DISTANCE = 1.5
+CAMERA_DISTANCE = 1 + 2/12
 
 #radians per pixel
-PIXELS_TO_RADIANS = .001636
+#PIXELS_TO_RADIANS = .001636
+PIXELS_TO_RADIANS = 74/640
 
 #maximum buoy translation allowed between frames
-MAX_X_TRANS = 100
-MAX_Y_TRANS = 100
+MAX_X_TRANS = 50
+MAX_Y_TRANS = 50
 
 #maximum allowed change in width
 MAX_CHANGE_WIDTH = 40
@@ -88,8 +89,8 @@ class BinocularBuoyWorker(VisionEntity):
     def init(self):
 
         # Thresholds
-        self.minsize = 20
-        self.maxsize = 60
+        self.minsize = 50
+        self.maxsize = 300
 
         # List we store found buoys in
         self.new = []
@@ -172,8 +173,8 @@ class BinocularBuoyWorker(VisionEntity):
         #update search size based on sizes found this frame
         if buoys:
             avg_w = avg_w / len(buoys)
-            self.minsize = int(avg_w * .7)
-            self.maxsize = int(avg_w * 1.3)
+            #self.minsize = int(avg_w * .7)
+            #self.maxsize = int(avg_w * 1.3)
 
             #determine color of new buoys (if possible)
             #libvision.buoy_analyzer(frame, self.new)
