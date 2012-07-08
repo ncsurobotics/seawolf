@@ -39,7 +39,7 @@ class BuoyMission(MissionBase):
     def init(self):
         '''runs at start of mission '''
         self.set_timer("mission_timeout", MISSION_TIMEOUT, self.mission_timeout)
-        self.process_manager.start_process(entities.BuoyEntity, "buoy", "forward", debug=True)
+        self.process_manager.start_process(entities.BuoyTestEntity, "buoy", "forward", debug=True)
         sw3.nav.do(sw3.Forward(FORWARD_SPEED,5))
 
         #self.reference_angle = sw3.data.imu.yaw()*(pi/180) % (2*pi)
@@ -116,7 +116,7 @@ class BuoyMission(MissionBase):
         if not track_buoy:
             return
         self.set_timer("Approach_Timeout", APPROACH_TIMEOUT, self.approach_timeout, sw3.data.imu.yaw())
-        print "track_buoy.r:", track_buoy.r
+        #print "track_buoy.r:", track_buoy.r
         #print "State: BuoyBump  dist: ",track_buoy.r, " x angle from current: ",track_buoy.theta, " y angle from current: ", track_buoy.phi
         yaw_routine = sw3.RelativeYaw(track_buoy.theta)
         forward_routine = sw3.Forward(FORWARD_SPEED)
@@ -153,10 +153,13 @@ class BuoyMission(MissionBase):
                 yaw_routine
                 ))
     def approach_timeout(self,approach_angle):
+        self.next_state()
+        '''
         sw3.nav.do(sw3.SequentialRoutine(
             sw3.Forward(BACKWARD_SPEED, 5),
             self.sweep_routine(approach_angle)
             ))
+        '''
 
     def state_bump(self,buoys):
         track_buoy = None

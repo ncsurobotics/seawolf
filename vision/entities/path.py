@@ -25,7 +25,7 @@ class PathEntity(VisionEntity):
         self.theta_threshold = 0.1
         self.hough_threshold = 55
         self.lines_to_consider = 4 # Only consider the strongest so many lines
-        self.seen_in_a_row_threshold = 3 # Must see path this many times in a row before reporting it
+        self.seen_in_a_row_threshold = 2 # Must see path this many times in a row before reporting it
 
         # Position/orientation
         self.theta = None
@@ -52,7 +52,7 @@ class PathEntity(VisionEntity):
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         #use RGB color finder
-        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,1500,800,.3)
+        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,1500,500,.3)
 
         if self.debug:
             color_filtered = cv.CloneImage(binary)

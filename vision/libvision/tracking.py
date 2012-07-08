@@ -122,10 +122,10 @@ class Tracker(object):
 
         '''
         match_rectangle = (
-            coordinates[0]-self._template.width/2,
-            coordinates[1]-self._template.height/2,
-            self._template.width,
-            self._template.height
+            int(coordinates[0]-self._template.width/2),
+            int(coordinates[1]-self._template.height/2),
+            int(self._template.width),
+            int(self._template.height)
         )
         cv.SetImageROI(search_image, match_rectangle)
 

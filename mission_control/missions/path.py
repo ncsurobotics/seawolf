@@ -15,7 +15,7 @@ DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.2
 CENTER_THRESHOLD = 2
-FIELD_OF_VIEW=20
+FIELD_OF_VIEW=36
 PATH_DEPTH = 8
 CENTER_TIME = 5
 MIN_ANGLE_THRESHOLD = 5
@@ -94,5 +94,6 @@ class PathMission(MissionBase):
         degree = path_data.theta*(180/pi)
 
 
-        if degree <=  MIN_ANGLE_THRESHOLD or degree >= MAX_ANGLE_THRESHOLD:
+        #if degree <=  MIN_ANGLE_THRESHOLD or degree >= MAX_ANGLE_THRESHOLD:
+        if degree <=  MIN_ANGLE_THRESHOLD:
             self.finish_mission()
