@@ -3,9 +3,9 @@
 
 #include <math.h>
 
-#define THRUSTER_CAP 0.8  // Thrusters capped at this unless panicing
+#define THRUSTER_CAP 1.0  // Thrusters capped at this unless panicing
 #define PANIC_DEPTH  12.0 // At what depth we panic and go up full force
-#define PANIC_TIME   10.0 // Time in seconds that we panic
+#define PANIC_TIME   8.0 // Time in seconds that we panic
 
 /* Base Integral
  * pid->e_dt is initilized to BASE_I / pid->i so that the thrusters have an
