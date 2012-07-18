@@ -11,6 +11,7 @@ STATUS_LIGHT_ON = 2
 APPS_TO_START = [
     "./bin/depthpid",
     "./bin/yawpid",
+    "./bin/pitchpid",
     "./bin/mixer",
 ]
 
