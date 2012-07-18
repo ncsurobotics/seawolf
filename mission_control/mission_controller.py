@@ -54,6 +54,11 @@ class MissionController(object):
                 self.process_manager.ping()
             action, param = seawolf.notify.get()
 
+        # Avoid resetting mission if conductor isn't running (not
+        # --wait-for-go)
+        elif seawolf.var.get("MissionReset"):
+            seawolf.var.set("MissionReset", 0)
+
         try :
             # Run missions
             while self.execute_next():
