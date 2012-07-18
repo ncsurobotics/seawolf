@@ -41,7 +41,7 @@ class GateEntity(VisionEntity):
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
         self.hough_threshold = 51
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 4
+        self.adaptive_thresh = 3
         self.max_range = 135
 
         self.left_pole = None
@@ -66,12 +66,12 @@ class GateEntity(VisionEntity):
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
-        # Set binary image to have saturation channel
+        # Set binary image to have value channel
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 2)
-        cv.Copy(hsv, binary)  # Binary image now contains saturation channel
+        cv.SetImageCOI(hsv, 3)
+        cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
         cv.AdaptiveThreshold(binary, binary,
