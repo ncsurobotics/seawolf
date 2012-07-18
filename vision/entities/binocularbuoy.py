@@ -4,6 +4,8 @@ import math
 from base import VisionEntity, MultiCameraVisionEntity
 import cv
 
+import svr
+
 import libvision
 from sw3.util import circular_average
 
@@ -97,7 +99,7 @@ class BinocularBuoyWorker(VisionEntity):
 
         if self.debug:
             #windows
-            cv.NamedWindow("Buoy Debug " + self.camera_name)
+            #cv.NamedWindow("Buoy" + self.camera_name)
 
             #random number generator used for choosing debug colors
             self.rng = cv.RNG()
@@ -140,7 +142,7 @@ class BinocularBuoyWorker(VisionEntity):
                 cv.Rectangle(frame, (x,y), (x+w, y+w), confirmed.debug_color, thickness = 6)
 
             #show debug frame
-            cv.ShowImage("Buoy Debug " + self.camera_name, frame)
+            svr.debug("Buoy" + self.camera_name, frame)
 
     def find_buoys(self, frame):
         # Get Channels

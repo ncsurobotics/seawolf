@@ -4,6 +4,8 @@ import math
 
 import cv
 
+import svr
+
 from base import VisionEntity
 import libvision
 from sw3.util import circular_average
@@ -72,7 +74,7 @@ class BuoyTestEntity(VisionEntity):
 
         if self.debug:
             #windows
-            cv.NamedWindow("Buoy Debug")
+            cv.NamedWindow("BuoyTest")
 
             #random number generator used for choosing debug colors
             self.rng = cv.RNG()
@@ -131,7 +133,7 @@ class BuoyTestEntity(VisionEntity):
                 cv.Rectangle(frame, (x,y), (x+w, y+w), COLORS[confirmed.color], thickness = -1)
 
             #show debug frame
-            cv.ShowImage("Buoy Debug", frame)
+            svr.debug("BuoyTest", frame)
 
         ####### END DEBUG #######
 

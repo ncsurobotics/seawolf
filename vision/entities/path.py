@@ -5,6 +5,8 @@ import math
 
 import cv
 
+import svr
+
 from base import VisionEntity
 import libvision
 from sw3.util import circular_average
@@ -34,8 +36,8 @@ class PathEntity(VisionEntity):
         self.seen_in_a_row = 0
 
         if self.debug:
-            cv.NamedWindow("Path")
             '''
+            cv.NamedWindow("Path")
             self.create_trackbar("lower_hue", 360)
             self.create_trackbar("upper_hue", 360)
             self.create_trackbar("hue_bandstop", 1)
@@ -143,7 +145,8 @@ class PathEntity(VisionEntity):
             else:
                 libvision.misc.draw_lines(frame, lines)
 
-            cv.ShowImage("Path", frame)
+            #cv.ShowImage("Path", frame)
+            svr.debug("Path", frame)
 
         #populate self.output with infos
         self.output.found = object_present

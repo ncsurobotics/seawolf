@@ -2,23 +2,19 @@
 import math
 import cv
 
+import svr
+
 import libvision
 from base import VisionEntity
 
 class TestEntity(VisionEntity):
 
-    def init(self):
-        cv.NamedWindow("Frame")
-        cv.NamedWindow("Edges")
-        cv.NamedWindow("Lines")
-        cv.NamedWindow("Thresh")
- 
     def process_frame(self, frame, debug=True):
         ''' process this frame, then place output in self.output'''
 
         if debug:
             #display frame
-            cv.ShowImage("Frame", frame)
+            svr.debug("Frame", frame)
 
             #create a new image, the size of frame
             gray = cv.CreateImage(cv.GetSize(frame), 8, 1)
@@ -44,7 +40,7 @@ class TestEntity(VisionEntity):
             )
 
             #display adaptive threshold
-            cv.ShowImage("Thresh", binary)
+            svr.debug("Thresh", binary)
 
             # Hough Transform
             line_storage = cv.CreateMemStorage()
@@ -63,13 +59,13 @@ class TestEntity(VisionEntity):
             print found_lines
 
             #display our transformed image
-            cv.ShowImage("Edges", edge)
+            svr.debug("Edges", edge)
 
             #draw found lines
             libvision.misc.draw_lines(lines, found_lines)
 
             #display image with lines
-            cv.ShowImage("Lines", lines)
+            svr.debug("Lines", lines)
 
             cv.WaitKey(10)
 

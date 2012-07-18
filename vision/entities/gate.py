@@ -5,6 +5,8 @@ import math
 
 import cv
 
+import svr
+
 from base import VisionEntity
 import libvision
 from sw3.util import circular_average
@@ -30,6 +32,7 @@ def line_group_accept_test(line_group, line, max_range):
     return max_rho - min_rho < max_range
 
 class GateEntity(VisionEntity):
+    name = "Gate"
 
     def init(self):
 
@@ -46,12 +49,10 @@ class GateEntity(VisionEntity):
         self.seen_crossbar = False
 
         if self.debug:
-            #windows
-            cv.NamedWindow("Gate Debug")
-
-            #trackbars
-            self.create_trackbar("adaptive_thresh", 20)
-            self.create_trackbar("hough_threshold", 100)
+            pass
+            #cv.NamedWindow("Gate")
+            #self.create_trackbar("adaptive_thresh", 20)
+            #self.create_trackbar("hough_threshold", 100)
 
     def process_frame(self, frame):
 
@@ -178,7 +179,8 @@ class GateEntity(VisionEntity):
             libvision.misc.draw_lines(frame, vertical_lines)
             libvision.misc.draw_lines(frame, horizontal_lines)
 
-            cv.ShowImage("Gate Debug", cv.CloneImage(frame))
+            #cv.ShowImage("Gate", cv.CloneImage(frame))
+            svr.debug("Gate", cv.CloneImage(frame))
 
         #populate self.output with infos
         self.output.seen_crossbar = self.seen_crossbar
@@ -186,6 +188,7 @@ class GateEntity(VisionEntity):
         self.output.right_pole = self.right_pole
 
         self.return_output()
+        print self
 
     def __repr__(self):
         return "<GateEntity left_pole=%s right_pole=%s seen_crossbar=%s>" % \

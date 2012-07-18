@@ -5,11 +5,10 @@ from itertools import combinations
 
 import cv
 
-from base import VisionEntity, Container
-import libvision
 import svr
 
-svr.connect()
+from base import VisionEntity, Container
+import libvision
 
 Point = namedtuple("Point", ["x", "y"])
 
@@ -59,8 +58,7 @@ class BuoyEntity(VisionEntity):
 
                 buoy_locations = map(lambda x: adjust_location(x.object_center, frame.width, frame.height), self.trackers)
                 if debug_frame:
-                    cv.NamedWindow("Buoy")
-                    cv.ShowImage("Buoy", debug_frame)
+                    svr.debug("Buoy", debug_frame)
                 return
 
         # Tracking
@@ -68,8 +66,7 @@ class BuoyEntity(VisionEntity):
             num_buoys_found, buoy_locations = self.buoy_track(frame, self.trackers, debug_frame)
 
         if debug_frame:
-            cv.NamedWindow("Buoy")
-            cv.ShowImage("Buoy", debug_frame)
+            svr.debug("Buoy", debug_frame)
 
         # Convert to output format
         self.output.buoys = []

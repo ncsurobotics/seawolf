@@ -2,6 +2,8 @@
 from base import VisionEntity, MultiCameraVisionEntity
 import cv
 
+import svr
+
 class BinocularTestWorker(VisionEntity):
 
     def init(self):

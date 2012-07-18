@@ -4,6 +4,8 @@ import time
 import traceback
 from multiprocessing import Process, Pipe
 
+import svr
+
 import sw3
 
 class ProcessManager(object):
@@ -125,6 +127,7 @@ def run_entity(upstream_conn, entity_cls, *args, **kwargs):
     '''perpetually loops the vision class entity_cls, and outputs data
        through the upstream_conn pipe '''
     try:
+        svr.connect()
         entity = entity_cls(upstream_conn, *args, **kwargs)
         print "running", entity
         entity.run()

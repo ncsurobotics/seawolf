@@ -40,10 +40,8 @@ class VisionEntity(object):
         # Open camera
         self.camera_name = camera_name
         if self.camera_name in self.cameras:
-            self.svr = None
             self.capture = libvision.Camera(self.cameras[self.camera_name], display=self.debug)
         else:
-            svr.connect()
             self.capture = svr.Stream(self.camera_name)
             self.capture.unpause()
 

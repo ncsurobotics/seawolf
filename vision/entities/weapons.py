@@ -5,6 +5,8 @@ import math
 
 import cv
 
+import svr
+
 from base import VisionEntity
 import libvision
 from sw3.util import circular_average

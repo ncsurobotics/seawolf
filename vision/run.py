@@ -22,6 +22,8 @@ parent_directory = os.path.realpath(os.path.join(
 ))
 sys.path.append(parent_directory)
 
+import svr
+
 import entities
 import process_manager
 
@@ -72,6 +74,7 @@ if __name__ == "__main__":
                 return None
             def send(self, data):
                 print data
+        svr.connect()
         process_manager.run_entity(
             FakePipe(),
             entities.entity_classes[entity_name],
