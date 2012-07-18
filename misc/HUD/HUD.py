@@ -49,7 +49,7 @@ def ReSizeGLScene(Width, Height):
     glMatrixMode(GL_MODELVIEW)
 
 def Update(d):
-    glutTimerFunc(2000,Update,0)
+    glutTimerFunc(100,Update,0)
     glutPostRedisplay()
 
 def SetVariables(number):
@@ -74,13 +74,13 @@ def SetVariables(number):
         CUR_PITCH = random.randint(-10,10)
         CUR_ROLL = random.randint(-10,10)
     else:
-        PORT = sw.var.get("PORT")
+        PORT = sw.var.get("Port")
         STAR = sw.var.get("Star")
         BOW = sw.var.get("Bow")
         STERN = sw.var.get("Stern")
         STRAFE = sw.var.get("Strafe")
         DEPTH = sw.var.get("Depth")
-        DEPTH_HEADING = sw.var.get("DEPTHPID.Heading")
+        DEPTH_HEADING = sw.var.get("DepthPID.Heading")
         CUR_PITCH = sw.var.get("SEA.Pitch")
         CUR_ROLL = sw.var.get("SEA.Roll")
 
@@ -190,10 +190,10 @@ def drawDepthGauge():
     glEnd()
 
     drawText(-1.5,-2.3,GLUT_BITMAP_HELVETICA_12,"ACTUAL")
-    drawText(-1.5,-2.9,GLUT_BITMAP_HELVETICA_18,'%.3f' % DEPTH)
+    drawText(-1.5,-2.9,GLUT_BITMAP_9_BY_15,'%6.3f' % DEPTH)
 
     drawText(.5,-2.3,GLUT_BITMAP_HELVETICA_12,"HEADING")
-    drawText(.5,-2.9,GLUT_BITMAP_HELVETICA_18,'%.3f' % DEPTH_HEADING)
+    drawText(.5,-2.9,GLUT_BITMAP_9_BY_15,'%6.3f' % DEPTH_HEADING)
 
     drawText(-1,3,GLUT_BITMAP_HELVETICA_18,"DEPTH GAUGE")
 
@@ -226,26 +226,20 @@ def drawThrusterGauge():
     glEnd()
 
     drawText(.1,1.3,GLUT_BITMAP_HELVETICA_18,"Port X")
-    drawText(1.3,1.3,GLUT_BITMAP_HELVETICA_18,'%.3f' %PORT)
+    drawText(1.3,1.3,GLUT_BITMAP_9_BY_15,'%6.3f' %PORT)
     drawText(.1,.5,GLUT_BITMAP_HELVETICA_18,"Star X")
-    drawText(1.3,.5,GLUT_BITMAP_HELVETICA_18,'%.3f' %STAR)
+    drawText(1.3,.5,GLUT_BITMAP_9_BY_15,'%6.3f' %STAR)
     drawText(.1,-.3,GLUT_BITMAP_HELVETICA_18,"Bow Y")
-    drawText(1.3,-.3,GLUT_BITMAP_HELVETICA_18,'%.3f' %BOW)
+    drawText(1.3,-.3,GLUT_BITMAP_9_BY_15,'%6.3f' %BOW)
     drawText(.1,-1.1,GLUT_BITMAP_HELVETICA_18,"Stern Y")
-    drawText(1.3,-1.1,GLUT_BITMAP_HELVETICA_18,'%.3f' %STERN)
+    drawText(1.3,-1.1,GLUT_BITMAP_9_BY_15,'%6.3f' %STERN)
     drawText(.1,-1.9,GLUT_BITMAP_HELVETICA_18,"Strafe")
-    drawText(1.3,-1.9,GLUT_BITMAP_HELVETICA_18,'%.3f' %STRAFE)
+    drawText(1.3,-1.9,GLUT_BITMAP_9_BY_15,'%6.3f' %STRAFE)
 
 def drawLevelGauge():
     drawText(-1,3,GLUT_BITMAP_HELVETICA_18,"LEVEL GAUGE")
 
-    glColor3f(.1,.1,.1)
     glBegin(GL_QUADS)
-    glVertex3f(-2,-2,0)
-    glVertex3f(2,-2,0)
-    glVertex3f(2,-3,0)
-    glVertex3f(-2,-3,0)
-
     glColor3f(0,0,.5)
     glVertex3f(-2,-0.02*CUR_ROLL-0.04*CUR_PITCH,0)
     glVertex3f(2,0.02*CUR_ROLL-0.04*CUR_PITCH,0)
@@ -253,6 +247,13 @@ def drawLevelGauge():
     glVertex3f(-2,-2,0)
     glEnd()
 
+    glBegin(GL_QUADS)
+    glColor3f(.1,.1,.1)
+    glVertex3f(-2,-2,0)
+    glVertex3f(2,-2,0)
+    glVertex3f(2,-3,0)
+    glVertex3f(-2,-3,0)
+    glEnd()
 
     glColor3f(1,1,1)
     glLineWidth(2)
@@ -299,22 +300,22 @@ def drawLevelGauge():
         number=number-10
 
     drawText(-1.5,-2.3,GLUT_BITMAP_HELVETICA_12,"PITCH")
-    drawText(-1.5,-2.9,GLUT_BITMAP_HELVETICA_18,'%.3f' % CUR_PITCH)
+    drawText(-1.5,-2.9,GLUT_BITMAP_9_BY_15,'%6.3f' % CUR_PITCH)
     drawText(.5,-2.3,GLUT_BITMAP_HELVETICA_12,"ROLL")
-    drawText(.5,-2.9,GLUT_BITMAP_HELVETICA_18,'%.3f' % CUR_ROLL)
+    drawText(.5,-2.9,GLUT_BITMAP_9_BY_15,'%6.3f' % CUR_ROLL)
 
 def main():
-    #sw.loadConfig("../../conf/seawolf.conf")
-    #sw.init("HUD")
-    #sw.var.subscribe("Depth")
-    #sw.var.subscribe("DepthPID.Heading")
-    #sw.var.subscribe("Port")
-    #sw.var.subscribe("Star")
-    #sw.var.subscribe("Bow")
-    #sw.var.subscribe("Stern")
-    #sw.var.subscribe("Strafe")
-    #sw.var.subscribe("SEA.Pitch")
-    #sw.var.subscribe("SEA.Roll")
+    sw.loadConfig("../../conf/seawolf.conf")
+    sw.init("HUD")
+    sw.var.subscribe("Depth")
+    sw.var.subscribe("DepthPID.Heading")
+    sw.var.subscribe("Port")
+    sw.var.subscribe("Star")
+    sw.var.subscribe("Bow")
+    sw.var.subscribe("Stern")
+    sw.var.subscribe("Strafe")
+    sw.var.subscribe("SEA.Pitch")
+    sw.var.subscribe("SEA.Roll")
 
     global window
     # For now we just pass glutInit one empty argument. I wasn't sure what should or could be passed in (tuple, list, ...)
