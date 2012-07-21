@@ -156,3 +156,7 @@ cblob_mod = CModule("blob2.so", [
     CFunction("_wrap_find_blobs", cBlob_p_p, [ctypes.py_object, ctypes.py_object, ctypes.POINTER(ctypes.c_int), ctypes.c_int, ctypes.c_int, ctypes.c_int]),
     CFunction("free_blobs", None, [cBlob_p_p, ctypes.c_int])
 ])
+
+cgreymap_mod = CModule("greymap.so", [
+        CFunction("_wrap_greymap", None, [ctypes.py_object, ctypes.py_object, ctypes.c_ubyte * 256])
+])
