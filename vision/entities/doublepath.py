@@ -18,7 +18,7 @@ import math
 from math import pi
 
 def circular_distance(a, b, high=180, low=-180):
-    '''Finds the signed distance between a and b in a circular fashion.
+    ''' Finds the signed distance between a and b in a circular fashion.
 
     high and low are the ends of the wraparound point.  Going any higher than
     high wraps around to low.
@@ -27,16 +27,25 @@ def circular_distance(a, b, high=180, low=-180):
 
     a -= low
     b -= low
-    diff = high - low
+    circular_range = high - low
 
-    a = a % diff
-    b = b % diff
-    if abs(a - b) < diff/2:
-        return a-b
-    elif a - b > 0:
-        return diff - (a-b)
+    a = a % circular_range
+    b = b % circular_range
+
+    diff = a - b
+
+    if abs(diff) < circular_range / 2:
+        return diff
     else:
-        return (a-b) + diff
+        return math.copysign(circular_range - abs(diff), -diff)
+
+def get_yaw():
+    return -sw3.data.imu.yaw()
+
+def angle_in_range(angle, low, high):
+    if circular_distance(angle, low) > 0 and circular_distance(high, angle) > 0:
+        return True
+    return False
 
 class Path(object):
     def __init__(self):
@@ -64,20 +73,26 @@ class PathManager(object):
         self.all_lines = []
 
         self.angle_hint = angle_hint
-        self.start_angle = sw3.data.imu.yaw()
+        self.start_angle = None
+
+        sw.loadConfig("../conf/seawolf.conf")
+        sw.init("DoublePath")
 
     def get_absolute_angle(self, theta):
-        angle_hint = sw3.util.add_angle(self.start_angle, self.angle_hint)
+        angle_hint = sw3.util.add_angle(self.start_angle, -self.angle_hint)
 
-        if theta > pi / 2:
-            theta = -(pi - theta)
-        path_offset = theta * (180 / pi)
+        if theta < pi / 2:
+            theta = -theta
+        else:
+            theta = pi - theta
 
-        angle = sw3.util.add_angle(sw3.data.imu.yaw(), path_offset)
+        path_offset = math.degrees(theta)
+        angle = sw3.util.add_angle(get_yaw(), path_offset)
 
-        if angle_hint < 0 and circular_distance(angle, sw3.util.add_angle(angle_hint, 90)) > 0:
-            angle = sw3.util.add_angle(angle, -180)
-        elif angle_hint > 0 and circular_distance(angle, sw3.util.add_angle(angle_hint, -90)) < 0:
+        angle_min = sw3.util.add_angle(angle_hint, -80)
+        angle_max = sw3.util.add_angle(angle_hint, 80)
+
+        if not angle_in_range(angle, angle_min, angle_max):
             angle = sw3.util.add_angle(angle, 180)
 
         return angle
@@ -94,7 +109,7 @@ class PathManager(object):
         for angle in angles:
             added = False
             for path in self.paths:
-                if abs(circular_distance(path.angle, angle)) < self.grouping_angle_threshold:
+                if abs(circular_distance(angle, path.angle)) < self.grouping_angle_threshold:
                     added = True
                     path.add(angle)
                     break
@@ -133,9 +148,9 @@ class PathManager(object):
         absolute_lines = [(line, self.get_absolute_angle(line[1])) for line in lines]
 
         for line, absolute_angle in absolute_lines:
-            paths.sort(key=lambda path: abs(circular_distance(path.angle, absolute_angle)))
+            paths.sort(key=lambda path: abs(circular_distance(absolute_angle, path.angle)))
             path = paths[0]
-            if abs(circular_distance(path.angle, absolute_angle)) < self.grouping_angle_threshold:
+            if abs(circular_distance(absolute_angle, path.angle)) < self.grouping_angle_threshold:
                 path.lines.append(line)
 
         for path in paths:
@@ -151,8 +166,6 @@ class PathManager(object):
         rho_min = min([line[0] for line in path.lines])
         r = sw3.util.euclid_distance((x, y), (0, 0))
         rho = r * math.cos(path.theta - math.atan2(y, x))
-
-        #print x, y, rho_min, rho, rho_max
 
         if rho_min < rho < rho_max:
             return True
@@ -181,12 +194,7 @@ class PathManager(object):
             return None
 
         paths = self.assign_blobs(paths, blobs)
-        #print
-        #print paths
-
         paths = filter(lambda path: path.verified, paths)
-        #print [path.blobs for path in paths]
-        #print
 
         if len(paths) == 2:
             return paths
@@ -200,43 +208,15 @@ class DoublePathEntity(VisionEntity):
         self.which_path = which_path
         self.angle_hint = angle_hint
         self.path = None
-
-        # Thresholds
-        self.lower_hue = 60
-        self.upper_hue = 220
-        self.hue_bandstop = 1
-        self.min_saturation = 0
-        self.max_saturation = 110
-        self.min_value = 100
-        self.max_value = 255
-        self.theta_threshold = 0.1
-        self.hough_threshold = 55
-        self.lines_to_consider = 10 # Only consider the strongest so many lines
-        self.seen_in_a_row_threshold = 2 # Must see path this many times in a row before reporting it
-
-        # Position/orientation
-        self.theta = None
-        self.center = None
-
-        self.seen_in_a_row = 0
-
         self.path_manager = PathManager(self.angle_hint)
 
-        if self.debug:
-            '''
-            cv.NamedWindow("Path")
-            self.create_trackbar("lower_hue", 360)
-            self.create_trackbar("upper_hue", 360)
-            self.create_trackbar("hue_bandstop", 1)
-            self.create_trackbar("min_saturation")
-            self.create_trackbar("max_saturation")
-            self.create_trackbar("min_value")
-            self.create_trackbar("max_value")
-            self.create_trackbar("hough_threshold", 100)
-            self.create_trackbar("lines_to_consider", 10)
-            '''
+        self.hough_threshold = 55
+        self.lines_to_consider = 10
 
     def process_frame(self, frame):
+        if self.path_manager.start_angle == None:
+            self.path_manager.start_angle = get_yaw()
+
         self.output.found = False
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
@@ -278,11 +258,12 @@ class DoublePathEntity(VisionEntity):
 
         if paths and not self.path:
             # If path[1] is clockwise of paths[0]
-            distance  = circular_distance(paths[1].angle, paths[0].angle)
+            distance = circular_distance(paths[0].angle, paths[1].angle)
 
             print
             print "Distance: ", distance
-            print paths[1].angle, paths[0].angle
+            print paths[0].theta, paths[0].angle
+            print paths[1].theta, paths[1].angle
 
             if distance > 0:
                 self.path = paths[self.which_path]
@@ -352,9 +333,9 @@ class DoublePathEntity(VisionEntity):
         )
 
     def __repr__(self):
-        if self.theta is None:
-            theta = None
+        if self.path:
+            theta = round((180/math.pi)*self.path.theta, 2)
+            return "<DoublePathEntity center=%s theta=%>" % \
+                (self.path.center, theta)
         else:
-            theta = round((180/math.pi)*self.theta, 2)
-        return "<PathEntity center=%s theta=%s>" % \
-            (self.center, theta)
+            return "<DoublePathEntity center=?? theta=??>"
