@@ -70,13 +70,9 @@ class PathManager(object):
         self.paths = []
         self.grouping_angle_threshold = 10
         self.min_path_count = 5
-        self.all_lines = []
 
         self.angle_hint = angle_hint
         self.start_angle = None
-
-        sw.loadConfig("../conf/seawolf.conf")
-        sw.init("DoublePath")
 
     def get_absolute_angle(self, theta):
         angle_hint = sw3.util.add_angle(self.start_angle, -self.angle_hint)
@@ -99,13 +95,8 @@ class PathManager(object):
 
     def add_lines(self, lines):
         lines = [(line[0], self.get_absolute_angle(line[1])) for line in lines]
-        for line in lines:
-            if line[1] > 180 or line[1] < -180:
-                raise Exception()
-
-        self.all_lines.extend(lines)
-
         angles = [line[1] for line in lines]
+
         for angle in angles:
             added = False
             for path in self.paths:
@@ -118,16 +109,6 @@ class PathManager(object):
                 path = Path()
                 path.add(angle)
                 self.paths.append(path)
-
-    def line_distance(self, a, b):
-        angle_distance = circular_distance(a[1], b[1])**2
-        rho_distance = (a[0] - b[0])**2 * 1e-1
-        return (angle_distance + rho_distance)**0.5
-
-    def line_average(self, *lines):
-        angle = sw3.util.circular_average([line[1] for line in lines], 180, -180)
-        rho = sum([line[0] for line in lines]) / len(lines)
-        return (rho, angle)
 
     def get_paths(self):
         paths = filter(lambda path: path.count() >= self.min_path_count, self.paths)
@@ -202,7 +183,7 @@ class PathManager(object):
             return None
 
 class DoublePathEntity(VisionEntity):
-    name = "Path"
+    name = "DoublePath"
 
     def init(self, which_path=1, angle_hint=-70):
         self.which_path = which_path
@@ -213,6 +194,9 @@ class DoublePathEntity(VisionEntity):
         self.hough_threshold = 55
         self.lines_to_consider = 10
 
+        sw.loadConfig("../conf/seawolf.conf")
+        sw.init("DoublePath")
+
     def process_frame(self, frame):
         if self.path_manager.start_angle == None:
             self.path_manager.start_angle = get_yaw()
@@ -221,7 +205,7 @@ class DoublePathEntity(VisionEntity):
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
-        #use RGB color finder
+        # Use RGB color finder
         binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,1500,500,.3)
         color_filtered = cv.CloneImage(binary)
 
