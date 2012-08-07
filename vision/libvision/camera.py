@@ -3,6 +3,8 @@ import os
 
 import cv
 
+import svr
+
 class Camera(object):
     '''An wrapper for OpenCV's camera functionality.
 
@@ -45,7 +47,7 @@ class Camera(object):
         self.dc1394_capture = None
 
         if display:
-            cv.NamedWindow(self.get_window_name())
+            pass #cv.NamedWindow(self.get_window_name())
 
     def get_window_name(self):
         if self.window_name:
@@ -67,9 +69,6 @@ class Camera(object):
             frame = self.dc1394_capture.get_frame()
         else:
             frame = cv.QueryFrame(self.capture)
-        if self.display:
-            cv.ShowImage(self.get_window_name(), frame)
-
         # If the capture device doesn't work, OpenCV might not complain, but
         # just returns None when grabbing a frame.  Here we check for errors,
         # and see if it was actualy an image, not a video that we're opening
@@ -99,6 +98,9 @@ class Camera(object):
             #      specified as a video file, or when the user doesn't have
             #      permissions for the file.
 
+        if self.display:
+            #cv.ShowImage(self.get_window_name(), frame)
+            svr.debug(self.get_window_name(), frame)
 
         if self.record_path:
             filename = os.path.join(self.record_path, "%s.jpg" % self.frame_count)

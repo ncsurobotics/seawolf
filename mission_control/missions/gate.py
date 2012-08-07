@@ -6,7 +6,7 @@ from missions.base import MissionBase
 from vision import process_manager
 import sw3
 
-MISSION_TIMEOUT = 3
+MISSION_TIMEOUT = 8
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.4

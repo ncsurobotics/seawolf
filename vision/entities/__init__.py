@@ -16,10 +16,12 @@ from binoculartest import BinocularTest
 from path import PathEntity
 from buoy import BuoyEntity
 from buoytest import BuoyTestEntity
+from buoynew import BuoyNewEntity
 from binocularbuoy import BinocularBuoy
 from weapons import WeaponsEntity 
 from buoy2011 import Buoy2011Entity
 from doublepath import DoublePathEntity
+from hedge import HedgeEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -28,8 +30,10 @@ entity_classes = {
     "gate": GateEntity,
     "path": PathEntity,
     "buoy": BuoyEntity,
+    "buoynew": BuoyNewEntity,
     "buoytest": BuoyTestEntity,
     "buoy2011": Buoy2011Entity,
+    "hedge": HedgeEntity,
     "weapons": WeaponsEntity,
     "doublepath": DoublePathEntity
 }

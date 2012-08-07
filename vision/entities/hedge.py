@@ -1,6 +1,7 @@
 
 from __future__ import division
 import math
+from math import tan, atan, radians, degrees
 
 import cv
 
@@ -30,26 +31,27 @@ def line_group_accept_test(line_group, line, max_range):
             min_rho = l[0]
     return max_rho - min_rho < max_range
 
-class GateEntity(VisionEntity):
-    name = "Gate"
+class HedgeEntity(VisionEntity):
+    name = "Hedge"
 
     def init(self):
 
         # Thresholds
         self.vertical_threshold = 0.2  # How close to verticle lines must be
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 51
+        self.hough_threshold = 52
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 3
+        self.adaptive_thresh = 5
         self.max_range = 135
 
         self.left_pole = None
         self.right_pole = None
         self.seen_crossbar = False
+        self.crossbar_depth = None
 
         if self.debug:
             pass
-            #cv.NamedWindow("Gate")
+            #cv.NamedWindow("Hedge")
             #self.create_trackbar("adaptive_thresh", 20)
             #self.create_trackbar("hough_threshold", 100)
 
@@ -61,7 +63,7 @@ class GateEntity(VisionEntity):
         #cv.SetImageROI(frame, (0, 0, 320, 240))
         #cv.Resize(copy, frame, cv.CV_INTER_NN)
 
-        found_gate = False
+        found_hedge = False
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
@@ -82,14 +84,16 @@ class GateEntity(VisionEntity):
         )
 
         # Morphology
+        '''
         kernel = cv.CreateStructuringElementEx(3, 3, 1, 1, cv.CV_SHAPE_ELLIPSE)
         cv.Erode(binary, binary, kernel, 1)
         cv.Dilate(binary, binary, kernel, 1)
+        '''
         if self.debug:
             color_filtered = cv.CloneImage(binary)
 
         # Get Edges
-        cv.Canny(binary, binary, 30, 40)
+        #cv.Canny(binary, binary, 30, 40)
 
         # Hough Transform
         line_storage = cv.CreateMemStorage()
@@ -154,11 +158,10 @@ class GateEntity(VisionEntity):
 
         if len(horizontal_line_groups) is 1:
             self.seen_crossbar = True
-            if self.debug:
-                rhos = map(lambda line: line[0], horizontal_line_groups[0])
-                angles = map(lambda line: line[1], horizontal_line_groups[0])
-                line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
-                horizontal_lines = [line]
+            rhos = map(lambda line: line[0], horizontal_line_groups[0])
+            angles = map(lambda line: line[1], horizontal_line_groups[0])
+            line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
+            horizontal_lines = [line]
         else:
             self.seen_crossbar = False
             horizontal_lines = []
@@ -173,22 +176,39 @@ class GateEntity(VisionEntity):
             self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
         #TODO: If one pole is seen, is it left or right pole?
 
+        # Calculate planar distance r (assuming we are moving perpendicular to
+        # the hedge)
+        if self.left_pole and self.right_pole:
+            theta = abs(self.left_pole - self.right_pole)
+            self.r = 3 / tan(radians(theta/2))
+        else:
+            self.r = None
+
+        if self.r and self.seen_crossbar:
+            bar_phi = (-1*horizontal_lines[0][0] + frame.height/2) / (frame.height/2) * 32
+            self.crossbar_depth = self.r * atan(radians(bar_phi))
+        else:
+            self.crossbar_depth = None
+
+
         if self.debug:
             cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
             libvision.misc.draw_lines(frame, vertical_lines)
             libvision.misc.draw_lines(frame, horizontal_lines)
 
-            #cv.ShowImage("Gate", cv.CloneImage(frame))
-            svr.debug("Gate", cv.CloneImage(frame))
+            #cv.ShowImage("Hedge", cv.CloneImage(frame))
+            svr.debug("Hedge", cv.CloneImage(frame))
 
         #populate self.output with infos
         self.output.seen_crossbar = self.seen_crossbar
         self.output.left_pole = self.left_pole
         self.output.right_pole = self.right_pole
+        self.output.r = self.r
+        self.output.crossbar_depth = self.crossbar_depth
 
         self.return_output()
         print self
 
     def __repr__(self):
-        return "<GateEntity left_pole=%s right_pole=%s seen_crossbar=%s>" % \
-            (self.left_pole, self.right_pole, self.seen_crossbar)
+        return "<HedgeEntity left_pole=%s right_pole=%s seen_crossbar=%s crossbar_depth=%s>" % \
+            (self.left_pole, self.right_pole, self.seen_crossbar, self.crossbar_depth)

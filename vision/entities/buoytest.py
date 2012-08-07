@@ -11,8 +11,8 @@ import libvision
 from sw3.util import circular_average
 
 #maximum buoy translation allowed between frames
-MAX_X_TRANS = 40
-MAX_Y_TRANS = 40
+MAX_X_TRANS = 80
+MAX_Y_TRANS = 80
 
 #maximum allowed change in width
 MAX_CHANGE_WIDTH = 40
@@ -74,7 +74,7 @@ class BuoyTestEntity(VisionEntity):
 
         if self.debug:
             #windows
-            cv.NamedWindow("BuoyTest")
+            #cv.NamedWindow("BuoyTest")
 
             #random number generator used for choosing debug colors
             self.rng = cv.RNG()

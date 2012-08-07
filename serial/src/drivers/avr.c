@@ -163,7 +163,7 @@ static void* receive_thread(void* _sp) {
 
             case LIPO:
                 Logging_log(WARNING, "LiPo batteries low!");
-                Var_set("StatusLight", 3);
+                //Var_set("StatusLight", 3);
                 break;
             }
             break;

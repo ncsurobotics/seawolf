@@ -10,11 +10,13 @@ import math
 from math import pi
 from sw3 import util
 
+import seawolf as sw
+
 MISSION_TIMEOUT = 5
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.4
-CENTER_THRESHOLD = 2
+CENTER_THRESHOLD = 3
 FIELD_OF_VIEW=36
 PATH_DEPTH = 8
 CENTER_TIME = 5
@@ -23,17 +25,24 @@ MAX_ANGLE_THRESHOLD = 175
 
 class PathMission(MissionBase):
 
-    def __init__(self):
+    def __init__(self, expected_angle=None, expected_angle_threshold=15, double=False, which_path=0, angle_hint=70):
+        self.which_path = which_path
+        self.angle_hint = angle_hint
+        self.double = double
+        self.expected_angle = expected_angle
+        self.expected_angle_threshold = expected_angle_threshold*(pi/180)
         self.path_seen = 0
 
     def init(self):
         '''runs at start of mission '''
-        self.process_manager.start_process(entities.PathEntity,"path", "down", debug = True)
+        if self.double:
+            self.process_manager.start_process(entities.DoublePathEntity,"path", "down", which_path=self.which_path, angle_hint=self.angle_hint)
+        else:
+            self.process_manager.start_process(entities.PathEntity,"path", "down", debug = True)
         sw3.nav.do(sw3.CompoundRoutine([sw3.Forward(FORWARD_SPEED)]))
 
-        self.reference_angle = sw3.data.imu.yaw()*(pi/180) % (2*pi)
+        self.reference_angle = sw.var.get("YawPID.Heading")*(pi/180) % (2*pi)
         self.state = "centering"
-
 
     def step(self, vision_data):
 
@@ -43,6 +52,18 @@ class PathMission(MissionBase):
 
         if not path_data.found:
             return
+
+        # Ignore path if it isn't close to the expected angle
+        if self.expected_angle is not None:
+            current_yaw = sw3.data.imu.yaw()*(pi/180) % (2*pi)
+            path_angle = (path_data.theta + current_yaw) % pi
+            opposite_angle = (pi + path_angle) % (2*pi)
+            absolute_expected_angle = self.reference_angle + self.expected_angle*(pi/180)
+            if util.circular_distance(absolute_expected_angle, path_angle) > self.expected_angle_threshold and \
+               util.circular_distance(absolute_expected_angle, opposite_angle) > self.expected_angle_threshold:
+
+                print "Ignoring path out of range"
+                return
 
         theta_x = path_data.x*FIELD_OF_VIEW * pi / 180 #path_data.x is percent of fram view . multiplying them gives you theta_x
         theta_y = path_data.y*FIELD_OF_VIEW * pi / 180 #path_data.y is percent of frame view . multiplying them gives you theta
@@ -89,11 +110,16 @@ class PathMission(MissionBase):
             path_angle = path_angle - 2*pi
 
         print "Orienting to", (180/pi)*path_angle
-        sw3.nav.do(sw3.SetYaw((180/pi)*path_angle))
+        routine = sw3.SetYaw((180/pi)*path_angle,timeout = 8)
+        routine.on_done(self.finish_mission)
+        sw3.nav.do(routine)
+        self.state = 'done'
 
         degree = path_data.theta*(180/pi)
 
 
         #if degree <=  MIN_ANGLE_THRESHOLD or degree >= MAX_ANGLE_THRESHOLD:
+        '''
         if degree <=  MIN_ANGLE_THRESHOLD:
             self.finish_mission()
+        '''

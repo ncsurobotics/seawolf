@@ -2,6 +2,7 @@
 from __future__ import division
 import math
 import time
+import itertools
 
 import cv
 
@@ -66,10 +67,11 @@ class Path(object):
         return len(self.angles)
 
 class PathManager(object):
-    def __init__(self, angle_hint):
+    def __init__(self, angle_hint, max_angle_distance):
         self.paths = []
-        self.grouping_angle_threshold = 10
+        self.grouping_angle_threshold = 15
         self.min_path_count = 5
+        self.max_angle_distance = max_angle_distance
 
         self.angle_hint = angle_hint
         self.start_angle = None
@@ -97,6 +99,8 @@ class PathManager(object):
         lines = [(line[0], self.get_absolute_angle(line[1])) for line in lines]
         angles = [line[1] for line in lines]
 
+        #print lines
+
         for angle in angles:
             added = False
             for path in self.paths:
@@ -112,8 +116,15 @@ class PathManager(object):
 
     def get_paths(self):
         paths = filter(lambda path: path.count() >= self.min_path_count, self.paths)
-        paths.sort(key=lambda path: path.count(), reverse=True)
-        return paths[:2]
+
+        pairs = list(itertools.combinations(paths, 2))
+        pairs.sort(key=lambda pair: pair[0].count() + pair[1].count(), reverse=True)
+
+        for paths in pairs:
+            if abs(circular_distance(paths[0].angle, paths[1].angle)) < self.max_angle_distance:
+                return list(paths)
+
+        return []
 
     def classify(self, lines):
         """ Segment the given lines and assign the line clusters to paths """
@@ -123,7 +134,7 @@ class PathManager(object):
         if len(paths) < 2:
             return None
 
-        for path in paths:
+        for path in self.paths:
             path.lines = list()
 
         absolute_lines = [(line, self.get_absolute_angle(line[1])) for line in lines]
@@ -136,6 +147,7 @@ class PathManager(object):
 
         for path in paths:
             path.theta = sw3.util.circular_average([line[1] for line in path.lines], pi, 0)
+            #print path, path.angle, path.lines, path.angles
 
         return paths
 
@@ -185,11 +197,12 @@ class PathManager(object):
 class DoublePathEntity(VisionEntity):
     name = "DoublePath"
 
-    def init(self, which_path=1, angle_hint=-70):
+    def init(self, which_path=0, angle_hint=0, max_angle_distance=80):
         self.which_path = which_path
         self.angle_hint = angle_hint
+        self.max_angle_distance = max_angle_distance
         self.path = None
-        self.path_manager = PathManager(self.angle_hint)
+        self.path_manager = PathManager(self.angle_hint, self.max_angle_distance)
 
         self.hough_threshold = 55
         self.lines_to_consider = 10
@@ -293,6 +306,14 @@ class DoublePathEntity(VisionEntity):
             cv.SubS(binary_rgb, (0, 0, 255), binary_rgb)
             cv.Sub(frame, binary_rgb, frame)  # Remove all but Red
 
+            theta = math.radians(circular_distance(self.path_manager.start_angle, get_yaw()))
+            if theta < 0:
+                scale = math.cos(-2 * theta)
+                theta = pi + theta
+                libvision.misc.draw_lines(frame, [((-frame.width/2)*scale, theta)])
+            else:
+                libvision.misc.draw_lines(frame, [(frame.width/2, theta)])
+
             # Show lines
             if self.output.found:
                 rounded_center = (
@@ -301,6 +322,7 @@ class DoublePathEntity(VisionEntity):
                     )
                 cv.Circle(frame, rounded_center, 5, (0,255,0))
                 libvision.misc.draw_lines(frame, [(frame.width/2, self.path.theta)])
+
             else:
                 libvision.misc.draw_lines(frame, lines)
 
@@ -319,7 +341,8 @@ class DoublePathEntity(VisionEntity):
     def __repr__(self):
         if self.path:
             theta = round((180/math.pi)*self.path.theta, 2)
-            return "<DoublePathEntity center=%s theta=%>" % \
-                (self.path.center, theta)
+            return "<DoublePathEntity which=%d hint=%d center=%s theta=%>" % \
+                (self.which_path, self.angle_hint, self.path.center, theta)
         else:
-            return "<DoublePathEntity center=?? theta=??>"
+            return "<DoublePathEntity which=%d hint=%d center=?? theta=??>" % \
+                (self.which_path, self.angle_hint)
