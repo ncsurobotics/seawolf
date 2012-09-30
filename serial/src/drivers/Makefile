@@ -6,7 +6,7 @@ BINS=$(DRIVERS:%.c=../../$(BIN_DIR)/%)
 all: $(BINS)
 
 ../../$(BIN_DIR)/%: %.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $< $(LDFLAGS) -o $@
 
 clean:
 	@for _f in $(BINS) $(OBJECTS); do \

@@ -5,7 +5,7 @@ all: $(SERIALAPP)
 	$(MAKE) -C drivers
 
 $(SERIALAPP): serialapp.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $< $(LDFLAGS) -o $@
 
 clean:
 	@for _f in $(SERIALAPP); do \
