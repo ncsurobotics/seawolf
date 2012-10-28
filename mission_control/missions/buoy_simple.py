@@ -18,7 +18,7 @@ DEPTH_BUMP= 7.3
 class SimpleBuoyMission(MissionBase):
 
     def init(self):
-        self.process_manager.start_process(entities.Buoy2011Entity,"buoy", "forward", debug=True)
+        self.process_manager.start_process(entities.BuoyEntity,"buoy", "forward", debug=True)
         sw3.nav.do(sw3.CompoundRoutine(
             sw3.Forward(FORWARD_SPEED),
             sw3.SetDepth(DEPTH_BUMP),
