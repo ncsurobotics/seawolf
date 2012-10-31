@@ -124,7 +124,7 @@ void analyze_region(IplImage* src, BuoyROI* roi, double* distances, RGBPixel* av
     avg_r /= (roi->w * roi->h);
     avg_g /= (roi->w * roi->h);
 
-    printf("avg_r = %lf, avg_g = %lf \n",avg_r, avg_g);
+    //printf("avg_r = %lf, avg_g = %lf \n",avg_r, avg_g);
     /* determine dot product to use as distance from each color vector of interest */
     /* Grey */
     distances[0] = sqrt(pow(avg_r,2) + pow(avg_g,2));
