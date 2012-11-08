@@ -138,8 +138,8 @@ class BuoyTestEntity(VisionEntity):
 
         self.output.buoys = self.confirmed
         for buoy in self.output.buoys:
-            buoy.theta = (buoy.x + frame.width/2) * 37 / (frame.width/2);
-            buoy.phi = -1 * (buoy.y + frame.height/2) * 36 / (frame.height/2);
+            buoy.theta = (buoy.x - frame.width/2) * 37 / (frame.width/2);
+            buoy.phi = -1 * (buoy.y - frame.height/2) * 36 / (frame.height/2);
         self.return_output()
 
     def sort_buoys(self):
