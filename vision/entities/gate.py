@@ -36,12 +36,12 @@ class GateEntity(VisionEntity):
     def init(self):
 
         # Thresholds
-        self.vertical_threshold = 0.2  # How close to verticle lines must be
+        self.vertical_threshold = 15*math.pi/180  # How close to vertical lines must be
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 51
+        self.hough_threshold = 45
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 3
-        self.max_range = 135
+        self.adaptive_thresh = 7
+        self.max_range = 100
 
         self.left_pole = None
         self.right_pole = None
@@ -65,11 +65,11 @@ class GateEntity(VisionEntity):
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
-        # Set binary image to have value channel
+        # Set binary image to have saturation channel
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 3)
+        cv.SetImageCOI(hsv, 2)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
@@ -82,7 +82,7 @@ class GateEntity(VisionEntity):
         )
 
         # Morphology
-        kernel = cv.CreateStructuringElementEx(3, 3, 1, 1, cv.CV_SHAPE_ELLIPSE)
+        kernel = cv.CreateStructuringElementEx(5, 5, 3, 3, cv.CV_SHAPE_ELLIPSE)
         cv.Erode(binary, binary, kernel, 1)
         cv.Dilate(binary, binary, kernel, 1)
         if self.debug:
@@ -165,6 +165,7 @@ class GateEntity(VisionEntity):
 
         self.left_pole = None
         self.right_pole = None
+	print vertical_lines
         if len(vertical_lines) is 2:
             roi = cv.GetImageROI(frame)
             width = roi[2]
@@ -172,7 +173,7 @@ class GateEntity(VisionEntity):
             self.left_pole = round(min(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
             self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
         #TODO: If one pole is seen, is it left or right pole?
-
+	
         if self.debug:
             cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
             libvision.misc.draw_lines(frame, vertical_lines)

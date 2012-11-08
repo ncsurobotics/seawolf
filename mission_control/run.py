@@ -74,34 +74,16 @@ from mission_controller import MissionController
 #  * Tuple - First item must be a mission class.  The rest of the tuple is
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
-    sw3.HoldYaw(timeout=0.1),
-    sw3.SetDepth(2.0, timeout=0.1),
-    sw3.Forward(0.6, 16),
-    #missions.GateMission,
+    missions.GateMission,
     missions.PathMission,
     sw3.SetDepth(6.0, timeout=5),
-    missions.SimpleBuoyMission,
-    (missions.PathMission, 10, 30),
-    missions.HedgeMission,
+    missions.BuoyMission,
+    missions.SimpleBuoyMission
+    # missions.PathMission,
+    #missions.HedgeMission,
     #(missions.PathMission, None, 15, True, 0, 50),
-    (missions.PathMission, 0, 30),
-    sw3.SetDepth(3.0, timeout=0.1),
-    sw3.RelativeYaw(15, timeout=7),#degrees to shift yaw to aim to second hedge(- for to left, + for to right)
-    sw3.Forward(0.6, 8),
-    #missions.PathMission,
-    (missions.PathMission, None, 15, True, 0, 40),
-    sw3.SetDepth(5.6, timeout=5),
-    sw3.Forward(0.4, 0),
-    missions.HedgeMission,
-
-    sw3.Forward(0.6, 15),
-    sw3.Forward(0.0, 0.1),
-    sw3.SetDepth(3, timeout=5),
-    sw3.Forward(0.4, 0.1),
-
-    missions.PathMission,
-    sw3.SetDepth(16, timeout=8),
-    sw3.SetDepth(0)
+    #(missions.PathMission, 0, 30),
+    #missions.HedgeMission
 ]
 
 if __name__ == "__main__":
