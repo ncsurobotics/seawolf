@@ -11,8 +11,8 @@ import libvision
 from sw3.util import circular_average
 
 #maximum buoy translation allowed between frames
-MAX_X_TRANS = 80
-MAX_Y_TRANS = 80
+MAX_X_TRANS = 30
+MAX_Y_TRANS = 30
 
 #maximum allowed change in width
 MAX_CHANGE_WIDTH = 40
@@ -24,7 +24,7 @@ CONFIRMED_BUOY_TIMEOUT = 5
 CANDIDATE_BUOY_TIMEOUT = 3
 
 #required seen threshold to accept a buoy
-CANDIDATE_SEEN_THRESH = 3
+CANDIDATE_SEEN_THRESH = 2
 
 #dictionaries of colors
 COLORS = {0: cv.RGB(127, 127, 127),1:cv.RGB(255, 0, 0), 2: cv.RGB(0, 255, 0), 3: cv.RGB(255, 255, 0)}
@@ -64,8 +64,7 @@ class BuoyTestEntity(VisionEntity):
 
         # Thresholds
         self.minsize = 20
-        self.maxsize = 60
-
+        self.maxsize = 40
         # Buoy Classes
         self.new = []
         self.candidates = []
@@ -87,12 +86,12 @@ class BuoyTestEntity(VisionEntity):
         grey = libvision.misc.get_channel(hsv, 2)
 
         # load a haar classifier
-        hc = cv.Load("/home/seawolf/software/seawolf5/vision/buoy_cascade_4.xml")
+        hc = cv.Load("buoy_cascade_4.xml")
 
         #use classifier to detect buoys
         minsize = (int(self.minsize), int(self.minsize))
         maxsize = (int(self.maxsize), int(self.maxsize))
-        buoys = cv.HaarDetectObjects(grey, hc, cv.CreateMemStorage(), min_size = minsize, max_size = maxsize)
+        buoys = cv.HaarDetectObjects(grey, hc, cv.CreateMemStorage(), min_size = minsize)
 
         #compute average buoy size and extract to a list
         avg_w = 0
