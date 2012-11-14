@@ -76,11 +76,11 @@ from mission_controller import MissionController
 MISSION_ORDER = [
     missions.GateMission,
     missions.PathMission,
-    sw3.SetDepth(6.0, timeout=5),
+    #sw3.SetDepth(6.0, timeout=5),
     missions.BuoyMission,
-    missions.SimpleBuoyMission
+  # missions.SimpleBuoyMission,
     # missions.PathMission,
-    #missions.HedgeMission,
+    missions.HedgeMission
     #(missions.PathMission, None, 15, True, 0, 50),
     #(missions.PathMission, 0, 30),
     #missions.HedgeMission

@@ -15,20 +15,20 @@ BACKWARD_SPEED = -0.3
 CENTER_TIME = 5
 
 DEPTH_THRESHOLD = .06
-DEPTH_UNIT = 0.2
+DEPTH_UNIT = 0.1
 
 
 BUOY_FIRST = 0 #first buoy to bump(0 is left, 1 is center, 2 is right)
 BUOY_SECOND = 2 #second buoy to bump
 
-BUMP_TIME = 5 #time to move forward in bump routine
-OVER_DEPTH = -4 #depth to pass over the center buoy
-RUNOVER_TIME = 8 #
-DIST_THRESHOLD =  7
-CENTER_THRESHOLD = 2
-APPROACH_TIMEOUT = 6
-BUMP_TIMEOUT = 7
-BACKUP_TIME = 6
+BUMP_TIME = 3 #time to move forward in bump routine
+OVER_DEPTH = 1 #depth to pass over the center buoy
+RUNOVER_TIME = 3 #
+DIST_THRESHOLD =  2
+CENTER_THRESHOLD = 3
+APPROACH_TIMEOUT = 3
+BUMP_TIMEOUT = 2
+BACKUP_TIME = 2
 
 #TODO: depth control, check findpath, check if second buoy is center, testing for different buoy arrangements
 class BuoyMission(MissionBase):
@@ -38,7 +38,7 @@ class BuoyMission(MissionBase):
 
     def init(self):
         '''runs at start of mission '''
-        self.set_timer("mission_timeout", MISSION_TIMEOUT, self.mission_timeout)
+        #self.set_timer("mission_timeout", MISSION_TIMEOUT, self.mission_timeout)
         self.process_manager.start_process(entities.BuoyTestEntity, "buoy", "forward", debug=True)
         sw3.nav.do(sw3.Forward(FORWARD_SPEED,5))
 
@@ -144,9 +144,11 @@ class BuoyMission(MissionBase):
                     yaw_routine,
                     depth_routine
                     ))
-            if abs(track_buoy.r) <= DIST_THRESHOLD:
+            ''' if abs(track_buoy.r) <= DIST_THRESHOLD:
                 self.delete_timer("Approach_Timeout")
                 self.next_state()
+
+            '''     
         else:
            sw3.nav.do(sw3.CompoundRoutine(
                 stop_routine,

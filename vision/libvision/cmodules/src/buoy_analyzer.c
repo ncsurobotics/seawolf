@@ -344,8 +344,8 @@ int* buoy_color(IplImage* src, BuoyROI** rois, int num_rois){
         CvPoint br = {tl.x + total_vert_roi.w, tl.y + total_vert_roi.h};
         CvScalar color =  {avg_color->b, avg_color->g, avg_color->r, 0};
         cvRectangle(debug, tl, br,color, 5, 8, 0);
-        cvNamedWindow("Color Analyzer Debug", CV_WINDOW_AUTOSIZE);
-        cvShowImage("Color Analyzer Debug", debug);
+        //cvNamedWindow("Color Analyzer Debug", CV_WINDOW_AUTOSIZE);
+        //cvShowImage("Color Analyzer Debug", debug);
 
         cvReleaseImage(&debug);
     #endif
