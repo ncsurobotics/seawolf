@@ -12,7 +12,7 @@ class GateEntity(Entity):
 
     def draw(self):
         self.pre_draw()
-        glMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, (1,0.5,0))
+        glColor(1, 0.5, 0)
         glMatrixMode(GL_MODELVIEW)
 
         # Right Pole
