@@ -96,3 +96,7 @@ class Simulator(object):
             entity.step(dt)
 
         self.last_step_time = t
+
+
+if __name__ == "__main__":
+    raise RuntimeError("simulator.py is not a script. Did you mean to run run.py?")
