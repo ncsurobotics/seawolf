@@ -112,8 +112,33 @@ class Interface(object):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         self.init_camera()
         glMatrixMode(GL_MODELVIEW)
+
         for entity in self.simulator.entities:
             entity.draw()
+
+        # Draw water
+        glEnable(GL_BLEND)
+        glDepthMask(False)
+        glColor(0, 0, 1, 0.2)
+        glBegin(GL_QUADS)
+        glVertex(-1, -1, 0, 0.001)
+        glVertex(-1, 1, 0, 0.001)
+        glVertex(1, 1, 0, 0.001)
+        glVertex(1, -1, 0, 0.001)
+        glEnd()
+        glDepthMask(True)
+        glDisable(GL_BLEND)
+
+        # Draw Floor
+        glColor(0.05, 0.05, 0.05)
+        glBegin(GL_QUADS)
+        glVertex(-1000, -1000, -16)
+        glVertex(-1000, 1000, -16)
+        glVertex(1000, 1000, -16)
+        glVertex(1000, -1000, -16)
+        glEnd()
+
+
         glFlush()
         glutSwapBuffers()
 
