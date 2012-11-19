@@ -1,10 +1,18 @@
 
+from math import pi, radians
+
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
 from base import Entity, Container
 
 BIN_SEPERATION = 0.2
+THING_NAMES = [
+    "rat",
+    "hampster",
+    "gerbil",
+    "guinea pig",
+]
 
 
 class BinsEntity(Entity):
@@ -17,8 +25,7 @@ class BinsEntity(Entity):
         for i in xrange(4):
 
             glPushMatrix()
-            x_pos = (i - 1.5) * (2 + BIN_SEPERATION)
-            glTranslate(x_pos, 0, 0)
+            glTranslate(self.bin_x_position(i), 0, 0)
             glBegin(GL_QUADS)
 
             # Middle black square
@@ -59,15 +66,30 @@ class BinsEntity(Entity):
 
         self.post_draw()
 
+    def bin_x_position(self, i):
+        return (i - 1.5) * (2 + BIN_SEPERATION)
+
+    def find_bin(self, i, robot):  # I, Robot. The book is 1,000,000 times
+                                   # better than the movie
+        center = self.absolute_point((self.bin_x_position(i), 0, 0))
+
+        b = Container()
+        b.id = i
+        b.theta, b.phi = robot.find_point("down", center)
+        b.found = b.theta != None and b.phi != None
+        b.thing = THING_NAMES[i]
+
+        return b
+
     def find(self, robot):
-        raise NotImplementedError()
-
         c = Container()
-        c.orientation
-        c.bins
-        c.bins[0].id
-        c.bins[0].theta
-        c.bins[0].phi
-        c.bins[0].thing
 
-        return found, c
+        bins = [self.find_bin(i, robot) for i in xrange(4)]
+        c.bins = filter(lambda b: b.found, bins)
+
+        if len(c.bins) > 0:
+            c.orientation = radians(self.yaw-robot.yaw) % pi
+            return True, c
+        else:
+            c.orientation = None
+            return False, c
