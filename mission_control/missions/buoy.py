@@ -17,6 +17,12 @@ CENTER_TIME = 5
 DEPTH_THRESHOLD = .06
 DEPTH_UNIT = 0.2
 
+CAM_FRAME_X_MIN = 0
+CAM_FRAME_X_MAX = 0
+
+CAM_FRAME_Y_MIN = 0
+CAM_FRAME_Y_MAX = 0
+
 
 BUOY_FIRST = 0 #first buoy to bump(0 is left, 1 is center, 2 is right)
 BUOY_SECOND = 2 #second buoy to bump
@@ -115,8 +121,7 @@ class BuoyMission(MissionBase):
 
         if not track_buoy:
             return
-        self.set_timer("Approach_Timeout", APPROACH_TIMEOUT, self.approach_timeout, sw3.data.imu.yaw())
-        #print "track_buoy.r:", track_buoy.r
+        #self.set_timer("Approach_Timeout", APPROACH_TIMEOUT, self.approach_timeout, sw3.data.imu.yaw())
         #print "State: BuoyBump  dist: ",track_buoy.r, " x angle from current: ",track_buoy.theta, " y angle from current: ", track_buoy.phi
         yaw_routine = sw3.RelativeYaw(track_buoy.theta)
         forward_routine = sw3.Forward(FORWARD_SPEED)
@@ -144,9 +149,12 @@ class BuoyMission(MissionBase):
                     yaw_routine,
                     depth_routine
                     ))
+            '''
             if abs(track_buoy.r) <= DIST_THRESHOLD:
                 self.delete_timer("Approach_Timeout")
                 self.next_state()
+            '''
+            self.next_state()
         else:
            sw3.nav.do(sw3.CompoundRoutine(
                 stop_routine,
