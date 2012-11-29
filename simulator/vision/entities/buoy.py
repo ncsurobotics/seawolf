@@ -34,7 +34,7 @@ class BuoyEntity(Entity):
         glMatrixMode(GL_MODELVIEW)
 
         for pos, color in izip(self.positions, self.colors):
-            glMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color)
+            glColor(color)
             glPushMatrix()
             glTranslate(*pos)
             glutSolidSphere(0.75, 8, 8)  # 9 inch diameter

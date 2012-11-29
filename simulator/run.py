@@ -62,7 +62,11 @@ PARAMETER_SETS = {
         "cam_pitch": -20,
         "robot_pos": (60, 25, -3),
         "robot_yaw": -90,
-    }
+    },
+    "bins": {
+        "robot_pos": (60, 43, -5),
+        "robot_yaw": -115,
+    },
 }
 
 opt_parser = OptionParser(
@@ -120,6 +124,8 @@ simulator = Simulator(interface, robot, entities=[
                          pos_green=(0, -4, -1.5)),
     entities.PathEntity((60, 25, -12), yaw=-90),
     entities.HedgeEntity((60, 40, -5), yaw=-90),
+    entities.PathEntity((60, 43, -12), yaw=65),
+    entities.BinsEntity((55, 55, -12), yaw=0),
 ])
 
 print """
