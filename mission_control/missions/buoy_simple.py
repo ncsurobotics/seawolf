@@ -12,8 +12,8 @@ import svr
 
 FORWARD_SPEED = 0.6
 BUOY_TO_BUMP = 2
-BUOY_CENTER_THRESHOLD = 15
-DEPTH_BUMP= 7.3
+BUOY_CENTER_THRESHOLD = 5
+DEPTH_BUMP= 3
 
 class SimpleBuoyMission(MissionBase):
 
@@ -38,7 +38,7 @@ class SimpleBuoyMission(MissionBase):
             self.finish_mission()
 
     def bump_buoy(self, buoys, buoy_to_bump, depth=None):
-        return
+        
 
         if self.tracking_buoy_id == None:
 
@@ -62,6 +62,7 @@ class SimpleBuoyMission(MissionBase):
                 if found_buoys[0].center_distance < BUOY_CENTER_THRESHOLD:
                     self.tracking_buoy_id = found_buoys[0].id
 
+#what does this conditional do?
         if self.tracking_buoy_id != None:
 
             self.delete_timer("mission_timeout")
