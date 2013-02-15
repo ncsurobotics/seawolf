@@ -10,6 +10,7 @@ from OpenGL.GLUT import *
 import seawolf
 
 from base import Entity
+from doublepath import DoublePathEntity
 import model
 
 class RobotEntity(Entity):
@@ -153,6 +154,9 @@ class RobotEntity(Entity):
             glDisable(GL_BLEND)
 
     def find_entity(self, entity_cls):
+
+        if entity_cls == DoublePathEntity:
+            return DoublePathEntity.find_paths(self, self.simulator.entities)
 
         data = None
         entity_class_found = False
