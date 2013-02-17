@@ -12,12 +12,29 @@ import libvision
 from sw3.util import circular_average, circular_range
 
 
-MAX_X_TRANS = 30
-MAX_Y_TRANS = 30
-#how many consequtive frames a candidate is allowed to go missing
-CANDIDATE_BIN_TIMEOUT = 3
-#required seen threshold to accept a buoy
-CANDIDATE_SEEN_THRESH = 2
+
+
+
+class Bin(object):
+    bin_id = 0
+    '''an imaged bin'''
+    def __init__(self, corner_a,corner_b,corner_c, corner_d):
+	self.midx = rect_midpointx(corner_a,corner_b,corner_c,corner_d)
+	self.midy = rect_midpointy(corner_a,corner_b,corner_c,corner_d)
+	self.corner1 = corner_a
+	self.corner2 = corner_b
+	self.corner3 = corner_c
+	self.corner4 = corner_d
+	self.angle = -angle_between_lines(line_slope(corner_a,corner_c), 0)
+	self.ID = 0
+	self.last_seen = 2
+	self.seencount = 1
+	self.rng = cv.RNG()
+	r = int(cv.RandReal(self.rng)*255)
+        g = int(cv.RandReal(self.rng)*255)
+        b = int(cv.RandReal(self.rng)*255)
+        self.debug_color = cv.RGB(r,g,b)
+
 
 class Binscorner(object):
     def __init__(self,type,center,angle,area):
@@ -41,8 +58,7 @@ class Binscorner(object):
 
         #tracks our type decisions
         self.type_counts = [0,0,0,0,0]
-	
-   
+
 
 def line_distance(corner_a, corner_b):
 	distance = math.sqrt((corner_b[0]-corner_a[0])**2 + (corner_b[1]-corner_a[1])**2)
@@ -87,60 +103,15 @@ def rect_midpointy(corner_a,corner_b,corner_c,corner_d):
 	return midpoint_y
 
 
+		
 
-
-class Bin(object):
-    '''an imaged bin'''
-    def __init__(self):
-
-        #Identification Number
-        self.id = 0
-
-        self.midx = None
-        self.midy = None
-
-        self.small = None
-
-        self.large = None
-
-	self.color = None
-
-        #Frames since last sighting
-        self.last_seen = 0
-
-        #Keeps track of how often we have seen this buoy
-        self.seen_count = 0
-
-        #Color used in debug windows
-        self.debug_color = None
 
 
 class BinscornerEntity(VisionEntity):
-    def new_bins(self,corner1,corner2,corner3,corner4):
-       	'''intialize a new bin'''
-	new_bins = Bin()
-	new_bins.midx = rect_midpointx(corner1,corner2, corner3, corner4)
-	new_bins.midy = rect_midpointy(corner1,corner2, corner3, corner4)
-	new_bins.corner1 = corner1
-	new_bins.corner2 = corner2
-	new_bins.corner3 = corner3
-	new_bins.corner4 = corner4
-	if math.fabs(line_distance(corner1, corner3))<math.fabs(line_distance(corner1,corner2)):
-		new_bins.angle = -angle_between_lines(line_slope(corner1,corner3), 0)
-		new_bins.small = math.fabs(line_distance(corner1, corner3))
-		new_bins.large = math.fabs(line_distance(corner1, corner2))
-	else:
-		new_bins.angle = angle_between_lines(line_slope(corner1,corner2), 0)
-		new_bins.small = math.fabs(line_distance(corner1, corner2))
-		new_bins.large = math.fabs(line_distance(corner1, corner3))
-	        new_bins.last_seen = 0
-	        new_bins.seen_count = 0
-        return new_bins
-
-
+    
+   
 
     def init(self):
-	
 	
 #	self.vertical_threshold = 15*math.pi/180  # How close to vertical lines must be
 #        self.horizontal_threshold = 0.2  # How close to horizontal lines must be
@@ -155,8 +126,6 @@ class BinscornerEntity(VisionEntity):
 	self.min_distance = 40
 	self.good_features_blocksize = 24
 	
-        self.min_line_size = 120
-	self.max_line_size = 200
 
 	self.angle_min = math.pi/2-.1
 	self.angle_max = math.pi/2+.1
@@ -168,16 +137,22 @@ class BinscornerEntity(VisionEntity):
 	self.ratio_threshold = .5
 	self.length_threshold = 200
 
+	self.MaxTrans = 25
+
+	self.last_seen_thresh = 0
+	self.min_seencount = 3
+
+	self.perimeter_threshold = 5000
 
 	self.candidates = []
-	self.confirmed = []
-
+        self.confirmed  = []
+	self.new = []
 
 
 
     def process_frame(self, frame):
-	debug_frame = cv.CreateImage(cv.GetSize(frame),8,3)
-	cv.Copy(frame, debug_frame)
+	self.debug_frame = cv.CreateImage(cv.GetSize(frame),8,3)
+	cv.Copy(frame, self.debug_frame)
 
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
@@ -208,7 +183,7 @@ class BinscornerEntity(VisionEntity):
         # Get Edges
         #cv.Canny(binary, binary, 30, 40)
    
-        cv.CvtColor(binary,debug_frame, cv.CV_GRAY2RGB)
+        cv.CvtColor(binary,self.debug_frame, cv.CV_GRAY2RGB)
 	
 	temp1 = cv.CreateImage(cv.GetSize(frame), 8, 1)
 	temp2 = cv.CreateImage(cv.GetSize(frame), 8, 1)
@@ -219,12 +194,13 @@ class BinscornerEntity(VisionEntity):
                 corner_color = (0,0,255)
 		text_color = (0, 255, 0)
 		font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .6, .6, 0, 1, 1)
-		cv.Circle(debug_frame, (int(corner[0]),int(corner[1])), 15, corner_color, 2,8,0)
-		cv.PutText(debug_frame, str(corner), (int(corner[0]),int(corner[1])), font, text_color)
+		cv.Circle(self.debug_frame, (int(corner[0]),int(corner[1])), 15, corner_color, 2,8,0)
+		cv.PutText(self.debug_frame, str(corner), (int(corner[0]),int(corner[1])), font, text_color)
 		#print corner
-#		cv.PutText(debug_frame, corner, (int(corner[0]),int(corner[1]), CV_FONT_HERSHEY_SIMPLEX, (0,0,255))
+#		cv.PutText(self.debug_frame, corner, (int(corner[0]),int(corner[1]), CV_FONT_HERSHEY_SIMPLEX, (0,0,255))
 		
-
+	
+	
 
 #Find Centers
 
@@ -236,119 +212,140 @@ class BinscornerEntity(VisionEntity):
 						if math.fabs(line_distance(corner1,corner3) - line_distance(corner2,corner4)) < self.size_threshold and math.fabs(line_distance(corner1,corner2) - line_distance(corner3,corner4)) < self.size_threshold and math.fabs(line_distance(corner1,corner3)/line_distance(corner1,corner2)) < self.ratio_threshold or math.fabs(line_distance(corner1,corner2)/line_distance(corner1,corner3)) < self.ratio_threshold:
 							if math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4) ))> self.angle_min and math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4))) < self.angle_max:
 								if math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4) ))> self.angle_min2 and math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4))) < self.angle_max2:
-									existing = 0
-									for bins in self.candidates:
-										if bins.midx == rect_midpointx(corner1,corner2, corner3, corner4) and bins.midy == rect_midpointy(corner1,corner2, corner3, corner4) :
-											existing = 1
-									if existing == 0:
-										bins_found = self.new_bins(corner1,corner2,corner3,corner4)
-										self.candidates.append(bins_found)
-										self.sort_bins()
-										
+									#print "found"
+									found = 0
+									new_bin = Bin(corner1,corner2,corner3,corner4)
+									for found in self.new:
+										if new_bin.corner1 != found.corner1 and new_bin.corner2 != found.corner2 and new_bin.corner3 != found.corner3 and new_bin.corner4 != found.corner4:
+											continue
+										else: 
+											found = 1
+									if found == 0:
+										self.match_bins(new_bin)
+	self.sort_bins()								
+	svr.debug("Bins", self.debug_frame)
+	        
 
-										line_color = (corner1[1]/2,corner2[1]/2,corner4[1]/2)
-										cv.Circle(debug_frame, (int(rect_midpointx(corner1,corner2, corner3, corner4)),int(rect_midpointy(corner1,corner2, corner3, corner4))), 15, line_color, 2,8,0)
-										
-										pt1 = (cv.Round(corner1[0]), cv.Round(corner1[1]))
-										pt2 = (cv.Round(corner2[0]), cv.Round(corner2[1]))
-										cv.Line(debug_frame, pt1, pt2, line_color, 1, cv.CV_AA, 0)
-										pt2 = (cv.Round(corner2[0]), cv.Round(corner2[1]))
-										pt4 = (cv.Round(corner4[0]), cv.Round(corner4[1]))
-										pt3 = (cv.Round(corner3[0]),cv.Round(corner3[1]))
-										cv.Line(debug_frame, pt2, pt4, line_color, 1, cv.CV_AA, 0)
-										cv.Line(debug_frame, pt3,pt4, line_color, 1, cv.CV_AA, 0)	
-										cv.Line(debug_frame, pt1,pt3, line_color, 1, cv.CV_AA, 0)
-										if math.fabs(line_distance(corner1, corner3))<math.fabs(line_distance(corner1,corner2)):
-											angle = -angle_between_lines(line_slope(corner1,corner3), 0)
-											print int((angle/math.pi)*180)
-											cv.PutText(debug_frame, str(int((angle/math.pi)*180)), (int(rect_midpointx(corner1,corner2, corner3, corner4)),int(rect_midpointy(corner1,corner2, corner3, corner4))), font, text_color)
-
-											print "found"
-	svr.debug("Bins", debug_frame)
-
-    def sort_bins(self):
-        
-        	#perform upkeep on confirmed buoys
-       		for confirmed in self.confirmed:
-
-        	    #increment how long ago we saw this buoy.  If it gets
-        	    # matched, this number will be reset
-        	    confirmed.last_seen += 1
-        	    confirmed.seen_count -= 1
-
-        	    #check if this buoy can be matched to a new buoy
-        	    self.match_bins(confirmed)
-	
-        	    #if this buoy hasn't been seen recently, mark it as lost
-        	    if confirmed.last_seen > CONFIRMED_BIN_TIMEOUT:
-        	        self.lost.append(confirmed)
-        	        self.confirmed.remove(confirmed)
-	
-        	#perform upkeep on candidates
-        	for candidate in self.candidates:
-	
-        	    #increment how long ago we saw this buoy.  If it gets
-        	    # matched, this number will be reset
-        	    candidate.last_seen += 1
-        	    candidate.seen_count -= 1
-	
-        	    #check if this buoy can be matched to a new buoy
-        	    self.match_bins(candidate)
-	
-        	    #if this buoy hasn't been seen recently, stop tracking
-        	    if candidate.last_seen > CANDIDATE_BIN_TIMEOUT:
-        	        self.candidates.remove(candidate)
-	
-        	    #if seen count has grown large enough, accept this buoy
-        	    if candidate.seen_count >= CANDIDATE_SEEN_THRESH:
-        	        if self.debug:
-        	            #assign this buoy a debug color
-        	            r = int(cv.RandReal(self.rng)*255)
-        	            g = int(cv.RandReal(self.rng)*255)
-        	            b = int(cv.RandReal(self.rng)*255)
-        	            candidate.debug_color = cv.RGB(r,g,b)
-        	        candidate.id = self.bin_count
-        	        self.bin_count += 1
-        	        self.confirmed.append(candidate)
-        	        self.candidates.remove(candidate)
-	
-        	#perform upkeep on lost buoys
-        	#TODO use lost buoys for anything, likely will depend on color
-	
-        	
+	self.output.bins = self.confirmed
+        for bins in self.output.bins:
+            bins.theta = (bins.midx - frame.width/2) * 37 / (frame.width/2);
+            bins.phi = -1 * (bins.midy - frame.height/2) * 36 / (frame.height/2);
+	    bins.orientation = bins.angle
+        self.return_output()
 
     def match_bins(self, target):
-        	'''matches buoys in the self.new list to a target buoy'''
-        
-	        #check if any of the new buoys match this confirmed buoy
-        	for Bin in self.confirmed:
-        	    if abs(Bin.midx - target.midx) < MAX_X_TRANS:
-        	        continue
-        	    if abs(Bin.midy - target.midy) < MAX_Y_TRANS:
-        	        continue
-        	    
+		existing = 0
+		for candidate in self.candidates:
+			if math.fabs(target.midx-candidate.midx) < self.MaxTrans and math.fabs(target.midy-candidate.midy) < self.MaxTrans and target.ID != candidate.ID:
+				candidate.midx = target.midx
+				candidate.midy = target.midy
+				candidate.corner1 = target.corner1
+				candidate.corner2 = target.corner2
+				candidate.corner3 = target.corner3
+				candidate.corner4 = target.corner4
+				candidate.angle = target.angle
+				if candidate.last_seen < 20:
+					candidate.last_seen +=3
+				candidate.seencount +=1
+				existing = 1
+		for confirmed in self.confirmed:
+			if math.fabs(target.midx-confirmed.midx) < self.MaxTrans and math.fabs(target.midy-confirmed.midy) < self.MaxTrans and target.ID != confirmed.ID:
+				confirmed.midx = target.midx
+				confirmed.midy = target.midy
+				confirmed.corner1 = target.corner1
+				confirmed.corner2 = target.corner2
+				confirmed.corner3 = target.corner3
+				confirmed.corner4 = target.corner4
+				confirmed.angle = target.angle
+				if confirmed.last_seen < 20:
+					confirmed.last_seen +=3
+				confirmed.seencount +=1
+				existing = 1
+		if existing == 0:
+			print "found candidate"
+			target.ID = Bin.bin_id
+			Bin.bin_id += 1
+			self.candidates.append(target)
+
+
+
+
+    '''
+									line_color = (corner1[1]/2,corner2[1]/2,corner4[1]/2)
+									cv.Circle(self.debug_frame, (int(rect_midpointx(corner1,corner2, corner3, corner4)),int(rect_midpointy(corner1,corner2, corner3, corner4))), 15, line_color, 2,8,0)
+									
+									pt1 = (cv.Round(corner1[0]), cv.Round(corner1[1]))
+									pt2 = (cv.Round(corner2[0]), cv.Round(corner2[1]))
+									cv.Line(self.debug_frame, pt1, pt2, line_color, 1, cv.CV_AA, 0)
+									pt2 = (cv.Round(corner2[0]), cv.Round(corner2[1]))
+									pt4 = (cv.Round(corner4[0]), cv.Round(corner4[1]))
+									pt3 = (cv.Round(corner3[0]),cv.Round(corner3[1]))
+									cv.Line(self.debug_frame, pt2, pt4, line_color, 1, cv.CV_AA, 0)
+									cv.Line(self.debug_frame, pt3,pt4, line_color, 1, cv.CV_AA, 0)
+									cv.Line(self.debug_frame, pt1,pt3, line_color, 1, cv.CV_AA, 0)
+									if math.fabs(line_distance(corner1, corner3))<math.fabs(line_distance(corner1,corner2)):
+										angle = -angle_between_lines(line_slope(corner1,corner3), 0)
+										print int((angle/math.pi)*180)
+										cv.PutText(self.debug_frame, str(int((angle/math.pi)*180)), (int(rect_midpointx(corner1,corner2, corner3, corner4)),int(rect_midpointy(corner1,corner2, corner3, corner4))), font, text_color)
+
+									print "found"
+    '''
 	
-        	    #this is a match, update confirmed buoy
-        	    Bin.color = target.color
-        	    Bin.midx = target.midx
-        	    Bin.midy = target.midy
-        	    
-        	    Bin.last_seen = 0
-        	    Bin.seen_count += 2 #effectually increase by 1 if seen, -1 if not seen
-        	    #TODO handle color
-	
-        	    #remove this new buoy that has been matched
-		    self.confirmed.remove(target)
-		
-        	    break		
-
-
-
-
-
 
 	
-	#libvision.misc.draw_lines(debug_frame, corner)
-       # cv.CvtColor(color_filtered,debug_frame, cv.CV_GRAY2RGB)
-    
+	
+    def sort_bins(self):
+		for candidate in self.candidates:
+			candidate.last_seen -= 1
+			if candidate.last_seen < self.last_seen_thresh:
+				self.candidates.remove(candidate) 
+				print "lost"
+				continue
+			if candidate.seencount > self.min_seencount:
+				self.confirmed.append(candidate)
+				self.candidates.remove(candidate)
+				print "confirmed"
+				continue
+		self.min_perimeter = 1000		
+		for confirmed in self.confirmed:
+			if 0 < line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 < self.min_perimeter: 	
+				self.min_perimeter = line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2
+
+		for confirmed in self.confirmed:
+			print self.min_perimeter
+			if math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 - self.min_perimeter)>self.min_perimeter*0.08:
+				print "perimeter error"
+				continue
+			confirmed.last_seen -= 1
+			if confirmed.last_seen < self.last_seen_thresh:
+				self.confirmed.remove(confirmed) 
+				print "lost confirmed"
+				continue
+			line_color = (confirmed.corner1[1]/2,confirmed.corner2[1]/2,confirmed.corner4[1]/2)
+			cv.Circle(self.debug_frame, (int(confirmed.midx),int(confirmed.midy)), 15, line_color, 2,8,0)
+			pt1 = (cv.Round(confirmed.corner1[0]), cv.Round(confirmed.corner1[1]))
+			pt2 = (cv.Round(confirmed.corner2[0]), cv.Round(confirmed.corner2[1]))
+			cv.Line(self.debug_frame, pt1, pt2, line_color, 1, cv.CV_AA, 0)
+			pt2 = (cv.Round(confirmed.corner2[0]), cv.Round(confirmed.corner2[1]))
+			pt4 = (cv.Round(confirmed.corner4[0]), cv.Round(confirmed.corner4[1]))
+			pt3 = (cv.Round(confirmed.corner3[0]),cv.Round(confirmed.corner3[1]))
+			cv.Line(self.debug_frame, pt2, pt4, line_color, 1, cv.CV_AA, 0)
+			cv.Line(self.debug_frame, pt3,pt4, line_color, 1, cv.CV_AA, 0)
+			cv.Line(self.debug_frame, pt1,pt3, line_color, 1, cv.CV_AA, 0)
+			font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .6, .6, 0, 1, 1)
+			text_color = (0, 255, 0)
+			cv.PutText(self.debug_frame, str(confirmed.last_seen), (int(confirmed.midx),int(confirmed.midy)), font, confirmed.debug_color)
+	
+	
+
+
+
+
+
+
+	
+	#libvision.misc.draw_lines(self.debug_frame, corner)
+       # cv.CvtColor(color_filtered,self.debug_frame, cv.CV_GRAY2RGB)
+	
+
 
