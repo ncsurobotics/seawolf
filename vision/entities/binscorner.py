@@ -12,7 +12,7 @@ from base import VisionEntity
 import libvision
 from sw3.util import circular_average, circular_range
 
-rng = cv.RNG()
+
 
 
 
@@ -20,6 +20,7 @@ class Bin(object):
     bin_id = 0
     '''an imaged bin'''
     def __init__(self, corner_a,corner_b,corner_c, corner_d):
+	rng = cv.RNG()
 	self.midx = rect_midpointx(corner_a,corner_b,corner_c,corner_d)
 	self.midy = rect_midpointy(corner_a,corner_b,corner_c,corner_d)
 	self.corner1 = corner_a
@@ -127,28 +128,34 @@ class BinscornerEntity(VisionEntity):
 	self.good_features_blocksize = 24
 	
 
-	self.angle_min = math.pi/2-.1
-	self.angle_max = math.pi/2+.1
-
-	self.angle_min2 = math.pi/2-.1
-	self.angle_max2 = math.pi/2+.1
+	self.angle_min = math.pi/2-.15
+	self.angle_max = math.pi/2+.15
+	self.angle_min2 = math.pi/2-.15
+	self.angle_max2 = math.pi/2+.15
 
 	self.size_threshold = 40
 	self.ratio_threshold = .5
 	self.length_threshold = 200
 
-	self.MaxTrans = 25
+	self.MaxTrans = 30
+	self.MaxLostTrans = 50
 
 	self.last_seen_thresh = 0
-	self.min_seencount = 3
+	self.min_seencount = 5
+	self.lost_last_seen_thresh = 0
 
-	self.perimeter_threshold = 5000
+	self.perimeter_threshold = 0.08
 
-	
+	self.lost_clock =100
+
+	self.corners = []
 	self.candidates = []
         self.confirmed  = []
 	self.new = []
 	self.angles = []
+	self.lost = []
+
+	
 
 
     def process_frame(self, frame):
@@ -191,10 +198,10 @@ class BinscornerEntity(VisionEntity):
 	#Find Corners
 	temp1 = cv.CreateImage(cv.GetSize(frame), 8, 1)
 	temp2 = cv.CreateImage(cv.GetSize(frame), 8, 1)
-	corners = cv.GoodFeaturesToTrack(binary, temp1, temp2, self.max_corners, self.quality_level, self.min_distance, None, self.good_features_blocksize, 0, 0.4) 
+	self.corners = cv.GoodFeaturesToTrack(binary, temp1, temp2, self.max_corners, self.quality_level, self.min_distance, None, self.good_features_blocksize, 0, 0.4) 
 	
 	#Display Corners
-        for corner in corners:
+        for corner in self.corners:
                 corner_color = (0,0,255)
 		text_color = (0, 255, 0)
 		font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .6, .6, 0, 1, 1)
@@ -205,10 +212,10 @@ class BinscornerEntity(VisionEntity):
 
 #Find Candidates
 
-	for corner1 in corners:
-		for corner2 in corners:
-			for corner3 in corners:
-				for corner4 in corners:
+	for corner1 in self.corners:
+		for corner2 in self.corners:
+			for corner3 in self.corners:
+				for corner4 in self.corners:
 					#Checks that corners are not the same and are in the proper orientation
 					if corner4[0] != corner3[0] and corner4[0] != corner2[0] and corner4[0] != corner1[0] and corner3[0] != corner2[0] and corner3[0] != corner1[0] and corner2[0] != corner1[0] and corner4[1] != corner3[1] and corner4[1] != corner2[1] and corner4[1] != corner1[1] and corner3[1] != corner2[1] and corner3[1] != corner1[1] and corner2[1] != corner1[1] and corner2[0]>=corner3[0] and corner1[1]>=corner4[1] and corner2[0]>=corner1[0]:
 						#Checks that the ratios are correct
@@ -233,6 +240,20 @@ class BinscornerEntity(VisionEntity):
 
     def match_bins(self, target):
 		existing = 0
+		#update if lost bin
+		for lost in self.lost:
+			if math.fabs(target.midx-lost.midx) < self.MaxTrans and math.fabs(target.midy-lost.midy) < self.MaxTrans and target.ID != lost.ID:
+				lost.midx = target.midx
+				lost.midy = target.midy
+				lost.corner1 = target.corner1
+				lost.corner2 = target.corner2
+				lost.corner3 = target.corner3
+				lost.corner4 = target.corner4
+				lost.angle = target.angle
+				lost.last_seen = 15
+				lost.seencount +=1
+				existing = 1
+				self.confirmed.append(lost)
 		#update if candidate
 		for candidate in self.candidates:
 			if math.fabs(target.midx-candidate.midx) < self.MaxTrans and math.fabs(target.midy-candidate.midy) < self.MaxTrans and target.ID != candidate.ID:
@@ -249,6 +270,12 @@ class BinscornerEntity(VisionEntity):
 				existing = 1
 		#update if confirmed
 		for confirmed in self.confirmed:
+			for confirmed2 in self.confirmed:
+				if confirmed.midx == confirmed2.midx and confirmed.midy == confirmed2.midy and confirmed.ID != confirmed2.ID:
+					if confirmed.ID < confirmed2.ID:
+						self.confirmed.remove(confirmed2)
+
+
 			if math.fabs(target.midx-confirmed.midx) < self.MaxTrans and math.fabs(target.midy-confirmed.midy) < self.MaxTrans and target.ID != confirmed.ID:
 				confirmed.midx = target.midx
 				confirmed.midy = target.midy
@@ -271,7 +298,13 @@ class BinscornerEntity(VisionEntity):
 
 
     def sort_bins(self):
+		for corner in self.corners:
+			for candidate in self.candidates:
+				if math.fabs((candidate.corner1[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner1[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner2[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner2[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner3[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner3[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner4[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner4[1] - corner[1])) < self.MaxTrans :
+					candidate.last_seen += 1
+			
 		for candidate in self.candidates:
+
 			candidate.last_seen -= 1
 			if candidate.last_seen < self.last_seen_thresh:
 				self.candidates.remove(candidate) 
@@ -282,7 +315,7 @@ class BinscornerEntity(VisionEntity):
 				self.candidates.remove(candidate)
 				print "confirmed"
 				continue
-		self.min_perimeter = 500	
+		self.min_perimeter = 500000	
 		self.angles = []
 		for confirmed in self.confirmed:
 			if 0 < line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 < self.min_perimeter: 	
@@ -290,11 +323,13 @@ class BinscornerEntity(VisionEntity):
 			print confirmed.angle/math.pi*180			
 			#self.angles.append((cv.Round(confirmed.angle/math.pi)*180/1)*1)
 			self.angles.append(cv.Round(confirmed.angle/math.pi*180/10)*10)
-#		for confirmed in self.confirmed:
-#			data = []
-#			if math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 - self.min_perimeter)>self.min_perimeter*0.08*1000:
-#				print "perimeter error"
-#				continue
+		for confirmed in self.confirmed:
+			data = []
+			if math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 - self.min_perimeter)>self.min_perimeter*self.perimeter_threshold:
+				print "perimeter error"	
+				self.candidates.append(confirmed)
+				self.confirmed.remove(confirmed)
+				continue
 #			from collections import Counter
 #			data = Counter(self.angles)
 #			print data.most_common(1)[0][0]
@@ -305,6 +340,8 @@ class BinscornerEntity(VisionEntity):
 			confirmed.last_seen -= 1
 			if confirmed.last_seen < self.last_seen_thresh:
 				self.confirmed.remove(confirmed) 
+				confirmed.last_seen = self.lost_clock
+#				self.lost.append(confirmed)
 				print "lost confirmed"
 				continue
 			#draw bins
@@ -322,6 +359,11 @@ class BinscornerEntity(VisionEntity):
 			font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .6, .6, 0, 1, 1)
 			text_color = (0, 255, 0)
 			cv.PutText(self.debug_frame, str(confirmed.ID), (int(confirmed.midx),int(confirmed.midy)), font, confirmed.debug_color)
+#		for lost in self.lost:
+#			lost.last_seen -= 1
+#			if lost.last_seen < self.lost_last_seen_thresh:
+#				self.lost.remove(lost)
+#				print "lost lost"
 	
 	
 
