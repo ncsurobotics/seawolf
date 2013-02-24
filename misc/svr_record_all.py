@@ -68,7 +68,7 @@ if __name__ == "__main__":
                                                         # dict is mutated in loop
             frame = None
             try:
-                frame = stream.get_frame()
+                frame = stream.get_frame(False)
             except svr.OrphanStreamException:
 
                 # Closed Stream

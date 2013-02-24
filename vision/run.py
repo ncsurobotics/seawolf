@@ -74,7 +74,6 @@ if __name__ == "__main__":
                 return None
             def send(self, data):
                 print data
-        svr.connect()
         process_manager.run_entity(
             FakePipe(),
             entities.entity_classes[entity_name],

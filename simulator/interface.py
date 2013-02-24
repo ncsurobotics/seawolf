@@ -50,6 +50,7 @@ class Interface(object):
         glEnable(GL_NORMALIZE)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_COLOR_MATERIAL)
+        glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
         glDisable(GL_CULL_FACE)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
@@ -58,11 +59,11 @@ class Interface(object):
         glLightfv(GL_LIGHT0, GL_POSITION, (0, 1, -1, 0))
         glLightfv(GL_LIGHT0, GL_AMBIENT, (0, 0, 0, 1))
         glLightfv(GL_LIGHT0, GL_DIFFUSE, (0.5, 0.5, 0.5, 1))
-        glLightfv(GL_LIGHT0, GL_SPECULAR, (0.1, 0.1, 0.1, 0.1))
+        glLightfv(GL_LIGHT0, GL_SPECULAR, (0, 0, 0, 0))
         glLightfv(GL_LIGHT1, GL_POSITION, (0.5, -1, -1, 0))
         glLightfv(GL_LIGHT1, GL_AMBIENT, (0, 0, 0, 1))
         glLightfv(GL_LIGHT1, GL_DIFFUSE, (0.5, 0.5, 0.5, 1))
-        glLightfv(GL_LIGHT1, GL_SPECULAR, (0.1, 0.1, 0.1, 0.1))
+        glLightfv(GL_LIGHT1, GL_SPECULAR, (0, 0, 0, 0))
         #glShadeModel(GL_SMOOTH)
         glEnable(GL_LIGHTING)
         glEnable(GL_LIGHT0)
@@ -111,8 +112,33 @@ class Interface(object):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         self.init_camera()
         glMatrixMode(GL_MODELVIEW)
+
         for entity in self.simulator.entities:
             entity.draw()
+
+        # Draw water
+        glEnable(GL_BLEND)
+        glDepthMask(False)
+        glColor(0, 0, 1, 0.2)
+        glBegin(GL_QUADS)
+        glVertex(-1, -1, 0, 0.001)
+        glVertex(-1, 1, 0, 0.001)
+        glVertex(1, 1, 0, 0.001)
+        glVertex(1, -1, 0, 0.001)
+        glEnd()
+        glDepthMask(True)
+        glDisable(GL_BLEND)
+
+        # Draw Floor
+        glColor(0.05, 0.05, 0.05)
+        glBegin(GL_QUADS)
+        glVertex(-1000, -1000, -16)
+        glVertex(-1000, 1000, -16)
+        glVertex(1000, 1000, -16)
+        glVertex(1000, -1000, -16)
+        glEnd()
+
+
         glFlush()
         glutSwapBuffers()
 

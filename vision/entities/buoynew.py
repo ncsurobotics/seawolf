@@ -2,6 +2,8 @@
 from __future__ import division
 from collections import namedtuple
 from itertools import combinations
+from time import time
+from math import sqrt
 
 import cv
 
@@ -12,38 +14,24 @@ import libvision
 
 Point = namedtuple("Point", ["x", "y"])
 
-BUOY_GREEN = 0
-BUOY_YELLOW = 2
-
 ############################### Tuning Values ###############################
-INIT_SEARCH_LOST_TIMEOUT = 5  # Frames we stop looking for features after we don't see any features
-INIT_TRACKING_THRESHOLD = 3  # Frames to see buoys before tracking
-
+INIT_TRACKING_THRESHOLD = 6  # Frames to see buoys before tracking
 TRACKING_MIN_Z_SCORE = 10
-TRACKING_ALPHA = 0.6
-TRACKING_TEMPLATE_MULTIPLIER = 0.25
-TRACKING_SEARCH_AREA_MULTIPLIER = 0.6
+TRACKING_ALPHA = 0.2
+MOVEMENT_THRESHOLD = 50  # Pixel distance the buoys are considered the same when finding buoys to track
+CANDIDATE_TIMEOUT = 2 # Time before the current buoy candidate is forgotten
 
-MAX_Y_SEPARATION = 20
-CENTER_ERROR_PERCENT = 0.2
-
-class BuoyEntity(VisionEntity):
+class BuoyNewEntity(VisionEntity):
 
     def init(self):
         self.output = Container()
         self.trackers = []
         self.seen_buoy_count = 0  # Used in initial_search
+        self.last_buoy = None
+        self.last_buoy_time = None
 
     def process_frame(self, frame):
         buoy_locations = []
-
-        # Scale image to reduce processing
-        '''
-        scale = 0.7
-        frame_scaled = cv.CreateImage((int(frame.width*scale), int(frame.height*scale)), 8, 3)
-        cv.Resize(frame, frame_scaled)
-        cv.SetImageROI(frame, (0, 0, int(frame.width*scale), int(frame.height*scale)))
-        '''
 
         # Create debug_frame
         if self.debug:
@@ -65,6 +53,12 @@ class BuoyEntity(VisionEntity):
         else:
             num_buoys_found, buoy_locations = self.buoy_track(frame, self.trackers, debug_frame)
 
+            # Debug info
+            if debug_frame:
+                for tracker in self.trackers:
+                    print "Drawing Circle!!!!", tracker.object_center
+                    cv.Circle(debug_frame, (int(tracker.object_center[0]),int(tracker.object_center[1])), tracker.size[0], (0,0,255), 2)
+
         if debug_frame:
             svr.debug("Buoy", debug_frame)
 
@@ -84,12 +78,14 @@ class BuoyEntity(VisionEntity):
     def initial_search(self, frame, debug_frame):
         '''Search for buoys, return trackers when at least 2 are found.'''
 
-        features = self.find_features(frame, debug_frame)
-        middle_buoy, buoy_dist = self.extract_buoys_from_features(features)
+        middle_buoy, buoy_scale = self.detect_buoys(frame, debug_frame)
 
-        if middle_buoy:
+        if middle_buoy and (not self.last_buoy or sqrt((middle_buoy[0]-self.last_buoy[0])**2 + (middle_buoy[1]-self.last_buoy[1])**2) < MOVEMENT_THRESHOLD):
             self.seen_buoy_count += 1
-        else:
+            self.last_buoy = middle_buoy
+            self.last_buoy_time = time()
+            print "Seen Buoy", self.seen_buoy_count, ":", middle_buoy
+        elif time() > self.last_buoy_time + CANDIDATE_TIMEOUT:
             self.seen_buoy_count = 0
 
         tracker = None
@@ -97,21 +93,17 @@ class BuoyEntity(VisionEntity):
 
             # Initialize Tracking
             print "Initializing Tracking"
+            template_size = (100, 100)
+            tracking_size = (300, 300)
             tracker = libvision.Tracker(
                 frame,
                 middle_buoy,
-                (buoy_dist*TRACKING_TEMPLATE_MULTIPLIER,
-                        buoy_dist*TRACKING_TEMPLATE_MULTIPLIER),
-                (buoy_dist*TRACKING_SEARCH_AREA_MULTIPLIER,
-                        buoy_dist*TRACKING_SEARCH_AREA_MULTIPLIER),
+                template_size,
+                tracking_size,
                 min_z_score=TRACKING_MIN_Z_SCORE,
                 alpha=TRACKING_ALPHA,
                 #debug=True,
             )
-
-        # Debug info
-        if debug_frame and middle_buoy:
-            cv.Circle(debug_frame, (int(middle_buoy[0]),int(middle_buoy[1])), int(buoy_dist*TRACKING_TEMPLATE_MULTIPLIER/2), (0,255,0), 2)
 
         if tracker:
             return [tracker]
@@ -140,61 +132,27 @@ class BuoyEntity(VisionEntity):
 
         return num_buoys_found, locations
 
-    def extract_buoys_from_features(self, features):
-
-        if len(features) < 3:
-            return None, None
-
-        for tripplet in combinations(features, 3):
-
-            # Sort features by x value
-            feature1,feature2,feature3 = sorted(tripplet, key=lambda x:x[0])
-
-            # Test that center feature is in middle of outside features
-            center = (feature1[0] + feature3[0]) / 2
-            if abs(center - feature2[0]) > CENTER_ERROR_PERCENT * (feature3[0]-feature1[0]):
-                continue
-
-            # Go through every pair
-            tripplet_is_valid = True
-            for a,b in combinations((feature1,feature2,feature3), 2):
-
-                # Ignore tripplets with pairs with large y separations
-                if abs(a[1] - b[1]) > MAX_Y_SEPARATION:
-                    tripplet_is_valid = False
-                    break
-            if not tripplet_is_valid:
-                continue
-
-            return feature2, feature3[0]-feature1[0]
-
-        return None, None
-
-    def find_features(self, frame, debug_image):
-        '''Find features in an image.'''
+    def detect_buoys(self, frame, debug_frame):
 
         # Get Channels
-        hsv = cv.CreateImage(cv.GetSize(frame), 8, 3);
+        hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
         grey = libvision.misc.get_channel(hsv, 2)
 
-        # Feature Detection
-        eigimage = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_32F,1)
-        tmpimage = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_32F,1)
-        cornercount = 4
-        qualitylevel = .2
-        mindistance = 40
-        blockSize = 7
-        corners = cv.GoodFeaturesToTrack(grey,eigimage,tmpimage,cornercount,qualitylevel,mindistance,None,blockSize,0,0.4)
+        # load a haar classifier
+        hc = cv.Load("/home/seawolf/software/seawolf5/vision/buoy_cascade_4.xml")
 
-        #determine if three corners are in a reasonable orientation
-        if debug_image:
+        #use classifier to detect buoys
+        minsize = (10, 10)
+        maxsize = (200, 200)
+        buoys = cv.HaarDetectObjects(grey, hc, cv.CreateMemStorage(), min_neighbors=0, min_size=minsize, max_size=maxsize)
 
-            for corner in corners:
-                corner_color = (0,0,255)
-                cv.Circle(debug_image, (int(corner[0]),int(corner[1])), 15, corner_color, 2,8,0)
+        if not buoys:
+            return None, None
 
-        return corners
+        # We'll probably only see one buoy at a time, so take the first one
+        (x,y,w,h),n = buoys[0]
+        return (x,y), w
 
 def scale_in_place(image, new_size):
     '''Mutates image to have size of new_size.

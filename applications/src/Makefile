@@ -7,7 +7,7 @@ OUTPUT_PY=$(SRCS_PY:%.py=../$(BIN_DIR)/%)
 all: $(OUTPUT) $(OUTPUT_PY)
 
 ../$(BIN_DIR)/%: %.c
-	$(CC) $(CFLAGS) $(LDFLAGS) $(shell cat $(<:%.c=%.flags) 2>/dev/null) -o $@ $<
+	$(CC) $(CFLAGS) $< $(shell cat $(<:%.c=%.flags) 2>/dev/null) $(LDFLAGS) -o $@
 
 ../$(BIN_DIR)/%: %.py
 	@echo "Copying" $< "to build dir"

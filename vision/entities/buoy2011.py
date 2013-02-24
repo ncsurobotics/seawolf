@@ -27,7 +27,9 @@ MIN_BLOB_SIZE = 200
 TRACKING_MIN_Z_SCORE = 15
 TRACKING_ALPHA = 0.6
 TRACKING_TEMPLATE_MULTIPLIER = 2
-TRACKING_SEARCH_AREA_MULTIPLIER = 14
+TRACKING_SEARCH_AREA_MULTIPLIER = 6
+
+BLOB_MARGIN_PERCENT = 0.15
 
 class Buoy2011Entity(VisionEntity):
 
@@ -89,12 +91,12 @@ class Buoy2011Entity(VisionEntity):
         self.output.buoys = []
         for location in self.buoy_locations:
             buoy = Container()
-            buoy.theta = location[0]
-            buoy.phi = location[1]
+            buoy.theta = location[0] * (34/(frame.width/2))
+            buoy.phi = location[1] * (30/(frame.height/2))  # Complete guess on vertical fov
             buoy.id = 1
             self.output.buoys.append(buoy)
 
-        return self.output
+        self.return_output()
 
     def initial_search(self, frame, debug_frame):
         '''Search for buoys, return trackers when at least 2 are found.'''
@@ -161,10 +163,17 @@ class Buoy2011Entity(VisionEntity):
         return num_buoys_found, locations
 
     def extract_buoys_from_blobs(self, blobs, labeled_image):
-        return filter(self.blob_filter, blobs)
+        return filter(lambda x: self.blob_filter(x, labeled_image), blobs)
 
-    def blob_filter(self, blob):
+    def blob_filter(self, blob, image):
         if blob.size < 50 or blob.size > 700:
+            return False
+
+        if blob.centroid[0] < image.width*BLOB_MARGIN_PERCENT or \
+            blob.centroid[0] > image.width*(1-BLOB_MARGIN_PERCENT) or \
+            blob.centroid[1] < image.height*BLOB_MARGIN_PERCENT or \
+            blob.centroid[1] > image.height*(1-BLOB_MARGIN_PERCENT):
+
             return False
 
         width = blob.roi[2]

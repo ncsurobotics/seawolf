@@ -11,8 +11,8 @@ import libvision
 from sw3.util import circular_average
 
 #maximum buoy translation allowed between frames
-MAX_X_TRANS = 40
-MAX_Y_TRANS = 40
+MAX_X_TRANS = 30
+MAX_Y_TRANS = 30
 
 #maximum allowed change in width
 MAX_CHANGE_WIDTH = 40
@@ -24,7 +24,7 @@ CONFIRMED_BUOY_TIMEOUT = 5
 CANDIDATE_BUOY_TIMEOUT = 3
 
 #required seen threshold to accept a buoy
-CANDIDATE_SEEN_THRESH = 3
+CANDIDATE_SEEN_THRESH = 2
 
 #dictionaries of colors
 COLORS = {0: cv.RGB(127, 127, 127),1:cv.RGB(255, 0, 0), 2: cv.RGB(0, 255, 0), 3: cv.RGB(255, 255, 0)}
@@ -58,29 +58,30 @@ class Buoy(object):
 class BuoyTestEntity(VisionEntity):
 
     def init(self):
-
+        
+        
         # Total Number of Buoys Found
         self.buoy_count = 0
 
         # Thresholds
         self.minsize = 20
-        self.maxsize = 60
-
+        self.maxsize = 40
         # Buoy Classes
         self.new = []
         self.candidates = []
         self.confirmed  = []
         self.lost = []
+        #self.debug = True 
 
         if self.debug:
-            #windows
-            cv.NamedWindow("BuoyTest")
+           # windows
+        #    cv.NamedWindow("BuoyTest")
 
             #random number generator used for choosing debug colors
             self.rng = cv.RNG()
 
     def process_frame(self, frame):
-
+        
         # Get Channels
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
@@ -88,12 +89,12 @@ class BuoyTestEntity(VisionEntity):
 
         # load a haar classifier
         hc = cv.Load("/home/seawolf/software/seawolf5/vision/buoy_cascade_4.xml")
-
+        
         #use classifier to detect buoys
         minsize = (int(self.minsize), int(self.minsize))
         maxsize = (int(self.maxsize), int(self.maxsize))
-        buoys = cv.HaarDetectObjects(grey, hc, cv.CreateMemStorage(), min_size = minsize, max_size = maxsize)
-
+        buoys = cv.HaarDetectObjects(grey, hc, cv.CreateMemStorage(), min_size = minsize)
+        
         #compute average buoy size and extract to a list
         avg_w = 0
         for (x,y,w,h),n in buoys:
@@ -132,6 +133,8 @@ class BuoyTestEntity(VisionEntity):
                 cv.Rectangle(frame, (x,y), (x+w, y+w), confirmed.debug_color, thickness = 6)
                 cv.Rectangle(frame, (x,y), (x+w, y+w), COLORS[confirmed.color], thickness = -1)
 
+
+            
             #show debug frame
             svr.debug("BuoyTest", frame)
 
@@ -139,12 +142,12 @@ class BuoyTestEntity(VisionEntity):
 
         self.output.buoys = self.confirmed
         for buoy in self.output.buoys:
-            buoy.theta = (buoy.x + frame.width/2) * 37 / (frame.width/2);
-            buoy.phi = -1 * (buoy.y + frame.height/2) * 36 / (frame.height/2);
+            buoy.theta = (buoy.x - frame.width/2) * 37 / (frame.width/2);
+            buoy.phi = -1 * (buoy.y - frame.height/2) * 36 / (frame.height/2);
         self.return_output()
 
     def sort_buoys(self):
-
+        
         #perform upkeep on confirmed buoys
         for confirmed in self.confirmed:
 
@@ -199,7 +202,7 @@ class BuoyTestEntity(VisionEntity):
 
     def match_buoys(self, target):
         '''matches buoys in the self.new list to a target buoy'''
-
+        
         #check if any of the new buoys match this confirmed buoy
         for buoy in self.new:
             if abs(buoy.x - target.x) > MAX_X_TRANS:
@@ -230,7 +233,7 @@ class BuoyTestEntity(VisionEntity):
         new_buoy.width = w
         new_buoy.last_seen = 0
         new_buoy.seen_count = 0
-
+        
         return new_buoy
 
     def __repr__(self):

@@ -35,7 +35,8 @@ class MissionBase(object):
         This is a blocking call that returns when the mission completes.
         '''
 
-        self.timers = {}
+        if not hasattr(self, "timers"):
+            self.timers = {}
 
         self._entity_timeout = getattr(self, "_entity_timeout", None)
         self._mission_done = getattr(self, "_mission_done", False)
@@ -44,6 +45,7 @@ class MissionBase(object):
         while not self._mission_done:
 
             if seawolf.var.get("MissionReset"):
+                print "MISSION RESET"
                 raise MissionControlReset()
 
             vision_data = self.process_manager.get_data(delay=0.05)
@@ -86,7 +88,10 @@ class MissionBase(object):
     def delete_timer(self, name):
         if not hasattr(self, "timers"):
             self.timers = {}
-        del self.timers[name]
+        try:
+            del self.timers[name]
+        except KeyError:
+            pass
 
 
 class SearchMission(MissionBase):

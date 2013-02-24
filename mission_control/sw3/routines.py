@@ -45,6 +45,7 @@ class NavRoutine(object):
             self.done_event.clear()
             self.state = NavRoutine.RUNNING
             if self.timeout_length > 0:
+                print "Starting Timer:", self.timeout_length
                 threading.Timer(self.timeout_length, self.timeout).start()
             self._start()
             if hasattr(self, "_poll"):
@@ -87,6 +88,7 @@ class NavRoutine(object):
         self.__finished(NavRoutine.COMPLETED)
 
     def timeout(self):
+        print
         self.__finished(NavRoutine.TIMEDOUT)
 
     def reset(self):

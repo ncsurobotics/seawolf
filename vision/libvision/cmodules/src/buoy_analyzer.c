@@ -124,7 +124,7 @@ void analyze_region(IplImage* src, BuoyROI* roi, double* distances, RGBPixel* av
     avg_r /= (roi->w * roi->h);
     avg_g /= (roi->w * roi->h);
 
-    printf("avg_r = %lf, avg_g = %lf \n",avg_r, avg_g);
+    //printf("avg_r = %lf, avg_g = %lf \n",avg_r, avg_g);
     /* determine dot product to use as distance from each color vector of interest */
     /* Grey */
     distances[0] = sqrt(pow(avg_r,2) + pow(avg_g,2));
@@ -344,8 +344,8 @@ int* buoy_color(IplImage* src, BuoyROI** rois, int num_rois){
         CvPoint br = {tl.x + total_vert_roi.w, tl.y + total_vert_roi.h};
         CvScalar color =  {avg_color->b, avg_color->g, avg_color->r, 0};
         cvRectangle(debug, tl, br,color, 5, 8, 0);
-        cvNamedWindow("Color Analyzer Debug", CV_WINDOW_AUTOSIZE);
-        cvShowImage("Color Analyzer Debug", debug);
+        //cvNamedWindow("Color Analyzer Debug", CV_WINDOW_AUTOSIZE);
+        //cvShowImage("Color Analyzer Debug", debug);
 
         cvReleaseImage(&debug);
     #endif

@@ -11,11 +11,13 @@ import random
 import numpy
 from collections import defaultdict
 
+
 def get_displaylist():
     new_list = glGenLists(1)
     if new_list == 0:
         raise RuntimeError("Could not allocate a display list")
     return new_list
+
 
 class Model(object):
     """A model that can be drawn on the screen"""
@@ -47,10 +49,6 @@ class Model(object):
     def draw(self):
         glCallList(self.renderlist)
 
-class Sphere(Model):
-    def render(self):
-        glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, (1,0,0,0))
-        glutSolidSphere(5, 5, 5)
 
 class _Material(object):
     """Defines a particular material"""
@@ -68,6 +66,7 @@ class _Material(object):
         return "_Material(%r,%r,%r,%r)" % (self.ambient, self.diffuse, self.specular, self.emission)
 
     def activate(self):
+        glColor(*self.diffuse)
         glMaterialfv(GL_FRONT, GL_AMBIENT, self.ambient)
         glMaterialfv(GL_FRONT, GL_DIFFUSE, self.diffuse)
         glMaterialfv(GL_FRONT, GL_SPECULAR, self.specular)

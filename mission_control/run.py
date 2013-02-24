@@ -76,10 +76,15 @@ from mission_controller import MissionController
 MISSION_ORDER = [
     missions.GateMission,
     missions.PathMission,
-    missions.BuoyMission,
+    #sw3.SetDepth(6.0, timeout=5),
+    missions.SimpleBuoyMission,
+  # missions.SimpleBuoyMission,
     missions.PathMission,
-    sw3.RelativeDepth(4),
+    sw3.SetDepth(8.0, timeout=5),
     missions.HedgeMission
+    #(missions.PathMission, None, 15, True, 0, 50),
+    #(missions.PathMission, 0, 30),
+    #missions.HedgeMission
 ]
 
 if __name__ == "__main__":
@@ -109,6 +114,7 @@ if __name__ == "__main__":
             # Add missions
             for mission in MISSION_ORDER[options.initial_mission:]:
                 if isinstance(mission, sw3.NavRoutine):
+                    mission.reset()
                     mission_controller.append_mission(mission)
                 else:
                     if type(mission) is tuple:
