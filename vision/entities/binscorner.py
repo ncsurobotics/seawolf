@@ -83,19 +83,14 @@ def angle_between_lines(slope_a, slope_b):
 def midpoint(corner_a, corner_b):
 	midpoint_x = (corner_b[0] - corner_a[0])/2+corner_a[0]
 	midpoint_y = (corner_b[1] - corner_a[1])/2+corner_a[1]
-	#mid = (midpoint_x, midpoint_y)
 	return [midpoint_x, midpoint_y]
 
 def midpointx(corner_a, corner_b):
 	midpoint_x = (corner_b[0] - corner_a[0])/2+corner_a[0]
-	#midpoint_y = (corner_b[1] - corner_a[1])/2+corner_a[1]
-	#mid = (midpoint_x, midpoint_y)
 	return midpoint_x
 
 def midpointy(corner_a, corner_b):
-	#midpoint_x = (corner_b[0] - corner_a[0])/2+corner_a[0]
 	midpoint_y = (corner_b[1] - corner_a[1])/2+corner_a[1]
-	#mid = (midpoint_x, midpoint_y)
 	return midpoint_y
 
 def rect_midpointx(corner_a,corner_b,corner_c,corner_d):
@@ -127,23 +122,28 @@ class BinscornerEntity(VisionEntity):
 	self.min_distance = 40
 	self.good_features_blocksize = 24
 	
-
+	#min and max angle in order to only accept rectangles
 	self.angle_min = math.pi/2-.15
 	self.angle_max = math.pi/2+.15
 	self.angle_min2 = math.pi/2-.15
 	self.angle_max2 = math.pi/2+.15
 
+	#how close parallel lines of a bin must be to eachother
 	self.size_threshold = 40
+	#How close to the ideal 2:1 ratio the bin sides must be
 	self.ratio_threshold = .5
-	self.length_threshold = 200
-
+	
+	#How far a bin may move and still be considered the same bin
 	self.MaxTrans = 30
 	self.MaxLostTrans = 50
 
+	#Minimum number the seencount can be before the bin is lost
 	self.last_seen_thresh = 0
+	#How many times a bin must be seen to be accepted as a confirmed bin
 	self.min_seencount = 5
 	self.lost_last_seen_thresh = 0
 
+	#How close the perimeter of a bin must be when compared to the perimeter of other bins
 	self.perimeter_threshold = 0.08
 
 	self.lost_clock =100
@@ -158,11 +158,11 @@ class BinscornerEntity(VisionEntity):
 	
 
 
+
+
     def process_frame(self, frame):
 	self.debug_frame = cv.CreateImage(cv.GetSize(frame),8,3)
 	cv.Copy(frame, self.debug_frame)
-
-
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         # Set binary image to have saturation channel
@@ -188,8 +188,6 @@ class BinscornerEntity(VisionEntity):
         cv.Erode(binary, binary, kernel, 1)
         cv.Dilate(binary, binary, kernel, 1)
 	
-        # Get Edges
-        #cv.Canny(binary, binary, 30, 40)
    
         cv.CvtColor(binary,self.debug_frame, cv.CV_GRAY2RGB)
 	
@@ -210,7 +208,7 @@ class BinscornerEntity(VisionEntity):
 		
 	
 
-#Find Candidates
+	#Find Candidates
 
 	for corner1 in self.corners:
 		for corner2 in self.corners:
@@ -298,10 +296,12 @@ class BinscornerEntity(VisionEntity):
 
 
     def sort_bins(self):
+		
 		for corner in self.corners:
 			for candidate in self.candidates:
+				#if corners are close, add to last_seen
 				if math.fabs((candidate.corner1[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner1[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner2[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner2[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner3[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner3[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner4[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner4[1] - corner[1])) < self.MaxTrans :
-					candidate.last_seen += 1
+					candidate.last_seen += .75
 			
 		for candidate in self.candidates:
 
@@ -325,7 +325,7 @@ class BinscornerEntity(VisionEntity):
 			self.angles.append(cv.Round(confirmed.angle/math.pi*180/10)*10)
 		for confirmed in self.confirmed:
 			data = []
-			if math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 - self.min_perimeter)>self.min_perimeter*self.perimeter_threshold:
+			if math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 - self.min_perimeter)>self.min_perimeter*self.perimeter_threshold and line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 > self.min_perimeter:
 				print "perimeter error"	
 				self.candidates.append(confirmed)
 				self.confirmed.remove(confirmed)
