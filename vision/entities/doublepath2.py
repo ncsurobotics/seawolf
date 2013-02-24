@@ -320,8 +320,8 @@ class DoublePathEntity(VisionEntity):
         for path in paths:
             if self.path:
                 theta = round((180/math.pi)*self.path.theta, 2)
-                return "<DoublePathEntity which=%d center=%s theta=%>" % \
-                    (self.which_path, self.path.center, theta)
+                return "<DoublePathEntity theta=%>" % \
+                    (theta)
             else:
                 return "<DoublePathEntity which=%d center=?? theta=??>" % \
                     (self.which_path)
