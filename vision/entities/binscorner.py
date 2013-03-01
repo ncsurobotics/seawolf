@@ -113,7 +113,7 @@ class BinscornerEntity(VisionEntity):
     def init(self):
 
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 21
+        self.adaptive_thresh = 17
 
         self.max_range = 100
 
@@ -128,10 +128,10 @@ class BinscornerEntity(VisionEntity):
 	self.angle_min2 = math.pi/2-.15
 	self.angle_max2 = math.pi/2+.15
 
-	#how close parallel lines of a bin must be to eachother
+	#how close the sizes of parallel lines of a bin must be to eachother
 	self.size_threshold = 40
 	#How close to the ideal 2:1 ratio the bin sides must be
-	self.ratio_threshold = .5
+	self.ratio_threshold = .7
 	
 	#How far a bin may move and still be considered the same bin
 	self.MaxTrans = 30
@@ -301,8 +301,8 @@ class BinscornerEntity(VisionEntity):
 			for candidate in self.candidates:
 				#if corners are close, add to last_seen
 				if math.fabs((candidate.corner1[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner1[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner2[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner2[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner3[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner3[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner4[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner4[1] - corner[1])) < self.MaxTrans :
-					candidate.last_seen += .75
-			
+					candidate.last_seen += .5
+
 		for candidate in self.candidates:
 
 			candidate.last_seen -= 1

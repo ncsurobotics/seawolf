@@ -66,7 +66,7 @@ def main():
 				dataOut(0.0)
 				seawolf.notify.send("PIDPAUSED", "Depth")
 				pid.pause()
-				e_dt = initial_e_dt(pid.i)
+				e_dt = initial_e_dt(pid.pid.i)
 
 		if(depth > panic_depth):
 			seawolf.logging.log(CRITICAL, "Depth: {}\n".format(depth))
