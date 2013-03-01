@@ -27,6 +27,14 @@ class Bin(object):
 	self.corner2 = corner_b
 	self.corner3 = corner_c
 	self.corner4 = corner_d
+	self.corner1_locx = self.corner1[0] - self.corner2[0]
+	self.corner1_locy = self.corner1[1] - self.corner2[1]
+	self.corner2_locx = self.corner2[0] - self.corner1[0]
+	self.corner2_locy = self.corner2[1] - self.corner1[1]
+	self.corner3_locx = self.corner3[0] - self.corner1[0]
+	self.corner3_locy = self.corner3[1] - self.corner1[1]	
+	self.corner4_locx = self.corner4[0] - self.corner1[0]
+	self.corner4_locy = self.corner4[1] - self.corner1[1]
 	if line_distance(corner_a,corner_c)< line_distance(corner_a, corner_b):
 		self.angle = -angle_between_lines(line_slope(corner_a,corner_c), 0)
 	else:
@@ -144,7 +152,7 @@ class BinscornerEntity(VisionEntity):
 	self.lost_last_seen_thresh = 0
 
 	#How close the perimeter of a bin must be when compared to the perimeter of other bins
-	self.perimeter_threshold = 0.08
+	self.perimeter_threshold = 0.09
 
 	self.lost_clock =100
 
@@ -262,6 +270,14 @@ class BinscornerEntity(VisionEntity):
 				candidate.corner3 = target.corner3
 				candidate.corner4 = target.corner4
 				candidate.angle = target.angle
+				candidate.corner1_locx = candidate.corner1[0] - candidate.corner2[0]
+				candidate.corner1_locy = candidate.corner1[1] - candidate.corner2[1]
+				candidate.corner2_locx = candidate.corner2[0] - candidate.corner1[0]
+				candidate.corner2_locy = candidate.corner2[1] - candidate.corner1[1]
+				candidate.corner3_locx = candidate.corner3[0] - candidate.corner1[0]
+				candidate.corner3_locy = candidate.corner3[1] - candidate.corner1[1]	
+				candidate.corner4_locx = candidate.corner4[0] - candidate.corner1[0]
+				candidate.corner4_locy = candidate.corner4[1] - candidate.corner1[1]
 				if candidate.last_seen < 30:
 					candidate.last_seen +=3
 				candidate.seencount +=1
@@ -297,12 +313,48 @@ class BinscornerEntity(VisionEntity):
 
     def sort_bins(self):
 		
-		for corner in self.corners:
-			for candidate in self.candidates:
+#		for corner in self.corners:
+#			for candidate in self.candidates:
 				#if corners are close, add to last_seen
-				if math.fabs((candidate.corner1[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner1[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner2[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner2[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner3[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner3[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner4[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner4[1] - corner[1])) < self.MaxTrans :
-					candidate.last_seen += .5
-
+#				if math.fabs((candidate.corner1[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner1[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner2[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner2[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner3[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner3[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner4[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner4[1] - corner[1])) < self.MaxTrans :
+#					candidate.last_seen += .3
+		'''			
+		for confirmed in self.confirmed:
+			corner1_found=0
+			corner2_found=0
+			corner3_found=0
+			corner4_found=0
+			for corner in self.corners:
+				if math.fabs((confirmed.corner1[0] - corner[0])) < self.MaxTrans and math.fabs((confirmed.corner1[1] - corner[1])) < self.MaxTrans:
+					corner1_found = 1
+					confirmed.corner1 = corner
+				if math.fabs((confirmed.corner2[0] - corner[0])) < self.MaxTrans and math.fabs((confirmed.corner2[1] - corner[1])) < self.MaxTrans:
+					corner2_found = 1 
+					confirmed.corner2 = corner
+				if math.fabs((confirmed.corner3[0] - corner[0])) < self.MaxTrans and math.fabs((confirmed.corner3[1] - corner[1])) < self.MaxTrans:
+					corner3_found = 1 
+					confirmed.corner3 = corner	
+				if math.fabs((confirmed.corner4[0] - corner[0])) < self.MaxTrans and math.fabs((confirmed.corner4[1] - corner[1])) < self.MaxTrans:
+					corner4_found = 1 
+					confirmed.corner4 = corner
+			if corner1_found == 0 and corner2_found == 1 and corner3_found == 1  and corner4_found == 1:
+				confirmed.corner1 = [confirmed.corner2[0]+confirmed.corner1_locx, confirmed.corner2[1]+confirmed.corner1_locy]
+				confirmed.last_seen += 1
+				print "yay?"
+			if corner2_found == 0 and corner1_found == 1 and corner3_found == 1  and corner4_found == 1:
+				confirmed.corner2 = [confirmed.corner1[0]+confirmed.corner2_locx, confirmed.corner1[1]+confirmed.corner2_locy]
+				confirmed.last_seen += 1
+				print "yay?"
+			if corner3_found == 0 and corner2_found == 1 and corner1_found == 1  and corner4_found == 1:
+				confirmed.corner3 = [confirmed.corner1[0]+confirmed.corner3_locx, confirmed.corner1[1]+confirmed.corner3_locy]
+				confirmed.last_seen += 1
+				print "yay?"
+			if corner4_found == 0 and corner2_found == 1 and corner3_found == 1  and corner1_found == 1:
+				confirmed.corner4 = [confirmed.corner1[0]+confirmed.corner4_locx, confirmed.corner1[1]+confirmed.corner4_locy]
+				confirmed.last_seen += 1
+				print "yay?"
+		'''
+				
 		for candidate in self.candidates:
 
 			candidate.last_seen -= 1
@@ -327,8 +379,8 @@ class BinscornerEntity(VisionEntity):
 			data = []
 			if math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 - self.min_perimeter)>self.min_perimeter*self.perimeter_threshold and line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 > self.min_perimeter:
 				print "perimeter error"	
-				self.candidates.append(confirmed)
-				self.confirmed.remove(confirmed)
+				confirmed.last_seen -= 5
+
 				continue
 #			from collections import Counter
 #			data = Counter(self.angles)
@@ -359,6 +411,7 @@ class BinscornerEntity(VisionEntity):
 			font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .6, .6, 0, 1, 1)
 			text_color = (0, 255, 0)
 			cv.PutText(self.debug_frame, str(confirmed.ID), (int(confirmed.midx),int(confirmed.midy)), font, confirmed.debug_color)
+			cv.PutText(self.debug_frame, str(confirmed.last_seen), (int(confirmed.midx-20),int(confirmed.midy-20)), font, confirmed.debug_color)
 #		for lost in self.lost:
 #			lost.last_seen -= 1
 #			if lost.last_seen < self.lost_last_seen_thresh:
