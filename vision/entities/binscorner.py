@@ -377,4 +377,6 @@ class BinscornerEntity(VisionEntity):
        # cv.CvtColor(color_filtered,self.debug_frame, cv.CV_GRAY2RGB)
 	
 
+#TODO Lower how much it gets from seeing corners to reduce things. Delete lost[] code or archive useful parts. fix perimeter error. get rid of bbb's. Fix integration of flux capacitors. Reduce interference from time lords. Prevent the rise of skynet. Speed up the processes so they can make the kessler run in under 12 parsecs. Go plaid in ludicrous speed. (NOTE: It's a Unix System, I know this). 
 
+#Ideas: lower maxtrans, fix numerous bins sharing the same spot.
