@@ -27,6 +27,7 @@ class Bin(object):
 	self.corner2 = corner_b
 	self.corner3 = corner_c
 	self.corner4 = corner_d
+	#locx and locy are relative locations of corners when compared to other corners of the same rectangle
 	self.corner1_locx = self.corner1[0] - self.corner2[0]
 	self.corner1_locy = self.corner1[1] - self.corner2[1]
 	self.corner2_locx = self.corner2[0] - self.corner1[0]
@@ -35,13 +36,14 @@ class Bin(object):
 	self.corner3_locy = self.corner3[1] - self.corner1[1]	
 	self.corner4_locx = self.corner4[0] - self.corner1[0]
 	self.corner4_locy = self.corner4[1] - self.corner1[1]
+	#angle is found according to short side
 	if line_distance(corner_a,corner_c)< line_distance(corner_a, corner_b):
 		self.angle = -angle_between_lines(line_slope(corner_a,corner_c), 0)
 	else:
 		self.angle = -angle_between_lines(line_slope(corner_a,corner_b), 0)
-	self.ID = 0
-	self.last_seen = 2
-	self.seencount = 1
+	self.ID = 0   #ID identifies which bin your looking at
+	self.last_seen = 2 #how recently you have seen this bin
+	self.seencount = 1 #how many times you have seen this bin (if you see it enough it becomes confirmed)
 	r = int(cv.RandReal(rng)*255)
         g = int(cv.RandReal(rng)*255)
         b = int(cv.RandReal(rng)*255)
@@ -49,6 +51,7 @@ class Bin(object):
 
 
 class Binscorner(object):
+    '''
     def __init__(self,type,center,angle,area):
         #ID number used when tracking bins
         self.id = 0
@@ -70,7 +73,7 @@ class Binscorner(object):
 
         #tracks our type decisions
         self.type_counts = [0,0,0,0,0]
-
+    '''
 
 def line_distance(corner_a, corner_b):
 	distance = math.sqrt((corner_b[0]-corner_a[0])**2 + (corner_b[1]-corner_a[1])**2)
@@ -120,11 +123,11 @@ class BinscornerEntity(VisionEntity):
 
     def init(self):
 
+	#Adaptive threshold parameters
         self.adaptive_thresh_blocksize = 19
         self.adaptive_thresh = 17
 
-        self.max_range = 100
-
+	#Good features parameters
 	self.max_corners = 20
 	self.quality_level = .7
 	self.min_distance = 40
@@ -143,25 +146,21 @@ class BinscornerEntity(VisionEntity):
 	
 	#How far a bin may move and still be considered the same bin
 	self.MaxTrans = 30
-	self.MaxLostTrans = 50
 
 	#Minimum number the seencount can be before the bin is lost
 	self.last_seen_thresh = 0
 	#How many times a bin must be seen to be accepted as a confirmed bin
 	self.min_seencount = 5
-	self.lost_last_seen_thresh = 0
 
 	#How close the perimeter of a bin must be when compared to the perimeter of other bins
 	self.perimeter_threshold = 0.09
 
-	self.lost_clock =100
 
 	self.corners = []
 	self.candidates = []
         self.confirmed  = []
 	self.new = []
 	self.angles = []
-	self.lost = []
 
 	
 
@@ -182,7 +181,7 @@ class BinscornerEntity(VisionEntity):
         cv.SetImageCOI(hsv, 0)
 
 	
-
+	#Adaptive Threshold
         cv.AdaptiveThreshold(binary, binary,
             255,
             cv.CV_ADAPTIVE_THRESH_MEAN_C,
@@ -224,7 +223,7 @@ class BinscornerEntity(VisionEntity):
 				for corner4 in self.corners:
 					#Checks that corners are not the same and are in the proper orientation
 					if corner4[0] != corner3[0] and corner4[0] != corner2[0] and corner4[0] != corner1[0] and corner3[0] != corner2[0] and corner3[0] != corner1[0] and corner2[0] != corner1[0] and corner4[1] != corner3[1] and corner4[1] != corner2[1] and corner4[1] != corner1[1] and corner3[1] != corner2[1] and corner3[1] != corner1[1] and corner2[1] != corner1[1] and corner2[0]>=corner3[0] and corner1[1]>=corner4[1] and corner2[0]>=corner1[0]:
-						#Checks that the ratios are correct
+						#Checks that the side ratios are correct
 						if math.fabs(line_distance(corner1,corner3) - line_distance(corner2,corner4)) < self.size_threshold and math.fabs(line_distance(corner1,corner2) - line_distance(corner3,corner4)) < self.size_threshold and math.fabs(line_distance(corner1,corner3)/line_distance(corner1,corner2)) < self.ratio_threshold or math.fabs(line_distance(corner1,corner2)/line_distance(corner1,corner3)) < self.ratio_threshold:
 							#Checks that angles are roughly 90 degrees
 							if math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4) ))> self.angle_min and math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4))) < self.angle_max:
@@ -246,20 +245,6 @@ class BinscornerEntity(VisionEntity):
 
     def match_bins(self, target):
 		existing = 0
-		#update if lost bin
-		for lost in self.lost:
-			if math.fabs(target.midx-lost.midx) < self.MaxTrans and math.fabs(target.midy-lost.midy) < self.MaxTrans and target.ID != lost.ID:
-				lost.midx = target.midx
-				lost.midy = target.midy
-				lost.corner1 = target.corner1
-				lost.corner2 = target.corner2
-				lost.corner3 = target.corner3
-				lost.corner4 = target.corner4
-				lost.angle = target.angle
-				lost.last_seen = 15
-				lost.seencount +=1
-				existing = 1
-				self.confirmed.append(lost)
 		#update if candidate
 		for candidate in self.candidates:
 			if math.fabs(target.midx-candidate.midx) < self.MaxTrans and math.fabs(target.midy-candidate.midy) < self.MaxTrans and target.ID != candidate.ID:
@@ -392,8 +377,6 @@ class BinscornerEntity(VisionEntity):
 			confirmed.last_seen -= 1
 			if confirmed.last_seen < self.last_seen_thresh:
 				self.confirmed.remove(confirmed) 
-				confirmed.last_seen = self.lost_clock
-#				self.lost.append(confirmed)
 				print "lost confirmed"
 				continue
 			#draw bins
@@ -412,18 +395,6 @@ class BinscornerEntity(VisionEntity):
 			text_color = (0, 255, 0)
 			cv.PutText(self.debug_frame, str(confirmed.ID), (int(confirmed.midx),int(confirmed.midy)), font, confirmed.debug_color)
 			cv.PutText(self.debug_frame, str(confirmed.last_seen), (int(confirmed.midx-20),int(confirmed.midy-20)), font, confirmed.debug_color)
-#		for lost in self.lost:
-#			lost.last_seen -= 1
-#			if lost.last_seen < self.lost_last_seen_thresh:
-#				self.lost.remove(lost)
-#				print "lost lost"
-	
-	
-
-
-
-
-
 
 	
 	#libvision.misc.draw_lines(self.debug_frame, corner)
