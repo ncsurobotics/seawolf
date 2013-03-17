@@ -49,6 +49,7 @@ class RobotEntity(Entity):
         stern = self.get_var("Stern")
 
         # Depth
+        self.depth = -self.pos[2]
         self.depth = self.depth + (bow+stern) * self.DEPTH_CONSTANT * dt
         if self.depth < 0:
             self.depth = self.depth + 1.0*dt
