@@ -7,11 +7,11 @@ from OpenGL.GLU import *
 from base import Entity, Container
 
 BIN_SEPERATION = 0.2
-THING_NAMES = [
-    "rat",
-    "hampster",
-    "gerbil",
-    "guinea pig",
+SHAPE_NAMES = [
+    "A",
+    "B",
+    "C",
+    "D",
 ]
 
 
@@ -77,7 +77,7 @@ class BinsEntity(Entity):
         b.id = i
         b.theta, b.phi = robot.find_point("down", center)
         b.found = b.theta != None and b.phi != None
-        b.thing = THING_NAMES[i]
+        b.shape = SHAPE_NAMES[i]
 
         return b
 
