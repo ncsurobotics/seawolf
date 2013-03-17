@@ -27,7 +27,7 @@ Documentation Contents
    run
    applications
    vision/index
-   mission_control/index
+   mission_control
    simulator/index
    production
 ..   microcontroller

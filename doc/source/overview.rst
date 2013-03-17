@@ -51,55 +51,58 @@ This diagram shows information flow for Seawolf's main components:
 
 .. digraph:: components
 
-   node [shape=Mrecord, style="filled", height=0.3, fillcolor="#aaddff", fontname="Sans"];
-   edge [arrowsize=0.9, color="#101020"];
-   fontname="Sans";
+    compound = true;
+    node [shape=Mrecord, style="filled", height=0.3, fillcolor="#aaddff", fontname="Sans"];
+    edge [arrowsize=0.9, color="#101020"];
+    fontname = "Sans";
+    ranksep = 0.7;
 
-   subgraph cluster_hardware {
-      rank = same;
-      label = "Hardware";
-      style = filled;
-      color = lightgrey;
+    subgraph cluster_software {
+        label = "Software";
+        compound = true;
 
-      thrusters [label="Thrusters", fillcolor="#ffddaa"];
-      sensors [label="Sensors", fillcolor="#ffddaa"];
-      cameras [label="Cameras", fillcolor="#ffddaa"];
+        vision [label="Vision", fillcolor="#aaffdd", href="vision/index.html"];
+        missioncontrol [label="Mission Control", href="mission_control/index.html"];
+        svr [label="SVR", fillcolor="#aaffdd"];
+        serialapp [label="Serial App", href="applications.html#serial-app"];
+        mixer [label="Mixer", href="applications.html#mixer"];
+        subgraph cluster_pid {
+            compound=true;
+            label = "PID Controllers";
+            rank = same;
+            depthpid [label="Depth", href="applications.html#pid-controllers"];
+            yawpid [label="Yaw", href="applications.html#pid-controllers"];
+            pitchpid [label="Pitch", href="applications.html#pid-controllers"];
+        }
 
-      // Invisible nodes to make things look decent
-      invis1 [style=invis];
-      invis2 [style=invis];
-      invis3 [style=invis];
-      cameras -> invis1 -> invis2 -> invis3 -> sensors -> thrusters [style=invis];
-   }
+        svr -> vision;
+        vision -> missioncontrol;
+        missioncontrol -> yawpid [lhead=cluster_pid, len=0.5];
+        yawpid -> mixer [ltail=cluster_pid];
+        mixer -> serialapp;
+        serialapp -> yawpid [lhead=cluster_pid];
+    }
 
-   subgraph cluster_software {
-      label = "Software";
+    subgraph cluster_hardware {
+        rank = same;
+        label = "Hardware";
+        style = filled;
+        color = lightgrey;
 
-      vision [label="Vision", fillcolor="#aaffdd", href="vision/index.html"];
-      missioncontrol [label="Mission Control", href="mission_control/index.html"];
-      svr [label="SVR", fillcolor="#aaffdd"];
-      serialapp [label="Serial App", href="applications.html#serial-app"];
-      mixer [label="Mixer", href="applications.html#mixer"];
-      subgraph pid {
-         rank = same;
-         depthpid [label="Depth PID", href="applications.html#pid-controllers"];
-         yawpid [label="Yaw PID", href="applications.html#pid-controllers"];
-      }
+        microcontroller [label="Electronics", fillcolor="#ffddaa"];
+        sensors [label="Sensors", fillcolor="#ffddaa"];
+        cameras [label="Cameras", fillcolor="#ffddaa"];
 
-      svr -> vision;
-      vision -> missioncontrol;
-      missioncontrol -> depthpid;
-      missioncontrol -> yawpid;
-      depthpid -> mixer;
-      yawpid -> mixer;
-      mixer -> serialapp;
-      serialapp -> depthpid;
-      serialapp -> yawpid;
-   }
+        // Invisible nodes to make things look decent
+        invis1 [style=invis];
+        invis2 [style=invis];
+        invis3 [style=invis];
+        cameras -> invis1 -> invis2 -> invis3 -> sensors -> microcontroller [style=invis];
+    }
 
-   cameras -> svr;
-   serialapp -> thrusters;
-   sensors -> serialapp;
+    cameras -> svr;
+    serialapp -> microcontroller;
+    sensors -> serialapp;
 
 The :ref:`Serial App <app_serial>` and :ref:`SVR <svr>` are the only software
 components that communicate with the physical world.  The serial app handles

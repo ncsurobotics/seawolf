@@ -24,9 +24,11 @@ folder.  When running applications, you must be in a specific folder, or the
 application won't be able to find ``seawolf.conf``, since the file is specified
 relative to the current directory.
 
-Inside ``applications/`` there is ``src/`` and ``bin/``.  Run ``make`` inside ``applications/`` and it will compile each application source file inside ``src/`` to a binary executable in ``bin/``.  To run these applications, navigate to the ``applications/`` directory and run ``./bin/<application>``.  For example:
-
-.. code-block:: bash
+Inside ``applications/`` there is ``src/`` and ``bin/``.  Run ``make`` inside
+``applications/`` and it will compile each application source file inside
+``src/`` to a binary executable in ``bin/``.  To run these applications,
+navigate to the ``applications/`` directory and run ``./bin/<application>``.
+For example::
 
     seawolf5$ cd applications/
     seawolf5/applications$ ./bin/mixer
@@ -47,10 +49,6 @@ be a lot easier to use.
 
 .. todo:: Application Runner
     Include description and usage here.  run.rst will link to here.
-
-.. automodule:: run
-.. .. autocommand:: python run.py -h
-..    :show_command:
 
 
 Application Descriptions
@@ -106,7 +104,8 @@ nessesarily as simple as adding requests from each PID together.
 
 **Input:**
 
-Notifications with action ``THRUSTER_REQUEST`` sent by PID controllers.  See :ref:`app_pid` for details.
+Notifications with action ``THRUSTER_REQUEST`` sent by PID controllers.  See
+:ref:`app_pid` for details.
 
 **Output:**
 
@@ -117,8 +116,32 @@ Sets libseawolf variables for thrusters to values from -1 to 1.
 Serial App
 ``````````
 
-.. todo:: Document Serial App
+The serial application handles both input and output for microcontrollers,
+sensors and other peripherals.  It handles all communication to the outside
+world except for cameras, which are handled by :ref:`SVR <svr>`.  The serial
+app is located in the top level directory ``serialapp/``.
 
+Although considered a single application for simplicity sake, it is really an
+entry point for drivers for different serial devices.  The serial app scans
+through the computer's serial devices and starts the driver for each device
+connected.
+
+IMU Driver
+""""""""""
+
+Interfaces with the :abbr:`IMU (Inertial Measurement Unit)` sensor, which
+provides the robot's orientation in the form of pitch, yaw and roll.  Updates libseawolf variables:
+
+ * SEA.Pitch
+ * SEA.Roll
+ * SEA.Yaw
+
+SEA stands for "Stabilized Euler Angles".
+
+IO Board Driver
+""""""""""""""""""""""
+
+.. todo:: IO Board Driver
 
 Writing Applications
 --------------------

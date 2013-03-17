@@ -65,6 +65,7 @@ class AppRunnerFrame(wx.Frame):
                         CheckBoxOption("--svr-source", "", "SVR Source", False),
                     ]),
                 "SVR Watch": AppPanel(self.panel_right, ["python","svr_watch_all.py"], "misc/"),
+                "HUD": AppPanel(self.panel_right, ["python","HUD.py"], "misc/HUD/"),
                 "Vision": AppPanel(self.panel_right, ["python","run.py"], "vision/",
                     options=[
                         TextOption("Entity: ", ignore_empty=False),
