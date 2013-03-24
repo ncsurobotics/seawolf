@@ -9,6 +9,9 @@ import sw3
 import sw3.joystick as joystick
 import sw3.ratelimit as ratelimit
 
+# Speed for the hat forward and backward
+FORWARD_SPEED = 0.4
+
 yaw_heading = 0
 
 def update_axis(event):
@@ -32,7 +35,7 @@ def update_axis(event):
         total = min(total, 1.0)
         forward = for_p * total
         rate = rate_p * total
-        
+
         sw3.nav.do(sw3.CompoundRoutine((sw3.SetRotate(rate), sw3.Forward(forward))))
         
 def print_table(headings, *values):
@@ -69,6 +72,7 @@ if len(devices) == 0:
     sys.exit(1)
 
 depth_heading = 0
+forward_heading = 0
 rate_limiter = ratelimit.RateLimiter(10, update_axis)
 js = joystick.Joystick(devices[0], joystick.LOGITECH)
 
@@ -82,10 +86,20 @@ while True:
             rate_limiter.provide(event)
         elif event.name == "hat":
             if event.x < 0:
-                yaw_heading = sw3.util.add_angle(yaw_heading, -5)
+                yaw_heading = sw3.util.add_angle(yaw_heading, -2.5)
+                sw3.pid.yaw.heading = yaw_heading
             elif event.x > 0:
-                yaw_heading = sw3.util.add_angle(yaw_heading, 5)
-            sw3.pid.yaw.heading = yaw_heading
+                yaw_heading = sw3.util.add_angle(yaw_heading, 2.5)
+                sw3.pid.yaw.heading = yaw_heading
+            elif event.y < 0:
+                forward_heading = FORWARD_SPEED
+                sw3.nav.do(sw3.Forward(forward_heading))
+            elif event.y > 0:
+                forward_heading = -FORWARD_SPEED
+                sw3.nav.do(sw3.Forward(forward_heading))
+            else:
+                forward_heading = 0
+                sw3.nav.do(sw3.Forward(forward_heading))
 
     elif event.value == 1:
         if event.name == "button8":
