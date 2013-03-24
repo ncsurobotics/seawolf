@@ -1,17 +1,11 @@
-
-
 from __future__ import division
 import math
-#import collections import Counter
-
 import cv
-
 import svr
-
 from base import VisionEntity
 import libvision
 from sw3.util import circular_average, circular_range
-
+import random
 
 
 
@@ -48,32 +42,11 @@ class Bin(object):
         g = int(cv.RandReal(rng)*255)
         b = int(cv.RandReal(rng)*255)
         self.debug_color = cv.RGB(r,g,b)
+	
+	self.object = random.choice(["A", "B", "C", "D"])
 
 
-class Binscorner(object):
-    '''
-    def __init__(self,type,center,angle,area):
-        #ID number used when tracking bins
-        self.id = 0
 
-        #decisive type of letter in the bin
-        self.type = type
-
-        #center of bin
-        self.center = center
-
-        #direction of the bin
-        self.angle = angle
-
-        #area of the bin
-        self.area = area
-
-        #tracks timeout for bin
-        self.timeout = 10
-
-        #tracks our type decisions
-        self.type_counts = [0,0,0,0,0]
-    '''
 
 def line_distance(corner_a, corner_b):
 	distance = math.sqrt((corner_b[0]-corner_a[0])**2 + (corner_b[1]-corner_a[1])**2)
@@ -163,6 +136,7 @@ class BinscornerEntity(VisionEntity):
 	self.angles = []
 
 	
+	
 
 
 
@@ -228,12 +202,10 @@ class BinscornerEntity(VisionEntity):
 							#Checks that angles are roughly 90 degrees
 							if math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4) ))> self.angle_min and math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4))) < self.angle_max:
 								if math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4) ))> self.angle_min2 and math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4))) < self.angle_max2:
-									found = 0
 									new_bin = Bin(corner1,corner2,corner3,corner4)
 									self.match_bins(new_bin)
 	self.sort_bins()								
 	svr.debug("Bins", self.debug_frame)
-	#raw_input()
 	        
 	#Output bins
 	self.output.bins = self.confirmed
@@ -241,6 +213,7 @@ class BinscornerEntity(VisionEntity):
             bins.theta = (bins.midx - frame.width/2) * 37 / (frame.width/2);
             bins.phi = -1 * (bins.midy - frame.height/2) * 36 / (frame.height/2);
 	    bins.orientation = bins.angle
+	    bins.shape = bins.object
         self.return_output()
 
     def match_bins(self, target):
@@ -297,49 +270,7 @@ class BinscornerEntity(VisionEntity):
 
 
     def sort_bins(self):
-		
-#		for corner in self.corners:
-#			for candidate in self.candidates:
-				#if corners are close, add to last_seen
-#				if math.fabs((candidate.corner1[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner1[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner2[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner2[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner3[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner3[1] - corner[1])) < self.MaxTrans or math.fabs((candidate.corner4[0] - corner[0])) < self.MaxTrans and math.fabs((candidate.corner4[1] - corner[1])) < self.MaxTrans :
-#					candidate.last_seen += .3
-		'''			
-		for confirmed in self.confirmed:
-			corner1_found=0
-			corner2_found=0
-			corner3_found=0
-			corner4_found=0
-			for corner in self.corners:
-				if math.fabs((confirmed.corner1[0] - corner[0])) < self.MaxTrans and math.fabs((confirmed.corner1[1] - corner[1])) < self.MaxTrans:
-					corner1_found = 1
-					confirmed.corner1 = corner
-				if math.fabs((confirmed.corner2[0] - corner[0])) < self.MaxTrans and math.fabs((confirmed.corner2[1] - corner[1])) < self.MaxTrans:
-					corner2_found = 1 
-					confirmed.corner2 = corner
-				if math.fabs((confirmed.corner3[0] - corner[0])) < self.MaxTrans and math.fabs((confirmed.corner3[1] - corner[1])) < self.MaxTrans:
-					corner3_found = 1 
-					confirmed.corner3 = corner	
-				if math.fabs((confirmed.corner4[0] - corner[0])) < self.MaxTrans and math.fabs((confirmed.corner4[1] - corner[1])) < self.MaxTrans:
-					corner4_found = 1 
-					confirmed.corner4 = corner
-			if corner1_found == 0 and corner2_found == 1 and corner3_found == 1  and corner4_found == 1:
-				confirmed.corner1 = [confirmed.corner2[0]+confirmed.corner1_locx, confirmed.corner2[1]+confirmed.corner1_locy]
-				confirmed.last_seen += 1
-				print "yay?"
-			if corner2_found == 0 and corner1_found == 1 and corner3_found == 1  and corner4_found == 1:
-				confirmed.corner2 = [confirmed.corner1[0]+confirmed.corner2_locx, confirmed.corner1[1]+confirmed.corner2_locy]
-				confirmed.last_seen += 1
-				print "yay?"
-			if corner3_found == 0 and corner2_found == 1 and corner1_found == 1  and corner4_found == 1:
-				confirmed.corner3 = [confirmed.corner1[0]+confirmed.corner3_locx, confirmed.corner1[1]+confirmed.corner3_locy]
-				confirmed.last_seen += 1
-				print "yay?"
-			if corner4_found == 0 and corner2_found == 1 and corner3_found == 1  and corner1_found == 1:
-				confirmed.corner4 = [confirmed.corner1[0]+confirmed.corner4_locx, confirmed.corner1[1]+confirmed.corner4_locy]
-				confirmed.last_seen += 1
-				print "yay?"
-		'''
-				
+		#promote candidate to confirmed if seen enough times, if it hasn't been seen, delete the bin
 		for candidate in self.candidates:
 
 			candidate.last_seen -= 1
@@ -352,27 +283,23 @@ class BinscornerEntity(VisionEntity):
 				self.candidates.remove(candidate)
 				print "confirmed"
 				continue
+
 		self.min_perimeter = 500000	
 		self.angles = []
 		for confirmed in self.confirmed:
 			if 0 < line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 < self.min_perimeter: 	
 				self.min_perimeter = line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2
-			print confirmed.angle/math.pi*180			
-			#self.angles.append((cv.Round(confirmed.angle/math.pi)*180/1)*1)
+			print confirmed.angle/math.pi*180
 			self.angles.append(cv.Round(confirmed.angle/math.pi*180/10)*10)
+
+		#compare perimeter of existing bins. If a bin is too much bigger than the others, it is deleted. This is done to get rid of bins found based of 3 bins
 		for confirmed in self.confirmed:
-			data = []
 			if math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 - self.min_perimeter)>self.min_perimeter*self.perimeter_threshold and line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 > self.min_perimeter:
 				print "perimeter error"	
 				confirmed.last_seen -= 5
 
 				continue
-#			from collections import Counter
-#			data = Counter(self.angles)
-#			print data.most_common(1)[0][0]
-#			if cv.Round(confirmed.angle/math.pi*180/10)*10 != data.most_common(1)[0][0] and math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 - self.min_perimeter)>self.min_perimeter*0.05:
-#				print "angle error"
-#				continue
+
 			
 			confirmed.last_seen -= 1
 			if confirmed.last_seen < self.last_seen_thresh:
@@ -393,13 +320,10 @@ class BinscornerEntity(VisionEntity):
 			cv.Line(self.debug_frame, pt1,pt3, line_color, 1, cv.CV_AA, 0)
 			font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .6, .6, 0, 1, 1)
 			text_color = (0, 255, 0)
+			#print ID and last_seen by each bin
 			cv.PutText(self.debug_frame, str(confirmed.ID), (int(confirmed.midx),int(confirmed.midy)), font, confirmed.debug_color)
 			cv.PutText(self.debug_frame, str(confirmed.last_seen), (int(confirmed.midx-20),int(confirmed.midy-20)), font, confirmed.debug_color)
 
-	
-	#libvision.misc.draw_lines(self.debug_frame, corner)
-       # cv.CvtColor(color_filtered,self.debug_frame, cv.CV_GRAY2RGB)
-	
 
 #TODO Lower how much it gets from seeing corners to reduce things. Delete lost[] code or archive useful parts. fix perimeter error. get rid of bbb's. Fix integration of flux capacitors. Reduce interference from time lords. Prevent the rise of skynet. Speed up the processes so they can make the kessler run in under 12 parsecs. Go plaid in ludicrous speed. (NOTE: It's a Unix System, I know this). 
 
