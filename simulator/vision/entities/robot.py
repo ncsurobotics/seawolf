@@ -18,11 +18,13 @@ class RobotEntity(Entity):
     DEPTH_CONSTANT = 1.5
     VELOCITY_CONSTANT = 1
     YAW_CONSTANT = 40
+    PITCH_CONSTANT = 50
 
     def __init__(self, *args, **kwargs):
         super(RobotEntity, self).__init__(*args, **kwargs)
 
         self.yaw_offset = -90
+        self.pitch_offset = 0
         self.model = model.ObjModel(file("models/seawolf5.obj"))
         self.depth = -1*self.pos[2]
         self.tracked_vars = {}
@@ -63,6 +65,12 @@ class RobotEntity(Entity):
         self.pos[0] += cos(radians(-self.yaw)) * velocity * dt
         self.pos[1] += sin(radians(-self.yaw)) * velocity * dt
 
+        #Pitch
+        self.pitch = self.pitch + (bow-stern) * self.PITCH_CONSTANT *dt
+        self.pitch = (self.pitch+180) % 360 - 180
+        seawolf.var.set("SEA.Pitch",self.pitch)
+        print self.pitch
+
         # Yaw
         self.yaw = self.yaw + (port-star) * self.YAW_CONSTANT * dt
         self.yaw = (self.yaw+180) % 360 - 180  # Range -180 to 180
@@ -76,6 +84,7 @@ class RobotEntity(Entity):
         glPushMatrix()
         glTranslate(0, 0, -1)
         glRotate(self.yaw_offset, 0, 0, -1)
+        glRotate(self.pitch_offset,0,1,0)
         self.model.draw()
         glPopMatrix()
 

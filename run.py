@@ -77,8 +77,9 @@ class AppRunnerFrame(wx.Frame):
                 ),
             },
             "PID": {
-                "Yaw PID": AppPanel(self.panel_right, ["./bin/yawpid"], "applications/"),
-                "Depth PID": AppPanel(self.panel_right, ["./bin/depthpid"], "applications/"),
+                "Pitch PID": AppPanel(self.panel_right, ["./bin/pitchpidpy"], "applications/"),
+                "Yaw PID": AppPanel(self.panel_right, ["./bin/yawpidpy"], "applications/"),
+                "Depth PID": AppPanel(self.panel_right, ["./bin/depthpidpy"], "applications/"),
                 "Mixer": AppPanel(self.panel_right, ["./bin/mixer"], "applications/"),
             },
             "Control": {
