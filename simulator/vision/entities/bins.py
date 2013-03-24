@@ -7,15 +7,20 @@ from OpenGL.GLU import *
 from base import Entity, Container
 
 BIN_SEPERATION = 0.2
-THING_NAMES = [
-    "rat",
-    "hampster",
-    "gerbil",
-    "guinea pig",
+SHAPE_NAMES = [
+    "A",
+    "B",
+    "C",
+    "D",
 ]
 
 
 class BinsEntity(Entity):
+
+    def __init__(self, *args, **kwargs):
+        self.bins_counter = 0
+        self.bin_ids = {}
+        return super(BinsEntity, self).__init__(*args, **kwargs)
 
     def draw(self):
         self.pre_draw()
@@ -74,10 +79,20 @@ class BinsEntity(Entity):
         center = self.absolute_point((self.bin_x_position(i), 0, 0))
 
         b = Container()
-        b.id = i
         b.theta, b.phi = robot.find_point("down", center)
         b.found = b.theta != None and b.phi != None
-        b.thing = THING_NAMES[i]
+        b.shape = SHAPE_NAMES[i]
+
+        if b.found:
+            if self.bin_ids.get(i, None) is None:
+                # Assign new id to bin
+                self.bin_ids[i] = self.bins_counter
+                self.bins_counter += 1
+            b.id = self.bin_ids[i]
+
+        else:
+            b.id = None
+        self.bin_ids[i] = b.id
 
         return b
 

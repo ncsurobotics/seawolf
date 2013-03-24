@@ -80,10 +80,12 @@ MISSION_ORDER = [
     missions.SimpleBuoyMission,
   # missions.SimpleBuoyMission,
     missions.PathMission,
-    sw3.SetDepth(8.0, timeout=5),
-    missions.HedgeMission
-    #(missions.PathMission, None, 15, True, 0, 50),
-    #(missions.PathMission, 0, 30),
+    #sw3.SetDepth(8.0, timeout=5),
+    missions.HedgeMission,
+    sw3.Forward(.5, timeout=.01),
+    (missions.PathMission,5, 15, True, 0, 50),
+    sw3.Forward(.5, timeout=.01)
+    #(missions, 0, 30),
     #missions.HedgeMission
 ]
 
