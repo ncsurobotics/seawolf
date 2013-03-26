@@ -12,7 +12,7 @@ from base import VisionEntity
 import libvision
 from sw3.util import circular_average, circular_range
 
-
+import random
 
 
 
@@ -48,6 +48,8 @@ class Bin(object):
         g = int(cv.RandReal(rng)*255)
         b = int(cv.RandReal(rng)*255)
         self.debug_color = cv.RGB(r,g,b)
+        self.object = random.choice(["A", "B", "C", "D"])
+
 
 
 class Binscorner(object):
@@ -85,11 +87,12 @@ def line_slope(corner_a, corner_b):
 		return slope
 
 def angle_between_lines(slope_a, slope_b):
-	if slope_a != None and slope_b != None and (1+slope_a*slope_b) != 0:
-		angle = math.atan((slope_a - slope_b)/(1+slope_a*slope_b))
-		return angle
-	else: 
-		return 0
+    if slope_a != None and slope_b != None and (1+slope_a*slope_b) != 0:
+        angle = math.atan((slope_a - slope_b)/(1+slope_a*slope_b))
+        return angle
+    else: 
+        angle = 0
+        return angle
 
 def midpoint(corner_a, corner_b):
 	midpoint_x = (corner_b[0] - corner_a[0])/2+corner_a[0]
@@ -117,7 +120,7 @@ def rect_midpointy(corner_a,corner_b,corner_c,corner_d):
 
 
 
-class BinscornerEntity(VisionEntity):
+class BinsCornerEntity(VisionEntity):
     
    
 
@@ -125,7 +128,7 @@ class BinscornerEntity(VisionEntity):
 
 	#Adaptive threshold parameters
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 17
+        self.adaptive_thresh = 14
 
 	#Good features parameters
 	self.max_corners = 20
@@ -237,10 +240,17 @@ class BinscornerEntity(VisionEntity):
 	        
 	#Output bins
 	self.output.bins = self.confirmed
+        anglesum = 0
         for bins in self.output.bins:
-            bins.theta = (bins.midx - frame.width/2) * 37 / (frame.width/2);
-            bins.phi = -1 * (bins.midy - frame.height/2) * 36 / (frame.height/2);
-	    bins.orientation = bins.angle
+            bins.theta = (bins.midx - frame.width/2) * 37 / (frame.width/2)
+            bins.phi = -1 * (bins.midy - frame.height/2) * 36 / (frame.height/2)
+            bins.shape = bins.object
+            anglesum += bins.angle
+           # bins.orientation = bins.angle
+        if len(self.output.bins) > 0:           
+            self.output.orientation = anglesum/len(self.output.bins)
+        else:
+            self.output.orientation = None
         self.return_output()
 
     def match_bins(self, target):
@@ -263,7 +273,7 @@ class BinscornerEntity(VisionEntity):
 				candidate.corner3_locy = candidate.corner3[1] - candidate.corner1[1]	
 				candidate.corner4_locx = candidate.corner4[0] - candidate.corner1[0]
 				candidate.corner4_locy = candidate.corner4[1] - candidate.corner1[1]
-				if candidate.last_seen < 30:
+				if candidate.last_seen < 20:
 					candidate.last_seen +=3
 				candidate.seencount +=1
 				existing = 1
@@ -283,7 +293,7 @@ class BinscornerEntity(VisionEntity):
 				confirmed.corner3 = target.corner3
 				confirmed.corner4 = target.corner4
 				confirmed.angle = target.angle
-				if confirmed.last_seen < 30:
+				if confirmed.last_seen < 20:
 					confirmed.last_seen +=3
 				confirmed.seencount +=1
 				existing = 1
@@ -363,7 +373,7 @@ class BinscornerEntity(VisionEntity):
 		for confirmed in self.confirmed:
 			data = []
 			if math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 - self.min_perimeter)>self.min_perimeter*self.perimeter_threshold and line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 > self.min_perimeter:
-				print "perimeter error"	
+				print "perimeter error (this is a good thing)"	
 				confirmed.last_seen -= 5
 
 				continue
@@ -401,6 +411,8 @@ class BinscornerEntity(VisionEntity):
        # cv.CvtColor(color_filtered,self.debug_frame, cv.CV_GRAY2RGB)
 	
 
-#TODO Lower how much it gets from seeing corners to reduce things. Delete lost[] code or archive useful parts. fix perimeter error. get rid of bbb's. Fix integration of flux capacitors. Reduce interference from time lords. Prevent the rise of skynet. Speed up the processes so they can make the kessler run in under 12 parsecs. Go plaid in ludicrous speed. (NOTE: It's a Unix System, I know this). 
+#TODO Lower how much it gets from seeing corners to reduce things. Add variable for max last_seen instead of stating in code. Delete lost[] code or archive useful parts. fix perimeter error. get rid of bbb's. Fix integration of flux capacitors. Reduce interference from time lords. Prevent the rise of skynet. Speed up the processes so they can make the kessler run in under 12 parsecs. Go plaid in ludicrous speed. (NOTE: It's a Unix System, I know this). 
+
+
 
 #Ideas: lower maxtrans, fix numerous bins sharing the same spot.

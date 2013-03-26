@@ -23,7 +23,7 @@ from buoy2011 import Buoy2011Entity
 from doublepath import DoublePathEntity
 from hedge import HedgeEntity
 from bins import BinsEntity
-from binscorner import BinscornerEntity
+from binscorner import BinsCornerEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -39,6 +39,6 @@ entity_classes = {
     "weapons": WeaponsEntity,
     "doublepath": DoublePathEntity,
     "bins": BinsEntity,
-    "binscorner": BinscornerEntity
+    "binscorner": BinsCornerEntity
 }
 
