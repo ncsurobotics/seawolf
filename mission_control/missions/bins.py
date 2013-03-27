@@ -26,9 +26,10 @@ class BinsMission(MissionBase):
     def __init__(self):
         pass
     def init(self):
-        self.process_manager.start_process(entities.BinsEntity, "bins", "down", debug=True)
+        self.process_manager.start_process(entities.BinsCornerEntity, "bins", "down", debug=True)
         self.reference_angle = sw3.data.imu.yaw()
-        self.highest_id = None
+        self.highest_ID = None
+
         self.turn_count = 1
         self.drop_count = 0
         self.dropped = "E"
@@ -76,8 +77,7 @@ class BinsMission(MissionBase):
             pos_x = math.atan2(bins[0].theta,bins[0].phi)*(180/pi)
             pos_rho = math.sqrt(bins[0].theta**2 + bins[0].phi**2)
            # sw3.nav.do(sw3.Forward(0,0))
-
-            center = sw3.CompoundRoutine(sw3.RelativeYaw(pos_x), sw3.Forward(.2),timeout = 4)
+            center = sw3.CompoundRoutine(sw3.RelativeYaw(pos_x), sw3.Forward(.2),timeout = 3)
             sw3.nav.do(center)
             #print pos_x
            # sw3.nav.do(sw3.Forward(FORWARD_SPEED, CENTER_TIME))
@@ -128,8 +128,8 @@ class BinsMission(MissionBase):
             #self.x = 1
         if bins:    
             for bincount in bins:
-                if bincount.id > self.highest_id:
-                    self.highest_id = bincount.id
+                if bincount.ID > self.highest_ID:
+                    self.highest_ID = bincount.ID
         current_bin = None
         if self.orientdata is not None:
         #if self.highest_id > self.id_holder:
@@ -139,7 +139,7 @@ class BinsMission(MissionBase):
             #self.id_holder = self.highest_id
             #sw3.nav.do(sw3.Forward(0,0))
             #sw3.nav.do(turning)
-            self.set_timer("bin_timeout",7, turnaround )
+            self.set_timer("bin_timeout",3, turnaround )
             turning.on_done(lambda y: sw3.nav.do(sweep))
             #print "I turned!"
             #sw3.nav.do(sw3.Forward(FORWARD_SPEED))
@@ -148,7 +148,7 @@ class BinsMission(MissionBase):
             #print self.turn_countFO
           
             for bina in bins:
-                if bina.id == self.highest_id:
+                if bina.ID == self.highest_ID:
                     current_bin = bina
                     print current_bin.shape
                     #self.highest_id = bina.id
@@ -187,4 +187,4 @@ class BinsMission(MissionBase):
             #self.finish_mission()
         self.state = self.states[self.state_num]
         print "State:", self.state
-        
+       

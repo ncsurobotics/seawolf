@@ -7,6 +7,7 @@ from path import PathMission
 from buoy import BuoyMission
 from buoy_simple import SimpleBuoyMission
 from hedge import HedgeMission
+from bins import BinsMission
 #from buoy_simple import SimpleBuoyMission
 #from buoy_demo import BuoyDemoMission
 
@@ -17,7 +18,8 @@ mission_classes = {
     'path': PathMission,
     'buoy': BuoyMission,
     'buoysimple': SimpleBuoyMission,
-    'hedge': HedgeMission
+    'hedge': HedgeMission,
+    'bins': BinsMission
     #'buoy_simple': SimpleBuoyMission,
     #'buoy_demo':BuoyDemoMission,
 }

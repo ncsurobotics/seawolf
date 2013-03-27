@@ -82,8 +82,8 @@ MISSION_ORDER = [
     missions.PathMission,
     sw3.SetDepth(8.0, timeout=5),
     missions.HedgeMission,
-    (missions.PathMission, True, 1),
-    sw3.Forward(.5, 3),
+    (missions.PathMission, False, 0),
+    sw3.Forward(.5, 1),
     missions.BinsMission
     #(missions.PathMission, None, 15, True, 0, 50),
     #(missions.PathMission, 0, 30),
