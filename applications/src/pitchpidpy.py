@@ -28,7 +28,7 @@ def main():
     dataOut(0.0)
 
     while(True):		
-        action,data = seawolf.notify.get()
+        data = seawolf.notify.get()
         pitch = seawolf.var.get("SEA.Pitch")
         if( data == "PitchPID.Coefficients"):
             pid.setCoefficients( seawolf.var.get("PitchPID.p"), seawolf.var.get("PitchPID.i"), seawolf.var.get("PitchPID.d"))
