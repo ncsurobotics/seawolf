@@ -10,23 +10,24 @@ from vision import entities
 import sw3
 from sw3 import util
 
-TARGET_A = 0
-TARGET_B = 1
-TARGET_C = 2
-TARGET_D = 3
-BIN_DEPTH = 0
+BIN_DEPTH = 8.0
 CENTER_THRESH = 6
 FORWARD_SPEED = .5
 CENTER_TIME = 5
 BIN_TIMEOUT = 8
-
+ORIENT_THRESH = 15
+TURNING_TIME = 4
+TURNAROUND_TIMER = 3
 
 class BinsMission(MissionBase):
 
     def __init__(self):
         pass
     def init(self):
-        self.process_manager.start_process(entities.BinsCornerEntity, "bins", "down", debug=True)
+        #pooltest
+        #self.process_manager.start_process(entities.BinsCornerEntity, "bins", "down", debug=True)
+        #simulator
+        self.process_manager.start_process(entities.BinsEntity, "bins", "down", debug=True)
         self.reference_angle = sw3.data.imu.yaw()
         self.highest_ID = None
 
@@ -77,7 +78,7 @@ class BinsMission(MissionBase):
             pos_x = math.atan2(bins[0].theta,bins[0].phi)*(180/pi)
             pos_rho = math.sqrt(bins[0].theta**2 + bins[0].phi**2)
            # sw3.nav.do(sw3.Forward(0,0))
-            center = sw3.CompoundRoutine(sw3.RelativeYaw(pos_x), sw3.Forward(.2),timeout = 3)
+            center = sw3.CompoundRoutine(sw3.RelativeYaw(pos_x), sw3.Forward(.2),sw3.SetDepth(BIN_DEPTH), timeout = 3)
             sw3.nav.do(center)
             #print pos_x
            # sw3.nav.do(sw3.Forward(FORWARD_SPEED, CENTER_TIME))
@@ -104,7 +105,7 @@ class BinsMission(MissionBase):
             #sw3.nav.do(sw3.Forward(FORWARD_SPEED,1))
             #sw3.nav.do(sw3.Forward(0,0))
             
-            orient = sw3.CompoundRoutine(sw3.Forward(0,5),sw3.RelativeYaw(orient_angle),sw3.RelativeDepth(BIN_DEPTH))
+            orient = sw3.CompoundRoutine(sw3.Forward(0,5),sw3.RelativeYaw(orient_angle))
             #sw3.nav.do(sw3.CompoundRoutine(sw3.Forward(0,0),(sw3.RelativeYaw(self.orientdata),timeout =5)))
             sw3.nav.do(orient)
             #orient.on_done(lambda z: sw3.nav.do(sw3.Forward(FORWARD_SPEED, 1)))
@@ -112,14 +113,14 @@ class BinsMission(MissionBase):
             #sw3.nav.do(sw3.RelativeDepth(BIN_DEPTH))
             #print sw3.data.imu.yaw() 
            # print self.orientdata
-            if (abs(abs(sw3.data.imu.yaw()) - orient_angle) <= 15):
+            if (abs(abs(sw3.data.imu.yaw()) - orient_angle) <= ORIENT_THRESH):
                 #print "done orienting"
                 orient.on_done(lambda z: sw3.nav.do(sw3.Forward(FORWARD_SPEED, 1)))
                 self.turn_count += 1
                 self.nextState()
     def sweep(self, bins):
         sweep = sw3.Forward(FORWARD_SPEED,1)
-        turning = sw3.CompoundRoutine(sw3.Forward(0,4), sw3.RelativeYaw(180))
+        turning = sw3.CompoundRoutine(sw3.Forward(0,TURNING_TIME), sw3.RelativeYaw(180))
         turnaround = lambda: sw3.nav.do(turning)
         #self.id_holder = self.highest_id
         #iif self.x == 0:
@@ -128,8 +129,8 @@ class BinsMission(MissionBase):
             #self.x = 1
         if bins:    
             for bincount in bins:
-                if bincount.ID > self.highest_ID:
-                    self.highest_ID = bincount.ID
+                if bincount.id > self.highest_ID:
+                    self.highest_ID = bincount.id
         current_bin = None
         if self.orientdata is not None:
         #if self.highest_id > self.id_holder:
@@ -139,7 +140,7 @@ class BinsMission(MissionBase):
             #self.id_holder = self.highest_id
             #sw3.nav.do(sw3.Forward(0,0))
             #sw3.nav.do(turning)
-            self.set_timer("bin_timeout",3, turnaround )
+            self.set_timer("bin_timeout",TURNAROUND_TIMER, turnaround )
             turning.on_done(lambda y: sw3.nav.do(sweep))
             #print "I turned!"
             #sw3.nav.do(sw3.Forward(FORWARD_SPEED))
@@ -148,7 +149,7 @@ class BinsMission(MissionBase):
             #print self.turn_countFO
           
             for bina in bins:
-                if bina.ID == self.highest_ID:
+                if bina.id == self.highest_ID:
                     current_bin = bina
                     print current_bin.shape
                     #self.highest_id = bina.id

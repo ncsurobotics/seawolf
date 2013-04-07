@@ -88,6 +88,7 @@ class BuoyTestEntity(VisionEntity):
         grey = libvision.misc.get_channel(hsv, 2)
 
         # load a haar classifier
+        #hc = cv.Load("/home/seawolf/software/seawolf5/vision/output.xml")
         hc = cv.Load("/home/seawolf/software/seawolf5/vision/buoy_cascade_4.xml")
         
         #use classifier to detect buoys
