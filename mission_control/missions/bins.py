@@ -10,7 +10,7 @@ from vision import entities
 import sw3
 from sw3 import util
 
-BIN_DEPTH = 4
+BIN_DEPTH = 8
 CENTER_THRESH = 6
 FORWARD_SPEED = .5
 CENTER_TIME = 5
@@ -27,7 +27,7 @@ class BinsMission(MissionBase):
         #pooltest
         #self.process_manager.start_process(entities.BinsCornerEntity, "bins", "down", debug=True)
         #simulator
-        self.process_manager.start_process(entities.BinsCornerEntity, "bins", "down", debug=True)
+        self.process_manager.start_process(entities.BinsEntity, "bins", "down", debug=True)
         self.reference_angle = sw3.data.imu.yaw()
         self.highest_id = None
 
@@ -65,7 +65,7 @@ class BinsMission(MissionBase):
         if self.state == "sweep":
             self.sweep(bins)
         if self.state == "drop":
-            self.drop()
+            self.drop(bins)
         if self.state == "findpath":
             self.findpath()
 
@@ -76,6 +76,7 @@ class BinsMission(MissionBase):
             sw3.nav.do(sw3.Forward(0,1))
             #print bins
             pos_x = math.atan2(bins[0].theta,bins[0].phi)*(180/pi)
+            print pos_x
             pos_rho = math.sqrt(bins[0].theta**2 + bins[0].phi**2)
            # sw3.nav.do(sw3.Forward(0,0))
             print "center"
@@ -121,7 +122,7 @@ class BinsMission(MissionBase):
                 self.nextState()
     def sweep(self, bins):
         #print "sweep"
-        print self.orientdata
+        #print self.orientdata
         sweep = sw3.Forward(FORWARD_SPEED,1)
         turning = sw3.CompoundRoutine(sw3.Forward(0,TURNING_TIME), sw3.RelativeYaw(180))
         turnaround = lambda: sw3.nav.do(turning)
@@ -150,7 +151,7 @@ class BinsMission(MissionBase):
             #sw3.nav.do(sw3.Forward(FORWARD_SPEED))
            # print "turning"
             self.turn_count += 1
-            #print self.turn_countFO
+            #print self.turn_countF none
           
             for bina in bins:
                 if bina.id == self.highest_id:
@@ -169,12 +170,19 @@ class BinsMission(MissionBase):
       # sw3.SequentialRoutine(sweep_routine, turnaround,sweep_routine)
         
     #move forward, order bins as we find, found/ordered 4 bins?
-    def drop(self):
+    def drop(self, bins):
         #print "Marker Dropped"
-        self.drop_count += 1
-        print "State:", self.state
-        self.state = self.states[2]
-        self.state_num = 2
+        if bins and self.orientdata:
+            orient_angle = self.orientdata*(180/pi)
+            print "orient"
+            orient = sw3.CompoundRoutine(sw3.Forward(0),sw3.RelativeYaw(orient_angle), timeout = 5)
+            sw3.nav.do(orient)
+
+
+            self.drop_count += 1
+            print "State:", self.state
+            self.state = self.states[0]
+            self.state_num = 0
         
    #move forward, bin below a target?, stop, drop.
     #repeat if markers dropped is not 2
