@@ -96,11 +96,11 @@ class BinsCornerEntity(VisionEntity):
 
         #Adaptive threshold parameters
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 14
+        self.adaptive_thresh = 19
 
         #Good features parameters
         self.max_corners = 20
-        self.quality_level = .7
+        self.quality_level = .6
         self.min_distance = 40
         self.good_features_blocksize = 24
         
