@@ -128,7 +128,7 @@ class PathMission(MissionBase):
             path_angle = path_angle - 2*pi
 
         print "Orienting to", (180/pi)*path_angle
-        routine = sw3.SetYaw((180/pi)*path_angle,timeout = 8)
+        routine = sw3.SetYaw((180/pi)*path_angle,timeout = 15)
         routine.on_done(self.finish_mission)
         sw3.nav.do(routine)
         self.state = 'done'

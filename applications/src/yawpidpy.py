@@ -1,7 +1,8 @@
+from __future__ import division
 import seawolf
 import math
 
-thruster_cap = .2
+thruster_cap = .4
 
 def thruster_log(mv):
     if(math.fabs(mv) < 0.01):

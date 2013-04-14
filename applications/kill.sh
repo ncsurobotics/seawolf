@@ -2,7 +2,7 @@
 killall mixer
 #killall tracker
 #killall trackerproxy
-killall depthpidpy
+killall depthpid
 killall yawpid
 #killall rotpid
 #killall rollpid

@@ -96,11 +96,12 @@ class BinsCornerEntity(VisionEntity):
 
         #Adaptive threshold parameters
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 19
+
+        self.adaptive_thresh = 12
 
         #Good features parameters
-        self.max_corners = 20
-        self.quality_level = .6
+        self.max_corners = 15
+        self.quality_level = .75
         self.min_distance = 40
         self.good_features_blocksize = 24
         
@@ -116,15 +117,15 @@ class BinsCornerEntity(VisionEntity):
         self.ratio_threshold = .7
         
         #How far a bin may move and still be considered the same bin
-        self.MaxTrans = 30
+        self.MaxTrans = 40
 
         #Minimum number the seencount can be before the bin is lost
         self.last_seen_thresh = 0
         #How many times a bin must be seen to be accepted as a confirmed bin
         self.min_seencount = 5
-
+ 
         #How close the perimeter of a bin must be when compared to the perimeter of other bins
-        self.perimeter_threshold = 0.09
+        self.perimeter_threshold = 0.08
 
 
         self.corners = []
@@ -294,13 +295,16 @@ class BinsCornerEntity(VisionEntity):
                 for confirmed in self.confirmed:
                         if 0 < line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 < self.min_perimeter:         
                                 self.min_perimeter = line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2
-                        print confirmed.angle/math.pi*180
+                        #print confirmed.angle/math.pi*180
                         self.angles.append(cv.Round(confirmed.angle/math.pi*180/10)*10)
 
                 #compare perimeter of existing bins. If a bin is too much bigger than the others, it is deleted. This is done to get rid of bins found based of 3 bins
                 for confirmed in self.confirmed:
-                        if math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 - self.min_perimeter)>self.min_perimeter*self.perimeter_threshold and line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 > self.min_perimeter:
+                        if math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + math.fabs(line_distance(confirmed.corner1,confirmed.corner2)*2) - self.min_perimeter)>self.min_perimeter*self.perimeter_threshold and line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 > self.min_perimeter:
                                 print "perimeter error (this is a good thing)"        
+                                print math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + math.fabs(line_distance(confirmed.corner1,confirmed.corner2)*2) - self.min_perimeter), "is greater than", self.min_perimeter*self.perimeter_threshold
+                                print "yay?"
+
                                 confirmed.last_seen -= 5
 
                                 continue

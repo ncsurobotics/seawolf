@@ -14,7 +14,7 @@ FORWARD_SPEED = 0.5
 BACKWARD_SPEED = -0.3
 CENTER_TIME = 5
 
-DEPTH_THRESHOLD = .06
+DEPTH_THRESHOLD = .05
 DEPTH_UNIT = 0.2
 
 CAM_FRAME_X_MIN = 0
@@ -178,6 +178,7 @@ class BuoyMission(MissionBase):
         if not track_buoy:
             return
 
+        #TODO add smarter timeout
         self.set_timer("Bump_Timeout", BUMP_TIMEOUT, self.bump_timeout,sw3.data.imu.yaw())
 
     def bump_timeout(self,approach_angle):

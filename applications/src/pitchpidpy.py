@@ -1,3 +1,4 @@
+from __future__ import division
 import seawolf
 import math
 import time
@@ -12,7 +13,7 @@ def in_range(a,x,b):
     elif( x > b ):
         return b
     else:
-        return x 
+        return x
 
 def main():
     seawolf.loadConfig("../conf/seawolf.conf")
@@ -23,16 +24,17 @@ def main():
     seawolf.notify.filter(seawolf.FILTER_MATCH, "UPDATED PitchPID.Paused")
     seawolf.notify.filter(seawolf.FILTER_MATCH, "UPDATED IMU")
 
-    pid = seawolf.PID( seawolf.var.get("DepthPID.Heading"), seawolf.var.get("DepthPID.p"), seawolf.var.get("DepthPID.i"), seawolf.var.get("DepthPID.d"))
+    pid = seawolf.PID( seawolf.var.get("PitchPID.Heading"), seawolf.var.get("PitchPID.p"), seawolf.var.get("PitchPID.i"), seawolf.var.get("PitchPID.d"))
 
     dataOut(0.0)
+    mv = 0.0
 
-    while(True):		
-        action,data = seawolf.notify.get()
+    while(True):
+        data = seawolf.notify.get()
         pitch = seawolf.var.get("SEA.Pitch")
         if( data == "PitchPID.Coefficients"):
             pid.setCoefficients( seawolf.var.get("PitchPID.p"), seawolf.var.get("PitchPID.i"), seawolf.var.get("PitchPID.d"))
-            pid.resetIntegral() 
+            pid.resetIntegral()
         elif( data == "PitchPID.Heading"):
             pid.setSetPoint(seawolf.var.get("PitchPID.Heading"))
             mv = pid.update(pitch)
@@ -45,14 +47,13 @@ def main():
             paused = p
             if(paused):
                 dataOut(0.0)
-                seawolf.notify.send("PIDPAUSED", "Pitch")        
-        elif( data == "IMU" and paused == False):
-            mv = pid.update(pitch);
-        
+                seawolf.notify.send("PIDPAUSED", "Pitch")
+        elif( data == "IMU" and paused == False): mv = pid.update(pitch);
+
         if(paused == False):
             dataOut(mv)
 
     seawolf.close()
 
 if __name__ == "__main__":
-	main()
+    main()
