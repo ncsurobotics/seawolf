@@ -5,7 +5,7 @@ import svr
 from base import VisionEntity
 import libvision
 from sw3.util import circular_average, circular_range
-
+#import msvcrt
 import random
 
 
@@ -219,6 +219,7 @@ class BinsCornerEntity(VisionEntity):
         else:
             self.output.orientation = None
         self.return_output()
+        
 
     def match_bins(self, target):
                 existing = 0
