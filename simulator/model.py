@@ -10,6 +10,7 @@ from OpenGL.GLUT import glutSolidSphere
 import random
 import numpy
 from collections import defaultdict
+import struct
 
 
 def get_displaylist():
@@ -220,3 +221,48 @@ class ObjModel(Model):
                     glVertex3dv(pt)
                 glEnd()
 
+class StlModel(Model):
+    """A model loaded from an stl file"""
+
+    def __init__(self, fileobj, scale=1, ambient=(0,0,0,0), diffuse=(0,0,0,0), specular=(0,0,0,0), emission=(0,0,0,0)):
+
+        if isinstance(fileobj, (str, unicode)):
+            fileobj = open(fileobj, 'rb')
+        self.f = fileobj
+
+        assert len(ambient)==4
+        assert len(diffuse)==4
+        assert len(specular)==4
+        assert len(emission)==4
+        self.ambient = ambient
+        self.diffuse = diffuse
+        self.specular = specular
+        self.emission = emission
+
+        self._create_displaylist(scale)
+
+    def render(self):
+
+        # Skip 80 byte header
+        self.f.seek(80)
+
+        n_triangles = struct.unpack('i', self.f.read(4))[0]
+
+        glColor(*self.diffuse)
+        glMaterialfv(GL_FRONT, GL_AMBIENT, self.ambient)
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, self.diffuse)
+        glMaterialfv(GL_FRONT, GL_SPECULAR, self.specular)
+        glMaterialfv(GL_FRONT, GL_EMISSION, self.emission)
+
+        fmt = '12fxx'
+        triangle_size = 4*12 + 2  # In bytes
+        data = self.f.read(triangle_size*n_triangles)
+        triangles = struct.unpack('<'+(fmt*n_triangles), data)
+
+        glBegin(GL_TRIANGLES)
+        for i in xrange(0, n_triangles*12, 12):
+            glNormal3f(triangles[i], triangles[i+1], triangles[i+2])
+            glVertex3f(triangles[i+3], triangles[i+4], triangles[i+5])
+            glVertex3f(triangles[i+6], triangles[i+7], triangles[i+8])
+            glVertex3f(triangles[i+9], triangles[i+10], triangles[i+11])
+        glEnd()
