@@ -6,7 +6,7 @@ from missions.base import MissionBase
 from vision import process_manager
 import sw3
 
-MISSION_TIMEOUT = 8
+MISSION_TIMEOUT = 6
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.4
@@ -50,10 +50,10 @@ class GateMission(MissionBase):
                     sw3.RelativeYaw(gate_center),
                     sw3.Forward(0.4)
                 ]))
-        elif self.gate_seen > 30:
+        elif self.gate_seen > 20:
             self.gate_lost += 1
 
-        if self.gate_lost > 30:
+        if self.gate_lost > 20:
             print "Heading Locked"
             self.finish_mission()
             return
