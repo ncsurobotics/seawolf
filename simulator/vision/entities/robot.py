@@ -22,8 +22,11 @@ class RobotEntity(Entity):
     def __init__(self, *args, **kwargs):
         super(RobotEntity, self).__init__(*args, **kwargs)
 
-        self.yaw_offset = -90
-        self.model = model.ObjModel(file("models/seawolf5.obj"))
+        self.yaw_offset = 90
+
+        #self.model = model.ObjModel(file("models/seawolf5.obj"))
+        self.model = model.StlModel("models/seawolf6.stl", ambient=(1, 0, 0, 0), diffuse=(1, 0, 0, 0))
+
         self.depth = -1*self.pos[2]
         self.tracked_vars = {}
 
@@ -74,7 +77,6 @@ class RobotEntity(Entity):
 
         # Account for model offsets and draw the model
         glPushMatrix()
-        glTranslate(0, 0, -1)
         glRotate(self.yaw_offset, 0, 0, -1)
         self.model.draw()
         glPopMatrix()
@@ -82,6 +84,7 @@ class RobotEntity(Entity):
         # Down camera guides
         glColor(1, 1, 0, 0.2)
         glPushMatrix()
+        glTranslate(0.0, 0, -0.60)
         glRotate(90, 0, 1, 0)
         self.draw_camera_guides(
             self.get_camera_fov("down", vertical=False),
@@ -91,7 +94,7 @@ class RobotEntity(Entity):
 
         # Forward camera guides
         glColor(0, 1, 0, 0.2)
-        glTranslate(1.5, 0, 0)
+        glTranslate(1.1, 0, 0)
         self.draw_camera_guides(
             self.get_camera_fov("forward", vertical=False),
             self.get_camera_fov("forward", vertical=True)
@@ -222,18 +225,11 @@ class RobotEntity(Entity):
             return theta, phi
 
     def get_camera_fov(self, camera, vertical=False):
-        if camera == "forward":
-            if vertical:
-                return 40
-            else:
-                return 53
-        elif camera == "down":
-            if vertical:
-                return 38  #TODO: We've never measured this, so this is a guess
-            else:
-                return 42
+        # All cameras are currently the same
+        if vertical:
+            return 38  #TODO: We've never measured this, so this is a guess
         else:
-            raise ValueError('Unknown camera: "%s"' % camera)
+            return 42
 
     def get_camera_matrix(self, camera):
         '''Gets the modelview matrix for the given camera.'''
@@ -250,21 +246,19 @@ class RobotEntity(Entity):
     def camera_transform(self, camera):
 
         if camera == "forward":
-            ref_point = self.absolute_point((2.5, 0, 0))
-            cam_point = self.absolute_point((1.5, 0, 0))
+            ref_point = self.absolute_point((1.6, 0, 0))
+            cam_point = self.absolute_point((1.1, 0, 0))
             up = self.absolute_point((0, 0, 1)) - self.pos
-            gluLookAt(
-                cam_point[0], cam_point[1], cam_point[2],
-                ref_point[0], ref_point[1], ref_point[2],
-                up[0], up[1], up[2])
 
         elif camera == "down":
-            ref_point = self.absolute_point((0, 0, -1))
+            cam_point = self.absolute_point((0, 0, -0.6))
+            ref_point = self.absolute_point((0, 0, -1.6))
             up = self.absolute_point((1, 0, 0)) - self.pos
-            gluLookAt(
-                self.pos[0], self.pos[1], self.pos[2],
-                ref_point[0], ref_point[1], ref_point[2],
-                up[0], up[1], up[2])
 
         else:
             raise ValueError('Unknown camera: "%s"' % camera)
+
+        gluLookAt(
+            cam_point[0], cam_point[1], cam_point[2],
+            ref_point[0], ref_point[1], ref_point[2],
+            up[0], up[1], up[2])

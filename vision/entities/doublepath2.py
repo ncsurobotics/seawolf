@@ -1,4 +1,3 @@
-
 from __future__ import division
 import math
 import time
@@ -8,12 +7,13 @@ import cv
 
 import svr
 
+
+
 from base import VisionEntity
 import libvision
 
 import sw3
 from sw3.util import circular_average
-import seawolf as sw
 
 import math
 from math import pi
@@ -21,10 +21,10 @@ from math import pi
 def circular_distance(a, b, high=180, low=-180):
     ''' Finds the signed distance between a and b in a circular fashion.
 
-    high and low are the ends of the wraparound point.  Going any higher than
-    high wraps around to low.
+high and low are the ends of the wraparound point. Going any higher than
+high wraps around to low.
 
-    '''
+'''
 
     a -= low
     b -= low
@@ -39,9 +39,6 @@ def circular_distance(a, b, high=180, low=-180):
         return diff
     else:
         return math.copysign(circular_range - abs(diff), -diff)
-
-def get_yaw():
-    return -sw3.data.imu.yaw()
 
 def angle_in_range(angle, low, high):
     if circular_distance(angle, low) > 0 and circular_distance(high, angle) > 0:
@@ -59,6 +56,8 @@ class Path(object):
         self.theta = None
         self.center = None
 
+        
+
     def add(self, angle):
         self.angles.append(angle)
         self.angle = sw3.util.circular_average(self.angles, -180, 180)
@@ -72,6 +71,7 @@ class PathManager(object):
         self.grouping_angle_threshold = 15
         self.min_path_count = 5
         self.max_angle_distance = 80
+        
 
         self.start_angle = None
 
@@ -177,7 +177,7 @@ class PathManager(object):
         else:
             return None
 
-class DoublePathEntity(VisionEntity):
+class DoublePath2Entity(VisionEntity):
     name = "DoublePath"
 
     def init(self):
@@ -187,10 +187,20 @@ class DoublePathEntity(VisionEntity):
         self.hough_threshold = 55
         self.lines_to_consider = 10
 
-    def process_frame(self, frame):
-        if self.path_manager.start_angle == None:
-            self.path_manager.start_angle = get_yaw()
+        
 
+
+        path = []
+        self.confirmed = []
+        
+        self.distance_threshold = 500
+        self.angle_threshold = math.pi/5.5
+        
+
+
+    def process_frame(self, frame):
+        lines = []
+        self.confirmed = []
         self.output.found = False
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
@@ -279,10 +289,38 @@ class DoublePathEntity(VisionEntity):
             # Show edges
             binary_rgb = cv.CreateImage(cv.GetSize(frame), 8, 3)
             cv.CvtColor(binary, binary_rgb, cv.CV_GRAY2RGB)
-            cv.Add(frame, binary_rgb, frame)  # Add white to edge pixels
+            cv.Add(frame, binary_rgb, frame) # Add white to edge pixels
             cv.SubS(binary_rgb, (0, 0, 255), binary_rgb)
-            cv.Sub(frame, binary_rgb, frame)  # Remove all but Red
+            cv.Sub(frame, binary_rgb, frame) # Remove all but Red
+            test_lines = []
+            for line1 in lines[:]:
+                if self.confirmed == []:
+                    self.confirmed.append(line1)
+            for confirmed in self.confirmed:
+                for line1 in lines[:]:
+                    if math.fabs(line1[0]-confirmed[0]) < self.distance_threshold and math.fabs(line1[1]-confirmed[1]) < self.angle_threshold: 
+                        confirmed = [(confirmed[0]+line1[0])/2,(confirmed[1]+line1[1])/2]
+                        #confirmed[0] = (confirmed[0]+line1[0])/2
+                        #confirmed[1] = (confirmed[1]+line1[1])/2
+                        #print line1
+                        print "lines"
+                        if line1 in lines:
+                            lines.remove(line1)
+                            print "line removed"
+                    else: 
+                        self.confirmed.append(line1)
+                        print "confirmed added"
+            for confirmed1 in self.confirmed[:]:
+                for confirmed2 in self.confirmed[:]:
+                    if math.fabs(confirmed1[0]-confirmed2[0]) < self.distance_threshold and math.fabs(confirmed1[1]-confirmed2[1]) < self.angle_threshold: 
+                        if confirmed1[0] > confirmed2[0] and confirmed1 in self.confirmed:
+                            self.confirmed.remove(confirmed1)
+                        if confirmed2[0] > confirmed1[0] and confirmed2 in self.confirmed:
+                            self.confirmed.remove(confirmed2)
+                         
+            
 
+            '''
             theta = math.radians(circular_distance(self.path_manager.start_angle, get_yaw()))
             if theta < 0:
                 scale = math.cos(-2 * theta)
@@ -290,7 +328,7 @@ class DoublePathEntity(VisionEntity):
                 libvision.misc.draw_lines(frame, [((-frame.width/2)*scale, theta)])
             else:
                 libvision.misc.draw_lines(frame, [(frame.width/2, theta)])
-
+            '''
             # Show lines
             if self.output.found:
                 rounded_center = (
@@ -299,13 +337,26 @@ class DoublePathEntity(VisionEntity):
                     )
                 cv.Circle(frame, rounded_center, 5, (0,255,0))
                 libvision.misc.draw_lines(frame, [(frame.width/2, self.path.theta)])
+                print "draw"
 
             else:
-                libvision.misc.draw_lines(frame, lines)
+                libvision.misc.draw_lines(frame, self.confirmed)
+                #libvision.misc.draw_lines2(frame, lines)
+                
+                print "Number of Paths:", len(self.confirmed)
+                if len(self.confirmed)>1:
+                    raw_input()
+                    
+                
+
+                print "draw 2"
 
             svr.debug("Path", frame)
 
         self.return_output()
+        self.confirmed = 0
+        lines = 0
+        
 
     def find_centroid(self, binary):
         mat = cv.GetMat(binary)
@@ -315,7 +366,9 @@ class DoublePathEntity(VisionEntity):
             int(moments.m01/moments.m00)
         )
 
+'''
     def __repr__(self):
+
 
         for path in paths:
             if self.path:
@@ -328,3 +381,4 @@ class DoublePathEntity(VisionEntity):
                 return "<DoublePathEntity which=%d theta=?? x=?? y=??>" % \
                     (self.which_path)
 
+'''

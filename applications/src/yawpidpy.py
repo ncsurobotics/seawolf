@@ -42,7 +42,7 @@ def main():
     seawolf.var.subscribe("YawPID.Paused")
     seawolf.var.subscribe("SEA.Yaw")
 
-    paused = (seawolf.var.get("YawPID.Paused") != 0.0)
+    paused = seawolf.var.get("YawPID.Paused")
     heading = seawolf.var.get("YawPID.Heading")
 
     pid = seawolf.PID(0.0, seawolf.var.get("YawPID.p"), seawolf.var.get("YawPID.i"), seawolf.var.get("YawPID.d"))
@@ -53,16 +53,21 @@ def main():
         
         seawolf.var.sync()
 
+        if( seawolf.var.stale("SEA.Yaw")):
+            yaw = seaowlf.var.get("SEA.Yaw")
+
         if( seawolf.var.stale("YawPID.p") or seawolf.var.stale("YawPID.i") or seawolf.var.stale("YawPID.d")):
             pid.setCoefficients(seawolf.var.get("YawPID.p"), seawolf.var.get("YawPID.i"), seawolf.var.get("YawPID.d"))
-            pid.resetIntegral()
+            #pid.resetIntegral() or e_dt needed?
 
-        if( seawolf.var.stale("YawPID.Heading")):
-            heading = seawolf.var.get("YawPID.Heading")
+        if( seawolf.var.poked("YawPID.Heading")):
+            pid.setSetPoint( seawolf.var.get("YawPID.Heading"))
             if paused:
-                dataOut(0.0)
-                seawolf.notify.send("PIDPAUSED", "Yaw")
-                pid.pause()
+                seawolf.var.set("YawPID.Paused", 0.0)
+                #more paused pids?
+                #dataOut(0.0)
+                #seawolf.notify.send("PIDPAUSED", "Yaw")
+                #pid.pause()
 
         if( seawolf.var.stale("YawPID.Paused")):
             paused = (seawolf.var.get("YawPID.Paused") != 0.0)
@@ -70,9 +75,11 @@ def main():
                 dataOut(0.0)
                 seawolf.notify.send("PIDPAUSED", "Yaw")
                 pid.pause()
+                #initial e_dt
 
         if (paused == False):
             mv = pid.update( angleError(heading,yaw))
+            #in-range
             dataOut(mv)
 
     seawolf.close()

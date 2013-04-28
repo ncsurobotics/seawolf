@@ -5,7 +5,7 @@ import svr
 from base import VisionEntity
 import libvision
 from sw3.util import circular_average, circular_range
-
+#import msvcrt
 import random
 
 
@@ -96,7 +96,7 @@ class BinsCornerEntity(VisionEntity):
 
         #Adaptive threshold parameters
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 15
+        self.adaptive_thresh = 12
 
         #Good features parameters
         self.max_corners = 15
@@ -219,6 +219,7 @@ class BinsCornerEntity(VisionEntity):
         else:
             self.output.orientation = None
         self.return_output()
+        
 
     def match_bins(self, target):
                 existing = 0
