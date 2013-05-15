@@ -1,6 +1,6 @@
 #!/bin/sh
 ./bin/mixer &
-./bin/yawpidpy &
+./bin/yawpid &
 ./bin/depthpid &
 ./bin/pitchpid &
 
