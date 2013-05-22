@@ -1,4 +1,4 @@
-
+from __future__ import division
 from math import pi, radians
 
 from OpenGL.GL import *
@@ -13,6 +13,24 @@ SHAPE_NAMES = [
     "C",
     "D",
 ]
+BIN_POSITIONS = (
+    (
+        BIN_SEPERATION/2 + 1,
+        BIN_SEPERATION/2 + 1.5
+    ),
+    (
+        BIN_SEPERATION/2 + 1,
+        -BIN_SEPERATION/2 - 1.5
+    ),
+    (
+        -BIN_SEPERATION/2 - 1,
+        BIN_SEPERATION/2 + 1.5
+    ),
+    (
+        -BIN_SEPERATION/2 - 1,
+        -BIN_SEPERATION/2 - 1.5
+    ),
+)
 
 
 class BinsEntity(Entity):
@@ -30,7 +48,8 @@ class BinsEntity(Entity):
         for i in xrange(4):
 
             glPushMatrix()
-            glTranslate(self.bin_x_position(i), 0, 0)
+            pos = BIN_POSITIONS[i]
+            glTranslate(pos[0], pos[1], 0)
             glBegin(GL_QUADS)
 
             # Middle black square
@@ -71,12 +90,10 @@ class BinsEntity(Entity):
 
         self.post_draw()
 
-    def bin_x_position(self, i):
-        return (i - 1.5) * (2 + BIN_SEPERATION)
-
     def find_bin(self, i, robot):  # I, Robot. The book is 1,000,000 times
                                    # better than the movie
-        center = self.absolute_point((self.bin_x_position(i), 0, 0))
+        pos = BIN_POSITIONS[i]
+        center = self.absolute_point((pos[0], pos[1], 0))
 
         b = Container()
         b.theta, b.phi = robot.find_point("down", center)

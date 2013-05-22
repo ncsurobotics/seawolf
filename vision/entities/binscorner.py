@@ -96,7 +96,6 @@ class BinsCornerEntity(VisionEntity):
 
         #Adaptive threshold parameters
         self.adaptive_thresh_blocksize = 19
-
         self.adaptive_thresh = 17 #12
 
         #Good features parameters
@@ -226,21 +225,23 @@ class BinsCornerEntity(VisionEntity):
         cv.CvtColor(binary, shape_ref, cv.CV_GRAY2RGB)
         
         for bin in self.confirmed:
-        	print "processing shape"
         	transf = cv.CreateMat(3, 3, cv.CV_32FC1)
-        	print "processing shape stage 2"
+        	
+        	shouldBeLonger = (bin.corner1[0]-bin.corner2[0])**2 + (bin.corner3[0]-bin.corner4[0])**2
+        	shouldBeShorter = (bin.corner1[0]-bin.corner3[0])**2 + (bin.corner2[0]-bin.corner4[0])**2
+        	if shouldBeShorter > shouldBeLonger:
+        		temp = bin.corner2
+        		bin.corner2 = bin.corner3
+        		bin.corner3 = temp
+        	
         	cv.GetPerspectiveTransform(
-        		[bin.corner1, bin.corner4, bin.corner2, bin.corner3],
-        		[(0, 0), (128, 256), (0, 256), (128, 0)],
+        		[bin.corner1, bin.corner2, bin.corner3, bin.corner4],
+        		[(0, 0), (0, 256), (128, 0), (128, 256)],
         		transf
         	)
-        	print "processing shape stage 3"
         	shape = cv.CreateImage([128, 256], 8, 3)
-        	print "processing shape stage 4"
         	cv.WarpPerspective(shape_ref, shape, transf)
-        	print "processing shape stage 5"
 		svr.debug("Bin", shape)
-        	print "processing shape stage 6"
 		#shape.copyTo(self.debug_frame(Rect(0, 0, 128, 256)))
 	
         #... TODO more

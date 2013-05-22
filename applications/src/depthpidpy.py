@@ -4,7 +4,7 @@ import math
 import time
 
 thruster_cap = 1.0
-panic_depth = 12.0
+panic_depth = 13.0
 panic_time = 8.0
 base_i = .1
 
