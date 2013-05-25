@@ -4,15 +4,15 @@ import math
 import time
 
 thruster_cap = 1.0
-panic_depth = 13.0
+panic_depth = 12.0
 panic_time = 8.0
-base_i = .1
+init_downward_force = .1
 
 def initial_e_dt(integral):
     if(math.fabs(integral) < .00001):
         return 0
     else:
-        return base_i / integral
+        return init_downward_force / integral
 
 def dataOut(mv):
     out = in_range(-1.0, mv, 1.0)
@@ -42,18 +42,19 @@ def main():
 
     pid = seawolf.PID( seawolf.var.get("DepthPID.Heading"), seawolf.var.get("DepthPID.p"), seawolf.var.get("DepthPID.i"), seawolf.var.get("DepthPID.d"))
 
-    e_dt = initial_e_dt(pid.pid.i)
+    e_dt = initial_e_dt( seawolf.var.get("DepthPID.i") )
     dataOut(0.0)
 
     while(True):
         seawolf.var.sync()
+
         if(seawolf.var.stale("Depth")):
             depth = seawolf.var.get("Depth")
 
         if(seawolf.var.stale("DepthPID.p") or seawolf.var.stale("DepthPID.i") or seawolf.var.stale("DepthPID.d")):
             pid.setCoefficients(seawolf.var.get("DepthPID.p"), seawolf.var.get("DepthPID.i"), seawolf.var.get("DepthPID.d"))
 
-            e_dt = initial_e_dt(pid.pid.i)
+            e_dt = initial_e_dt( seawolf.var.get("DepthPID.i") )
 
         if(seawolf.var.poked("DepthPID.Heading")):
             pid.setSetPoint(seawolf.var.get("DepthPID.Heading"))
@@ -67,7 +68,7 @@ def main():
                 dataOut(0.0)
                 seawolf.notify.send("PIDPAUSED", "Depth")
                 pid.pause()
-                e_dt = initial_e_dt(pid.pid.i)
+                e_dt = initial_e_dt( seawolf.var.get("DepthPID.i") )
 
         if(depth > panic_depth):
             seawolf.logging.log(CRITICAL, "Depth: {}\n".format(depth))
