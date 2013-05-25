@@ -96,11 +96,13 @@ class BinsCornerEntity(VisionEntity):
 
         #Adaptive threshold parameters
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 12
+        self.adaptive_thresh = 17 #12
 
         #Good features parameters
+
         self.max_corners = 18
         self.quality_level = .75
+
         self.min_distance = 40
         self.good_features_blocksize = 24
         
@@ -201,7 +203,52 @@ class BinsCornerEntity(VisionEntity):
                                                                 if math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4) ))> self.angle_min2 and math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4))) < self.angle_max2:
                                                                         new_bin = Bin(corner1,corner2,corner3,corner4)
                                                                         self.match_bins(new_bin)
-        self.sort_bins()                                                                
+        self.sort_bins()
+        
+						
+	#START SHAPE PROCESSING
+        binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
+        cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
+        cv.SetImageCOI(hsv, 2)
+        cv.Copy(hsv, binary)
+        cv.SetImageCOI(hsv, 0)
+        cv.AdaptiveThreshold(binary, binary,
+            255,
+            cv.CV_ADAPTIVE_THRESH_MEAN_C,
+            cv.CV_THRESH_BINARY_INV,
+            27, #TODO DEFINE THIS IN CONSTANT LIKE OTHER adaptive_thresh_blocksize def19
+            29, #TODO DEFINE THIS IN CONSTANT LIKE OTHER adaptive_thresh def21
+        )
+        kernel = cv.CreateStructuringElementEx(5, 5, 3, 3, cv.CV_SHAPE_ELLIPSE)
+        cv.Erode(binary, binary, kernel, 1)
+        cv.Dilate(binary, binary, kernel, 1)
+        shape_ref = cv.CreateImage(cv.GetSize(frame), 8, 3)
+        cv.CvtColor(binary, shape_ref, cv.CV_GRAY2RGB)
+        
+        for bin in self.confirmed:
+        	transf = cv.CreateMat(3, 3, cv.CV_32FC1)
+        	
+        	shouldBeLonger = (bin.corner1[0]-bin.corner2[0])**2 + (bin.corner3[0]-bin.corner4[0])**2
+        	shouldBeShorter = (bin.corner1[0]-bin.corner3[0])**2 + (bin.corner2[0]-bin.corner4[0])**2
+        	if shouldBeShorter > shouldBeLonger:
+        		temp = bin.corner2
+        		bin.corner2 = bin.corner3
+        		bin.corner3 = temp
+        	
+        	cv.GetPerspectiveTransform(
+        		[bin.corner1, bin.corner2, bin.corner3, bin.corner4],
+        		[(0, 0), (0, 256), (128, 0), (128, 256)],
+        		transf
+        	)
+        	shape = cv.CreateImage([128, 256], 8, 3)
+        	cv.WarpPerspective(shape_ref, shape, transf)
+		svr.debug("Bin", shape)
+		#shape.copyTo(self.debug_frame(Rect(0, 0, 128, 256)))
+	
+        #... TODO more
+        #END SHAPE PROCESSING
+        
+        
         svr.debug("Bins", self.debug_frame)
                 
         #Output bins
