@@ -7,96 +7,32 @@ import cv
 
 import svr
 
-
-
 from base import VisionEntity
 import libvision
 
 import sw3
 from sw3.util import circular_average
 
-import math
-from math import pi
 
-def circular_distance(a, b, high=180, low=-180):
-    ''' Finds the signed distance between a and b in a circular fashion.
-
-high and low are the ends of the wraparound point. Going any higher than
-high wraps around to low.
-
-'''
-
-    a -= low
-    b -= low
-    circular_range = high - low
-
-    a = a % circular_range
-    b = b % circular_range
-
-    diff = a - b
-
-    if abs(diff) < circular_range / 2:
-        return diff
-    else:
-        return math.copysign(circular_range - abs(diff), -diff)
-
-def angle_in_range(angle, low, high):
-    if circular_distance(angle, low) > 0 and circular_distance(high, angle) > 0:
-        return True
-    return False
 
 class Path(object):
-    def __init__(self):
-        self.angles = []
-        self.angle = 0
-        self.verified = False
-
-        self.lines = None
-        self.blobs = None
-        self.theta = None
-        self.center = None
-
+    def __init__(self, arg1, arg2):
+        self.loc = arg1
+        self.angle = arg2
+        self.id= 0
+        self.last_seen = 2
+        self.seencount = 1
         
 
-    def add(self, angle):
-        self.angles.append(angle)
-        self.angle = sw3.util.circular_average(self.angles, -180, 180)
 
-    def count(self):
-        return len(self.angles)
+      
 
 class PathManager(object):
     def __init__(self):
-        self.paths = []
-        self.grouping_angle_threshold = 15
-        self.min_path_count = 5
-        self.max_angle_distance = 80
+        self.paths = []       
         
 
-        self.start_angle = None
-
-    def get_relative_angle(self, theta):
-        return theta
-
-    def add_lines(self, lines):
-        lines = [(line[0], self.get_relative_angle(line[1])) for line in lines]
-        angles = [line[1] for line in lines]
-
-        #print lines
-
-        for angle in angles:
-            added = False
-            for path in self.paths:
-                if abs(circular_distance(angle, path.angle)) < self.grouping_angle_threshold:
-                    added = True
-                    path.add(angle)
-                    break
-
-            if not added:
-                path = Path()
-                path.add(angle)
-                self.paths.append(path)
-
+        
     def get_paths(self):
         paths = filter(lambda path: path.count() >= self.min_path_count, self.paths)
 
@@ -120,7 +56,7 @@ class PathManager(object):
         for path in self.paths:
             path.lines = list()
 
-        relative_lines = [(line, self.get_relative_angle(line[1])) for line in lines]
+        relative_lines = [(line, line[1]) for line in lines]
 
         for line, relative_angle in relative_lines:
             paths.sort(key=lambda path: abs(circular_distance(relative_angle, path.angle)))
@@ -163,7 +99,6 @@ class PathManager(object):
         return paths
 
     def process(self, lines, blobs):
-        self.add_lines(lines)
         paths = self.classify(lines)
 
         if not paths:
@@ -179,29 +114,46 @@ class PathManager(object):
 
 class DoublePath2Entity(VisionEntity):
     name = "DoublePath"
-
+    
     def init(self):
+        self.path_id = 0 
         self.path = None
         self.path_manager = PathManager()
 
         self.hough_threshold = 55
         self.lines_to_consider = 10
 
-        
-
 
         path = []
         self.confirmed = []
+        self.candidates = []
+        self.min_seencount = 1
+        self.max_seencount = 30
         
-        self.distance_threshold = 500
-        self.angle_threshold = math.pi/5.5
+        #Grouping Thresholds
+        self.distance_threshold = 400
+        self.angle_threshold = 6*math.pi
+
+
+        #Transition Thresholds
+        self.distance_trans = 1000
+        self.angle_trans = 4*math.pi
+
+        self.min_center_distance = 50
+        
+        
+        
         
 
+    
 
     def process_frame(self, frame):
-        lines = []
-        self.confirmed = []
+        
         self.output.found = False
+
+        
+
+        
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
@@ -258,6 +210,7 @@ class DoublePath2Entity(VisionEntity):
             print
 
         if paths and self.path in paths and self.path.blobs:
+        
             temp_map = cv.CloneImage(blob_map)
 
             mapping = [0] * 256
@@ -273,11 +226,7 @@ class DoublePath2Entity(VisionEntity):
                 -center[1] + (frame.height / 2)
             )
 
-            self.output.found = True
-            self.output.theta = self.path.theta
-            self.output.x = self.path.center[0] / (frame.width / 2)
-            self.output.y = self.path.center[1] / (frame.height / 2)
-            print self.output
+            
 
         if self.debug:
             # Show color filtered
@@ -293,70 +242,155 @@ class DoublePath2Entity(VisionEntity):
             cv.SubS(binary_rgb, (0, 0, 255), binary_rgb)
             cv.Sub(frame, binary_rgb, frame) # Remove all but Red
             test_lines = []
-            for line1 in lines[:]:
-                if self.confirmed == []:
-                    self.confirmed.append(line1)
-            for confirmed in self.confirmed:
-                for line1 in lines[:]:
-                    if math.fabs(line1[0]-confirmed[0]) < self.distance_threshold and math.fabs(line1[1]-confirmed[1]) < self.angle_threshold: 
-                        confirmed = [(confirmed[0]+line1[0])/2,(confirmed[1]+line1[1])/2]
-                        #confirmed[0] = (confirmed[0]+line1[0])/2
-                        #confirmed[1] = (confirmed[1]+line1[1])/2
+            new_path = None
+            
+            for line in lines[:]:
+                if self.candidates == []:
+                    new_path = Path(line[0], line[1])
+                    new_path.id= self.path_id
+                    self.path_id += 1
+                    new_path.last_seen += 1
+                    self.candidates.append(new_path)
+            for line in lines[:]:
+                for candidate in self.candidates:
+                    if math.fabs(line[0]-candidate.loc) < self.distance_threshold and math.fabs(line[1]-candidate.angle) < self.angle_threshold: 
+                        candidate.loc = (candidate.loc+line[0])/2
+                        candidate.angle = (candidate.angle+line[1])/2
+                        if candidate.last_seen < self.max_seencount:
+                                candidate.last_seen += 1
                         #print line1
                         print "lines"
-                        if line1 in lines:
-                            lines.remove(line1)
-                            print "line removed"
+                        if line in lines:
+                            lines.remove(line)
                     else: 
-                        self.confirmed.append(line1)
+                        new_path = Path(line[0], line[1])
+                        new_path.id= self.path_id
+                        self.path_id += 1
+                        new_path.last_seen += 1
+                        new_path.seencount +=5
+                        self.candidates.append(new_path)
                         print "confirmed added"
+            for candidate in self.candidates [:]:
+                candidate.last_seen -= 4
+                if candidate.seencount > self.min_seencount:
+                    self.confirmed.append(candidate)
+                    self.candidates.remove(candidate)
+                if candidate.last_seen == -1:
+                    self.candidates.remove(candidate)
+
+            for confirmed in self.confirmed:
+                for line in lines[:]:
+                    if math.fabs(line[0]-confirmed.loc) < self.distance_trans and math.fabs(line[1]-confirmed.angle) < self.angle_trans: 
+                        confirmed.loc = line[0]
+                        confirmed.angle = line[1]
+                        if confirmed.last_seen < self.max_seencount:
+                                confirmed.last_seen += 3
+                        
+                        if line in lines:
+                            self.lines.remove(line)
+                            print "line removed"
+
+            for confirmed in self.confirmed:
+                for candidate in self.candidates[:]:
+                    if math.fabs(candidate.loc-confirmed.loc) < self.distance_trans and math.fabs(candidate.angle-confirmed.angle) < self.angle_trans: 
+                        confirmed.loc = candidate.loc
+                        confirmed.angle = candidate.angle
+                        if confirmed.last_seen < self.max_seencount:
+                                confirmed.last_seen += 3
+                        
+                        print "lines"
+                        if candidate in self.candidates:
+                            self.candidates.remove(candidate)
+                            print "line removed"
+            
             for confirmed1 in self.confirmed[:]:
                 for confirmed2 in self.confirmed[:]:
-                    if math.fabs(confirmed1[0]-confirmed2[0]) < self.distance_threshold and math.fabs(confirmed1[1]-confirmed2[1]) < self.angle_threshold: 
-                        if confirmed1[0] > confirmed2[0] and confirmed1 in self.confirmed:
+                    if math.fabs(confirmed1.loc-confirmed2.loc) < self.distance_threshold and math.fabs(confirmed1.angle-confirmed2.angle) < self.angle_threshold: 
+                        if confirmed1.id > confirmed2.id and confirmed1 in self.confirmed:
+                            confirmed2.loc == (confirmed2.loc+confirmed1.loc)/2
+                            confirmed2.angle == (confirmed2.angle + confirmed1.angle)/2
                             self.confirmed.remove(confirmed1)
-                        if confirmed2[0] > confirmed1[0] and confirmed2 in self.confirmed:
+                            if confirmed2.last_seen < self.max_seencount:
+                                confirmed2.last_seen += 1
+                        if confirmed2.id > confirmed1.id and confirmed2 in self.confirmed:
+                            confirmed2.loc == (confirmed2.loc+confirmed1.loc)/2
+                            confirmed2.angle == (confirmed2.angle + confirmed1.angle)/2
                             self.confirmed.remove(confirmed2)
+                            if confirmed1.last_seen < self.max_seencount:
+                                confirmed1.last_seen += 1
+            
+    
+
+            for confirmed in self.confirmed[:]:
+                confirmed.last_seen -= 4
+                if confirmed.last_seen < -1:
+                    self.confirmed.remove(confirmed)
                          
             
 
-            '''
-            theta = math.radians(circular_distance(self.path_manager.start_angle, get_yaw()))
-            if theta < 0:
-                scale = math.cos(-2 * theta)
-                theta = pi + theta
-                libvision.misc.draw_lines(frame, [((-frame.width/2)*scale, theta)])
-            else:
-                libvision.misc.draw_lines(frame, [(frame.width/2, theta)])
-            '''
-            # Show lines
-            if self.output.found:
-                rounded_center = (
-                    int(round(center[0])),
-                    int(round(center[1])),
-                    )
-                cv.Circle(frame, rounded_center, 5, (0,255,0))
-                libvision.misc.draw_lines(frame, [(frame.width/2, self.path.theta)])
-                print "draw"
+            final_lines = []
+            for confirmed in self.confirmed:
+                final_line = [confirmed.loc, confirmed.angle]
+                final_lines.append(final_line)
+                print confirmed.id
+            candidate_ids = []
+            for candidate in self.candidates:
+                new_id = candidate.id
+                candidate_ids.append(new_id)
+            print candidate_ids
+            print len(self.candidates)
+            
 
-            else:
-                libvision.misc.draw_lines(frame, self.confirmed)
-                #libvision.misc.draw_lines2(frame, lines)
-                
-                print "Number of Paths:", len(self.confirmed)
-                if len(self.confirmed)>1:
-                    raw_input()
+            libvision.misc.draw_lines(frame, final_lines)
+            #libvision.misc.draw_lines2(frame, lines)              
+            print "Number of Paths:", len(self.confirmed)
+            #type -s after the command to run vision for this to work and not produce errors.
+            #if len(self.confirmed)>1:
+            #    raw_input()
+
                     
                 
 
-                print "draw 2"
 
+
+            
+
+            self.output.final_paths = []
+            center_x = 0
+            center_y = 0
+            self.output.final_paths = self.confirmed
+            
+            for path in self.output.final_paths:
+                
+                center_x = frame.width/2
+                center_y = (-math.cos(path.angle)/math.sin(path.angle))*center_x+(path.loc/(math.sin(path.angle)))
+
+                if center_y > frame.height or center_y < 0 or center_y < self.min_center_distance or frame.height-center_y < self.min_center_distance:
+                    center_y2 = frame.height/2
+                    center_x2 = (center_y2-(path.loc/math.sin(path.angle)))/(-math.cos(path.angle)/math.sin(path.angle)) 
+                    path.center = [center_x2, center_y2]
+                else:
+                    path.center = [center_x, center_y]
+                #if center_x2 > frame.width or center_x2 < 0:
+                #    path.center = [center_x, center_y]
+                #else:
+                #    path.center = [center_x2, center_y2]
+
+                
+
+                cv.Circle(frame, (int(path.center[0]),int(path.center[1])), 15, (255,255,255), 2,8,0)
+                
+            
+
+            self.return_output()
             svr.debug("Path", frame)
 
-        self.return_output()
-        self.confirmed = 0
-        lines = 0
+            
         
+
+    
+
+    
 
     def find_centroid(self, binary):
         mat = cv.GetMat(binary)
@@ -366,19 +400,4 @@ class DoublePath2Entity(VisionEntity):
             int(moments.m01/moments.m00)
         )
 
-'''
-    def __repr__(self):
 
-
-        for path in paths:
-            if self.path:
-                x = self.path.center[0] / (frame.width / 2)
-                y = self.path.center[1] / (frame.height / 2)
-                theta = round((180/math.pi)*self.path.theta, 2)
-                return "<DoublePathEntity theta=%f x=%f y=%f>" % \
-                    (theta, x, y)
-            else:
-                return "<DoublePathEntity which=%d theta=?? x=?? y=??>" % \
-                    (self.which_path)
-
-'''
