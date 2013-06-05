@@ -99,8 +99,10 @@ class BinsCornerEntity(VisionEntity):
         self.adaptive_thresh = 17 #12
 
         #Good features parameters
-        self.max_corners = 15
-        self.quality_level = .7 #.75
+
+        self.max_corners = 18
+        self.quality_level = .75
+
         self.min_distance = 40
         self.good_features_blocksize = 24
         
@@ -183,7 +185,6 @@ class BinsCornerEntity(VisionEntity):
                 text_color = (0, 255, 0)
                 font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .6, .6, 0, 1, 1)
                 cv.Circle(self.debug_frame, (int(corner[0]),int(corner[1])), 15, corner_color, 2,8,0)
-                cv.PutText(self.debug_frame, str(corner), (int(corner[0]),int(corner[1])), font, text_color)
                 
         
 

@@ -31,10 +31,11 @@ def main():
     pid = seawolf.PID( seawolf.var.get("PitchPID.Heading"), seawolf.var.get("PitchPID.p"), seawolf.var.get("PitchPID.i"), seawolf.var.get("PitchPID.d"))
 
     dataOut(0.0)
+    mv = 0.0    
 
     while(True):
         seawolf.var.sync()
-        if( seawolf.var.stale("SEA.Pitch") && paused == False):
+        if( seawolf.var.stale("SEA.Pitch") and paused == False):
             pitch = seawolf.var.get("SEA.Pitch")
             mv = pid.update(pitch)
         elif( seawolf.var.stale("PitchPID.p") or seawolf.var.stale("PitchPID.i") or seawolf.var.stale("PitchPID.d") ):
