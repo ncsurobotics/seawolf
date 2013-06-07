@@ -77,7 +77,7 @@ MISSION_ORDER = [
     missions.GateMission,
    (missions.PathMission, False, 0),
     #sw3.SetDepth(6.0, timeout=5),
-    missions.SimpleBuoyMission,
+    missions.BuoyMission,
   # missions.SimpleBuoyMission,
     missions.PathMission,
     sw3.SetDepth(8.0, timeout=5),
