@@ -101,7 +101,7 @@ class PizzaEntity(VisionEntity):
         self.max_range = 100
 
         #For Probalistic
-        self.min_length = 2
+        self.min_length = 5
         self.max_gap = 40
 
         #grouping
@@ -109,11 +109,19 @@ class PizzaEntity(VisionEntity):
         
         #For Rectangle Indentification Variables, look at function
 
+        self.min_corner_distance = 40
+
+        #min and max angle in order to only accept rectangles
+        self.angle_min = math.pi/2-.05
+        self.angle_max = math.pi/2+.05
+        self.angle_min2 = math.pi/2-.05
+        self.angle_max2 = math.pi/2+.05
 
         #how close the sizes of parallel lines of a bin must be to eachother
         self.size_threshold = 40
         #How close to the ideal 1:1 ratio the bin sides must be
-        self.ratio_threshold = .7
+        self.ratio_threshold = 1.15
+        
 
     def process_frame(self, frame):
 	debug_frame = cv.CreateImage(cv.GetSize(frame),8,3)
@@ -163,9 +171,13 @@ class PizzaEntity(VisionEntity):
 
 	
         lines = []
+        corners = []
+
         for line in raw_lines:
             lines.append(line)
+            
         #Grouping lines depending on endpoint simularities
+
         for line1 in lines[:]:
             for line2 in lines[:]:
                 if line1 in lines and line2 in lines and line1 != line2:
@@ -179,8 +191,38 @@ class PizzaEntity(VisionEntity):
                             lines.remove(line2)
                         else:
                             lines.remove(line1)
-                      
-        
+
+        for line in lines:
+            corners.append(line[0])
+            corners.append(line[1])
+        drawn = 0
+        for corner1 in corners:
+                for corner2 in corners:
+                        for corner3 in corners:
+                                for corner4 in corners:
+                                        #Checks that corners are not the same and are in the proper orientation
+                                        if corner4[0] != corner3[0] and corner4[0] != corner2[0] and corner4[0] != corner1[0] and corner3[0] != corner2[0] and corner3[0] != corner1[0] and corner2[0] != corner1[0] and corner4[1] != corner3[1] and corner4[1] != corner2[1] and corner4[1] != corner1[1] and corner3[1] != corner2[1] and corner3[1] != corner1[1] and corner2[1] != corner1[1] and corner2[0]>=corner3[0] and corner1[1]>=corner4[1] and corner2[0]>=corner1[0] and math.fabs(corner1[0]-corner4[0])> self.min_corner_distance and math.fabs(corner1[1]-corner4[1])>self.min_corner_distance and math.fabs(corner2[0]-corner3[0])> self.min_corner_distance and math.fabs(corner2[1]-corner3[1])>self.min_corner_distance:
+                                                #Checks that the side ratios are correct
+                                                if math.fabs(line_distance(corner1,corner3) - line_distance(corner2,corner4)) < self.size_threshold and math.fabs(line_distance(corner1,corner2) - line_distance(corner3,corner4)) < self.size_threshold and (math.fabs(line_distance(corner1,corner3)/line_distance(corner1,corner2)) < self.ratio_threshold and math.fabs(line_distance(corner1,corner2)/line_distance(corner1,corner3)) < self.ratio_threshold):
+#^^^ CHANGED OR TO AND --> DID MUCH BETTER. CONSIDER CHANGING ON BINSCORNER
+
+                                                        #Checks that angles are roughly 90 degrees
+                                                        if math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4) ))> self.angle_min and math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4))) < self.angle_max:
+                                                                if math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4) ))> self.angle_min2 and math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4))) < self.angle_max2 and drawn == 0:
+                                                                    print "found"
+                                                                    drawn=1
+                                                                    line_color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+                                                                    cv.Line(debug_frame,corner1,corner2, line_color, 10, cv.CV_AA, 0)
+                                                                    cv.Line(debug_frame,corner1,corner3, line_color, 10, cv.CV_AA, 0)
+                                                                    cv.Line(debug_frame,corner3,corner4, line_color, 10, cv.CV_AA, 0)
+                                                                    cv.Line(debug_frame,corner2,corner4, line_color, 10, cv.CV_AA, 0)
+                                                                    font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1, 1, 0, 2, 1)
+                                                                    cv.PutText(debug_frame, str("1"), (int(corner1[0]),int(corner1[1])), font, (0,0,255))
+                                                                    cv.PutText(debug_frame, str("2"), (int(corner2[0]),int(corner2[1])), font, (0,0,255))
+                                                                    cv.PutText(debug_frame, str("3"), (int(corner3[0]),int(corner3[1])), font, (0,0,255))
+                                                                    cv.PutText(debug_frame, str("4"), (int(corner4[0]),int(corner4[1])), font, (0,0,255))
+
+        '''
         if len(lines) > 3:
             for line1 in lines:
                 for line2 in lines:
@@ -194,14 +236,14 @@ class PizzaEntity(VisionEntity):
 #                                cv.Line(debug_frame,line3[0],line3[1], line_color, 10, cv.CV_AA, 0)
 #                                cv.Line(debug_frame,line4[0],line4[1], line_color, 10, cv.CV_AA, 0)
 
-                        
+        '''              
 
               
 
 
 
         for line in lines:
-            cv.Line(debug_frame, line[0], line[1], (0,255,255), 5, cv.CV_AA, 0)
+            #cv.Line(debug_frame, line[0], line[1], (0,255,255), 5, cv.CV_AA, 0)
             cv.Circle(debug_frame, line[0], 15, (255,0,0), 2,8,0)
             cv.Circle(debug_frame, line[1], 15, (255,0,0), 2,8,0)
 
