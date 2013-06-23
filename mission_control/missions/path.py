@@ -15,7 +15,7 @@ import seawolf as sw
 MISSION_TIMEOUT = 5
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
-FORWARD_SPEED = 0.4
+FORWARD_SPEED = 0.3
 CENTER_THRESHOLD = 3
 FIELD_OF_VIEW=36
 PATH_DEPTH = 8
@@ -40,6 +40,7 @@ class PathMission(MissionBase):
 
         self.reference_angle = sw.var.get("YawPID.Heading")*(pi/180) % (2*pi)
         self.state = "centering"
+        self.set_timer("path_timeout", 45, self.fail_mission)
 
     def step(self, vision_data):
        

@@ -40,6 +40,7 @@ class MissionBase(object):
 
         self._entity_timeout = getattr(self, "_entity_timeout", None)
         self._mission_done = getattr(self, "_mission_done", False)
+        self._mission_fail = getattr(self, "_mission_fail", False)
         last_entity_timestamp = time()
 
         while not self._mission_done:
@@ -59,6 +60,10 @@ class MissionBase(object):
                     self.delete_timer(name)
                     callback(*args)
 
+            if self._mission_fail:
+                return False
+        return True
+
     def finish_mission(self, *args, **kwargs):
         '''Marks the mission complete so self.execute() will return.
 
@@ -68,6 +73,9 @@ class MissionBase(object):
         routine.
         '''
         self._mission_done = True
+
+    def fail_mission(self, *args, **kwargs):
+        self._mission_fail = True
 
     def step(self, entity_found):
         '''

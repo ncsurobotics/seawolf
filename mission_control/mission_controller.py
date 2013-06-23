@@ -90,6 +90,7 @@ class MissionController(object):
         print "Starting mission:", self.current_mission
 
         if isinstance(self.current_mission, sw3.NavRoutine):
+            #6/15/2013 this may be where the instant finish problem is
             try:
                 sw3.nav.do(self.current_mission)
                 self.current_mission.wait()
@@ -99,8 +100,12 @@ class MissionController(object):
         else:
             self.current_mission.init()
             try:
-                self.current_mission.execute()
-                print "MISSION FINISHED"
+               if not self.current_mission.execute():
+                   print "MISSION FAILED"
+                   while len(self.mission_queue) > 1:
+                       self.last_mission = self.mission_queue.popleft()
+               else:
+                   print "MISSION FINISHED"
             except KillSignal:
                 sys.exit(0)
 

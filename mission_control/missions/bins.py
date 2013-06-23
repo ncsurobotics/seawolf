@@ -46,6 +46,7 @@ class BinsMission(MissionBase):
         self.state = self.states[self.state_num]
         self.x = 0
         self.y = 0
+        self.set_timer("bins_timeout", 45, self.fail_mission)
         #sw3.nav.do(sw3.Forward(0,0))
     def step(self, vision_data):
         if vision_data is None:

@@ -9,7 +9,7 @@ import sw3
 
 MISSION_TIMEOUT = 3
 STRAIGHT_TOLERANCE = 3  # In degrees
-FORWARD_SPEED = 0.4
+FORWARD_SPEED = 0.3
 DEPTH_OVERBAR = 3
 
 class HedgeMission(MissionBase):
@@ -23,7 +23,7 @@ class HedgeMission(MissionBase):
             #sw3.SetDepth(5.0),
             sw3.HoldYaw(),
         ))
-        self.set_timer("mission_timeout", 15, self.finish_mission)
+        self.set_timer("hedge_timeout", 45, self.finish_mission)
 
     def step(self, vision_data):
         if not vision_data: return

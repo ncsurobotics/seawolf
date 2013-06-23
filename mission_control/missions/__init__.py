@@ -8,6 +8,8 @@ from buoy import BuoyMission
 from buoy_simple import SimpleBuoyMission
 from hedge import HedgeMission
 from bins import BinsMission
+from new_bins import NewBinsMission
+from acoustics import AcousticsMission
 #from buoy_simple import SimpleBuoyMission
 #from buoy_demo import BuoyDemoMission
 
@@ -19,7 +21,9 @@ mission_classes = {
     'buoy': BuoyMission,
     'buoysimple': SimpleBuoyMission,
     'hedge': HedgeMission,
-    'bins': BinsMission
+    'bins': BinsMission,
+    'new_bins': NewBinsMission,
     #'buoy_simple': SimpleBuoyMission,
     #'buoy_demo':BuoyDemoMission,
+    'acoustics': AcousticsMission
 }

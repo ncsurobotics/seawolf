@@ -9,7 +9,7 @@ import sw3
 MISSION_TIMEOUT = 6
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
-FORWARD_SPEED = 0.4
+FORWARD_SPEED = 0.3
 
 class GateMission(MissionBase):
 
