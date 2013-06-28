@@ -82,12 +82,13 @@ MISSION_ORDER = [
     missions.PathMission,
     sw3.SetDepth(8.0, timeout=5),
     missions.HedgeMission,
-    (missions.PathMission, False, 0),
+    (missions.PathMission, True, 1),
     sw3.Forward(.5, 1),
-    missions.BinsMission
+    missions.NewBinsMission,
     #(missions.PathMission, None, 15, True, 0, 50),
     #(missions.PathMission, 0, 30),
     #missions.HedgeMission
+    missions.AcousticsMission
 ]
 
 if __name__ == "__main__":

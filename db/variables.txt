@@ -39,3 +39,9 @@ SEA.Roll             = 0.0,  0,  0
 SEA.Yaw              = 0.0,  0,  0
 
 Temperature          = 0.0,  0,  0
+
+Solenoid.0           = 0.0,  0,  0
+Solenoid.1           = 0.0,  0,  0
+Solenoid.2           = 0.0,  0,  0
+Servo.0              = 0.0,  0,  0
+Servo.1              = 0.0,  0,  0

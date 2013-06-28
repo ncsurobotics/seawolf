@@ -11,7 +11,7 @@ import sw3
 from sw3 import util
 
 BOX_DEPTH = 8
-FORWARD_SPEED = .5
+FORWARD_SPEED = .3
 ORIENT_THRESH = 15
 
 class AcousticsMission(MissionBase):
@@ -38,8 +38,8 @@ class AcousticsMission(MissionBase):
             self.orientdata = pinger_data.orientation
         if vision_data is not None:
             box = vision_data.box
-        else:
-            self.orientdata = None:
+        #else:
+        #    self.orientdata = None:
 
         if self.state == "followpinger":
             self.followpinger(pinger_data)
@@ -52,7 +52,7 @@ class AcousticsMission(MissionBase):
         if self.state == "findpath":
             self.findpath()
 
-    def followpinger(self, pinger_data?):
+    def followpinger(self, pinger_data):
         if pinger_data and self.orientdata:
             sw3.nav.do(sw3.Forward(0,1))
             orient_angle = self.orientdata*(180/pi)

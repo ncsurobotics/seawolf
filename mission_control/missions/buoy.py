@@ -10,7 +10,7 @@ from math import pi
 from sw3 import util
 
 MISSION_TIMEOUT = 10
-FORWARD_SPEED = 0.5
+FORWARD_SPEED = 0.3
 BACKWARD_SPEED = -0.3
 CENTER_TIME = 5
 
@@ -65,6 +65,7 @@ class BuoyMission(MissionBase):
         ]
         self.state_num = 0
         self.state = self.states[self.state_num]
+        self.set_timer("buoy_timeout", 120, self.fail_mission)
 
     def next_state(self):
         self.state_num += 1
