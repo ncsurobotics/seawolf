@@ -14,7 +14,13 @@ import libvision
 from sw3.util import circular_average, circular_range
 
 class Pizza(object):
-    def __init__(self,type,center,angle,area):
+    def __init__(self,corner1, corner2, corner3, corner4):
+        self.corner1 = corner1
+        self.corner2 = corner2
+        self.corner3 = corner3
+        self.corner4 = corner4
+
+        
         #ID number used when tracking bins
         self.id = 0
 
@@ -22,19 +28,13 @@ class Pizza(object):
         self.type = type
 
         #center of bin
-        self.center = center
+        self.center = (rect_midpointx(corner1,corner2,corner3,corner4), rect_midpointy(corner1,corner2, corner3, corner4))
 
         #direction of the bin
-        self.angle = angle
+        self.angle = angle_between_lines(line_slope(corner1,corner2), 0)
 
-        #area of the bin
-        self.area = area
+        self.lastseen = 2
 
-        #tracks timeout for bin
-        self.timeout = 10
-
-        #tracks our type decisions
-        self.type_counts = [0,0,0,0,0]
 
 
 def line_distance(corner_a, corner_b):
@@ -86,6 +86,7 @@ def check_for_corner(line1,line2):
     if angle_between_lines(line_slope(line1[0],line1[1]),line_slope(line2[0],line2[1])) > angle_clarity_min and angle_between_lines(line_slope(line1[0],line1[1]),line_slope(line2[0],line2[1])) < angle_clarity_max:
         if math.fabs(line1[0][0] - line2[0][0]) < corner_distance or math.fabs(line1[0][1] - line2[0][1]) < corner_distance or math.fabs(line1[1][0] - line2[1][0]) < corner_distance or math.fabs(line1[1][1] - line2[1][1]) < corner_distance:
             return True
+
     
 
 
@@ -100,32 +101,40 @@ class PizzaEntity(VisionEntity):
         self.adaptive_thresh = 7
         self.max_range = 100
 
+        self.Boxes = []
+
         #For Probalistic
         self.min_length = 5
-        self.max_gap = 40
+        self.max_gap = 40 #40
 
         #grouping
-        self.max_corner_range = 15
+        self.max_corner_range = 100  #15
         
         #For Rectangle Indentification Variables, look at function
 
-        self.min_corner_distance = 40
+        self.min_corner_distance = 40  #40
 
         #min and max angle in order to only accept rectangles
-        self.angle_min = math.pi/2-.05
-        self.angle_max = math.pi/2+.05
-        self.angle_min2 = math.pi/2-.05
-        self.angle_max2 = math.pi/2+.05
+        self.angle_min = math.pi/2-.03
+        self.angle_max = math.pi/2+.03
+        self.angle_min2 = math.pi/2-.03
+        self.angle_max2 = math.pi/2+.03
 
         #how close the sizes of parallel lines of a bin must be to eachother
         self.size_threshold = 40
         #How close to the ideal 1:1 ratio the bin sides must be
         self.ratio_threshold = 1.15
+
+        self.center_thresh = 20
+
+        self.lastseen_thresh = 10
         
 
     def process_frame(self, frame):
-	debug_frame = cv.CreateImage(cv.GetSize(frame),8,3)
-	cv.Copy(frame, debug_frame)
+	self.debug_frame = cv.CreateImage(cv.GetSize(frame),8,3)
+        og_frame = cv.CreateImage(cv.GetSize(frame),8,3)
+	cv.Copy(frame, self.debug_frame)
+        cv.Copy(self.debug_frame, og_frame)
 
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
@@ -156,7 +165,7 @@ class PizzaEntity(VisionEntity):
         # Get Edges
         #cv.Canny(binary, binary, 30, 40)
    
-        cv.CvtColor(binary,debug_frame, cv.CV_GRAY2RGB)
+        cv.CvtColor(binary,self.debug_frame, cv.CV_GRAY2RGB)
 	
 
         # Hough Transform
@@ -195,7 +204,9 @@ class PizzaEntity(VisionEntity):
         for line in lines:
             corners.append(line[0])
             corners.append(line[1])
-        drawn = 0
+        
+
+
         for corner1 in corners:
                 for corner2 in corners:
                         for corner3 in corners:
@@ -208,45 +219,85 @@ class PizzaEntity(VisionEntity):
 
                                                         #Checks that angles are roughly 90 degrees
                                                         if math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4) ))> self.angle_min and math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4))) < self.angle_max:
-                                                                if math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4) ))> self.angle_min2 and math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4))) < self.angle_max2 and drawn == 0:
+                                                                if math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4) ))> self.angle_min2 and math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4))) < self.angle_max2:
                                                                     print "found"
-                                                                    drawn=1
-                                                                    line_color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
-                                                                    cv.Line(debug_frame,corner1,corner2, line_color, 10, cv.CV_AA, 0)
-                                                                    cv.Line(debug_frame,corner1,corner3, line_color, 10, cv.CV_AA, 0)
-                                                                    cv.Line(debug_frame,corner3,corner4, line_color, 10, cv.CV_AA, 0)
-                                                                    cv.Line(debug_frame,corner2,corner4, line_color, 10, cv.CV_AA, 0)
-                                                                    font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1, 1, 0, 2, 1)
-                                                                    cv.PutText(debug_frame, str("1"), (int(corner1[0]),int(corner1[1])), font, (0,0,255))
-                                                                    cv.PutText(debug_frame, str("2"), (int(corner2[0]),int(corner2[1])), font, (0,0,255))
-                                                                    cv.PutText(debug_frame, str("3"), (int(corner3[0]),int(corner3[1])), font, (0,0,255))
-                                                                    cv.PutText(debug_frame, str("4"), (int(corner4[0]),int(corner4[1])), font, (0,0,255))
+                                                                    new_box = Pizza(corner1, corner2, corner3, corner4)
+                                                                    self.match_Boxes(new_box)
 
-        '''
-        if len(lines) > 3:
-            for line1 in lines:
-                for line2 in lines:
-                    for line3 in lines:
-                        for line4 in lines:
-                            if check_for_corner(line1,line2) and check_for_corner(line1, line3) and check_for_corner(line2,line4) and check_for_corner(line3,line4):
-                                print "found"
-                                line_color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
-#                                cv.Line(debug_frame,line1[0],line1[1], line_color, 10, cv.CV_AA, 0)
-#                                cv.Line(debug_frame,line2[0],line2[1], line_color, 10, cv.CV_AA, 0)
-#                                cv.Line(debug_frame,line3[0],line3[1], line_color, 10, cv.CV_AA, 0)
-#                                cv.Line(debug_frame,line4[0],line4[1], line_color, 10, cv.CV_AA, 0)
 
-        '''              
+        
+                                                                    
 
-              
+        
+        for Box in self.Boxes[:]:
+            Box.lastseen -= 1
+            if Box.lastseen < 0:
+                self.Boxes.remove(Box)
+
+        self.draw_pizza()      
 
 
 
         for line in lines:
-            #cv.Line(debug_frame, line[0], line[1], (0,255,255), 5, cv.CV_AA, 0)
-            cv.Circle(debug_frame, line[0], 15, (255,0,0), 2,8,0)
-            cv.Circle(debug_frame, line[1], 15, (255,0,0), 2,8,0)
+            cv.Circle(self.debug_frame, line[0], 15, (255,0,0), 2,8,0)
+            cv.Circle(self.debug_frame, line[1], 15, (255,0,0), 2,8,0)
 
 
-        svr.debug("Bins", debug_frame)
+        self.output.pizza = self.Boxes
+        anglesum = 0
+        for Box in self.Boxes:
+            Box.theta = (Box.center[0] - frame.width/2) * 37 / (frame.width/2)
+            Box.phi = -1 * (Box.center[1] - frame.height/2) * 36 / (frame.height/2)
+            anglesum += Box.angle
+        if len(self.output.pizza) > 0:           
+            self.output.orientation = anglesum/len(self.output.pizza)
+        else:
+            self.output.orientation = None
+        self.return_output()
+
+        print len(lines)
+        svr.debug("Pizza", self.debug_frame)
+        svr.debug("Original", og_frame)
+
+
+
+    def match_Boxes(self,target):
+        if len(self.Boxes) == 0:
+            self.Boxes.append(target)
+
+        for Box in self.Boxes:
+            if math.fabs(target.center[0] - Box.center[0]) < self.center_thresh and math.fabs(target.center[1] - Box.center[1]) < self.center_thresh:
+                Box.corner1 = target.corner1
+                Box.corner2 = target.corner2
+                Box.corner3 = target.corner3
+                Box.corner4 = target.corner4
+                Box.center = target.center
+                Box.angle = target.angle
+                if Box.lastseen < self.lastseen_thresh:
+                    Box.lastseen += 3
+                print ":("
+            else:
+                self.Boxes.append(target)
+                print "new Box"
+                Box.lastseen += 3
+
+    def draw_pizza(self):
+        for Box in self.Boxes:
+            line_color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+            cv.Line(self.debug_frame,Box.corner1,Box.corner2, line_color, 10, cv.CV_AA, 0)
+            cv.Line(self.debug_frame,Box.corner1,Box.corner3, line_color, 10, cv.CV_AA, 0)
+            cv.Line(self.debug_frame,Box.corner3,Box.corner4, line_color, 10, cv.CV_AA, 0)
+            cv.Line(self.debug_frame,Box.corner2,Box.corner4, line_color, 10, cv.CV_AA, 0)
+            font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1, 1, 0, 2, 1)
+            cv.PutText(self.debug_frame, str("1"), (int(Box.corner1[0]),int(Box.corner1[1])), font, (0,0,255))
+            cv.PutText(self.debug_frame, str("2"), (int(Box.corner2[0]),int(Box.corner2[1])), font, (0,0,255))
+            cv.PutText(self.debug_frame, str("3"), (int(Box.corner3[0]),int(Box.corner3[1])), font, (0,0,255))
+            cv.PutText(self.debug_frame, str("4"), (int(Box.corner4[0]),int(Box.corner4[1])), font, (0,0,255))
+            center = (int(Box.center[0]), int(Box.center[1]))
+            print center
+            cv.Circle(self.debug_frame, center, 15, (255,0,0), 2,8,0)
+
+
+
+
 
