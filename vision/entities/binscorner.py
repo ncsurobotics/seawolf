@@ -207,44 +207,74 @@ class BinsCornerEntity(VisionEntity):
         
 						
 	#START SHAPE PROCESSING
-        binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
-        cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 2)
-        cv.Copy(hsv, binary)
-        cv.SetImageCOI(hsv, 0)
-        cv.AdaptiveThreshold(binary, binary,
-            255,
-            cv.CV_ADAPTIVE_THRESH_MEAN_C,
-            cv.CV_THRESH_BINARY_INV,
-            27, #TODO DEFINE THIS IN CONSTANT LIKE OTHER adaptive_thresh_blocksize def19
-            29, #TODO DEFINE THIS IN CONSTANT LIKE OTHER adaptive_thresh def21
-        )
-        kernel = cv.CreateStructuringElementEx(5, 5, 3, 3, cv.CV_SHAPE_ELLIPSE)
-        cv.Erode(binary, binary, kernel, 1)
-        cv.Dilate(binary, binary, kernel, 1)
-        shape_ref = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        cv.CvtColor(binary, shape_ref, cv.CV_GRAY2RGB)
-        
-        for bin in self.confirmed:
-        	transf = cv.CreateMat(3, 3, cv.CV_32FC1)
-        	
-        	shouldBeLonger = (bin.corner1[0]-bin.corner2[0])**2 + (bin.corner3[0]-bin.corner4[0])**2
-        	shouldBeShorter = (bin.corner1[0]-bin.corner3[0])**2 + (bin.corner2[0]-bin.corner4[0])**2
-        	if shouldBeShorter > shouldBeLonger:
-        		temp = bin.corner2
-        		bin.corner2 = bin.corner3
-        		bin.corner3 = temp
-        	
-        	cv.GetPerspectiveTransform(
-        		[bin.corner1, bin.corner2, bin.corner3, bin.corner4],
-        		[(0, 0), (0, 256), (128, 0), (128, 256)],
-        		transf
-        	)
-        	shape = cv.CreateImage([128, 256], 8, 3)
-        	cv.WarpPerspective(shape_ref, shape, transf)
-		svr.debug("Bin", shape)
-		#shape.copyTo(self.debug_frame(Rect(0, 0, 128, 256)))
 	
+	#TODO load these ONCE somewhere
+	samples = np.loadtxt('generalsamples.data',np.float32)
+	responses = np.loadtxt('generalresponses.data',np.float32)
+	responses = responses.reshape((responses.size,1))
+	model = cv2.KNearest()
+	model.train(samples,responses)
+	
+        for bin in self.confirmed:
+        	try:
+        		bin.speedlimit
+        	except:
+        		continue
+        	transf = cv.CreateMat(3, 3, cv.CV_32FC1)
+		corner_orders = [
+			[bin.corner1, bin.corner2, bin.corner3, bin.corner4], #0 degrees
+			[bin.corner4, bin.corner3, bin.corner2, bin.corner1], #180 degrees
+			[bin.corner2, bin.corner4, bin.corner1, bin.corner3], #90 degrees
+			[bin.corner3, bin.corner1, bin.corner4, bin.corner2], #270 degrees
+			[bin.corner3, bin.corner4, bin.corner1, bin.corner2], #0 degrees and flipped X
+			[bin.corner2, bin.corner1, bin.corner4, bin.corner3], #180 degrees and flipped X
+			[bin.corner1, bin.corner3, bin.corner2, bin.corner4], #90 degrees and flipped X
+			[bin.corner4, bin.corner2, bin.corner3, bin.corner1]] #270 degrees andf flipped X
+        	for i in range(0, 8):
+			cv.GetPerspectiveTransform(
+				corner_orders[i],
+				[(0, 0), (0, 256), (128, 0), (128, 256)],
+				transf
+			)
+        		shape = cv.CreateImage([128, 256], 8, 3)
+        		cv.WarpPerspective(frame, shape, transf)
+        		
+			shape_thresh = np.zeros((256-104,128,1), np.uint8)
+			j = 104
+			while j<256:
+			    i = 0
+			    while i<128:
+			    	pixel = cv.Get2D(shape, j, i)
+				if int(pixel[2]) > (int(pixel[1]) + int(pixel[0])) * 0.7:
+				    shape_thresh[j-104,i] = 255
+				else:
+				    shape_thresh[j-104,i] = 0
+				i = i+1
+			    j = j+1
+			cv2.imshow("Bin " + str(i), shape_thresh)
+			contours,hierarchy = cv2.findContours(thresh,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+			for cnt in contours:
+    				if cv2.contourArea(cnt)>50:
+        				[x,y,w,h] = cv2.boundingRect(cnt)
+        				if  h>54 and w>36:
+            					roi = thresh[y:y+h,x:x+w]
+            					roismall = cv2.resize(roi,(10,10))
+            					roismall = roismall.reshape((1,100))
+            					roismall = np.float32(roismall)
+            					retval, results, neigh_resp, dists = model.find_nearest(roismall, k = 1)
+            					digit_tuples.append( (x, int((results[0][0]))) )
+            		
+            		if len(digit_tuples) == 2:
+            			digit_tuples_sorted = sorted(digit_tuples, key=lambda digit_tuple: digit_tuple[0])
+				speedlimit = 0
+				for i in range(0, len(digit_tuples_sorted)):
+    					speedlimit = speedlimit * 10 + digit_tuples_sorted[i][1]
+    				bin.speedlimit = speedlimit
+    				print "Found speed limit: " + str(speedlimit)
+    				break
+    			else:
+    				print "Unable to determine speed limit"
+
         #... TODO more
         #END SHAPE PROCESSING
         
