@@ -1,5 +1,3 @@
-
-
 from __future__ import division
 import math
 
@@ -220,7 +218,7 @@ class PizzaEntity(VisionEntity):
                                                         #Checks that angles are roughly 90 degrees
                                                         if math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4) ))> self.angle_min and math.fabs(angle_between_lines(line_slope(corner1, corner2),line_slope(corner2,corner4))) < self.angle_max:
                                                                 if math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4) ))> self.angle_min2 and math.fabs(angle_between_lines(line_slope(corner1, corner3),line_slope(corner3,corner4))) < self.angle_max2:
-                                                                    print "found"
+                                                                    
                                                                     new_box = Pizza(corner1, corner2, corner3, corner4)
                                                                     self.match_Boxes(new_box)
 
@@ -255,7 +253,6 @@ class PizzaEntity(VisionEntity):
             self.output.orientation = None
         self.return_output()
 
-        print len(lines)
         svr.debug("Pizza", self.debug_frame)
         svr.debug("Original", og_frame)
 
@@ -275,13 +272,14 @@ class PizzaEntity(VisionEntity):
                 Box.angle = target.angle
                 if Box.lastseen < self.lastseen_thresh:
                     Box.lastseen += 3
-                print ":("
+                
             else:
                 self.Boxes.append(target)
-                print "new Box"
+                
                 Box.lastseen += 3
 
     def draw_pizza(self):
+        print "Number of boxes:", len(self.Boxes)
         for Box in self.Boxes:
             line_color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
             cv.Line(self.debug_frame,Box.corner1,Box.corner2, line_color, 10, cv.CV_AA, 0)
@@ -294,7 +292,7 @@ class PizzaEntity(VisionEntity):
             cv.PutText(self.debug_frame, str("3"), (int(Box.corner3[0]),int(Box.corner3[1])), font, (0,0,255))
             cv.PutText(self.debug_frame, str("4"), (int(Box.corner4[0]),int(Box.corner4[1])), font, (0,0,255))
             center = (int(Box.center[0]), int(Box.center[1]))
-            print center
+            
             cv.Circle(self.debug_frame, center, 15, (255,0,0), 2,8,0)
 
 
