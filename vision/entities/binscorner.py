@@ -1,7 +1,7 @@
 from __future__ import division
 import math
 import cv
-import cv2
+#import cv2
 import numpy as np
 import svr
 from base import VisionEntity
@@ -98,7 +98,7 @@ class BinsCornerEntity(VisionEntity):
 
         #Adaptive threshold parameters
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 17 #12
+        self.adaptive_thresh = 10 #12
 
         #Good features parameters
 
@@ -145,7 +145,11 @@ class BinsCornerEntity(VisionEntity):
 
     def process_frame(self, frame):
         self.debug_frame = cv.CreateImage(cv.GetSize(frame),8,3)
+        self.test_frame = cv.CreateImage(cv.GetSize(frame),8,3)
+
         cv.Copy(frame, self.debug_frame)
+        cv.Copy(frame, self.test_frame)
+
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         # Set binary image to have saturation channel
@@ -207,7 +211,7 @@ class BinsCornerEntity(VisionEntity):
                                                                         self.match_bins(new_bin)
         self.sort_bins()
         
-						
+        '''					
 	#START SHAPE PROCESSING
 	
 	#TODO load these ONCE somewhere
@@ -279,9 +283,11 @@ class BinsCornerEntity(VisionEntity):
 
         #... TODO more
         #END SHAPE PROCESSING
+	'''
         
         
         svr.debug("Bins", self.debug_frame)
+        svr.debug("Bins2", self.test_frame)
                 
         #Output bins
         self.output.bins = self.confirmed
