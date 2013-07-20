@@ -129,7 +129,7 @@ class BinsHoughEntity(VisionEntity):
         self.lastseen_thresh = 6
 
         #How close the perimeter of a bin must be when compared to the perimeter of other bins
-        self.perimeter_threshold = 2
+        self.perimeter_threshold = 1
 
 
         
@@ -315,7 +315,7 @@ class BinsHoughEntity(VisionEntity):
             cv.PutText(self.debug_frame, str("4"), (int(Box.corner4[0]),int(Box.corner4[1])), font, (0,0,255))
             center = (int(Box.center[0]), int(Box.center[1]))
             
-            cv.Circle(self.debug_frame, center, 15, (255,0,0), 2,8,0)
+            cv.Circle(self.debug_frame, center, 15, (0,255,0), 2,8,0)
 
 
 
