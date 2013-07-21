@@ -50,6 +50,17 @@ class Bin(object):
         self.corner4_locy = self.corner4[1] - self.corner1[1]
 
 
+        self.distance12 = line_distance(corner1,corner2)
+        self.distance13 = line_distance(corner1,corner3)
+        self.distance24 = line_distance(corner4,corner2)
+        self.distance34 = line_distance(corner3,corner4)
+
+        self.angle124 = angle_between_lines(line_slope(corner1,corner2),line_slope(corner2,corner4))
+        self.angle134 = angle_between_lines(line_slope(corner1,corner3),line_slope(corner3,corner4))
+        self.angle312 = angle_between_lines(line_slope(corner3,corner1),line_slope(corner1,corner2))
+        self.angle243 = angle_between_lines(line_slope(corner2,corner4),line_slope(corner4,corner3))
+
+
 
 def line_distance(corner_a, corner_b):
         distance = math.sqrt((corner_b[0]-corner_a[0])**2 + (corner_b[1]-corner_a[1])**2)
@@ -116,7 +127,7 @@ class BinsHough2Entity(VisionEntity):
 	
 #	self.vertical_threshold = 15*math.pi/180  # How close to vertical lines must be
 #        self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 30
+        self.hough_threshold = 20
         self.adaptive_thresh_blocksize = 13
         self.adaptive_thresh = 7
 
@@ -131,7 +142,7 @@ class BinsHough2Entity(VisionEntity):
         self.Bins = []
 
         #For Probalistic
-        self.min_length = 40
+        self.min_length = 30
         self.max_gap = 5 #40
 
         #grouping
@@ -141,7 +152,7 @@ class BinsHough2Entity(VisionEntity):
         self.max_corner_range2 = 15
 
         #for updating
-        self.max_corner_range3 = 10
+        self.max_corner_range3 = 20
 
         #for hough corners grouping
         self.max_corner_range4 = 30
@@ -151,8 +162,8 @@ class BinsHough2Entity(VisionEntity):
         self.min_corner_distance = 40  #40
 
         #min and max angle in order to only accept rectangles
-        self.angle_min = math.pi/2-.1
-        self.angle_max = math.pi/2+.1
+        self.angle_min = math.pi/2-.03
+        self.angle_max = math.pi/2+.03
         self.angle_min2 = math.pi/2-.03
         self.angle_max2 = math.pi/2+.03
 
@@ -163,7 +174,15 @@ class BinsHough2Entity(VisionEntity):
 
         self.center_thresh = 40
 
-        self.lastseen_thresh = 15
+        self.lastseen_thresh = 10
+
+        self.length_trans_thresh = 20
+        self.angle_trans_thresh = 5
+
+        self.center_trans = 15
+
+        self.corner_sort_thresh = 250
+
 
         #How close the perimeter of a bin must be when compared to the perimeter of other bins
         self.perimeter_threshold = 1
@@ -288,19 +307,23 @@ class BinsHough2Entity(VisionEntity):
                     
 
         self.corners=[]
+        self.final_corners = self.sort_corners()
+        print len(self.final_corners)
         self.sort_bins()
         self.update_bins()
+        self.group_bins()
+        self.draw_bins()
               
 
-        for corner in self.hough_corners:
+        for corner in self.final_corners:
             line_color = [255,0,0]
-            #cv.Circle(self.debug_frame, corner, 15, (255,0,0), 2,8,0)
+            cv.Circle(self.debug_frame, corner, 15, (255,0,0), 2,8,0)
 
         for line in lines:
             line_color = [255,0,0]
             #cv.Line(self.debug_frame,line[0],line[1], line_color, 5, cv.CV_AA, 0)    
-            cv.Circle(self.debug_frame, line[0], 15, (255,0,0), 2,8,0)
-            cv.Circle(self.debug_frame, line[1], 15, (255,0,0), 2,8,0)
+            #cv.Circle(self.debug_frame, line[0], 15, (255,0,0), 2,8,0)
+            #cv.Circle(self.debug_frame, line[1], 15, (255,0,0), 2,8,0)
 
 
         self.output.pizza = self.Boxes
@@ -394,19 +417,23 @@ class BinsHough2Entity(VisionEntity):
         for Bin in self.Bins[:]:
             for corner in self.hough_corners:
                 if math.fabs(corner[0]-Bin.corner1[0]) < self.max_corner_range3 and math.fabs(corner[1]-Bin.corner1[1]) < self.max_corner_range3:
-                    Bin.lastseen += 1
+                    if Bin.lastseen < self.lastseen_thresh:
+                        Bin.lastseen += 1
                     Bin.corner1 = corner
                     Bin.corner1_updated = 1
                 elif math.fabs(corner[0]-Bin.corner2[0]) < self.max_corner_range3 and math.fabs(corner[1]-Bin.corner2[1]) < self.max_corner_range3:
-                    Bin.lastseen += 1
+                    if Bin.lastseen < self.lastseen_thresh:
+                        Bin.lastseen += 1
                     Bin.corner2 = corner
                     Bin.corner2_updated = 1
                 elif math.fabs(corner[0]-Bin.corner3[0]) < self.max_corner_range3 and math.fabs(corner[1]-Bin.corner3[1]) < self.max_corner_range3:
-                    Bin.lastseen += 1
+                    if Bin.lastseen < self.lastseen_thresh: 
+                        Bin.lastseen += 1
                     Bin.corner3 = corner
                     Bin.corner3_updated = 1
                 elif math.fabs(corner[0]-Bin.corner3[0]) < self.max_corner_range3 and math.fabs(corner[1]-Bin.corner3[1]) < self.max_corner_range3:
-                    Bin.lastseen += 1
+                    if Bin.lastseen < self.lastseen_thresh: 
+                        Bin.lastseen += 1
                     Bin.corner4 = corner
                     Bin.corner4_updated = 1
             if Bin.corner1_updated==1 and Bin.corner2_updated==1 and Bin.corner3_updated==1 and Bin.corner4_updated==0:
@@ -419,21 +446,93 @@ class BinsHough2Entity(VisionEntity):
                 Bin.corner1 = (Bin.corner1_locx + Bin.corner2[0], Bin.corner1_locy + Bin.corner2[1])
 
 
+            if line_distance(Bin.corner1,Bin.corner2) > Bin.distance12 + self.length_trans_thresh or line_distance(Bin.corner1,Bin.corner2) < Bin.distance12 - self.length_trans_thresh and Bin in self.Bins:
+                self.Bins.remove(Bin)
+            elif line_distance(Bin.corner1,Bin.corner3) > Bin.distance13 + self.length_trans_thresh or line_distance(Bin.corner1,Bin.corner3) < Bin.distance13 - self.length_trans_thresh and Bin in self.Bins:
+                self.Bins.remove(Bin)
+            elif line_distance(Bin.corner2,Bin.corner4) > Bin.distance24 + self.length_trans_thresh or line_distance(Bin.corner2,Bin.corner4) < Bin.distance24 - self.length_trans_thresh and Bin in self.Bins:
+                self.Bins.remove(Bin)
+            elif line_distance(Bin.corner3,Bin.corner4) > Bin.distance34 + self.length_trans_thresh or line_distance(Bin.corner3,Bin.corner4) < Bin.distance34 - self.length_trans_thresh and Bin in self.Bins:
+                self.Bins.remove(Bin)
+
+
+            elif math.fabs(Bin.angle124 - angle_between_lines(line_slope(Bin.corner1,Bin.corner2),line_slope(Bin.corner2,Bin.corner4))) > self.angle_trans_thresh:
+                self.Bins.remove(Bin)
+            elif math.fabs(Bin.angle134 - angle_between_lines(line_slope(Bin.corner1,Bin.corner3),line_slope(Bin.corner3,Bin.corner4))) > self.angle_trans_thresh:
+                self.Bins.remove(Bin)
+            elif math.fabs(Bin.angle312 - angle_between_lines(line_slope(Bin.corner3,Bin.corner1),line_slope(Bin.corner2,Bin.corner1))) > self.angle_trans_thresh:
+                self.Bins.remove(Bin)
+            elif math.fabs(Bin.angle243 - angle_between_lines(line_slope(Bin.corner2,Bin.corner4),line_slope(Bin.corner3,Bin.corner4))) > self.angle_trans_thresh:
+                self.Bins.remove(Bin)
+
+
+
             Bin.lastseen -=2
-            if Bin.lastseen < 0:
+            if Bin.lastseen < 0 and Bin in self.Bins:
                 self.Bins.remove(Bin)
                 print "Bin Lost"
-            else:
-                line_color = (0,0,255)
-                cv.Line(self.debug_frame,Bin.corner1,Bin.corner2, line_color, 10, cv.CV_AA, 0)
-                cv.Line(self.debug_frame,Bin.corner1,Bin.corner3, line_color, 10, cv.CV_AA, 0)
-                cv.Line(self.debug_frame,Bin.corner4,Bin.corner2, line_color, 10, cv.CV_AA, 0)
-                cv.Line(self.debug_frame,Bin.corner4,Bin.corner3, line_color, 10, cv.CV_AA, 0)
+                
             Bin.corner1_updated = 0
             Bin.corner2_updated = 0
             Bin.corner3_updated = 0
             Bin.corner4_updated = 0
+        print "There are", len(self.Bins), "Bins"
             
+
+    def group_bins(self):
+        for Bin1 in self.Bins[:]:
+            for Bin2 in self.Bins[:]:
+                if Bin1 in self.Bins and Bin2 in self.Bins and Bin1 is not Bin2:
+                    if math.fabs(Bin1.center[0]-Bin2.center[0]) < self.center_trans and math.fabs(Bin1.center[1]-Bin2.center[1]) < self.center_trans:
+                        if Bin1.id < Bin2.id:
+                            Bin1.lastseen += Bin2.lastseen
+                            self.Bins.remove(Bin2)
+                        else:
+                            Bin2.lastseen += Bin1.lastseen
+                            self.Bins.remove(Bin1)
+
+
+    def draw_bins(self):
+        for Bin in self.Bins:
+            line_color = (0,0,255)
+            cv.Line(self.debug_frame,Bin.corner1,Bin.corner2, line_color, 10, cv.CV_AA, 0)
+            cv.Line(self.debug_frame,Bin.corner1,Bin.corner3, line_color, 10, cv.CV_AA, 0)
+            cv.Line(self.debug_frame,Bin.corner4,Bin.corner2, line_color, 10, cv.CV_AA, 0)
+            cv.Line(self.debug_frame,Bin.corner4,Bin.corner3, line_color, 10, cv.CV_AA, 0)
+
+
+
+
+    def sort_corners(self):
+        self.final_corners = []
+        print len(self.hough_corners)
+        
+        for corner1 in self.hough_corners[:]:
+            for corner2 in self.hough_corners[:]:
+                if corner1 is not corner2 and corner1 in self.hough_corners and corner2 in self.hough_corners and corner1[0]-corner2[0] != 0 and corner1[1]-corner2[1] != 0:
+                    if math.fabs(corner1[0]-corner2[0]) < self.corner_sort_thresh and math.fabs(corner1[1]-corner2[1]) < self.corner_sort_thresh:
+                        self.final_corners.append(corner1)
+                        self.hough_corners.remove(corner2)
+                        self.hough_corners.remove(corner1)
+                        print "appended"
+                        break
+
+
+        
+        return self.final_corners
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
