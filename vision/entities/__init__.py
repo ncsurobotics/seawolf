@@ -21,9 +21,14 @@ from binocularbuoy import BinocularBuoy
 from weapons import WeaponsEntity 
 from buoy2011 import Buoy2011Entity
 from doublepath import DoublePathEntity
+from doublepath2 import DoublePath2Entity
 from hedge import HedgeEntity
 from bins import BinsEntity
 from binscorner import BinsCornerEntity
+from binshough import BinsHoughEntity
+from binshough2 import BinsHough2Entity
+from pizza import PizzaEntity
+
 
 entity_classes = {
     "test": TestEntity,
@@ -39,6 +44,10 @@ entity_classes = {
     "weapons": WeaponsEntity,
     "doublepath": DoublePathEntity,
     "bins": BinsEntity,
-    "binscorner": BinsCornerEntity
+    "binscorner": BinsCornerEntity,
+    "binshough": BinsHoughEntity,
+    "binshough2": BinsHough2Entity,
+    "doublepath2": DoublePath2Entity,
+    "pizza": PizzaEntity
 }
 
