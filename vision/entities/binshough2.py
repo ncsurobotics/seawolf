@@ -18,12 +18,20 @@ class Bin(object):
         self.corner3 = corner3
         self.corner4 = corner4
 
-        if line_distance(corner1,corner2)<line_distance(corner1,corner3):
-            self.angle =  -angle_between_lines(line_slope(corner1,corner2), 0)
-        else:
-            self.angle =  -angle_between_lines(line_slope(corner1,corner3),0)
+        rdm_corner = [0,0]
+        if line_distance(self.corner1,self.corner2)<line_distance(self.corner1,self.corner3):
+            rdm_corner = self.corner2
+            self.corner2 = self.corner3
+            self.corner3 = rdm_corner
 
         
+
+        if line_distance(self.corner1,self.corner2)<line_distance(self.corner1,self.corner3):
+            self.angle =  -angle_between_lines(line_slope(self.corner1,self.corner2), 0)
+        else:
+            self.angle =  -angle_between_lines(line_slope(self.corner1,self.corner3),0)
+
+
         #ID number used when tracking bins
         self.id = 0
 
@@ -31,7 +39,7 @@ class Bin(object):
         self.icon = 0
 
         #center of bin
-        self.center = (rect_midpointx(corner1,corner2,corner3,corner4), rect_midpointy(corner1,corner2, corner3, corner4))
+        self.center = (rect_midpointx(self.corner1,self.corner2,self.corner3,self.corner4), rect_midpointy(self.corner1,self.corner2, self.corner3, self.corner4))
 
         
 
@@ -54,15 +62,15 @@ class Bin(object):
         self.corner4_locy = self.corner4[1] - self.corner1[1]
 
 
-        self.distance12 = line_distance(corner1,corner2)
-        self.distance13 = line_distance(corner1,corner3)
-        self.distance24 = line_distance(corner4,corner2)
-        self.distance34 = line_distance(corner3,corner4)
+        self.distance12 = line_distance(self.corner1,self.corner2)
+        self.distance13 = line_distance(self.corner1,self.corner3)
+        self.distance24 = line_distance(self.corner4,self.corner2)
+        self.distance34 = line_distance(self.corner3,self.corner4)
 
-        self.angle124 = angle_between_lines(line_slope(corner1,corner2),line_slope(corner2,corner4))
-        self.angle134 = angle_between_lines(line_slope(corner1,corner3),line_slope(corner3,corner4))
-        self.angle312 = angle_between_lines(line_slope(corner3,corner1),line_slope(corner1,corner2))
-        self.angle243 = angle_between_lines(line_slope(corner2,corner4),line_slope(corner4,corner3))
+        self.angle124 = angle_between_lines(line_slope(self.corner1,self.corner2),line_slope(self.corner2,self.corner4))
+        self.angle134 = angle_between_lines(line_slope(self.corner1,self.corner3),line_slope(self.corner3,self.corner4))
+        self.angle312 = angle_between_lines(line_slope(self.corner3,self.corner1),line_slope(self.corner1,self.corner2))
+        self.angle243 = angle_between_lines(line_slope(self.corner2,self.corner4),line_slope(self.corner4,self.corner3))
 
         self.corner1_replace = []
         self.corner2_replace = []
