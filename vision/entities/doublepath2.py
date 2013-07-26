@@ -19,6 +19,7 @@ class Path(object):
     def __init__(self, arg1, arg2):
         self.loc = arg1
         self.angle = arg2
+        self.theta = arg2
         self.id= 0
         self.last_seen = 2
         self.seencount = 1
@@ -120,8 +121,9 @@ class DoublePath2Entity(VisionEntity):
         self.path = None
         self.path_manager = PathManager()
 
-        self.hough_threshold = 55
+        self.hough_threshold = 140
         self.lines_to_consider = 10
+        print "it updated"
 
 
         path = []
@@ -131,8 +133,8 @@ class DoublePath2Entity(VisionEntity):
         self.max_seencount = 30
         
         #Grouping Thresholds
-        self.distance_threshold = 400
-        self.angle_threshold = 6*math.pi
+        self.distance_threshold = 50
+        self.angle_threshold = 1*math.pi
 
 
         #Transition Thresholds
@@ -185,10 +187,11 @@ class DoublePath2Entity(VisionEntity):
             param1=0,
             param2=0
         )
+        print "hough transform found",len(lines)," lines"
         lines = lines[:self.lines_to_consider] # Limit number of lines
 
-        if not lines:
-            return
+        #if not lines:
+        #    return
 
         paths = self.path_manager.process(lines, blobs)
 
@@ -196,19 +199,14 @@ class DoublePath2Entity(VisionEntity):
             # If path[1] is clockwise of paths[0]
             distance = circular_distance(paths[0].angle, paths[1].angle)
 
-            print
-            print "Distance: ", distance
-            print paths[0].theta, paths[0].angle
-            print paths[1].theta, paths[1].angle
-
+                     
+            
             if distance > 0:
                 self.path = paths[self.which_path]
             else:
                 self.path = paths[1 - self.which_path]
 
-            print self.path.angle, self.path.theta
-            print
-
+            
         if paths and self.path in paths and self.path.blobs:
         
             temp_map = cv.CloneImage(blob_map)
@@ -227,8 +225,8 @@ class DoublePath2Entity(VisionEntity):
             )
 
             
-
-        if self.debug:
+        random = 0
+        if random == 0:
             # Show color filtered
             color_filtered_rgb = cv.CreateImage(cv.GetSize(frame), 8, 3)
             cv.CvtColor(color_filtered, color_filtered_rgb, cv.CV_GRAY2RGB)
@@ -251,6 +249,11 @@ class DoublePath2Entity(VisionEntity):
                     self.path_id += 1
                     new_path.last_seen += 1
                     self.candidates.append(new_path)
+                    print "got a candidate"
+            for candidate in self.candidates:
+                if len(self.confirmed) == 0:
+                    self.confirmed.append(candidate)
+                    
             for line in lines[:]:
                 for candidate in self.candidates:
                     if math.fabs(line[0]-candidate.loc) < self.distance_threshold and math.fabs(line[1]-candidate.angle) < self.angle_threshold: 
@@ -259,7 +262,7 @@ class DoublePath2Entity(VisionEntity):
                         if candidate.last_seen < self.max_seencount:
                                 candidate.last_seen += 1
                         #print line1
-                        print "lines"
+                        
                         if line in lines:
                             lines.remove(line)
                     else: 
@@ -269,9 +272,9 @@ class DoublePath2Entity(VisionEntity):
                         new_path.last_seen += 1
                         new_path.seencount +=5
                         self.candidates.append(new_path)
-                        print "confirmed added"
+                        
             for candidate in self.candidates [:]:
-                candidate.last_seen -= 4
+                candidate.last_seen -= 1
                 if candidate.seencount > self.min_seencount:
                     self.confirmed.append(candidate)
                     self.candidates.remove(candidate)
@@ -289,7 +292,7 @@ class DoublePath2Entity(VisionEntity):
                         if line in lines:
                             self.lines.remove(line)
                             print "line removed"
-
+            
             for confirmed in self.confirmed:
                 for candidate in self.candidates[:]:
                     if math.fabs(candidate.loc-confirmed.loc) < self.distance_trans and math.fabs(candidate.angle-confirmed.angle) < self.angle_trans: 
@@ -311,19 +314,19 @@ class DoublePath2Entity(VisionEntity):
                             confirmed2.angle == (confirmed2.angle + confirmed1.angle)/2
                             self.confirmed.remove(confirmed1)
                             if confirmed2.last_seen < self.max_seencount:
-                                confirmed2.last_seen += 1
+                                confirmed2.last_seen += 10
                         if confirmed2.id > confirmed1.id and confirmed2 in self.confirmed:
                             confirmed2.loc == (confirmed2.loc+confirmed1.loc)/2
                             confirmed2.angle == (confirmed2.angle + confirmed1.angle)/2
                             self.confirmed.remove(confirmed2)
                             if confirmed1.last_seen < self.max_seencount:
-                                confirmed1.last_seen += 1
+                                confirmed1.last_seen += 10
             
     
 
             for confirmed in self.confirmed[:]:
-                confirmed.last_seen -= 4
-                if confirmed.last_seen < -1:
+                confirmed.last_seen -= 1
+                if confirmed.last_seen < -10:
                     self.confirmed.remove(confirmed)
                          
             
@@ -344,6 +347,7 @@ class DoublePath2Entity(VisionEntity):
             libvision.misc.draw_lines(frame, final_lines)
             #libvision.misc.draw_lines2(frame, lines)              
             print "Number of Paths:", len(self.confirmed)
+            print "Number of Candidates:",len(self.candidates)
             #type -s after the command to run vision for this to work and not produce errors.
             #if len(self.confirmed)>1:
             #    raw_input()
@@ -355,27 +359,26 @@ class DoublePath2Entity(VisionEntity):
 
             
 
-            self.output.final_paths = []
+            self.output.paths = []
             center_x = 0
             center_y = 0
-            self.output.final_paths = self.confirmed
+            self.output.paths = self.confirmed
             
-            for path in self.output.final_paths:
-                
+            for path in self.output.paths:
+                path.theta = path.angle
                 center_x = frame.width/2
-                center_y = (-math.cos(path.angle)/math.sin(path.angle))*center_x+(path.loc/(math.sin(path.angle)))
-
+                path.x = center_x
+                center_y = (-math.cos(path.angle)/(math.sin(path.angle)+.001))*center_x+(path.loc/((math.sin(path.angle)+.001)))
+                path.y = center_y
                 if center_y > frame.height or center_y < 0 or center_y < self.min_center_distance or frame.height-center_y < self.min_center_distance:
                     center_y2 = frame.height/2
-                    center_x2 = (center_y2-(path.loc/math.sin(path.angle)))/(-math.cos(path.angle)/math.sin(path.angle)) 
-                    path.center = [center_x2, center_y2]
-                else:
-                    path.center = [center_x, center_y]
-                #if center_x2 > frame.width or center_x2 < 0:
-                #    path.center = [center_x, center_y]
-                #else:
-                #    path.center = [center_x2, center_y2]
-
+                    center_x2 = (center_y2-(path.loc/(math.sin(path.angle)+.0001)))/(-math.cos(path.angle)/(math.sin(path.angle)+.0001)) 
+             
+                    if center_x2 > frame.width or center_x2 < 0:
+                        path.center = [center_x, center_y]
+                    else:
+                        path.center = [center_x2, center_y2]
+                else: path.center = [center_x, center_y]
                 
 
                 cv.Circle(frame, (int(path.center[0]),int(path.center[1])), 15, (255,255,255), 2,8,0)
