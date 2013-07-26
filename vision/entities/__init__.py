@@ -28,7 +28,7 @@ from binscorner import BinsCornerEntity
 from binshough import BinsHoughEntity
 from binshough2 import BinsHough2Entity
 from pizza import PizzaEntity
-
+from pizzacorner import PizzaCornerEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -48,6 +48,7 @@ entity_classes = {
     "binshough": BinsHoughEntity,
     "binshough2": BinsHough2Entity,
     "doublepath2": DoublePath2Entity,
-    "pizza": PizzaEntity
+    "pizza": PizzaEntity,
+    "pizzacorner": PizzaCornerEntity
 }
 
