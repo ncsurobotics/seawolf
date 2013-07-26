@@ -13,6 +13,39 @@ from sw3.util import circular_average, circular_range
 
 class Bin(object):
     def __init__(self,corner1, corner2, corner3, corner4):
+
+        '''
+        Expected Bin setup:
+
+
+
+         Corner1             Corner3
+         _________________________
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |                         |
+        |_________________________|
+         Corner2            Corner4
+
+
+
+
+
+        '''
+
         self.corner1 = corner1
         self.corner2 = corner2
         self.corner3 = corner3
@@ -143,7 +176,7 @@ class BinsHough2Entity(VisionEntity):
 #        self.vertical_threshold = 15*math.pi/180  # How close to vertical lines must be
 #        self.horizontal_threshold = 0.2  # How close to horizontal lines must be
         self.hough_threshold = 15 #15 at comp
-        self.adaptive_thresh_blocksize = 27 #27 before competition
+        self.adaptive_thresh_blocksize = 35 #27 before competition
         self.adaptive_thresh = 7 #23 before competition #9 at competition #11 after hough line changes
 
         self.max_range = 100
@@ -158,7 +191,7 @@ class BinsHough2Entity(VisionEntity):
 
         #For Probalistic
         self.min_length = 15 #15 at comp
-        self.max_gap = 2 #40 #5 at comp
+        self.max_gap = 10 #40 #5 at comp
 
         #grouping
         self.max_corner_range = 30  #15
@@ -223,7 +256,7 @@ class BinsHough2Entity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 2) #3 before competition #2 at competition
+        cv.SetImageCOI(hsv, 1) #3 before competition #2 at competition
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
@@ -720,7 +753,7 @@ class BinsHough2Entity(VisionEntity):
             cv.Line(self.debug_frame,(int(pt4[0]),int(pt4[1])),(int(pt3[0]),int(pt3[1])), line_color, 10, cv.CV_AA, 0)
 
             cv.Circle(self.debug_frame, (int(Bin.center[0]),int(Bin.center[1])), 15, (0,255,0), 2,8,0)
-
+          
             
             font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .6, .6, 0, 1, 1)
             text_color = (0, 255, 0)

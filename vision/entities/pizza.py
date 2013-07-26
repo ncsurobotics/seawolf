@@ -94,15 +94,15 @@ class PizzaEntity(VisionEntity):
 	
 #	self.vertical_threshold = 15*math.pi/180  # How close to vertical lines must be
 #        self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 120
+        self.hough_threshold = 15
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 7
+        self.adaptive_thresh = 8
         self.max_range = 100
 
         self.Boxes = []
 
         #For Probalistic
-        self.min_length = 5
+        self.min_length = 3
         self.max_gap = 40 #40
 
         #grouping
@@ -141,7 +141,7 @@ class PizzaEntity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 3)
+        cv.SetImageCOI(hsv, 1)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
@@ -237,6 +237,7 @@ class PizzaEntity(VisionEntity):
 
 
         for line in lines:
+            cv.Line(self.debug_frame,line[0],line[1], (255,255,0), 10, cv.CV_AA, 0)
             cv.Circle(self.debug_frame, line[0], 15, (255,0,0), 2,8,0)
             cv.Circle(self.debug_frame, line[1], 15, (255,0,0), 2,8,0)
 

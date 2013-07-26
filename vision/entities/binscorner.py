@@ -97,27 +97,27 @@ class BinsCornerEntity(VisionEntity):
     def init(self):
 
         #Adaptive threshold parameters
-        self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 10 #12
+        self.adaptive_thresh_blocksize = 35
+        self.adaptive_thresh = 6 #12
 
         #Good features parameters
 
         self.max_corners = 18
-        self.quality_level = .75
+        self.quality_level = .65
 
-        self.min_distance = 40
+        self.min_distance = 15
         self.good_features_blocksize = 24
         
         #min and max angle in order to only accept rectangles
-        self.angle_min = math.pi/2-.15
-        self.angle_max = math.pi/2+.15
-        self.angle_min2 = math.pi/2-.15
-        self.angle_max2 = math.pi/2+.15
+        self.angle_min = math.pi/2-.12
+        self.angle_max = math.pi/2+.12
+        self.angle_min2 = math.pi/2-.12
+        self.angle_max2 = math.pi/2+.12
 
         #how close the sizes of parallel lines of a bin must be to eachother
-        self.size_threshold = 40
+        self.size_threshold = .5
         #How close to the ideal 2:1 ratio the bin sides must be
-        self.ratio_threshold = .7
+        self.ratio_threshold = .75
         
         #How far a bin may move and still be considered the same bin
         self.MaxTrans = 40
@@ -125,10 +125,12 @@ class BinsCornerEntity(VisionEntity):
         #Minimum number the seencount can be before the bin is lost
         self.last_seen_thresh = 0
         #How many times a bin must be seen to be accepted as a confirmed bin
-        self.min_seencount = 5
+        self.min_seencount = 3
  
         #How close the perimeter of a bin must be when compared to the perimeter of other bins
-        self.perimeter_threshold = 0.08
+        self.perimeter_threshold = 0.10
+
+        self.area_thresh = 2000
 
 
         self.corners = []
@@ -156,7 +158,7 @@ class BinsCornerEntity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 3)
+        cv.SetImageCOI(hsv, 1)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
@@ -326,7 +328,7 @@ class BinsCornerEntity(VisionEntity):
                                 candidate.corner4_locx = candidate.corner4[0] - candidate.corner1[0]
                                 candidate.corner4_locy = candidate.corner4[1] - candidate.corner1[1]
                                 if candidate.last_seen < 20:
-                                        candidate.last_seen +=3
+                                        candidate.last_seen +=6
                                 candidate.seencount +=1
                                 existing = 1
                 #update if confirmed
@@ -346,7 +348,7 @@ class BinsCornerEntity(VisionEntity):
                                 confirmed.corner4 = target.corner4
                                 confirmed.angle = target.angle
                                 if confirmed.last_seen < 20:
-                                        confirmed.last_seen +=3
+                                        confirmed.last_seen +=6
                                 confirmed.seencount +=1
                                 existing = 1
                 if existing == 0:
@@ -359,6 +361,8 @@ class BinsCornerEntity(VisionEntity):
 
 
     def sort_bins(self):
+                perimeter_errors = []
+                area_errors = []
                 #promote candidate to confirmed if seen enough times, if it hasn't been seen, delete the bin
                 for candidate in self.candidates:
 
@@ -384,15 +388,21 @@ class BinsCornerEntity(VisionEntity):
                 #compare perimeter of existing bins. If a bin is too much bigger than the others, it is deleted. This is done to get rid of bins found based of 3 bins
                 for confirmed in self.confirmed:
                         if math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + math.fabs(line_distance(confirmed.corner1,confirmed.corner2)*2) - self.min_perimeter)>self.min_perimeter*self.perimeter_threshold and line_distance(confirmed.corner1,confirmed.corner3)*2 + line_distance(confirmed.corner1,confirmed.corner2)*2 > self.min_perimeter:
-                                print "perimeter error (this is a good thing)"        
+                                print "perimeter error (this is a good thing)"
                                 print math.fabs(line_distance(confirmed.corner1,confirmed.corner3)*2 + math.fabs(line_distance(confirmed.corner1,confirmed.corner2)*2) - self.min_perimeter), "is greater than", self.min_perimeter*self.perimeter_threshold
                                 print "yay?"
 
                                 confirmed.last_seen -= 5
-
+                                perimeter_errors.append(confirmed)
                                 continue
 
-                        
+                        if line_distance(confirmed.corner1,confirmed.corner2)*line_distance(confirmed.corner1,confirmed.corner3)>self.area_thresh:
+                                print "area error"
+                                confirmed.last_seen -= 5
+                                area_errors.append(confirmed)
+                                continue
+
+
                         confirmed.last_seen -= 1
                         if confirmed.last_seen < self.last_seen_thresh:
                                 self.confirmed.remove(confirmed) 
@@ -415,7 +425,10 @@ class BinsCornerEntity(VisionEntity):
                         #print id and last_seen by each bin
                         cv.PutText(self.debug_frame, str(confirmed.id), (int(confirmed.midx),int(confirmed.midy)), font, confirmed.debug_color)
                         cv.PutText(self.debug_frame, str(confirmed.last_seen), (int(confirmed.midx-20),int(confirmed.midy-20)), font, confirmed.debug_color)
-
+                for error in perimeter_errors:
+                    cv.Circle(self.debug_frame, (int(error.midx),int(error.midy)), 15, (0,255,255), 2,8,0)
+                for error in area_errors:
+                    cv.Circle(self.debug_frame, (int(error.midx),int(error.midy)), 15, (255,0,255), 2,8,0)
 
 #TODO Lower how much it gets from seeing corners to reduce things. Add variable for max last_seen instead of stating in code. Delete lost[] code or archive useful parts. fix perimeter error. get rid of bbb's. Fix integration of flux capacitors. Reduce interference from time lords. Prevent the rise of skynet. Speed up the processes so they can make the kessler run in under 12 parsecs. Go plaid in ludicrous speed. (NOTE: It's a Unix System, I know this). 
 

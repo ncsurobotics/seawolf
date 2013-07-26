@@ -286,23 +286,24 @@ class PizzaCornerEntity(VisionEntity):
 	'''
         
         
-        svr.debug("Bins", self.debug_frame)
-        svr.debug("Bins2", self.test_frame)
+        svr.debug("Pizza", self.debug_frame)
+        svr.debug("Pizza2", self.test_frame)
                 
-        #Output bins
-        self.output.bins = self.confirmed
+        
+
+        self.output.pizza = self.confirmed
         anglesum = 0
-        for bins in self.output.bins:
-            bins.theta = (bins.midx - frame.width/2) * 37 / (frame.width/2)
-            bins.phi = -1 * (bins.midy - frame.height/2) * 36 / (frame.height/2)
-            bins.shape = bins.object
-            anglesum += bins.angle
-           # bins.orientation = bins.angle
-        if len(self.output.bins) > 0:           
-            self.output.orientation = anglesum/len(self.output.bins)
+        for Box in self.output.pizza:
+            Box.theta = (Box.midx - frame.width/2) * 37 / (frame.width/2)
+            Box.phi = -1 * (Box.midy - frame.height/2) * 36 / (frame.height/2)
+            anglesum += Box.angle
+        if len(self.output.pizza) > 0:           
+            self.output.orientation = anglesum/len(self.output.pizza)
         else:
             self.output.orientation = None
         self.return_output()
+
+        
         
 
     def match_bins(self, target):
