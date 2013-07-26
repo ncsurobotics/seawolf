@@ -47,6 +47,18 @@ class Bin(object):
         self.debug_color = cv.RGB(r,g,b)
         self.object = random.choice(["A", "B", "C", "D"])
 
+
+        self.corner1_repl = [0,0]
+        self.corner2_repl = [0,0]
+        self.corner3_repl = [0,0]
+        self.corner4_repl = [0,0]
+
+        self.corner1_repl_check = 0
+        self.corner2_repl_check = 0
+        self.corner3_repl_check = 0
+        self.corner4_repl_check = 0
+
+
 def line_distance(corner_a, corner_b):
         distance = math.sqrt((corner_b[0]-corner_a[0])**2 + (corner_b[1]-corner_a[1])**2)
         return distance
@@ -122,13 +134,19 @@ class BinsCornerEntity(VisionEntity):
         #How far a bin may move and still be considered the same bin
         self.MaxTrans = 40
 
+        self.MaxCornerTrans = 10
+
         #Minimum number the seencount can be before the bin is lost
         self.last_seen_thresh = 0
+
+        self.last_seen_max = 20
+
+
         #How many times a bin must be seen to be accepted as a confirmed bin
         self.min_seencount = 3
  
         #How close the perimeter of a bin must be when compared to the perimeter of other bins
-        self.perimeter_threshold = 0.20
+        self.perimeter_threshold = 0.25
 
         self.area_thresh = 3000 #4000
 
@@ -197,6 +215,37 @@ class BinsCornerEntity(VisionEntity):
         
 
         #Find Candidates
+        for confirmed in self.confirmed:
+            confirmed.corner1_repl_check = 0
+            confirmed.corner2_repl_check = 0
+            confirmed.corner3_repl_check = 0
+            confirmed.corner4_repl_check = 0
+            for corner in self.corners:
+                if math.fabs(confirmed.corner1[0] - corner[0]) < self.MaxCornerTrans and math.fabs(confirmed.corner1[1] - corner[1]) < self.MaxCornerTrans:
+                    confirmed.corner1_repl_check = 1
+                    confirmed.corner1_repl = corner
+                elif math.fabs(confirmed.corner2[0] - corner[0]) < self.MaxCornerTrans and math.fabs(confirmed.corner2[1] - corner[1]) < self.MaxCornerTrans:
+                    confirmed.corner2_repl_check = 1
+                    confirmed.corner2_repl = corner
+                elif math.fabs(confirmed.corner3[0] - corner[0]) < self.MaxCornerTrans and math.fabs(confirmed.corner3[1] - corner[1]) < self.MaxCornerTrans:
+                    confirmed.corner3_repl_check = 1
+                    confirmed.corner3_repl = corner
+                elif math.fabs(confirmed.corner4[0] - corner[0]) < self.MaxCornerTrans and math.fabs(confirmed.corner4[1] - corner[1]) < self.MaxCornerTrans:
+                    confirmed.corner4_repl_check = 1
+                    confirmed.corner4_repl = corner
+            if confirmed.corner4_repl_check == 1 and confirmed.corner3_repl_check == 1 and confirmed.corner2_repl_check == 1 and confirmed.corner1_repl_check == 1:
+                confirmed.corner1 = confirmed.corner1_repl
+                confirmed.corner2 = confirmed.corner2_repl
+                confirmed.corner3 = confirmed.corner3_repl
+                confirmed.corner4 = confirmed.corner4_repl
+
+                
+                confirmed.midx = rect_midpointx(confirmed.corner1,confirmed.corner2,confirmed.corner3,confirmed.corner4)
+                confirmed.midy = rect_midpointy(confirmed.corner1,confirmed.corner2,confirmed.corner3,confirmed.corner4)
+
+                if confirmed.last_seen < self.last_seen_max:
+                    confirmed.last_seen += 5
+            
 
         for corner1 in self.corners:
                 for corner2 in self.corners:
@@ -327,7 +376,7 @@ class BinsCornerEntity(VisionEntity):
                                 candidate.corner3_locy = candidate.corner3[1] - candidate.corner1[1]        
                                 candidate.corner4_locx = candidate.corner4[0] - candidate.corner1[0]
                                 candidate.corner4_locy = candidate.corner4[1] - candidate.corner1[1]
-                                if candidate.last_seen < 20:
+                                if candidate.last_seen < self.last_seen_max:
                                         candidate.last_seen +=6
                                 candidate.seencount +=1
                                 existing = 1
@@ -347,7 +396,7 @@ class BinsCornerEntity(VisionEntity):
                                 confirmed.corner3 = target.corner3
                                 confirmed.corner4 = target.corner4
                                 confirmed.angle = target.angle
-                                if confirmed.last_seen < 20:
+                                if confirmed.last_seen < self.last_seen_max:
                                         confirmed.last_seen +=6
                                 confirmed.seencount +=1
                                 existing = 1
