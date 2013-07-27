@@ -130,7 +130,7 @@ class DoublePath2Entity(VisionEntity):
         self.confirmed = []
         self.candidates = []
         self.min_seencount = 1
-        self.max_seencount = 30
+        self.max_lastseen = 5
         
         #Grouping Thresholds
         self.distance_threshold = 50
@@ -259,7 +259,7 @@ class DoublePath2Entity(VisionEntity):
                     if math.fabs(line[0]-candidate.loc) < self.distance_threshold and math.fabs(line[1]-candidate.angle) < self.angle_threshold: 
                         candidate.loc = (candidate.loc+line[0])/2
                         candidate.angle = (candidate.angle+line[1])/2
-                        if candidate.last_seen < self.max_seencount:
+                        if candidate.last_seen < self.max_lastseen:
                                 candidate.last_seen += 1
                         #print line1
                         
@@ -286,8 +286,8 @@ class DoublePath2Entity(VisionEntity):
                     if math.fabs(line[0]-confirmed.loc) < self.distance_trans and math.fabs(line[1]-confirmed.angle) < self.angle_trans: 
                         confirmed.loc = line[0]
                         confirmed.angle = line[1]
-                        if confirmed.last_seen < self.max_seencount:
-                                confirmed.last_seen += 3
+                        if confirmed.last_seen < self.max_lastseen:
+                                confirmed.last_seen += 2
                         
                         if line in lines:
                             self.lines.remove(line)
@@ -298,8 +298,8 @@ class DoublePath2Entity(VisionEntity):
                     if math.fabs(candidate.loc-confirmed.loc) < self.distance_trans and math.fabs(candidate.angle-confirmed.angle) < self.angle_trans: 
                         confirmed.loc = candidate.loc
                         confirmed.angle = candidate.angle
-                        if confirmed.last_seen < self.max_seencount:
-                                confirmed.last_seen += 3
+                        if confirmed.last_seen < self.max_lastseen:
+                                confirmed.last_seen += 2
                         
                         print "lines"
                         if candidate in self.candidates:
@@ -313,14 +313,14 @@ class DoublePath2Entity(VisionEntity):
                             confirmed2.loc == (confirmed2.loc+confirmed1.loc)/2
                             confirmed2.angle == (confirmed2.angle + confirmed1.angle)/2
                             self.confirmed.remove(confirmed1)
-                            if confirmed2.last_seen < self.max_seencount:
-                                confirmed2.last_seen += 10
+                            if confirmed2.last_seen < self.max_lastseen:
+                                confirmed2.last_seen += 2
                         if confirmed2.id > confirmed1.id and confirmed2 in self.confirmed:
                             confirmed2.loc == (confirmed2.loc+confirmed1.loc)/2
                             confirmed2.angle == (confirmed2.angle + confirmed1.angle)/2
                             self.confirmed.remove(confirmed2)
-                            if confirmed1.last_seen < self.max_seencount:
-                                confirmed1.last_seen += 10
+                            if confirmed1.last_seen < self.max_lastseen:
+                                confirmed1.last_seen += 2
             
     
 
