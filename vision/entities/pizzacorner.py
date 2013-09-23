@@ -15,7 +15,7 @@ import random
 
 class Bin(object):
     bin_id = 0
-    '''an imaged bin'''
+    '''an imaged pizza'''
     def __init__(self, corner_a,corner_b,corner_c, corner_d):
         rng = cv.RNG()
         self.midx = rect_midpointx(corner_a,corner_b,corner_c,corner_d)
@@ -38,26 +38,14 @@ class Bin(object):
                 self.angle = -angle_between_lines(line_slope(corner_a,corner_c), 0)
         else:
                 self.angle = -angle_between_lines(line_slope(corner_a,corner_b), 0)
-        self.id = 0   #id identifies which bin your looking at
-        self.last_seen = 2 #how recently you have seen this bin
-        self.seencount = 1 #how many times you have seen this bin (if you see it enough it becomes confirmed)
+        self.id = 0   #id identifies which pizza your looking at
+        self.last_seen = 2 #how recently you have seen this pizza
+        self.seencount = 1 #how many times you have seen this pizza (if you see it enough it becomes confirmed)
         r = int(cv.RandReal(rng)*255)
         g = int(cv.RandReal(rng)*255)
         b = int(cv.RandReal(rng)*255)
         self.debug_color = cv.RGB(r,g,b)
         self.object = random.choice(["A", "B", "C", "D"])
-
-
-        self.corner1_repl = [0,0]
-        self.corner2_repl = [0,0]
-        self.corner3_repl = [0,0]
-        self.corner4_repl = [0,0]
-
-        self.corner1_repl_check = 0
-        self.corner2_repl_check = 0
-        self.corner3_repl_check = 0
-        self.corner4_repl_check = 0
-
 
 def line_distance(corner_a, corner_b):
         distance = math.sqrt((corner_b[0]-corner_a[0])**2 + (corner_b[1]-corner_a[1])**2)
@@ -102,7 +90,7 @@ def rect_midpointy(corner_a,corner_b,corner_c,corner_d):
 
 
 
-class BinsCornerEntity(VisionEntity):
+class PizzaCornerEntity(VisionEntity):
     
    
 
@@ -115,40 +103,32 @@ class BinsCornerEntity(VisionEntity):
         #Good features parameters
 
         self.max_corners = 18
-        self.quality_level = .55
+        self.quality_level = .6
 
-        self.min_distance = 15
+        self.min_distance = 10
         self.good_features_blocksize = 24
         
         #min and max angle in order to only accept rectangles
-        self.angle_min = math.pi/2-.12
-        self.angle_max = math.pi/2+.12
-        self.angle_min2 = math.pi/2-.12
-        self.angle_max2 = math.pi/2+.12
+        self.angle_min = math.pi/2-.1
+        self.angle_max = math.pi/2+.1
+        self.angle_min2 = math.pi/2-.1
+        self.angle_max2 = math.pi/2+.1
 
         #how close the sizes of parallel lines of a bin must be to eachother
-        self.size_threshold = .5
+        self.size_threshold = 30
         #How close to the ideal 2:1 ratio the bin sides must be
-        self.ratio_threshold = .75
+        self.ratio_threshold = 1.5
         
         #How far a bin may move and still be considered the same bin
         self.MaxTrans = 40
 
-        self.MaxCornerTrans = 10
-
         #Minimum number the seencount can be before the bin is lost
         self.last_seen_thresh = 0
-
-        self.last_seen_max = 20
-
-
         #How many times a bin must be seen to be accepted as a confirmed bin
-        self.min_seencount = 3
+        self.min_seencount = 5
  
         #How close the perimeter of a bin must be when compared to the perimeter of other bins
-        self.perimeter_threshold = 0.25
-
-        self.area_thresh = 3000 #4000
+        self.perimeter_threshold = 0.08
 
 
         self.corners = []
@@ -215,37 +195,6 @@ class BinsCornerEntity(VisionEntity):
         
 
         #Find Candidates
-        for confirmed in self.confirmed:
-            confirmed.corner1_repl_check = 0
-            confirmed.corner2_repl_check = 0
-            confirmed.corner3_repl_check = 0
-            confirmed.corner4_repl_check = 0
-            for corner in self.corners:
-                if math.fabs(confirmed.corner1[0] - corner[0]) < self.MaxCornerTrans and math.fabs(confirmed.corner1[1] - corner[1]) < self.MaxCornerTrans:
-                    confirmed.corner1_repl_check = 1
-                    confirmed.corner1_repl = corner
-                elif math.fabs(confirmed.corner2[0] - corner[0]) < self.MaxCornerTrans and math.fabs(confirmed.corner2[1] - corner[1]) < self.MaxCornerTrans:
-                    confirmed.corner2_repl_check = 1
-                    confirmed.corner2_repl = corner
-                elif math.fabs(confirmed.corner3[0] - corner[0]) < self.MaxCornerTrans and math.fabs(confirmed.corner3[1] - corner[1]) < self.MaxCornerTrans:
-                    confirmed.corner3_repl_check = 1
-                    confirmed.corner3_repl = corner
-                elif math.fabs(confirmed.corner4[0] - corner[0]) < self.MaxCornerTrans and math.fabs(confirmed.corner4[1] - corner[1]) < self.MaxCornerTrans:
-                    confirmed.corner4_repl_check = 1
-                    confirmed.corner4_repl = corner
-            if confirmed.corner4_repl_check == 1 and confirmed.corner3_repl_check == 1 and confirmed.corner2_repl_check == 1 and confirmed.corner1_repl_check == 1:
-                confirmed.corner1 = confirmed.corner1_repl
-                confirmed.corner2 = confirmed.corner2_repl
-                confirmed.corner3 = confirmed.corner3_repl
-                confirmed.corner4 = confirmed.corner4_repl
-
-                
-                confirmed.midx = rect_midpointx(confirmed.corner1,confirmed.corner2,confirmed.corner3,confirmed.corner4)
-                confirmed.midy = rect_midpointy(confirmed.corner1,confirmed.corner2,confirmed.corner3,confirmed.corner4)
-
-                if confirmed.last_seen < self.last_seen_max:
-                    confirmed.last_seen += 5
-            
 
         for corner1 in self.corners:
                 for corner2 in self.corners:
@@ -262,98 +211,99 @@ class BinsCornerEntity(VisionEntity):
                                                                         self.match_bins(new_bin)
         self.sort_bins()
         
-        '''                                        
-        #START SHAPE PROCESSING
-        
-        #TODO load these ONCE somewhere
-        samples = np.loadtxt('generalsamples.data',np.float32)
-        responses = np.loadtxt('generalresponses.data',np.float32)
-        responses = responses.reshape((responses.size,1))
-        model = cv2.KNearest()
-        model.train(samples,responses)
-        
+        '''					
+	#START SHAPE PROCESSING
+	
+	#TODO load these ONCE somewhere
+	samples = np.loadtxt('generalsamples.data',np.float32)
+	responses = np.loadtxt('generalresponses.data',np.float32)
+	responses = responses.reshape((responses.size,1))
+	model = cv2.KNearest()
+	model.train(samples,responses)
+	
         for bin in self.confirmed:
-                try:
-                        bin.speedlimit
-                except:
-                        continue
-                transf = cv.CreateMat(3, 3, cv.CV_32FC1)
-                corner_orders = [
-                        [bin.corner1, bin.corner2, bin.corner3, bin.corner4], #0 degrees
-                        [bin.corner4, bin.corner3, bin.corner2, bin.corner1], #180 degrees
-                        [bin.corner2, bin.corner4, bin.corner1, bin.corner3], #90 degrees
-                        [bin.corner3, bin.corner1, bin.corner4, bin.corner2], #270 degrees
-                        [bin.corner3, bin.corner4, bin.corner1, bin.corner2], #0 degrees and flipped X
-                        [bin.corner2, bin.corner1, bin.corner4, bin.corner3], #180 degrees and flipped X
-                        [bin.corner1, bin.corner3, bin.corner2, bin.corner4], #90 degrees and flipped X
-                        [bin.corner4, bin.corner2, bin.corner3, bin.corner1]] #270 degrees andf flipped X
-                for i in range(0, 8):
-                        cv.GetPerspectiveTransform(
-                                corner_orders[i],
-                                [(0, 0), (0, 256), (128, 0), (128, 256)],
-                                transf
-                        )
-                        shape = cv.CreateImage([128, 256], 8, 3)
-                        cv.WarpPerspective(frame, shape, transf)
-                        
-                        shape_thresh = np.zeros((256-104,128,1), np.uint8)
-                        j = 104
-                        while j<256:
-                            i = 0
-                            while i<128:
-                                    pixel = cv.Get2D(shape, j, i)
-                                if int(pixel[2]) > (int(pixel[1]) + int(pixel[0])) * 0.7:
-                                    shape_thresh[j-104,i] = 255
-                                else:
-                                    shape_thresh[j-104,i] = 0
-                                i = i+1
-                            j = j+1
-                        cv2.imshow("Bin " + str(i), shape_thresh)
-                        contours,hierarchy = cv2.findContours(thresh,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
-                        for cnt in contours:
-                                    if cv2.contourArea(cnt)>50:
-                                        [x,y,w,h] = cv2.boundingRect(cnt)
-                                        if  h>54 and w>36:
-                                                    roi = thresh[y:y+h,x:x+w]
-                                                    roismall = cv2.resize(roi,(10,10))
-                                                    roismall = roismall.reshape((1,100))
-                                                    roismall = np.float32(roismall)
-                                                    retval, results, neigh_resp, dists = model.find_nearest(roismall, k = 1)
-                                                    digit_tuples.append( (x, int((results[0][0]))) )
-                            
-                            if len(digit_tuples) == 2:
-                                    digit_tuples_sorted = sorted(digit_tuples, key=lambda digit_tuple: digit_tuple[0])
-                                speedlimit = 0
-                                for i in range(0, len(digit_tuples_sorted)):
-                                            speedlimit = speedlimit * 10 + digit_tuples_sorted[i][1]
-                                    bin.speedlimit = speedlimit
-                                    print "Found speed limit: " + str(speedlimit)
-                                    break
-                            else:
-                                    print "Unable to determine speed limit"
+        	try:
+        		bin.speedlimit
+        	except:
+        		continue
+        	transf = cv.CreateMat(3, 3, cv.CV_32FC1)
+		corner_orders = [
+			[bin.corner1, bin.corner2, bin.corner3, bin.corner4], #0 degrees
+			[bin.corner4, bin.corner3, bin.corner2, bin.corner1], #180 degrees
+			[bin.corner2, bin.corner4, bin.corner1, bin.corner3], #90 degrees
+			[bin.corner3, bin.corner1, bin.corner4, bin.corner2], #270 degrees
+			[bin.corner3, bin.corner4, bin.corner1, bin.corner2], #0 degrees and flipped X
+			[bin.corner2, bin.corner1, bin.corner4, bin.corner3], #180 degrees and flipped X
+			[bin.corner1, bin.corner3, bin.corner2, bin.corner4], #90 degrees and flipped X
+			[bin.corner4, bin.corner2, bin.corner3, bin.corner1]] #270 degrees andf flipped X
+        	for i in range(0, 8):
+			cv.GetPerspectiveTransform(
+				corner_orders[i],
+				[(0, 0), (0, 256), (128, 0), (128, 256)],
+				transf
+			)
+        		shape = cv.CreateImage([128, 256], 8, 3)
+        		cv.WarpPerspective(frame, shape, transf)
+        		
+			shape_thresh = np.zeros((256-104,128,1), np.uint8)
+			j = 104
+			while j<256:
+			    i = 0
+			    while i<128:
+			    	pixel = cv.Get2D(shape, j, i)
+				if int(pixel[2]) > (int(pixel[1]) + int(pixel[0])) * 0.7:
+				    shape_thresh[j-104,i] = 255
+				else:
+				    shape_thresh[j-104,i] = 0
+				i = i+1
+			    j = j+1
+			cv2.imshow("Bin " + str(i), shape_thresh)
+			contours,hierarchy = cv2.findContours(thresh,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+			for cnt in contours:
+    				if cv2.contourArea(cnt)>50:
+        				[x,y,w,h] = cv2.boundingRect(cnt)
+        				if  h>54 and w>36:
+            					roi = thresh[y:y+h,x:x+w]
+            					roismall = cv2.resize(roi,(10,10))
+            					roismall = roismall.reshape((1,100))
+            					roismall = np.float32(roismall)
+            					retval, results, neigh_resp, dists = model.find_nearest(roismall, k = 1)
+            					digit_tuples.append( (x, int((results[0][0]))) )
+            		
+            		if len(digit_tuples) == 2:
+            			digit_tuples_sorted = sorted(digit_tuples, key=lambda digit_tuple: digit_tuple[0])
+				speedlimit = 0
+				for i in range(0, len(digit_tuples_sorted)):
+    					speedlimit = speedlimit * 10 + digit_tuples_sorted[i][1]
+    				bin.speedlimit = speedlimit
+    				print "Found speed limit: " + str(speedlimit)
+    				break
+    			else:
+    				print "Unable to determine speed limit"
 
         #... TODO more
         #END SHAPE PROCESSING
-        '''
+	'''
         
         
-        svr.debug("Bins", self.debug_frame)
-        svr.debug("Bins2", self.test_frame)
+        svr.debug("Pizza", self.debug_frame)
+        svr.debug("Pizza2", self.test_frame)
                 
-        #Output bins
-        self.output.bins = self.confirmed
+        
+
+        self.output.pizza = self.confirmed
         anglesum = 0
-        for bins in self.output.bins:
-            bins.theta = (bins.midx - frame.width/2) * 37 / (frame.width/2)
-            bins.phi = -1 * (bins.midy - frame.height/2) * 36 / (frame.height/2)
-            bins.shape = bins.object
-            anglesum += bins.angle
-           # bins.orientation = bins.angle
-        if len(self.output.bins) > 0:           
-            self.output.orientation = anglesum/len(self.output.bins)
+        for Box in self.output.pizza:
+            Box.theta = (Box.midx - frame.width/2) * 37 / (frame.width/2)
+            Box.phi = -1 * (Box.midy - frame.height/2) * 36 / (frame.height/2)
+            anglesum += Box.angle
+        if len(self.output.pizza) > 0:           
+            self.output.orientation = anglesum/len(self.output.pizza)
         else:
             self.output.orientation = None
         self.return_output()
+
+        
         
 
     def match_bins(self, target):
@@ -376,8 +326,8 @@ class BinsCornerEntity(VisionEntity):
                                 candidate.corner3_locy = candidate.corner3[1] - candidate.corner1[1]        
                                 candidate.corner4_locx = candidate.corner4[0] - candidate.corner1[0]
                                 candidate.corner4_locy = candidate.corner4[1] - candidate.corner1[1]
-                                if candidate.last_seen < self.last_seen_max:
-                                        candidate.last_seen +=6
+                                if candidate.last_seen < 20:
+                                        candidate.last_seen +=3
                                 candidate.seencount +=1
                                 existing = 1
                 #update if confirmed
@@ -396,8 +346,8 @@ class BinsCornerEntity(VisionEntity):
                                 confirmed.corner3 = target.corner3
                                 confirmed.corner4 = target.corner4
                                 confirmed.angle = target.angle
-                                if confirmed.last_seen < self.last_seen_max:
-                                        confirmed.last_seen +=6
+                                if confirmed.last_seen < 20:
+                                        confirmed.last_seen +=3
                                 confirmed.seencount +=1
                                 existing = 1
                 if existing == 0:
@@ -410,8 +360,6 @@ class BinsCornerEntity(VisionEntity):
 
 
     def sort_bins(self):
-                perimeter_errors = []
-                area_errors = []
                 #promote candidate to confirmed if seen enough times, if it hasn't been seen, delete the bin
                 for candidate in self.candidates:
 
@@ -442,18 +390,10 @@ class BinsCornerEntity(VisionEntity):
                                 print "yay?"
 
                                 confirmed.last_seen -= 5
-                                perimeter_errors.append(confirmed)
+
                                 continue
 
                         
-
-                        if line_distance(confirmed.corner1,confirmed.corner2)*line_distance(confirmed.corner1,confirmed.corner3)>self.area_thresh or line_distance(confirmed.corner4,confirmed.corner2)*line_distance(confirmed.corner4,confirmed.corner3)>self.area_thresh :
-                                print "area error"
-                                confirmed.last_seen -= 5
-                                area_errors.append(confirmed)
-                                continue
-
-
                         confirmed.last_seen -= 1
                         if confirmed.last_seen < self.last_seen_thresh:
                                 self.confirmed.remove(confirmed) 
@@ -476,10 +416,7 @@ class BinsCornerEntity(VisionEntity):
                         #print id and last_seen by each bin
                         cv.PutText(self.debug_frame, str(confirmed.id), (int(confirmed.midx),int(confirmed.midy)), font, confirmed.debug_color)
                         cv.PutText(self.debug_frame, str(confirmed.last_seen), (int(confirmed.midx-20),int(confirmed.midy-20)), font, confirmed.debug_color)
-                for error in perimeter_errors:
-                    cv.Circle(self.debug_frame, (int(error.midx),int(error.midy)), 15, (0,255,255), 2,8,0)
-                for error in area_errors:
-                    cv.Circle(self.debug_frame, (int(error.midx),int(error.midy)), 15, (255,0,255), 2,8,0)
+
 
 #TODO Lower how much it gets from seeing corners to reduce things. Add variable for max last_seen instead of stating in code. Delete lost[] code or archive useful parts. fix perimeter error. get rid of bbb's. Fix integration of flux capacitors. Reduce interference from time lords. Prevent the rise of skynet. Speed up the processes so they can make the kessler run in under 12 parsecs. Go plaid in ludicrous speed. (NOTE: It's a Unix System, I know this). 
 

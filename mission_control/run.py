@@ -75,20 +75,17 @@ from mission_controller import MissionController
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
     missions.GateMission,
-   (missions.PathMission, False, 0),
-    #sw3.SetDepth(6.0, timeout=5),
-    missions.BuoyMission,
-  # missions.SimpleBuoyMission,
+    missions.PathMission,
+    missions.SimpleBuoyMission,
     missions.PathMission,
     sw3.SetDepth(8.0, timeout=5),
     missions.HedgeMission,
     (missions.PathMission, True, 1),
     sw3.Forward(.5, 1),
     missions.NewBinsMission,
-    #(missions.PathMission, None, 15, True, 0, 50),
-    #(missions.PathMission, 0, 30),
-    #missions.HedgeMission
-    missions.AcousticsMission
+    (missions.PathMission, True, 1),
+    missions.HedgeMission,
+    missions.FakePizzaMission
 ]
 
 if __name__ == "__main__":

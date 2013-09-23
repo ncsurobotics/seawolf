@@ -24,7 +24,7 @@ class NewBinsMission(MissionBase):
     def __init__(self):
         pass
     def init(self):
-        self.process_manager.start_process(entities.BinsEntity, "bins", "down", debug=True)
+        self.process_manager.start_process(entities.BinsCornerEntity, "bins", "down", debug=True)
         self.reference_angle = sw3.data.imu.yaw()
         self.highest_id = None
         self.drop_count = 0
@@ -103,12 +103,14 @@ class NewBinsMission(MissionBase):
             self.nextState()
 
     def drop(self, bins):
-        #print "Marker Dropped"
+        seawolf.var.set("Servo1", 160)
+        print "Marker Dropped"
         self.drop_count += 1
         if self.drop_count == 1:
             self.state_num = 0
         else:
             self.state_num = 3
+        seawolf.var.set("Servo1", 20)
         self.state = self.states[self.state_num]
    #move forward, bin below a target?, stop, drop.
     #repeat if markers dropped is not 2

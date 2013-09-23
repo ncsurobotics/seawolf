@@ -14,6 +14,16 @@ from sw3.util import circular_average
 GATE_BLACK = 0
 GATE_WHITE = 1
 
+def line_slope(corner_a, corner_b):
+        if corner_a[0] != corner_b[0]:
+                slope = (corner_b[1]-corner_a[1])/(corner_b[0]-corner_a[0])
+                return slope
+
+
+def line_distance(corner_a, corner_b):
+        distance = math.sqrt((corner_b[0]-corner_a[0])**2 + (corner_b[1]-corner_a[1])**2)
+        return distance
+
 def line_group_accept_test(line_group, line, max_range):
     '''
     Returns True if the line should be let into the line group.
@@ -39,10 +49,15 @@ class HedgeEntity(VisionEntity):
         # Thresholds
         self.vertical_threshold = 0.2  # How close to verticle lines must be
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 30
+        self.hough_threshold = 200
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 40
+        self.adaptive_thresh = 15
         self.max_range = 135
+
+        self.min_length = 50
+        self.max_gap = 10
+
+        self.hor_threshold = 2
 
         self.left_pole = None
         self.right_pole = None
@@ -64,6 +79,10 @@ class HedgeEntity(VisionEntity):
         #cv.Resize(copy, frame, cv.CV_INTER_NN)
 
         found_hedge = False
+        
+        test_frame = cv.CreateImage(cv.GetSize(frame),8,3)
+
+        cv.Copy(frame, test_frame)
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
@@ -71,7 +90,7 @@ class HedgeEntity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 3)
+        cv.SetImageCOI(hsv, 2)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
@@ -96,6 +115,7 @@ class HedgeEntity(VisionEntity):
         #cv.Canny(binary, binary, 30, 40)
 
         # Hough Transform
+        '''
         line_storage = cv.CreateMemStorage()
         raw_lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_STANDARD,
             rho=1,
@@ -104,7 +124,36 @@ class HedgeEntity(VisionEntity):
             param1=0,
             param2=0
         )
+        '''
+        # Hough Transform
+        line_storage = cv.CreateMemStorage()
+        raw_lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_PROBABILISTIC,
+            rho=1,
+            theta=math.pi/180,
+            threshold=self.hough_threshold,
+            param1=self.min_length,
+            param2=self.max_gap
+        )
+        
+        self.hor_lines = []
 
+        for line in raw_lines:
+            if math.fabs(line_slope(line[0],line[1])) < self.hor_threshold:
+                self.hor_lines.append(line)
+
+        max_length = 0
+        
+        for line in self.hor_lines:
+            if math.fabs(line_distance(line[0],line[1]))>max_length:
+                max_length = math.fabs(line_distance(line[0],line[1]))
+                crossbar_seg = line
+
+        
+
+
+
+
+        '''
         # Get vertical lines
         vertical_lines = []
         for line in raw_lines:
@@ -189,25 +238,71 @@ class HedgeEntity(VisionEntity):
             self.crossbar_depth = self.r * atan(radians(bar_phi))
         else:
             self.crossbar_depth = None
+        '''
+        self.left_pole = None
+        self.right_pole = None
+        self.seen_crossbar = False
+        self.crossbar_depth = None
 
-
-        if self.debug:
+        if self.debug and max_length != 0:
             cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
-            libvision.misc.draw_lines(frame, vertical_lines)
-            libvision.misc.draw_lines(frame, horizontal_lines)
+            
+            
+
+            #libvision.misc.draw_lines(frame, vertical_lines)
+            #libvision.misc.draw_lines(frame, horizontal_lines)
+            #for line in raw_lines:
+            #    cv.Line(frame,line[0],line[1], (255,255,0), 10, cv.CV_AA, 0)
+                
+            #    cv.Circle(frame, line[1], 15, (255,0,0), 2,8,0)
+            #print len(raw_lines)
+            
 
             #cv.ShowImage("Hedge", cv.CloneImage(frame))
-            svr.debug("Hedge", cv.CloneImage(frame))
+            if (crossbar_seg[0][0] - frame.width/2) * 37 / (frame.width/2) < (crossbar_seg[1][0] - frame.width/2) * 37 / (frame.width/2):
+                self.left_pole  = round((crossbar_seg[0][0] - frame.width/2) * 37 / (frame.width/2))
+                self.right_pole = round((crossbar_seg[1][0] - frame.width/2) * 37 / (frame.width/2))
+            else:
+                self.left_pole  = round((crossbar_seg[1][0] - frame.width/2) * 37 / (frame.width/2))
+                self.right_pole = round((crossbar_seg[0][0] - frame.width/2) * 37 / (frame.width/2))
+            self.crossbar_depth = round(-1 * (crossbar_seg[1][1] - frame.height/2) * 36 / (frame.height/2))
+            if self.left_pole == -37:
+                self.left_pole = None
+            if self.right_pole == -37:
+                self.right_pole = None
 
-        #populate self.output with infos
-        self.output.seen_crossbar = self.seen_crossbar
-        self.output.left_pole = self.left_pole
-        self.output.right_pole = self.right_pole
-        self.output.r = self.r
-        self.output.crossbar_depth = self.crossbar_depth
+            self.seen_crossbar = True
 
-        self.return_output()
-        print self
+            cv.Line(frame,crossbar_seg[0],crossbar_seg[1], (255,255,0), 10, cv.CV_AA, 0)
+            if self.left_pole and crossbar_seg[0][0]<crossbar_seg[1][0]:
+                
+                cv.Line(frame,crossbar_seg[0],(crossbar_seg[0][0],crossbar_seg[0][0]-500), (255,0,0), 10, cv.CV_AA, 0)
+            elif self.left_pole:
+                cv.Line(frame,crossbar_seg[1],(crossbar_seg[1][0],crossbar_seg[1][1]-500), (255,0,0), 10, cv.CV_AA, 0)
+
+            if self.right_pole and crossbar_seg[0][0]>crossbar_seg[1][0]:
+                
+                cv.Line(frame,crossbar_seg[0],(crossbar_seg[0][0],crossbar_seg[0][0]-500), (255,0,0), 10, cv.CV_AA, 0)
+            elif self.right_pole:
+                cv.Line(frame,crossbar_seg[1],(crossbar_seg[1][0],crossbar_seg[1][1]-500), (255,0,0), 10, cv.CV_AA, 0)
+
+
+
+
+            #populate self.output with infos
+            self.output.seen_crossbar = self.seen_crossbar
+            self.output.left_pole = self.left_pole
+            self.output.right_pole = self.right_pole
+            #self.output.r = self.r
+            self.output.crossbar_depth =  self.crossbar_depth
+
+            self.return_output()
+            print self
+        else: 
+            cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
+       
+        svr.debug("Hedge", cv.CloneImage(frame))
+        svr.debug("Hedge2", test_frame)
 
     def __repr__(self):
         return "<HedgeEntity left_pole=%s right_pole=%s seen_crossbar=%s crossbar_depth=%s>" % \

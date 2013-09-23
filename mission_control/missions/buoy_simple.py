@@ -50,7 +50,9 @@ class SimpleBuoyMission(MissionBase):
             print "found 3 buoys"
             # Assign tracking_buoy_id to middle buoy
             self.tracking_buoy_id = found_buoys[1].id
-        
+        if len(found_buoys) == 1:
+            print "found 1 buoy"
+            self.tracking_buoy_id = found_buoys[0].id 
         """
         elif found_buoys:
             for buoy in found_buoys:

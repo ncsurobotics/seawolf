@@ -88,25 +88,26 @@ def check_for_corner(line1,line2):
     
 
 
-class PizzaEntity(VisionEntity):
+class BinsHoughEntity(VisionEntity):
 
     def init(self):
 	
 #	self.vertical_threshold = 15*math.pi/180  # How close to vertical lines must be
 #        self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 15
-        self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 8
+        self.hough_threshold = 50
+        self.adaptive_thresh_blocksize = 13
+        self.adaptive_thresh = 9
+
         self.max_range = 100
 
         self.Boxes = []
 
         #For Probalistic
-        self.min_length = 3
-        self.max_gap = 40 #40
+        self.min_length = 30
+        self.max_gap = 10 #40
 
         #grouping
-        self.max_corner_range = 100  #15
+        self.max_corner_range = 75  #15
         
         #For Rectangle Indentification Variables, look at function
 
@@ -119,13 +120,18 @@ class PizzaEntity(VisionEntity):
         self.angle_max2 = math.pi/2+.03
 
         #how close the sizes of parallel lines of a bin must be to eachother
-        self.size_threshold = 40
+        self.size_threshold = 5
         #How close to the ideal 1:1 ratio the bin sides must be
-        self.ratio_threshold = 1.15
+        self.ratio_threshold =1.4
 
-        self.center_thresh = 20
+        self.center_thresh = 40
 
-        self.lastseen_thresh = 10
+        self.lastseen_thresh = 6
+
+        #How close the perimeter of a bin must be when compared to the perimeter of other bins
+        self.perimeter_threshold = 1
+
+
         
 
     def process_frame(self, frame):
@@ -141,7 +147,7 @@ class PizzaEntity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 1)
+        cv.SetImageCOI(hsv, 3)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
@@ -212,7 +218,7 @@ class PizzaEntity(VisionEntity):
                                         #Checks that corners are not the same and are in the proper orientation
                                         if corner4[0] != corner3[0] and corner4[0] != corner2[0] and corner4[0] != corner1[0] and corner3[0] != corner2[0] and corner3[0] != corner1[0] and corner2[0] != corner1[0] and corner4[1] != corner3[1] and corner4[1] != corner2[1] and corner4[1] != corner1[1] and corner3[1] != corner2[1] and corner3[1] != corner1[1] and corner2[1] != corner1[1] and corner2[0]>=corner3[0] and corner1[1]>=corner4[1] and corner2[0]>=corner1[0] and math.fabs(corner1[0]-corner4[0])> self.min_corner_distance and math.fabs(corner1[1]-corner4[1])>self.min_corner_distance and math.fabs(corner2[0]-corner3[0])> self.min_corner_distance and math.fabs(corner2[1]-corner3[1])>self.min_corner_distance:
                                                 #Checks that the side ratios are correct
-                                                if math.fabs(line_distance(corner1,corner3) - line_distance(corner2,corner4)) < self.size_threshold and math.fabs(line_distance(corner1,corner2) - line_distance(corner3,corner4)) < self.size_threshold and (math.fabs(line_distance(corner1,corner3)/line_distance(corner1,corner2)) < self.ratio_threshold and math.fabs(line_distance(corner1,corner2)/line_distance(corner1,corner3)) < self.ratio_threshold):
+                                                if math.fabs(line_distance(corner1,corner3) - line_distance(corner2,corner4)) < self.size_threshold and math.fabs(line_distance(corner1,corner2) - line_distance(corner3,corner4)) < self.size_threshold and (math.fabs(line_distance(corner1,corner3)/line_distance(corner1,corner2))) < .5*self.ratio_threshold:
 #^^^ CHANGED OR TO AND --> DID MUCH BETTER. CONSIDER CHANGING ON BINSCORNER
 
                                                         #Checks that angles are roughly 90 degrees
@@ -226,18 +232,20 @@ class PizzaEntity(VisionEntity):
         
                                                                     
 
-        
+        self.min_perimeter = 500000    
         for Box in self.Boxes[:]:
-            Box.lastseen -= 1
+            Box.lastseen -= 2
             if Box.lastseen < 0:
                 self.Boxes.remove(Box)
+                if math.fabs(line_distance(Box.corner1,Box.corner3)*2 + math.fabs(line_distance(Box.corner1,Box.corner2)*2) - self.min_perimeter)>self.min_perimeter*self.perimeter_threshold and line_distance(Box.corner1,Box.corner3)*2 + line_distance(Box.corner1,Box.corner2)*2 > self.min_perimeter:
+                    print "perimeter error (this is a good thing)"
+                    print math.fabs(line_distance(Box.corner1,Box.corner3)*2 + math.fabs(line_distance(Box.corner1,Box.corner2)*2) - self.min_perimeter), "is greater than", self.min_perimeter*self.perimeter_threshold
 
         self.draw_pizza()      
 
 
 
         for line in lines:
-            cv.Line(self.debug_frame,line[0],line[1], (255,255,0), 10, cv.CV_AA, 0)
             cv.Circle(self.debug_frame, line[0], 15, (255,0,0), 2,8,0)
             cv.Circle(self.debug_frame, line[1], 15, (255,0,0), 2,8,0)
 
@@ -263,16 +271,29 @@ class PizzaEntity(VisionEntity):
         if len(self.Boxes) == 0:
             self.Boxes.append(target)
 
-        for Box in self.Boxes:
+        for Box in self.Boxes[:]:
             if math.fabs(target.center[0] - Box.center[0]) < self.center_thresh and math.fabs(target.center[1] - Box.center[1]) < self.center_thresh:
-                Box.corner1 = target.corner1
-                Box.corner2 = target.corner2
-                Box.corner3 = target.corner3
-                Box.corner4 = target.corner4
-                Box.center = target.center
-                Box.angle = target.angle
-                if Box.lastseen < self.lastseen_thresh:
-                    Box.lastseen += 3
+                if line_distance(Box.corner1,Box.corner2)+line_distance(Box.corner1,Box.corner3) < line_distance(target.corner1,target.corner2)+line_distance(target.corner1,target.corner3):                    
+                    target.corner1 = Box.corner1
+                    target.corner2 = Box.corner2
+                    target.corner3 = Box.corner3
+                    target.corner4 = Box.corner1
+                    target.center = Box.center
+                    target.angle = Box.angle
+                    if target.lastseen < self.lastseen_thresh:
+                        target.lastseen += 3
+                    self.Boxes.append(target)
+                    self.Boxes.remove(Box)
+                else:
+                    Box.corner1 = target.corner1
+                    Box.corner2 = target.corner2
+                    Box.corner3 = target.corner3
+                    Box.corner4 = target.corner4
+                    Box.center = target.center
+                    Box.angle = target.angle
+                    if Box.lastseen < self.lastseen_thresh:
+                        Box.lastseen += 3
+                
                 
             else:
                 self.Boxes.append(target)
@@ -294,7 +315,7 @@ class PizzaEntity(VisionEntity):
             cv.PutText(self.debug_frame, str("4"), (int(Box.corner4[0]),int(Box.corner4[1])), font, (0,0,255))
             center = (int(Box.center[0]), int(Box.center[1]))
             
-            cv.Circle(self.debug_frame, center, 15, (255,0,0), 2,8,0)
+            cv.Circle(self.debug_frame, center, 15, (0,255,0), 2,8,0)
 
 
 

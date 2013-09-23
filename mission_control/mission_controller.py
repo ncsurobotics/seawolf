@@ -102,8 +102,6 @@ class MissionController(object):
             try:
                if not self.current_mission.execute():
                    print "MISSION FAILED"
-                   while len(self.mission_queue) > 1:
-                       self.last_mission = self.mission_queue.popleft()
                else:
                    print "MISSION FINISHED"
             except KillSignal:
