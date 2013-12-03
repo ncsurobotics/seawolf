@@ -22,6 +22,3 @@
 /vision/libvision/doc/
 /vision/libvision/c/interface.py
 /vision/libvision/c/interface_wrap.c
-/vision/footage/
-vision/FOOTAGE
-.gitignore
