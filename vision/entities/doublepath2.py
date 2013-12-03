@@ -14,26 +14,22 @@ import sw3
 from sw3.util import circular_average
 
 
-
 class Path(object):
     def __init__(self, arg1, arg2):
         self.loc = arg1
         self.angle = arg2
         self.theta = arg2
-        self.id= 0
+        self.id = 0
         self.last_seen = 2
         self.seencount = 1
         
 
-
-      
 
 class PathManager(object):
     def __init__(self):
         self.paths = []       
         
 
-        
     def get_paths(self):
         paths = filter(lambda path: path.count() >= self.min_path_count, self.paths)
 
@@ -125,7 +121,6 @@ class DoublePath2Entity(VisionEntity):
         self.lines_to_consider = 10
         print "it updated"
 
-
         path = []
         self.confirmed = []
         self.candidates = []
@@ -136,31 +131,22 @@ class DoublePath2Entity(VisionEntity):
         self.distance_threshold = 50
         self.angle_threshold = 1*math.pi
 
-
         #Transition Thresholds
         self.distance_trans = 1000
         self.angle_trans = 4*math.pi
 
         self.min_center_distance = 50
         
-        
-        
-        
 
-    
 
     def process_frame(self, frame):
         
         self.output.found = False
 
-        
-
-        
-
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         # Use RGB color finder
-        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,1500,500,.3)
+        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame, 250, 125, 0, 1500, 500, .3)
         color_filtered = cv.CloneImage(binary)
 
         blob_map = cv.CloneImage(binary)
@@ -181,13 +167,13 @@ class DoublePath2Entity(VisionEntity):
         # Hough Transform
         line_storage = cv.CreateMemStorage()
         lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_STANDARD,
-            rho=1,
-            theta=math.pi/180,
-            threshold=self.hough_threshold,
-            param1=0,
-            param2=0
+                               rho=1,
+                               theta=math.pi/180,
+                               threshold=self.hough_threshold,
+                               param1=0,
+                               param2=0
         )
-        print "hough transform found",len(lines)," lines"
+        print "hough transform found", len(lines), " lines"
         lines = lines[:self.lines_to_consider] # Limit number of lines
 
         #if not lines:
@@ -198,8 +184,6 @@ class DoublePath2Entity(VisionEntity):
         if paths and not self.path:
             # If path[1] is clockwise of paths[0]
             distance = circular_distance(paths[0].angle, paths[1].angle)
-
-                     
             
             if distance > 0:
                 self.path = paths[self.which_path]
@@ -256,7 +240,8 @@ class DoublePath2Entity(VisionEntity):
                     
             for line in lines[:]:
                 for candidate in self.candidates:
-                    if math.fabs(line[0]-candidate.loc) < self.distance_threshold and math.fabs(line[1]-candidate.angle) < self.angle_threshold: 
+                    if math.fabs(line[0]-candidate.loc) < self.distance_threshold and \
+                       math.fabs(line[1]-candidate.angle) < self.angle_threshold:
                         candidate.loc = (candidate.loc+line[0])/2
                         candidate.angle = (candidate.angle+line[1])/2
                         if candidate.last_seen < self.max_lastseen:
@@ -283,7 +268,8 @@ class DoublePath2Entity(VisionEntity):
 
             for confirmed in self.confirmed:
                 for line in lines[:]:
-                    if math.fabs(line[0]-confirmed.loc) < self.distance_trans and math.fabs(line[1]-confirmed.angle) < self.angle_trans: 
+                    if math.fabs(line[0]-confirmed.loc) < self.distance_trans and \
+                       math.fabs(line[1]-confirmed.angle) < self.angle_trans: 
                         confirmed.loc = line[0]
                         confirmed.angle = line[1]
                         if confirmed.last_seen < self.max_lastseen:
@@ -295,7 +281,8 @@ class DoublePath2Entity(VisionEntity):
             
             for confirmed in self.confirmed:
                 for candidate in self.candidates[:]:
-                    if math.fabs(candidate.loc-confirmed.loc) < self.distance_trans and math.fabs(candidate.angle-confirmed.angle) < self.angle_trans: 
+                    if math.fabs(candidate.loc-confirmed.loc) < self.distance_trans and \
+                       math.fabs(candidate.angle-confirmed.angle) < self.angle_trans: 
                         confirmed.loc = candidate.loc
                         confirmed.angle = candidate.angle
                         if confirmed.last_seen < self.max_lastseen:
@@ -308,7 +295,8 @@ class DoublePath2Entity(VisionEntity):
             
             for confirmed1 in self.confirmed[:]:
                 for confirmed2 in self.confirmed[:]:
-                    if math.fabs(confirmed1.loc-confirmed2.loc) < self.distance_threshold and math.fabs(confirmed1.angle-confirmed2.angle) < self.angle_threshold: 
+                    if math.fabs(confirmed1.loc-confirmed2.loc) < self.distance_threshold and \
+                       math.fabs(confirmed1.angle-confirmed2.angle) < self.angle_threshold: 
                         if confirmed1.id > confirmed2.id and confirmed1 in self.confirmed:
                             confirmed2.loc == (confirmed2.loc+confirmed1.loc)/2
                             confirmed2.angle == (confirmed2.angle + confirmed1.angle)/2
@@ -351,12 +339,6 @@ class DoublePath2Entity(VisionEntity):
             #type -s after the command to run vision for this to work and not produce errors.
             #if len(self.confirmed)>1:
             #    raw_input()
-
-                    
-                
-
-
-
             
 
             self.output.paths = []
@@ -370,7 +352,9 @@ class DoublePath2Entity(VisionEntity):
                 path.x = center_x
                 center_y = (-math.cos(path.angle)/(math.sin(path.angle)+.001))*center_x+(path.loc/((math.sin(path.angle)+.001)))
                 path.y = center_y
-                if center_y > frame.height or center_y < 0 or center_y < self.min_center_distance or frame.height-center_y < self.min_center_distance:
+                if center_y > frame.height or center_y < 0 or \
+                   center_y < self.min_center_distance or \
+                   frame.height-center_y < self.min_center_distance:
                     center_y2 = frame.height/2
                     center_x2 = (center_y2-(path.loc/(math.sin(path.angle)+.0001)))/(-math.cos(path.angle)/(math.sin(path.angle)+.0001)) 
              
@@ -379,7 +363,6 @@ class DoublePath2Entity(VisionEntity):
                     else:
                         path.center = [center_x2, center_y2]
                 else: path.center = [center_x, center_y]
-                
 
                 cv.Circle(frame, (int(path.center[0]),int(path.center[1])), 15, (255,255,255), 2,8,0)
                 
@@ -389,18 +372,8 @@ class DoublePath2Entity(VisionEntity):
             svr.debug("Path", frame)
 
             
-        
-
-    
-
-    
-
     def find_centroid(self, binary):
         mat = cv.GetMat(binary)
         moments = cv.Moments(mat)
-        return (
-            int(moments.m10/moments.m00),
-            int(moments.m01/moments.m00)
-        )
-
-
+        return (int(moments.m10/moments.m00),
+                int(moments.m01/moments.m00))

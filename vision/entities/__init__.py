@@ -25,6 +25,7 @@ from doublepath2 import DoublePath2Entity
 from hedge import HedgeEntity
 from bins import BinsEntity
 from binscorner import BinsCornerEntity
+from binscontour import BinsContourEntity
 from binshough import BinsHoughEntity
 from binshough2 import BinsHough2Entity
 from pizza import PizzaEntity
@@ -45,6 +46,7 @@ entity_classes = {
     "doublepath": DoublePathEntity,
     "bins": BinsEntity,
     "binscorner": BinsCornerEntity,
+    "binscontour": BinsContourEntity,
     "binshough": BinsHoughEntity,
     "binshough2": BinsHough2Entity,
     "doublepath2": DoublePath2Entity,

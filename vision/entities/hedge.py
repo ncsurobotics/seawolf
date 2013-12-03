@@ -15,14 +15,15 @@ GATE_BLACK = 0
 GATE_WHITE = 1
 
 def line_slope(corner_a, corner_b):
-        if corner_a[0] != corner_b[0]:
-                slope = (corner_b[1]-corner_a[1])/(corner_b[0]-corner_a[0])
-                return slope
+    if corner_a[0] != corner_b[0]:
+        slope = (corner_b[1]-corner_a[1])/(corner_b[0]-corner_a[0])
+        return slope
 
 
 def line_distance(corner_a, corner_b):
-        distance = math.sqrt((corner_b[0]-corner_a[0])**2 + (corner_b[1]-corner_a[1])**2)
-        return distance
+    distance = math.sqrt((corner_b[0]-corner_a[0])**2 + 
+                         (corner_b[1]-corner_a[1])**2)
+    return distance
 
 def line_group_accept_test(line_group, line, max_range):
     '''
@@ -95,12 +96,12 @@ class HedgeEntity(VisionEntity):
         cv.SetImageCOI(hsv, 0)
 
         cv.AdaptiveThreshold(binary, binary,
-            255,
-            cv.CV_ADAPTIVE_THRESH_MEAN_C,
-            cv.CV_THRESH_BINARY_INV,
-            self.adaptive_thresh_blocksize,
-            self.adaptive_thresh,
-        )
+                             255,
+                             cv.CV_ADAPTIVE_THRESH_MEAN_C,
+                             cv.CV_THRESH_BINARY_INV,
+                             self.adaptive_thresh_blocksize,
+                             self.adaptive_thresh,
+                             )
 
         # Morphology
         '''
@@ -128,31 +129,27 @@ class HedgeEntity(VisionEntity):
         # Hough Transform
         line_storage = cv.CreateMemStorage()
         raw_lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_PROBABILISTIC,
-            rho=1,
-            theta=math.pi/180,
-            threshold=self.hough_threshold,
-            param1=self.min_length,
-            param2=self.max_gap
+                                   rho=1,
+                                   theta=math.pi/180,
+                                   threshold=self.hough_threshold,
+                                   param1=self.min_length,
+                                   param2=self.max_gap
         )
         
         self.hor_lines = []
 
         for line in raw_lines:
-            if math.fabs(line_slope(line[0],line[1])) < self.hor_threshold:
+            if math.fabs(line_slope(line[0], line[1])) < self.hor_threshold:
                 self.hor_lines.append(line)
 
         max_length = 0
         
         for line in self.hor_lines:
-            if math.fabs(line_distance(line[0],line[1]))>max_length:
-                max_length = math.fabs(line_distance(line[0],line[1]))
+            if math.fabs(line_distance(line[0], line[1])) > max_length:
+                max_length = math.fabs(line_distance(line[0], line[1]))
                 crossbar_seg = line
 
-        
-
-
-
-
+    
         '''
         # Get vertical lines
         vertical_lines = []
@@ -246,8 +243,7 @@ class HedgeEntity(VisionEntity):
 
         if self.debug and max_length != 0:
             cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
-            
-            
+             
 
             #libvision.misc.draw_lines(frame, vertical_lines)
             #libvision.misc.draw_lines(frame, horizontal_lines)
@@ -273,28 +269,25 @@ class HedgeEntity(VisionEntity):
 
             self.seen_crossbar = True
 
-            cv.Line(frame,crossbar_seg[0],crossbar_seg[1], (255,255,0), 10, cv.CV_AA, 0)
-            if self.left_pole and crossbar_seg[0][0]<crossbar_seg[1][0]:
+            cv.Line(frame, crossbar_seg[0], crossbar_seg[1], (255, 255, 0), 10, cv.CV_AA, 0)
+            if self.left_pole and crossbar_seg[0][0] < crossbar_seg[1][0]:
                 
-                cv.Line(frame,crossbar_seg[0],(crossbar_seg[0][0],crossbar_seg[0][0]-500), (255,0,0), 10, cv.CV_AA, 0)
+                cv.Line(frame, crossbar_seg[0], (crossbar_seg[0][0], crossbar_seg[0][0]-500), (255, 0, 0), 10, cv.CV_AA, 0)
             elif self.left_pole:
-                cv.Line(frame,crossbar_seg[1],(crossbar_seg[1][0],crossbar_seg[1][1]-500), (255,0,0), 10, cv.CV_AA, 0)
+                cv.Line(frame, crossbar_seg[1], (crossbar_seg[1][0], crossbar_seg[1][1]-500), (255, 0, 0), 10, cv.CV_AA, 0)
 
-            if self.right_pole and crossbar_seg[0][0]>crossbar_seg[1][0]:
+            if self.right_pole and crossbar_seg[0][0] > crossbar_seg[1][0]:
                 
-                cv.Line(frame,crossbar_seg[0],(crossbar_seg[0][0],crossbar_seg[0][0]-500), (255,0,0), 10, cv.CV_AA, 0)
+                cv.Line(frame, crossbar_seg[0], (crossbar_seg[0][0], crossbar_seg[0][0]-500), (255, 0, 0), 10, cv.CV_AA, 0)
             elif self.right_pole:
-                cv.Line(frame,crossbar_seg[1],(crossbar_seg[1][0],crossbar_seg[1][1]-500), (255,0,0), 10, cv.CV_AA, 0)
-
-
-
+                cv.Line(frame, crossbar_seg[1], (crossbar_seg[1][0], crossbar_seg[1][1]-500), (255, 0, 0), 10, cv.CV_AA, 0)
 
             #populate self.output with infos
             self.output.seen_crossbar = self.seen_crossbar
             self.output.left_pole = self.left_pole
             self.output.right_pole = self.right_pole
             #self.output.r = self.r
-            self.output.crossbar_depth =  self.crossbar_depth
+            self.output.crossbar_depth = self.crossbar_depth
 
             self.return_output()
             print self

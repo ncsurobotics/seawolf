@@ -7,21 +7,24 @@ import svr
 
 import cv
 
+
 class Container(object):
-    '''a blank container object'''
+    """ a blank container object """
 
     def __repr__(self):
         return str(self.__dict__)
 
+
 class VisionEntity(object):
-    '''Defines an entity, an object that can be located.
+    """
+    Defines an entity, an object that can be located.
 
     Subclasses must:
         - Implement a find() method.
     Subclasses should:
         - Implement a __repr__() method.
 
-    '''
+    """
 
     # A human readable name for this entity
     name = "VisionEntity"
@@ -51,12 +54,12 @@ class VisionEntity(object):
         self.init()
 
     def init(self):
-        '''subclass-modified init class'''
+        """ subclass-modified init class """
         pass
 
     def run(self):
-        '''handles running of this entity.  Interfaces with cameras, and manages
-            connections. '''
+        """ handles running of this entity.  Interfaces with cameras, and manages
+            connections.  """
 
         record_path = get_record_path()
 
@@ -66,13 +69,12 @@ class VisionEntity(object):
 
                 #if sync required, do not continue until we receive a message
                 if self.waitforsync:
-                   signal = self.wait_for_parent(None)
+                    signal = self.wait_for_parent(None)
 
-                   if isinstance(signal, CaptureFrameSignal):
+                    if isinstance(signal, CaptureFrameSignal):
                         #there's our signal
                         pass
-
-                   else:
+                    else:
                         #passed signal at the wrong time
                         raise ValueError("Expecting CaptureFrameSignal or KillSignal")
 
@@ -127,12 +129,12 @@ class VisionEntity(object):
         self.child_conn.send(data)
 
     def process_frame(self, frame, debug=True):
-        ''' process this frame, then place output in self.output'''
+        """ process this frame, then place output in self.output """
 
         raise NotImplementedError("The find subclass must be implemented!")
 
     def create_trackbar(self, var, max=255):
-        '''Function to create trackbar for a variable.
+        """ Function to create trackbar for a variable.
 
         Arguments:
             var - The variable name to create a trackbar for.  The variable
@@ -141,12 +143,13 @@ class VisionEntity(object):
             max - The maximum value the trackbar can slide to.  Min is always
                 zero.
 
-        '''
+        """
         cv.CreateTrackbar("%s" % var, self.name, getattr(self, var), max,
             lambda value: setattr(self, var, value))
 
+
 class MultiCameraVisionEntity(VisionEntity):
-    '''spawns and communicates with subprocess, each of which controls a camera'''
+    """ spawns and communicates with subprocess, each of which controls a camera """
     subprocess = None
 
     def __init__(self, child_conn, *cameras_to_use, **kwargs):
@@ -167,14 +170,14 @@ class MultiCameraVisionEntity(VisionEntity):
         #start a subprocess for every camera
         for camera_name in cameras_to_use:
             self.process_manager.start_process(
-                    self.subprocess,
-                    camera_name,
-                    camera_name,
-                    debug=self.debug,
-                    delay=self.delay,
-                    cameras=self.cameras,
-                    waitforsync=True,
-                    binocularworker=True,
+                            self.subprocess,
+                            camera_name,
+                            camera_name,
+                            debug=self.debug,
+                            delay=self.delay,
+                            cameras=self.cameras,
+                            waitforsync=True,
+                            binocularworker=True,
             )
 
         self.output = Container()
@@ -184,8 +187,8 @@ class MultiCameraVisionEntity(VisionEntity):
         pass
 
     def run(self):
-        '''handles running of this entity.  Interfaces with subprocesses, and manages
-            connections. '''
+        """ handles running of this entity.  Interfaces with subprocesses, and manages
+            connections. """
 
         try:
 
@@ -207,8 +210,8 @@ class MultiCameraVisionEntity(VisionEntity):
 
         # Always close camera, even if an exception was raised
         finally:
-           self.process_manager.kill()
-           self.child_conn.send(vision.process_manager.KillSignal())
+            self.process_manager.kill()
+            self.child_conn.send(vision.process_manager.KillSignal())
 
     def sync_capture(self):
         #send frame sync
@@ -218,7 +221,7 @@ class MultiCameraVisionEntity(VisionEntity):
     def wait_for_workers(self):
         #wait for workers all workers to return data
         try:
-            data = self.process_manager.get_data(force = True)
+            data = self.process_manager.get_data(force=True)
         except vision.process_manager.KillSignal:
             self.child_conn.send(vision.process_manager.KillSignal())
             raise
@@ -228,7 +231,7 @@ class MultiCameraVisionEntity(VisionEntity):
         raise NotImplementedError()
 
 class CaptureFrameSignal():
-    '''used to send frame sync signals to subprocesses'''
+    """ used to send frame sync signals to subprocesses """
     pass
 
 def get_record_path():

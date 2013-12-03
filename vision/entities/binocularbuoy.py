@@ -33,7 +33,7 @@ CANDIDATE_BUOY_TIMEOUT = 3
 CANDIDATE_SEEN_THRESH = 3
 
 #dictionaries of colors
-COLORS = {0: cv.RGB(127, 127, 127),1:cv.RGB(255, 0, 0), 2: cv.RGB(0, 255, 0), 3: cv.RGB(255, 255, 0)}
+COLORS = {0: cv.RGB(127, 127, 127),1: cv.RGB(255, 0, 0), 2: cv.RGB(0, 255, 0), 3: cv.RGB(255, 255, 0)}
 
 #define left and right as indecies
 LEFT = 0
@@ -50,7 +50,7 @@ class ManagerData(object):
         pass
 
 class Buoy(object):
-    '''an imaged buoy'''
+    ''' an imaged buoy '''
     def __init__(self):
 
         #Identification Number

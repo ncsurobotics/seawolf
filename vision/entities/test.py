@@ -10,7 +10,7 @@ from base import VisionEntity
 class TestEntity(VisionEntity):
 
     def process_frame(self, frame, debug=True):
-        ''' process this frame, then place output in self.output'''
+        """ process this frame, then place output in self.output """
 
         if debug:
             #display frame
@@ -32,12 +32,12 @@ class TestEntity(VisionEntity):
 
             # Run Adaptive Threshold
             cv.AdaptiveThreshold(gray, binary,
-                255,
-                cv.CV_ADAPTIVE_THRESH_MEAN_C,
-                cv.CV_THRESH_BINARY_INV,
-                19,
-                4,
-            )
+                                 255,
+                                 cv.CV_ADAPTIVE_THRESH_MEAN_C,
+                                 cv.CV_THRESH_BINARY_INV,
+                                 19,
+                                 4,
+                                 )
 
             #display adaptive threshold
             svr.debug("Thresh", binary)
@@ -45,11 +45,11 @@ class TestEntity(VisionEntity):
             # Hough Transform
             line_storage = cv.CreateMemStorage()
             raw_lines = cv.HoughLines2(edge, line_storage, cv.CV_HOUGH_STANDARD,
-                rho=1,
-                theta=math.pi/180,
-                threshold=50,
-                param1=0,
-                param2=0
+                                       rho=1,
+                                       theta=math.pi/180,
+                                       threshold=50,
+                                       param1=0,
+                                       param2=0
             )
 
             #process line data

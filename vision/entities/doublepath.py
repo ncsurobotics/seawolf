@@ -18,7 +18,7 @@ import seawolf as sw
 import math
 from math import pi
 
-def circular_distance(a, b, high=180, low=-180):
+def circular_distance(a, b, high = 180, low = -180):
     ''' Finds the signed distance between a and b in a circular fashion.
 
     high and low are the ends of the wraparound point.  Going any higher than
@@ -197,7 +197,7 @@ class PathManager(object):
 class DoublePathEntity(VisionEntity):
     name = "DoublePath"
 
-    def init(self, which_path=0, angle_hint=0, max_angle_distance=80):
+    def init(self, which_path = 0, angle_hint = 0, max_angle_distance = 80):
         self.which_path = which_path
         self.angle_hint = angle_hint
         self.max_angle_distance = max_angle_distance
@@ -211,7 +211,7 @@ class DoublePathEntity(VisionEntity):
         sw.init("DoublePath")
 
     def process_frame(self, frame):
-        if self.path_manager.start_angle == None:
+        if self.path_manager.start_angle is None:
             self.path_manager.start_angle = get_yaw()
 
         self.output.found = False
@@ -219,7 +219,7 @@ class DoublePathEntity(VisionEntity):
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         # Use RGB color finder
-        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,1500,500,.3)
+        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame, 250, 125, 0, 1500, 500, .3)
         color_filtered = cv.CloneImage(binary)
 
         blob_map = cv.CloneImage(binary)
@@ -240,13 +240,13 @@ class DoublePathEntity(VisionEntity):
         # Hough Transform
         line_storage = cv.CreateMemStorage()
         lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_STANDARD,
-            rho=1,
-            theta=math.pi/180,
-            threshold=self.hough_threshold,
-            param1=0,
-            param2=0
+                               rho=1,
+                               theta=math.pi/180,
+                               threshold=self.hough_threshold,
+                               param1=0,
+                               param2=0
         )
-        lines = lines[:self.lines_to_consider] # Limit number of lines
+        lines = lines[:self.lines_to_consider]  # Limit number of lines
 
         if not lines:
             return
@@ -320,7 +320,7 @@ class DoublePathEntity(VisionEntity):
                     int(round(center[0])),
                     int(round(center[1])),
                     )
-                cv.Circle(frame, rounded_center, 5, (0,255,0))
+                cv.Circle(frame, rounded_center, 5, (0, 255, 0))
                 libvision.misc.draw_lines(frame, [(frame.width/2, self.path.theta)])
 
             else:

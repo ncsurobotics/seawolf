@@ -94,20 +94,20 @@ class GateEntity(VisionEntity):
         # Hough Transform
         line_storage = cv.CreateMemStorage()
         raw_lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_STANDARD,
-            rho=1,
-            theta=math.pi/180,
-            threshold=self.hough_threshold,
-            param1=0,
-            param2=0
-        )
+                                   rho=1,
+                                   theta=math.pi/180,
+                                   threshold=self.hough_threshold,
+                                   param1=0,
+                                   param2=0
+                                   )
 
         # Get vertical lines
         vertical_lines = []
         for line in raw_lines:
             if line[1] < self.vertical_threshold or \
-                line[1] > math.pi-self.vertical_threshold:
+               line[1] > math.pi-self.vertical_threshold:
 
-                vertical_lines.append( (abs(line[0]), line[1]) )
+                vertical_lines.append((abs(line[0]), line[1]))
 
         # Group vertical lines
         vertical_line_groups = []  # A list of line groups which are each a line list
@@ -135,7 +135,7 @@ class GateEntity(VisionEntity):
         for line in raw_lines:
             dist_from_horizontal = (math.pi/2 + line[1]) % math.pi
             if dist_from_horizontal < self.horizontal_threshold or \
-                dist_from_horizontal > math.pi-self.horizontal_threshold:
+               dist_from_horizontal > math.pi-self.horizontal_threshold:
 
                 horizontal_lines.append( (abs(line[0]), line[1]) )
 
@@ -165,7 +165,7 @@ class GateEntity(VisionEntity):
 
         self.left_pole = None
         self.right_pole = None
-	print vertical_lines
+        print vertical_lines
         if len(vertical_lines) is 2:
             roi = cv.GetImageROI(frame)
             width = roi[2]
@@ -173,7 +173,7 @@ class GateEntity(VisionEntity):
             self.left_pole = round(min(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
             self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
         #TODO: If one pole is seen, is it left or right pole?
-	
+    
         if self.debug:
             cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
             libvision.misc.draw_lines(frame, vertical_lines)

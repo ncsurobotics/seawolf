@@ -54,7 +54,7 @@ class PathEntity(VisionEntity):
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         #use RGB color finder
-        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame,250,125,0,1500,500,.3)
+        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame, 250, 125, 0, 1500, 500, .3)
 
         if self.debug:
             color_filtered = cv.CloneImage(binary)
@@ -65,13 +65,13 @@ class PathEntity(VisionEntity):
         # Hough Transform
         line_storage = cv.CreateMemStorage()
         lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_STANDARD,
-            rho=1,
-            theta=math.pi/180,
-            threshold=self.hough_threshold,
-            param1=0,
-            param2=0
-        )
-        lines = lines[:self.lines_to_consider] # Limit number of lines
+                               rho=1,
+                               theta=math.pi/180,
+                               threshold=self.hough_threshold,
+                               param1=0,
+                               param2=0
+                               )
+        lines = lines[:self.lines_to_consider]  # Limit number of lines
 
         # If there are at least 2 lines and they are close to parallel...
         # There's a path!
@@ -89,8 +89,8 @@ class PathEntity(VisionEntity):
                     theta_min = theta
 
             theta_range = theta_max - theta_min
-            # Near verticle angles will wrap around from pi to 0.  If the range
-            # crosses this verticle line, the range will be way too large.  To
+            # Near vertical angles will wrap around from pi to 0.  If the range
+            # crosses this vertical line, the range will be way too large.  To
             # correct for this, we always take the smallest angle between the
             # min and max.
             if theta_range > math.pi/2:
@@ -140,7 +140,7 @@ class PathEntity(VisionEntity):
                     int(round(self.image_coordinate_center[0])),
                     int(round(self.image_coordinate_center[1])),
                 )
-                cv.Circle(frame, rounded_center, 5, (0,255,0))
+                cv.Circle(frame, rounded_center, 5, (0, 255, 0))
                 libvision.misc.draw_lines(frame, [(frame.width/2, self.theta)])
             else:
                 libvision.misc.draw_lines(frame, lines)
