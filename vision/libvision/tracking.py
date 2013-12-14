@@ -1,4 +1,4 @@
-
+# pylint: disable=E1101
 from __future__ import division
 from time import time
 

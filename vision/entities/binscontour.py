@@ -1,7 +1,11 @@
+# pylint: disable=E1101
+
 from __future__ import division
 import math
 
-import cv
+import cv2
+import cv2.cv as cv
+import numpy as np
 
 import svr
 
@@ -56,7 +60,7 @@ def rect_midpointy(corner_a, corner_b, corner_c, corner_d):
     return midpoint_y
 
 def average_corners(corner_a, corner_b):
-    average_corner = [0,0]
+    average_corner = [0, 0]
     average_corner[0] = (corner_a[0] + corner_b[0])/2
     average_corner[1] = (corner_a[1] + corner_b[1])/2
     return average_corner
@@ -77,15 +81,16 @@ def check_for_corner(line1, line2):
     
 class BinsContourEntity(VisionEntity):
     def init(self):
-
-        self.adaptive_thresh_blocksize = 35
+        self.adaptive_thresh_blocksize = 50
         self.adaptive_thresh = 4
 
     def process_frame(self, frame):
+        orig_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
         self.debug_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        og_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
+        cv.Copy(frame, orig_frame)
         cv.Copy(frame, self.debug_frame)
-        cv.Copy(self.debug_frame, og_frame)
+        # orig_frame = cv.CloneImage(frame)
+        # self.debug_frame = cv.CloneImage(frame)
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
@@ -93,7 +98,7 @@ class BinsContourEntity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 1)  #3 before competition #2 at competition
+        cv.SetImageCOI(hsv, 1)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
@@ -110,9 +115,12 @@ class BinsContourEntity(VisionEntity):
         cv.Erode(binary, binary, kernel, 1)
         cv.Dilate(binary, binary, kernel, 1)
 
-        # Get Edges
+        # Get Edge
         #cv.Canny(binary, binary, 30, 40)
 
         cv.CvtColor(binary, self.debug_frame, cv.CV_GRAY2RGB)
 
-        svr.debug("Bins", self.debug_frame)
+        #c = cv.Contour(self.debug_frame, contour)
+
+        svr.debug("Bins", orig_frame)
+        svr.debug("Bins2", self.debug_frame)

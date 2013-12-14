@@ -1,3 +1,4 @@
+# pylint: disable=E1101
 from __future__ import division
 import math
 import time
@@ -23,7 +24,6 @@ class Path(object):
         self.last_seen = 2
         self.seencount = 1
         
-
 
 class PathManager(object):
     def __init__(self):
@@ -138,7 +138,6 @@ class DoublePath2Entity(VisionEntity):
         self.min_center_distance = 50
         
 
-
     def process_frame(self, frame):
         
         self.output.found = False
@@ -208,7 +207,6 @@ class DoublePath2Entity(VisionEntity):
                 -center[1] + (frame.height / 2)
             )
 
-            
         random = 0
         if random == 0:
             # Show color filtered
@@ -245,7 +243,7 @@ class DoublePath2Entity(VisionEntity):
                         candidate.loc = (candidate.loc+line[0])/2
                         candidate.angle = (candidate.angle+line[1])/2
                         if candidate.last_seen < self.max_lastseen:
-                                candidate.last_seen += 1
+                            candidate.last_seen += 1
                         #print line1
                         
                         if line in lines:
@@ -273,7 +271,7 @@ class DoublePath2Entity(VisionEntity):
                         confirmed.loc = line[0]
                         confirmed.angle = line[1]
                         if confirmed.last_seen < self.max_lastseen:
-                                confirmed.last_seen += 2
+                            confirmed.last_seen += 2
                         
                         if line in lines:
                             self.lines.remove(line)
@@ -286,7 +284,7 @@ class DoublePath2Entity(VisionEntity):
                         confirmed.loc = candidate.loc
                         confirmed.angle = candidate.angle
                         if confirmed.last_seen < self.max_lastseen:
-                                confirmed.last_seen += 2
+                            confirmed.last_seen += 2
                         
                         print "lines"
                         if candidate in self.candidates:
@@ -310,14 +308,10 @@ class DoublePath2Entity(VisionEntity):
                             if confirmed1.last_seen < self.max_lastseen:
                                 confirmed1.last_seen += 2
             
-    
-
             for confirmed in self.confirmed[:]:
                 confirmed.last_seen -= 1
                 if confirmed.last_seen < -10:
                     self.confirmed.remove(confirmed)
-                         
-            
 
             final_lines = []
             for confirmed in self.confirmed:
@@ -340,7 +334,6 @@ class DoublePath2Entity(VisionEntity):
             #if len(self.confirmed)>1:
             #    raw_input()
             
-
             self.output.paths = []
             center_x = 0
             center_y = 0
@@ -350,13 +343,13 @@ class DoublePath2Entity(VisionEntity):
                 path.theta = path.angle
                 center_x = frame.width/2
                 path.x = center_x
-                center_y = (-math.cos(path.angle)/(math.sin(path.angle)+.001))*center_x+(path.loc/((math.sin(path.angle)+.001)))
+                center_y = (-math.cos(path.angle)/(math.sin(path.angle)+.001))*center_x + (path.loc/((math.sin(path.angle)+.001)))
                 path.y = center_y
                 if center_y > frame.height or center_y < 0 or \
                    center_y < self.min_center_distance or \
                    frame.height-center_y < self.min_center_distance:
                     center_y2 = frame.height/2
-                    center_x2 = (center_y2-(path.loc/(math.sin(path.angle)+.0001)))/(-math.cos(path.angle)/(math.sin(path.angle)+.0001)) 
+                    center_x2 = (center_y2-(path.loc/(math.sin(path.angle)+.0001))) / (-math.cos(path.angle)/(math.sin(path.angle)+.0001)) 
              
                     if center_x2 > frame.width or center_x2 < 0:
                         path.center = [center_x, center_y]
@@ -364,10 +357,8 @@ class DoublePath2Entity(VisionEntity):
                         path.center = [center_x2, center_y2]
                 else: path.center = [center_x, center_y]
 
-                cv.Circle(frame, (int(path.center[0]),int(path.center[1])), 15, (255,255,255), 2,8,0)
+                cv.Circle(frame, (int(path.center[0]), int(path.center[1])), 15, (255,255,255), 2,8,0)
                 
-            
-
             self.return_output()
             svr.debug("Path", frame)
 
