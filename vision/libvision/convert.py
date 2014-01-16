@@ -2,7 +2,7 @@ import numpy as np
 import cv
 import cv2
 
-def cv_to_cv2(self, frame):
+def cv_to_cv2(frame):
     '''Convert a cv image into cv2 format.
     
     Keyword Arguments:
@@ -13,7 +13,7 @@ def cv_to_cv2(self, frame):
     return cv2_image
     
     
-def cv2_to_cv(self, frame):
+def cv2_to_cv(frame):
     '''Convert a cv2 image into cv format.
     
     Keyword Arguments:
