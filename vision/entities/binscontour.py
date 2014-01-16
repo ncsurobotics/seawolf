@@ -81,7 +81,7 @@ def check_for_corner(line1, line2):
     
 class BinsContourEntity(VisionEntity):
     def init(self):
-        self.adaptive_thresh_blocksize = 50
+        self.adaptive_thresh_blocksize = 35
         self.adaptive_thresh = 4
 
     def process_frame(self, frame):
