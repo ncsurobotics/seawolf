@@ -1,4 +1,4 @@
-
+# pylint: disable=E1101
 from __future__ import division
 from collections import namedtuple
 from itertools import combinations

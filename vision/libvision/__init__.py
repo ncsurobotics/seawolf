@@ -1,6 +1,7 @@
 
 from camera import Camera
 import blob
+from convert import *
 import letters
 import cmodules
 import filters

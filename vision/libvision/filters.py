@@ -1,4 +1,4 @@
-
+# pylint: disable=E1101
 import cv
 
 def hsv_filter(src, low_h, high_h, min_s, max_s, min_v, max_v,
