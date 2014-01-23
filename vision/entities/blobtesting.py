@@ -30,6 +30,7 @@ def cv2_to_cv(frame):
     frame -- a cv2 numpy array representing an image.
     Returns a cv image.
     '''
+    frame = frame.copy() #makes the frame contiguous
     container = cv.fromarray(frame)
     cv_image = cv.GetImage(container)
     return cv_image
@@ -45,9 +46,33 @@ class BlobTesting(VisionEntity):
 
     def process_frame(self, frame):
         self.debug_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
+        self.ref_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
         og_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
         cv.Copy(frame, self.debug_frame)
         cv.Copy(self.debug_frame, og_frame)
+        cv.Copy(self.ref_frame, og_frame)
+
+        #CV2 Transforms        
+        self.numpy_frame = cv_to_cv2(self.ref_frame)
+
+        self.numpy_frame = cv2.medianBlur(self.numpy_frame,7)
+        self.numpy_frame = cv2.cvtColor(self.numpy_frame,cv.CV_BGR2HSV) 
+        #cv2.mixChannels(self.numpy_frame,self.numpy_single,fromTo, 1)
+        #height, width, depth = self.numpy_frame.shape
+        #print height, width, depth
+        
+        [self.frame1,self.frame2,self.frame3] = numpy.dsplit(self.numpy_frame,3)
+        self.numpy_frame = self.frame1
+        
+
+        cv2.adaptiveThreshold(self.numpy_frame,self.adaptive_thresh,ADAPTIVE_THRESH_MEAN_C,THRESH_BINARY,self.adaptive_thresh_blocksize)
+
+
+
+
+        '''
+
+        #CV Transforms
 
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
@@ -76,18 +101,30 @@ class BlobTesting(VisionEntity):
         #cv.Canny(binary, binary, 30, 40)
 
         cv.CvtColor(binary, self.debug_frame, cv.CV_GRAY2RGB)
-        
+        '''
+
+
+
+        '''
         self.numpy_frame = cv_to_cv2(self.debug_frame)
         self.numpy_frame = self.numpy_frame[:,:,1]
         print self.numpy_frame.shape
-        
-        contours, hierarchy = cv2.findContours(self.numpy_frame,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-
-
+        '''
         #contours, hierarchy = cv2.findContours(self.numpy_frame,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
 
 
-        svr.debug("Bins", self.debug_frame)
+        #contours, hierarchy = cv2.findContours(self.numpy_frame,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+        
+
+
+        print type(self.frame1)
+        self.numpy_to_cv = cv2_to_cv(self.frame1)
+        print type(self.numpy_to_cv)
+        
+        
+
+        svr.debug("CV", self.debug_frame)
+        svr.debug("CV2", self.numpy_to_cv)
         #svr.debug("Original", og_frame)
 
 

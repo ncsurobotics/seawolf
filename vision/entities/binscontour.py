@@ -114,5 +114,7 @@ class BinsContourEntity(VisionEntity):
         #cv.Canny(binary, binary, 30, 40)
 
         cv.CvtColor(binary, self.debug_frame, cv.CV_GRAY2RGB)
+        
+        print type(self.debug_frame)
 
         svr.debug("Bins", self.debug_frame)
