@@ -6,7 +6,7 @@ from OpenGL.GLU import *
 
 from base import Entity, Container
 
-BIN_SEPERATION = 0.2
+BIN_SEPARATION = 0.2
 SHAPE_NAMES = [
     "A",
     "B",
@@ -15,20 +15,20 @@ SHAPE_NAMES = [
 ]
 BIN_POSITIONS = (
     (
-        BIN_SEPERATION/2 + 1,
-        BIN_SEPERATION/2 + 1.5
+        BIN_SEPARATION + 1,
+        -2*BIN_SEPARATION
     ),
     (
-        BIN_SEPERATION/2 + 1,
-        -BIN_SEPERATION/2 - 1.5
+        2*BIN_SEPARATION + 3,
+        2*BIN_SEPARATION
     ),
     (
-        -BIN_SEPERATION/2 - 1,
-        BIN_SEPERATION/2 + 1.5
+        -BIN_SEPARATION - 1,
+        2*BIN_SEPARATION
     ),
     (
-        -BIN_SEPERATION/2 - 1,
-        -BIN_SEPERATION/2 - 1.5
+        -2*BIN_SEPARATION - 3,
+        -2*BIN_SEPARATION
     ),
 )
 
