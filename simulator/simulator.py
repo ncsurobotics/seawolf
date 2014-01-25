@@ -4,6 +4,7 @@ from time import time
 import socket
 from multiprocessing.connection import Listener
 
+
 class Simulator(object):
 
     # yaw=0 pitch=0 is looking down the +X axis.  +Z is up.

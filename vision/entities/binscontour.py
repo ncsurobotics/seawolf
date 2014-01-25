@@ -12,7 +12,7 @@ import libvision
 
 
 def line_distance(corner_a, corner_b):
-    distance = math.sqrt((corner_b[0]-corner_a[0])**2 + 
+    distance = math.sqrt((corner_b[0]-corner_a[0])**2 +
                          (corner_b[1]-corner_a[1])**2)
     return distance
 
@@ -25,7 +25,7 @@ def angle_between_lines(slope_a, slope_b):
     if slope_a is not None and slope_b is not None and (1+slope_a*slope_b) != 0:
         angle = math.atan((slope_a - slope_b) / (1+slope_a*slope_b))
         return angle
-    else: 
+    else:
         angle = 0
         return angle
 
@@ -68,7 +68,7 @@ def check_for_corner(line1, line2):
     corner_angle = angle_between_lines(line_slope(line1[0], line1[1]),
                                        line_slope(line2[0], line2[1]))
 
-    if  angle_clarity_min < corner_angle < angle_clarity_max:
+    if angle_clarity_min < corner_angle < angle_clarity_max:
         if (math.fabs(line1[0][0] - line2[0][0]) < corner_distance or
             math.fabs(line1[0][1] - line2[0][1]) < corner_distance or
             math.fabs(line1[1][0] - line2[1][0]) < corner_distance or
@@ -93,7 +93,7 @@ class BinsContourEntity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 1)  #3 before competition #2 at competition
+        cv.SetImageCOI(hsv, 1) #3 before competition #2 at competition
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
@@ -114,5 +114,7 @@ class BinsContourEntity(VisionEntity):
         #cv.Canny(binary, binary, 30, 40)
 
         cv.CvtColor(binary, self.debug_frame, cv.CV_GRAY2RGB)
+        
+        print type(self.debug_frame)
 
         svr.debug("Bins", self.debug_frame)
