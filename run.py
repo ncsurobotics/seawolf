@@ -86,6 +86,10 @@ class AppRunnerFrame(wx.Frame):
                 "Steering Wheel Controller": AppPanel(self.panel_right, ["./bin/steering_controller"], "applications/"),
                 "Zero Thrusters": AppPanel(self.panel_right, ["./bin/zerothrusters"], "applications/"),
             },
+           "Missions (Simulator)": {
+                "Run All Missions": AppPanel(self.panel_right, ["python","run.py","-s"], "mission_control/"),
+
+            },
         }
         tree_root = self.app_tree.AddRoot("Applications")
         for group_name, app_dict in applications.iteritems():
