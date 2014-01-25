@@ -34,25 +34,21 @@ class HedgeMission(MissionBase):
 
         #desired_depth = current_depth + hedge_data.crossbar_depth - DEPTH_OVERBAR
         
-        if hedge_data and hedge_data.left_pole is not None and hedge_data.right_pole is not None and hedge_data.crossbar_depth is not None:
-            hedge_center = (hedge_data.left_pole + hedge_data.right_pole)/2  # degrees
+        if hedge_data and hedge_data.crossbar_depth is not None:
+
+            if hedge_data.right_pole is not None and hedge_data.left_pole is not None:
+                hedge_center = (hedge_data.left_pole + hedge_data.right_pole)/2  # degrees
+
+            elif hedge_data.center_pole is not None:
+                hedge_center = hedge_data.center_pole
+
             desired_depth = current_depth + hedge_data.crossbar_depth - DEPTH_OVERBAR
             # If both poles are seen, point toward it then go forward.
             self.set_timer("mission_timeout", 3, self.finish_mission)
 
-            if abs(hedge_center) < STRAIGHT_TOLERANCE:
-                sw3.nav.do(sw3.CompoundRoutine([
-                    sw3.Forward(FORWARD_SPEED),
-                    sw3.HoldYaw(),#TODO:check if holdyaw is right
-                    sw3.SetDepth(desired_depth)
-                ]))
-                # if self.hedge_seen > 10:
-                #    print "Heading Locked"
-                #   self.finish_mission()
-                #   return
-            else:
-                print "Correcting Yaw", hedge_center
-                sw3.nav.do(sw3.CompoundRoutine([
-                    sw3.RelativeYaw(hedge_center),
-                    sw3.Forward(FORWARD_SPEED)
-                ]))
+            print "Correcting Yaw", hedge_center
+            sw3.nav.do(sw3.CompoundRoutine([
+                sw3.RelativeYaw(hedge_center+2),
+                sw3.Forward(FORWARD_SPEED),
+                sw3.SetDepth(desired_depth)
+            ]))
