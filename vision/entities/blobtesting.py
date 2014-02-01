@@ -1,4 +1,5 @@
 from __future__ import division
+
 import math
 
 import cv
@@ -39,8 +40,8 @@ def cv2_to_cv(frame):
 class BlobTesting(VisionEntity):
     def init(self):
 
-        self.adaptive_thresh_blocksize = 35  # 27 before competition
-        self.adaptive_thresh = 7  # 23 before competition #9 at competition #11 after hough line changes
+        self.adaptive_thresh_blocksize = 41  # 27 before competition
+        self.adaptive_thresh = 4 # 23 before competition #9 at competition #11 after hough line changes
 
 
 
@@ -51,6 +52,7 @@ class BlobTesting(VisionEntity):
         cv.Copy(frame, self.debug_frame)
         cv.Copy(self.debug_frame, og_frame)
         cv.Copy(self.ref_frame, og_frame)
+        self.debug_numpy_frame = cv_to_cv2(self.debug_frame)
 
         #CV2 Transforms        
         self.numpy_frame = cv_to_cv2(self.ref_frame)
@@ -63,67 +65,72 @@ class BlobTesting(VisionEntity):
         
         [self.frame1,self.frame2,self.frame3] = numpy.dsplit(self.numpy_frame,3)
         self.numpy_frame = self.frame1
+        print self.frame1.shape
         
-
-        cv2.adaptiveThreshold(self.numpy_frame,self.adaptive_thresh,ADAPTIVE_THRESH_MEAN_C,THRESH_BINARY,self.adaptive_thresh_blocksize)
-
-
-
-
-        '''
-
-        #CV Transforms
-
-        cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
-
-        # Set binary image to have saturation channel
-        hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
-        cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 1)  
-        cv.Copy(hsv, binary)
-        cv.SetImageCOI(hsv, 0)
-
-        cv.AdaptiveThreshold(binary, binary,
+        self.temp_cv2frame = cv2_to_cv(self.numpy_frame)
+        
+        cv.AdaptiveThreshold(self.temp_cv2frame, self.temp_cv2frame,
                              255,
                              cv.CV_ADAPTIVE_THRESH_MEAN_C,
                              cv.CV_THRESH_BINARY_INV,
                              self.adaptive_thresh_blocksize,
                              self.adaptive_thresh,
         )
-
-        # Morphology
+        
         kernel = cv.CreateStructuringElementEx(5, 5, 3, 3, cv.CV_SHAPE_ELLIPSE)
-        cv.Erode(binary, binary, kernel, 1)
-        cv.Dilate(binary, binary, kernel, 1)
-
-        # Get Edges
-        #cv.Canny(binary, binary, 30, 40)
-
-        cv.CvtColor(binary, self.debug_frame, cv.CV_GRAY2RGB)
-        '''
-
-
-
-        '''
-        self.numpy_frame = cv_to_cv2(self.debug_frame)
-        self.numpy_frame = self.numpy_frame[:,:,1]
-        print self.numpy_frame.shape
-        '''
-        #contours, hierarchy = cv2.findContours(self.numpy_frame,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-
-
-        #contours, hierarchy = cv2.findContours(self.numpy_frame,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+        cv.Erode(self.temp_cv2frame, self.temp_cv2frame, kernel, 1)
+        cv.Dilate(self.temp_cv2frame, self.temp_cv2frame, kernel, 1)
+        self.numpy_frame = cv_to_cv2(self.temp_cv2frame)
+        
+        #cv2.adaptiveThreshold(self.numpy_frame,self.adaptive_thresh,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,self.adaptive_thresh_blocksize,3,self.numpy_frame)
         
 
 
-        print type(self.frame1)
-        self.numpy_to_cv = cv2_to_cv(self.frame1)
-        print type(self.numpy_to_cv)
+
+
+  
+        contours, hierarchy = cv2.findContours(self.numpy_frame,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+        if len(contours)>1: 
+            cnt = contours[0]
+            
+            cv2.drawContours(self.numpy_frame,contours,-1,(255,255,255),3)
+            #cv2.drawContours(self.debug_numpy_frame,contours,-1,(0,255,0),3)
+
+            #for h,cnt in enumerate(contours):
+            #    mask = numpy.zeros(imgray.shape,np.uint8)
+            #    cv2.drawContours(mask,[cnt],0,255,-1)
+            #    mean = cv2.mean(im,mask = mask)
+            '''
+            hull = cv2.convexHull(cnt)
+
+            rect = cv2.minAreaRect(cnt)
+            box = cv2.cv.BoxPoints(rect)
+            box = numpy.int0(box)
+            print box
+            '''
+            #if len(box > 1):
+            #    cv2.drawContours(self.numpy_frame,box,0,(255,255,255),2)
+
+
+
+
+
+
+
+
+
+
+        
+
+ 
+        print type(self.numpy_frame)
+        self.numpy_to_cv = cv2_to_cv(self.numpy_frame)
+        #print type(self.numpy_to_cv)
+        self.debug_final_frame = cv2_to_cv(self.debug_numpy_frame)
         
         
 
-        svr.debug("CV", self.debug_frame)
+        svr.debug("CV", self.debug_final_frame)
         svr.debug("CV2", self.numpy_to_cv)
         #svr.debug("Original", og_frame)
 
