@@ -47,15 +47,13 @@ class BlobTesting(VisionEntity):
 
     def process_frame(self, frame):
         self.debug_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        self.ref_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
         og_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
         cv.Copy(frame, self.debug_frame)
         cv.Copy(self.debug_frame, og_frame)
-        cv.Copy(self.ref_frame, og_frame)
         self.debug_numpy_frame = cv_to_cv2(self.debug_frame)
 
         #CV2 Transforms        
-        self.numpy_frame = cv_to_cv2(self.ref_frame)
+        self.numpy_frame = cv_to_cv2(self.debug_frame)
 
         self.numpy_frame = cv2.medianBlur(self.numpy_frame,7)
         self.numpy_frame = cv2.cvtColor(self.numpy_frame,cv.CV_BGR2HSV) 
@@ -88,34 +86,29 @@ class BlobTesting(VisionEntity):
 
 
 
-  
+        '''
         contours, hierarchy = cv2.findContours(self.numpy_frame,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
         if len(contours)>1: 
             cnt = contours[0]
             
-            cv2.drawContours(self.numpy_frame,contours,-1,(255,255,255),3)
+            cv2.Contours(self.numpy_frame,contours,-1,(255,255,255),3)
             #cv2.drawContours(self.debug_numpy_frame,contours,-1,(0,255,0),3)
 
             #for h,cnt in enumerate(contours):
             #    mask = numpy.zeros(imgray.shape,np.uint8)
             #    cv2.drawContours(mask,[cnt],0,255,-1)
             #    mean = cv2.mean(im,mask = mask)
-            '''
+            
             hull = cv2.convexHull(cnt)
 
             rect = cv2.minAreaRect(cnt)
             box = cv2.cv.BoxPoints(rect)
             box = numpy.int0(box)
             print box
-            '''
+            
             #if len(box > 1):
             #    cv2.drawContours(self.numpy_frame,box,0,(255,255,255),2)
-
-
-
-
-
-
+        '''
 
 
 
