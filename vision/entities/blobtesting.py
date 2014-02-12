@@ -66,10 +66,10 @@ def rect_midpointy(corner_a, corner_b, corner_c, corner_d):
 class BlobTesting(VisionEntity):
     def init(self):
 
-        self.adaptive_thresh_blocksize = 41  # 27 before competition
-        self.adaptive_thresh = 4 # 23 before competition #9 at competition #11 after hough line changes
-        self.mid_sep = 10
-        self.min_area = 600
+        self.adaptive_thresh_blocksize = 21  # 27 before competition
+        self.adaptive_thresh = 5 # 23 before competition #9 at competition #11 after hough line changes
+        self.mid_sep = 50
+        self.min_area = 10000
 
 
     def process_frame(self, frame):
@@ -83,14 +83,10 @@ class BlobTesting(VisionEntity):
         self.numpy_frame = cv_to_cv2(self.debug_frame)
 
         self.numpy_frame = cv2.medianBlur(self.numpy_frame,7)
-        self.numpy_frame = cv2.cvtColor(self.numpy_frame,cv.CV_BGR2HSV) 
-        #cv2.mixChannels(self.numpy_frame,self.numpy_single,fromTo, 1)
-        #height, width, depth = self.numpy_frame.shape
-        #print height, width, depth
+        self.numpy_frame = cv2.cvtColor(self.numpy_frame,cv.CV_BGR2HSV)
         
         [self.frame1,self.frame2,self.frame3] = numpy.dsplit(self.numpy_frame,3)
-        self.numpy_frame = self.frame1
-        print self.frame1.shape
+        self.numpy_frame = self.frame2
         
         self.temp_cv2frame = cv2_to_cv(self.numpy_frame)
         
@@ -104,7 +100,7 @@ class BlobTesting(VisionEntity):
         
         kernel = cv.CreateStructuringElementEx(5, 5, 3, 3, cv.CV_SHAPE_ELLIPSE)
         cv.Erode(self.temp_cv2frame, self.temp_cv2frame, kernel, 1)
-        cv.Dilate(self.temp_cv2frame, self.temp_cv2frame, kernel, 1)
+        cv.Dilate(self.temp_cv2frame, self.temp_cv2frame, kernel, 5)
         self.numpy_frame = cv_to_cv2(self.temp_cv2frame)
         
         #cv2.adaptiveThreshold(self.numpy_frame,self.adaptive_thresh,cv2.ADAPTIVE_THRESH_MEAN_C,cv2.THRESH_BINARY,self.adaptive_thresh_blocksize,3,self.numpy_frame)
@@ -118,8 +114,6 @@ class BlobTesting(VisionEntity):
         raw_bins = []
         if len(contours)>1: 
             cnt = contours[0]
-            print type(contours)
-            print cnt[0]
             cv2.drawContours(self.numpy_frame,contours,-1,(255,255,255),3)
             #cv2.drawContours(self.debug_numpy_frame,contours,-1,(0,255,0),3)
             self.masks = []
@@ -135,8 +129,6 @@ class BlobTesting(VisionEntity):
                 rect = cv2.minAreaRect(cnt)
                 box = cv2.cv.BoxPoints(rect)
                 box = numpy.int0(box)
-                print type(box)
-                print box
                 new_bin = Bin(tuple(box[0]),tuple(box[1]),tuple(box[2]),tuple(box[3]))
                 raw_bins.append(new_bin)
                 for pt in box:
@@ -156,18 +148,20 @@ class BlobTesting(VisionEntity):
                                 raw_bins.remove(bin1)
                             if bin2.area < self.min_area and bin2 in raw_bins:
                                 raw_bins.remove(bin2)
-
-
-
-
         
 
+
+
+
+                
+
  
-        print type(self.numpy_frame)
         self.numpy_to_cv = cv2_to_cv(self.numpy_frame)
         #print type(self.numpy_to_cv)
         self.debug_final_frame = cv2_to_cv(self.debug_numpy_frame)
+        
         for bin in raw_bins:
+            print bin.area
             cv.Circle(self.debug_final_frame, bin.corner1, 5, (0,255,0), -1,8,0)
             cv.Circle(self.debug_final_frame, bin.corner2, 5, (0,255,0), -1,8,0)
             cv.Circle(self.debug_final_frame, bin.corner3, 5, (0,255,0), -1,8,0)
