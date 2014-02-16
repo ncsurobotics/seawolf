@@ -273,8 +273,6 @@ class PathsEntity(VisionEntity):
         '''
         binary_img = self.preprocess(frame)
         
-        svr.debug("BinaryPaths", libvision.cv2_to_cv(binary_img))
-        
         
         grad = self.get_gradient(binary_img)
         hough_p = self.hough_p(grad)

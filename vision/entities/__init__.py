@@ -31,6 +31,7 @@ from binshough2 import BinsHough2Entity
 from pizza import PizzaEntity
 from pizzacorner import PizzaCornerEntity
 from blobtesting import BlobTesting
+from paths import PathsEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -53,6 +54,7 @@ entity_classes = {
     "doublepath2": DoublePath2Entity,
     "pizza": PizzaEntity,
     "pizzacorner": PizzaCornerEntity,
-    "blobtesting":BlobTesting
+    "paths": PathsEntity,
+    "blobtesting": BlobTesting
 }
 
