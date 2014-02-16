@@ -4,7 +4,6 @@
 
 
 from __future__ import division
-from __future__ import print_function
 import cv2
 import numpy as np
 import math
@@ -45,7 +44,7 @@ class LineReducer(object):
 		
         self._list_lines_count = len(lines[0])
         self._list_lines = list(lines[0])
-        print (self._list_lines)
+        #print (self._list_lines)
         
         self._list_grouped = []
         self._groups = []
