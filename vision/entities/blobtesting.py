@@ -1,14 +1,9 @@
 from __future__ import division
-
 import math
-
 import cv
 import cv2
-
 import numpy
-
 import svr
-
 from base import VisionEntity
 import libvision
 
@@ -70,7 +65,7 @@ def rect_midpointy(corner_a, corner_b, corner_c, corner_d):
 class BlobTesting(VisionEntity):
     def init(self):
 
-        self.adaptive_thresh_blocksize = 21  
+        self.adaptive_thresh_blocksize = 15
         self.adaptive_thresh = 7
         self.mid_sep = 50
         self.min_area = 10000
@@ -98,7 +93,7 @@ class BlobTesting(VisionEntity):
         self.numpy_frame = cv2.cvtColor(self.numpy_frame,cv.CV_BGR2HSV)
         
         [self.frame1,self.frame2,self.frame3] = numpy.dsplit(self.numpy_frame,3)
-        self.numpy_frame = self.frame2 #Change the frame number to determine what channel to focus on
+        self.numpy_frame = self.frame3 #Change the frame number to determine what channel to focus on
         
 
         '''Temporarily converts the image to a cv frame to do the adaptive threshold '''
@@ -114,7 +109,11 @@ class BlobTesting(VisionEntity):
         
         kernel = cv.CreateStructuringElementEx(5, 5, 3, 3, cv.CV_SHAPE_ELLIPSE)
         cv.Erode(self.temp_cv2frame, self.temp_cv2frame, kernel, 1)
-        cv.Dilate(self.temp_cv2frame, self.temp_cv2frame, kernel, 7)
+        cv.Dilate(self.temp_cv2frame, self.temp_cv2frame, kernel, 1)
+
+
+        self.adaptive_frame = cv.CreateImage(cv.GetSize(frame), 8, 1)
+        cv.Copy(self.temp_cv2frame, self.adaptive_frame)
         '''Returns the frame to a cv2 image'''
         self.numpy_frame = cv_to_cv2(self.temp_cv2frame)
         
@@ -166,16 +165,16 @@ class BlobTesting(VisionEntity):
             self.match_bins(bin)
         self.sort_bins()
 
-        
 
  
         self.numpy_to_cv = cv2_to_cv(self.numpy_frame)
         self.debug_final_frame = cv2_to_cv(self.debug_numpy_frame)
         self.draw_bins()
-        
+         
 
         svr.debug("CV", self.debug_final_frame)
         svr.debug("CV2", self.numpy_to_cv)
+        svr.debug("Adaptive", self.adaptive_frame)
 
     def match_bins(self,target):
         found = 0

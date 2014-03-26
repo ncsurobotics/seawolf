@@ -16,7 +16,7 @@ def draw_lines(src, lines, limit=None):
     '''
     if not limit:
         limit = len(lines)
-
+    
     for rho, theta in lines[:limit]:
         a = math.cos(theta)
         b = math.sin(theta)
@@ -24,7 +24,9 @@ def draw_lines(src, lines, limit=None):
         y0 = b * rho
         pt1 = (cv.Round(x0 + 1000*(-b)), cv.Round(y0 + 1000*(a)))
         pt2 = (cv.Round(x0 - 1000*(-b)), cv.Round(y0 - 1000*(a)))
-        cv.Line(src, pt1, pt2, cv.RGB(255, 0, 0), 1, cv.CV_AA, 0)
+        cv.Line(src, pt1, pt2, cv.RGB(255, 0, 0), 3, cv.CV_AA, 0)
+
+
 
 def get_channel(frame, channel):
     '''

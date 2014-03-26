@@ -32,6 +32,8 @@ from pizza import PizzaEntity
 from pizzacorner import PizzaCornerEntity
 from blobtesting import BlobTesting
 from paths import PathsEntity
+from hedgeR import HedgeREntity
+from oldhedge import OldHedgeEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -55,6 +57,8 @@ entity_classes = {
     "pizza": PizzaEntity,
     "pizzacorner": PizzaCornerEntity,
     "paths": PathsEntity,
-    "blobtesting": BlobTesting
+    "blobtesting": BlobTesting,
+    "hedgeR": HedgeREntity,
+    "oldhedge": OldHedgeEntity
 }
 
