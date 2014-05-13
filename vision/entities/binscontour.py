@@ -13,12 +13,13 @@ class BinsContourEntity(VisionEntity):
 
     def init(self):
         self.adaptive_thresh_blocksize = 15
-        self.adaptive_thresh = 7
+        self.adaptive_thresh = 8
         self.mid_sep = 50
-        self.min_area = 10000
-
+        self.min_area = 9000
+        self.max_area = 14000
+        self.side_ratio = 2
+        self.ratio_thresh = .5
         self.recent_id = 1
-
         self.trans_thresh = 25
 
         self.candidates = []
@@ -96,17 +97,19 @@ class BinsContourEntity(VisionEntity):
                 '''Removes bins that have centers too close to others (to prevent bins inside bins), and bins that are too small'''
                 for bin1 in self.raw_bins[:]:
                     for bin2 in self.raw_bins[:]:
+                        if bin1 is bin2:
+                            continue
+                        if bin1 in self.raw_bins and bin2 in self.raw_bins:
+                            if not (self.min_area < bin1.area < self.max_area):
+                                self.raw_bins.remove(bin1)
+                            if not (self.min_area < bin2.area < self.max_area):
+                                self.raw_bins.remove(bin2)
                         if bin1 in self.raw_bins and bin2 in self.raw_bins and math.fabs(bin1.midx - bin2.midx) < self.mid_sep and math.fabs(bin1.midy - bin2.midy) < self.mid_sep:
                             if bin1.area < bin2.area:
                                 self.raw_bins.remove(bin1)
                             elif bin2.area < bin1.area:
                                 self.raw_bins.remove(bin2)
-                        if bin1 in self.raw_bins and bin2 in self.raw_bins:
-                            if bin1.area < self.min_area:
-                                self.raw_bins.remove(bin1)
-                            if bin2.area < self.min_area and bin2 in self.raw_bins:
-                                self.raw_bins.remove(bin2)
-
+                        
         for bin in self.raw_bins:
             self.match_bins(bin)
         self.sort_bins()
@@ -162,14 +165,15 @@ class BinsContourEntity(VisionEntity):
                 print "confirmed removed"
 
     def draw_bins(self):
+        green = (0, 255, 0)
         for bin in self.raw_bins:
             cv.Circle(self.debug_final_frame,
-                      bin.corner1, 5, (0, 255, 0), -1, 8, 0)
+                      bin.corner1, 5, green, -1, 8, 0)
             cv.Circle(self.debug_final_frame,
-                      bin.corner2, 5, (0, 255, 0), -1, 8, 0)
+                      bin.corner2, 5, green, -1, 8, 0)
             cv.Circle(self.debug_final_frame,
-                      bin.corner3, 5, (0, 255, 0), -1, 8, 0)
+                      bin.corner3, 5, green, -1, 8, 0)
             cv.Circle(self.debug_final_frame,
-                      bin.corner4, 5, (0, 255, 0), -1, 8, 0)
+                      bin.corner4, 5, green, -1, 8, 0)
             cv.Circle(self.debug_final_frame, (
-                int(bin.midx), int(bin.midy)), 5, (0, 255, 0), -1, 8, 0)
+                int(bin.midx), int(bin.midy)), 5, green, -1, 8, 0)
