@@ -11,6 +11,7 @@ import libvision
 import sw3
 from sw3.util import circular_average
 
+#from entity_types.path import Path
 class Path(object):
     def __init__(self, arg1, arg2):
         self.loc = arg1

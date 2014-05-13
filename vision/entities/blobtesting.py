@@ -26,7 +26,7 @@ def cv2_to_cv(frame):
     frame -- a cv2 numpy array representing an image.
     Returns a cv image.
     '''
-    frame = frame.copy()  # makes the frame contiguous
+    #frame = frame.copy()  # makes the frame contiguous
     container = cv.fromarray(frame)
     cv_image = cv.GetImage(container)
     return cv_image
