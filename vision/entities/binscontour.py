@@ -17,8 +17,8 @@ class BinsContourEntity(VisionEntity):
         self.mid_sep = 50
         self.min_area = 4500
         self.max_area = 14000
-        self.min_aspect_ratio = 1.6
-        self.max_aspect_ratio = 2.4
+        self.min_aspect_ratio = .4
+        self.max_aspect_ratio = .6
         self.recent_id = 1
         self.trans_thresh = 25
 
@@ -67,7 +67,9 @@ class BinsContourEntity(VisionEntity):
         self.adaptive_frame = libvision.cv2_to_cv(self.numpy_frame.copy())
 
         # Find contours
-        contours, hierarchy = cv2.findContours(self.numpy_frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, hierarchy = cv2.findContours(self.numpy_frame,
+                                               cv2.RETR_TREE, 
+                                               cv2.CHAIN_APPROX_SIMPLE)
         self.raw_bins = []
 
         if len(contours) > 1:
@@ -89,21 +91,23 @@ class BinsContourEntity(VisionEntity):
                 box = np.int0(box)
 
                 # test aspect ratio & area, create bin if matches
-                x, y, w, h = cv2.boundingRect(cnt)
-                aspect_ratio = float(h)/w
-                area = h * w
-                if self.min_aspect_ratio < aspect_ratio < self.max_aspect_ratio:
+                # x, y, w, h = cv2.boundingRect(cnt)
+                (x, y), (w, h), theta = rect
+                if w > 0 and h > 0:
+                    aspect_ratio = float(h) / w
+                    area = h * w
                     if self.min_area < area < self.max_area:
-                        new_bin = Bin(tuple(box[0]), tuple(
-                            box[1]), tuple(box[2]), tuple(box[3]))
-                        new_bin.id = self.recent_id
-                        self.recent_id = self.recent_id + 1
-                        self.raw_bins.append(new_bin)
-                        for pt in box:
-                            type(tuple(pt))
-                            cv2.circle(self.numpy_frame, tuple(
-                                pt), 5, (255, 255, 255), -1, 8, 0)
-                            pts.append(pt)
+                        if .4 < aspect_ratio < .6 or 1.8 < aspect_ratio < 2.2:   # Depending on the angle of the bin, "width" may be flipped with height, thus needs 2 conditions                     
+                            new_bin = Bin(tuple(box[0]), tuple(
+                                box[1]), tuple(box[2]), tuple(box[3]))
+                            new_bin.id = self.recent_id
+                            self.recent_id = self.recent_id + 1
+                            self.raw_bins.append(new_bin)
+                            for pt in box:
+                                type(tuple(pt))
+                                cv2.circle(self.numpy_frame, tuple(
+                                    pt), 5, (255, 255, 255), -1, 8, 0)
+                                pts.append(pt)
 
             # Removes bins that have centers too close to others (to prevent bins inside bins)
             for bin1 in self.raw_bins[:]:
@@ -111,8 +115,8 @@ class BinsContourEntity(VisionEntity):
                     if bin1 is bin2:
                         continue
                     if bin1 in self.raw_bins and bin2 in self.raw_bins and \
-                        math.fabs(bin1.midx - bin2.midx) < self.mid_sep and \
-                        math.fabs(bin1.midy - bin2.midy) < self.mid_sep:
+                       math.fabs(bin1.midx - bin2.midx) < self.mid_sep and \
+                       math.fabs(bin1.midy - bin2.midy) < self.mid_sep:
                         if bin1.area < bin2.area:
                             self.raw_bins.remove(bin1)
                         elif bin2.area < bin1.area:
@@ -134,7 +138,8 @@ class BinsContourEntity(VisionEntity):
     def match_bins(self, target):
         found = 0
         for bin in self.candidates:
-            if math.fabs(bin.midx - target.midx) < self.trans_thresh and math.fabs(bin.midy - target.midy) < self.trans_thresh:
+            if math.fabs(bin.midx - target.midx) < self.trans_thresh and \
+               math.fabs(bin.midy - target.midy) < self.trans_thresh:
                 print bin.seencount
                 bin.midx = target.midx
                 bin.midy = target.midy
@@ -148,7 +153,8 @@ class BinsContourEntity(VisionEntity):
                 bin.lastseen += 6
                 found = 1
         for bin in self.confirmed:
-            if math.fabs(bin.midx - target.midx) < self.trans_thresh and math.fabs(bin.midy - target.midy) < self.trans_thresh:
+            if math.fabs(bin.midx - target.midx) < self.trans_thresh and \
+               math.fabs(bin.midy - target.midy) < self.trans_thresh:
                 target.id = bin.id
                 bin = target
                 bin.lastseen += 6
