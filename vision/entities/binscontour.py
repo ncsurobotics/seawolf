@@ -15,7 +15,7 @@ class BinsContourEntity(VisionEntity):
         self.adaptive_thresh_blocksize = 15
         self.adaptive_thresh = 8
         self.mid_sep = 50
-        self.min_area = 9000
+        self.min_area = 4500
         self.max_area = 14000
         self.min_aspect_ratio = 1.6
         self.max_aspect_ratio = 2.4
@@ -59,9 +59,10 @@ class BinsContourEntity(VisionEntity):
                               )
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         #kernel = np.ones((2,2), np.uint8)
         self.numpy_frame = cv2.erode(self.numpy_frame, kernel)
-        self.numpy_frame = cv2.dilate(self.numpy_frame, kernel)
+        self.numpy_frame = cv2.dilate(self.numpy_frame, kernel2)
 
         self.adaptive_frame = libvision.cv2_to_cv(self.numpy_frame.copy())
 
@@ -84,7 +85,7 @@ class BinsContourEntity(VisionEntity):
                 rect = cv2.minAreaRect(cnt)
                 box = cv2.cv.BoxPoints(rect)
                 box = np.int0(box)
-                x,y,w,h = cv2.boundingRect(cnt)
+                x, y, w, h = cv2.boundingRect(cnt)
                 aspect_ratio = float(h)/w
                 if self.min_aspect_ratio < aspect_ratio < self.max_aspect_ratio:
                     new_bin = Bin(tuple(box[0]), tuple(
@@ -98,17 +99,18 @@ class BinsContourEntity(VisionEntity):
                             pt), 5, (255, 255, 255), -1, 8, 0)
                         pts.append(pt)
 
+            for bin in self.raw_bins[:]:
+                if not (self.min_area < bin.area < self.max_area):
+                    self.raw_bins.remove(bin)
+
             '''Removes bins that have centers too close to others (to prevent bins inside bins), and bins that are too small'''
             for bin1 in self.raw_bins[:]:
                 for bin2 in self.raw_bins[:]:
                     if bin1 is bin2:
                         continue
-                    if bin1 in self.raw_bins and bin2 in self.raw_bins:
-                        if not (self.min_area < bin1.area < self.max_area):
-                            self.raw_bins.remove(bin1)
-                        if not (self.min_area < bin2.area < self.max_area):
-                            self.raw_bins.remove(bin2)
-                    if bin1 in self.raw_bins and bin2 in self.raw_bins and math.fabs(bin1.midx - bin2.midx) < self.mid_sep and math.fabs(bin1.midy - bin2.midy) < self.mid_sep:
+                    if bin1 in self.raw_bins and bin2 in self.raw_bins and \
+                        math.fabs(bin1.midx - bin2.midx) < self.mid_sep and \
+                        math.fabs(bin1.midy - bin2.midy) < self.mid_sep:
                         if bin1.area < bin2.area:
                             self.raw_bins.remove(bin1)
                         elif bin2.area < bin1.area:
