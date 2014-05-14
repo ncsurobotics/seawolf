@@ -58,7 +58,8 @@ class BinsContourEntity(VisionEntity):
                               self.adaptive_thresh
                               )
 
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        #kernel = np.ones((2,2), np.uint8)
         self.numpy_frame = cv2.erode(self.numpy_frame, kernel)
         self.numpy_frame = cv2.dilate(self.numpy_frame, kernel)
 
