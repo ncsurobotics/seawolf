@@ -59,10 +59,10 @@ class BinsContourEntity(VisionEntity):
                               )
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-        kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        #kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         #kernel = np.ones((2,2), np.uint8)
         self.numpy_frame = cv2.erode(self.numpy_frame, kernel)
-        self.numpy_frame = cv2.dilate(self.numpy_frame, kernel2)
+        self.numpy_frame = cv2.dilate(self.numpy_frame, kernel)
 
         self.adaptive_frame = libvision.cv2_to_cv(self.numpy_frame.copy())
 
@@ -91,13 +91,12 @@ class BinsContourEntity(VisionEntity):
                 box = np.int0(box)
 
                 # test aspect ratio & area, create bin if matches
-                # x, y, w, h = cv2.boundingRect(cnt)
                 (x, y), (w, h), theta = rect
                 if w > 0 and h > 0:
-                    aspect_ratio = float(h) / w
                     area = h * w
                     if self.min_area < area < self.max_area:
-                        if .4 < aspect_ratio < .6 or 1.8 < aspect_ratio < 2.2:   # Depending on the angle of the bin, "width" may be flipped with height, thus needs 2 conditions                     
+                        aspect_ratio = float(h) / w
+                        if .4 < aspect_ratio < .6 or 1.8 < aspect_ratio < 2.2:   # Depending on the orientation of the bin, "width" may be flipped with height, thus needs 2 conditions                     
                             new_bin = Bin(tuple(box[0]), tuple(
                                 box[1]), tuple(box[2]), tuple(box[3]))
                             new_bin.id = self.recent_id
@@ -125,15 +124,17 @@ class BinsContourEntity(VisionEntity):
         for bin in self.raw_bins:
             self.match_bins(bin)
 
-        self.sort_bins()
+        self.debug_final_frame = self.debug_numpy_frame
 
-        self.numpy_to_cv = libvision.cv2_to_cv(self.numpy_frame)
-        self.debug_final_frame = libvision.cv2_to_cv(self.debug_numpy_frame)
+        self.sort_bins()
         self.draw_bins()
 
-        svr.debug("debug", self.debug_final_frame)
+        self.debug_final_frame = libvision.cv2_to_cv(self.debug_numpy_frame)
+        self.numpy_to_cv = libvision.cv2_to_cv(self.numpy_frame)
+
         svr.debug("processed", self.numpy_to_cv)
         svr.debug("adaptive", self.adaptive_frame)
+        svr.debug("debug", self.debug_final_frame)
 
     def match_bins(self, target):
         found = 0
@@ -182,13 +183,13 @@ class BinsContourEntity(VisionEntity):
     def draw_bins(self):
         green = (0, 255, 0)
         for bin in self.raw_bins:
-            cv.Circle(self.debug_final_frame,
-                      bin.corner1, 5, green, -1, 8, 0)
-            cv.Circle(self.debug_final_frame,
-                      bin.corner2, 5, green, -1, 8, 0)
-            cv.Circle(self.debug_final_frame,
-                      bin.corner3, 5, green, -1, 8, 0)
-            cv.Circle(self.debug_final_frame,
-                      bin.corner4, 5, green, -1, 8, 0)
-            cv.Circle(self.debug_final_frame, (
-                int(bin.midx), int(bin.midy)), 5, green, -1, 8, 0)
+            cv2.circle(self.debug_final_frame,
+                      bin.corner1, 5, green, -1)
+            cv2.circle(self.debug_final_frame,
+                      bin.corner2, 5, green, -1)
+            cv2.circle(self.debug_final_frame,
+                      bin.corner3, 5, green, -1)
+            cv2.circle(self.debug_final_frame,
+                      bin.corner4, 5, green, -1)
+            cv2.circle(self.debug_final_frame, (
+                int(bin.midx), int(bin.midy)), 5, green, -1)
