@@ -66,15 +66,17 @@ class BinsContourEntity(VisionEntity):
 
         self.adaptive_frame = libvision.cv2_to_cv(self.numpy_frame.copy())
 
-        '''Begins finding contours'''
+        # Find contours
         contours, hierarchy = cv2.findContours(self.numpy_frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         self.raw_bins = []
+
         if len(contours) > 1:
             cnt = contours[0]
             cv2.drawContours(
                 self.numpy_frame, contours, -1, (255, 255, 255), 3)
             self.masks = []
             pts = []
+
             for h, cnt in enumerate(contours):
                 mask = np.zeros(self.numpy_frame.shape, np.uint8)
                 cv2.drawContours(mask, [cnt], 0, 255, -1)
@@ -85,25 +87,25 @@ class BinsContourEntity(VisionEntity):
                 rect = cv2.minAreaRect(cnt)
                 box = cv2.cv.BoxPoints(rect)
                 box = np.int0(box)
+
+                # test aspect ratio & area, create bin if matches
                 x, y, w, h = cv2.boundingRect(cnt)
                 aspect_ratio = float(h)/w
+                area = h * w
                 if self.min_aspect_ratio < aspect_ratio < self.max_aspect_ratio:
-                    new_bin = Bin(tuple(box[0]), tuple(
-                        box[1]), tuple(box[2]), tuple(box[3]))
-                    new_bin.id = self.recent_id
-                    self.recent_id = self.recent_id + 1
-                    self.raw_bins.append(new_bin)
-                    for pt in box:
-                        type(tuple(pt))
-                        cv2.circle(self.numpy_frame, tuple(
-                            pt), 5, (255, 255, 255), -1, 8, 0)
-                        pts.append(pt)
+                    if self.min_area < area < self.max_area:
+                        new_bin = Bin(tuple(box[0]), tuple(
+                            box[1]), tuple(box[2]), tuple(box[3]))
+                        new_bin.id = self.recent_id
+                        self.recent_id = self.recent_id + 1
+                        self.raw_bins.append(new_bin)
+                        for pt in box:
+                            type(tuple(pt))
+                            cv2.circle(self.numpy_frame, tuple(
+                                pt), 5, (255, 255, 255), -1, 8, 0)
+                            pts.append(pt)
 
-            for bin in self.raw_bins[:]:
-                if not (self.min_area < bin.area < self.max_area):
-                    self.raw_bins.remove(bin)
-
-            '''Removes bins that have centers too close to others (to prevent bins inside bins), and bins that are too small'''
+            # Removes bins that have centers too close to others (to prevent bins inside bins)
             for bin1 in self.raw_bins[:]:
                 for bin2 in self.raw_bins[:]:
                     if bin1 is bin2:
@@ -115,9 +117,10 @@ class BinsContourEntity(VisionEntity):
                             self.raw_bins.remove(bin1)
                         elif bin2.area < bin1.area:
                             self.raw_bins.remove(bin2)
-                        
+
         for bin in self.raw_bins:
             self.match_bins(bin)
+
         self.sort_bins()
 
         self.numpy_to_cv = libvision.cv2_to_cv(self.numpy_frame)
