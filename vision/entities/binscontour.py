@@ -179,17 +179,17 @@ class BinsContourEntity(VisionEntity):
                 print "confirmed removed"
 
     def draw_bins(self):
-        green = (0, 255, 0)
+        clr = (255, 0, 255)
         for bin in self.raw_bins:
             cv2.circle(self.debug_final_frame,
-                       bin.corner1, 5, green, -1)
+                       bin.corner1, 5, clr, -1)
             cv2.circle(self.debug_final_frame,
-                       bin.corner2, 5, green, -1)
+                       bin.corner2, 5, clr, -1)
             cv2.circle(self.debug_final_frame,
-                       bin.corner3, 5, green, -1)
+                       bin.corner3, 5, clr, -1)
             cv2.circle(self.debug_final_frame,
-                       bin.corner4, 5, green, -1)
+                       bin.corner4, 5, clr, -1)
             cv2.circle(self.debug_final_frame, (
-                int(bin.midx), int(bin.midy)), 5, green, -1)
+                int(bin.midx), int(bin.midy)), 5, clr, -1)
             # font = cv2.FONT_HERSHEY_SIMPLEX
-            # cv2.putText(self.debug_final_frame, "theta=" + str(bin.theta), (int(bin.midx) - 50, int(bin.midy) + 20), font, .4, green, 1, cv2.CV_AA)
+            # cv2.putText(self.debug_final_frame, "theta=" + str(bin.theta), (int(bin.midx) - 50, int(bin.midy) + 20), font, .4, clr, 1, cv2.CV_AA)
