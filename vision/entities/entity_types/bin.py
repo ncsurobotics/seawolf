@@ -13,6 +13,7 @@ class Bin(BaseObject):
         self.corner3 = corner3
         self.corner4 = corner4
         self.corners = [corner1, corner2, corner3, corner4]
+        self.theta = 0
         self.midx = rect_midpointx(corner1, corner2, corner3, corner4)
         self.midy = rect_midpointy(corner1, corner2, corner3, corner4)
         self.area = line_distance(

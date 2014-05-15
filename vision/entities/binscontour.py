@@ -1,6 +1,5 @@
 from __future__ import division
 import math
-import cv
 import cv2
 import numpy as np
 import svr
@@ -17,8 +16,6 @@ class BinsContourEntity(VisionEntity):
         self.mid_sep = 50
         self.min_area = 4500
         self.max_area = 14000
-        self.min_aspect_ratio = .4
-        self.max_aspect_ratio = .6
         self.recent_id = 1
         self.trans_thresh = 25
 
@@ -100,13 +97,14 @@ class BinsContourEntity(VisionEntity):
                             new_bin = Bin(tuple(box[0]), tuple(
                                 box[1]), tuple(box[2]), tuple(box[3]))
                             new_bin.id = self.recent_id
+                            new_bin.theta = -theta
                             self.recent_id = self.recent_id + 1
                             self.raw_bins.append(new_bin)
-                            for pt in box:
-                                type(tuple(pt))
-                                cv2.circle(self.numpy_frame, tuple(
-                                    pt), 5, (255, 255, 255), -1, 8, 0)
-                                pts.append(pt)
+                            # for pt in box:                      # the heck does this do
+                            #     type(tuple(pt))
+                            #     cv2.circle(self.numpy_frame, tuple(
+                            #         pt), 5, (255, 255, 255), -1, 8, 0)
+                            #     pts.append(pt)
 
             # Removes bins that have centers too close to others (to prevent bins inside bins)
             for bin1 in self.raw_bins[:]:
@@ -184,12 +182,14 @@ class BinsContourEntity(VisionEntity):
         green = (0, 255, 0)
         for bin in self.raw_bins:
             cv2.circle(self.debug_final_frame,
-                      bin.corner1, 5, green, -1)
+                       bin.corner1, 5, green, -1)
             cv2.circle(self.debug_final_frame,
-                      bin.corner2, 5, green, -1)
+                       bin.corner2, 5, green, -1)
             cv2.circle(self.debug_final_frame,
-                      bin.corner3, 5, green, -1)
+                       bin.corner3, 5, green, -1)
             cv2.circle(self.debug_final_frame,
-                      bin.corner4, 5, green, -1)
+                       bin.corner4, 5, green, -1)
             cv2.circle(self.debug_final_frame, (
                 int(bin.midx), int(bin.midy)), 5, green, -1)
+            # font = cv2.FONT_HERSHEY_SIMPLEX
+            # cv2.putText(self.debug_final_frame, "theta=" + str(bin.theta), (int(bin.midx) - 50, int(bin.midy) + 20), font, .4, green, 1, cv2.CV_AA)
