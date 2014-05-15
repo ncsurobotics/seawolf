@@ -91,7 +91,9 @@ class HedgeREntity(VisionEntity):
         # Rframe = self.debug_frame.copy()
         # Gframe = self.debug_frame.copy()
 
-        # Red frame
+        Rframe = cv2.boxFilter(Rframe, (7, 7))
+
+    # Red frame
         cv.Smooth(Rframe, Rframe, cv.CV_MEDIAN, 7, 7)
 
         # Set binary image to have saturation channel
@@ -119,7 +121,6 @@ class HedgeREntity(VisionEntity):
         cv.CvtColor(Rbinary, Rframe, cv.CV_GRAY2RGB)
 
     #Green frame
-
         cv.Smooth(Gframe, Gframe, cv.CV_MEDIAN, 7, 7)
 
         # Set binary image to have saturation channel

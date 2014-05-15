@@ -26,19 +26,15 @@ class BinsContourEntity(VisionEntity):
         self.seencount_thresh = 2
 
     def process_frame(self, frame):
-        # Creation of frames
+        # This is equivalent to the old routine, but it isn't actually necessary
         #height, width, depth = libvision.cv_to_cv2(frame).shape
-        #self.debug_numpy_frame = np.zeros((height, width, 3), np.uint8)
-
-        # Debug frame is CV1
-        # self.debug_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        # cv.Copy(frame, self.debug_frame)
+        #self.debug_frame = np.zeros((height, width, 3), np.uint8)
 
         # Debug numpy is CV2
-        self.debug_numpy_frame = libvision.cv_to_cv2(frame)
+        self.debug_frame = libvision.cv_to_cv2(frame)
 
         # CV2 Transforms
-        self.numpy_frame = self.debug_numpy_frame.copy()
+        self.numpy_frame = self.debug_frame.copy()
         self.numpy_frame = cv2.medianBlur(self.numpy_frame, 5)
         self.numpy_frame = cv2.cvtColor(self.numpy_frame, cv2.COLOR_BGR2HSV)
 
@@ -61,7 +57,7 @@ class BinsContourEntity(VisionEntity):
         self.numpy_frame = cv2.erode(self.numpy_frame, kernel)
         self.numpy_frame = cv2.dilate(self.numpy_frame, kernel)
 
-        self.adaptive_frame = libvision.cv2_to_cv(self.numpy_frame.copy())
+        self.adaptive_frame = self.numpy_frame.copy()
 
         # Find contours
         contours, hierarchy = cv2.findContours(self.numpy_frame,
@@ -100,11 +96,6 @@ class BinsContourEntity(VisionEntity):
                             new_bin.theta = -theta
                             self.recent_id = self.recent_id + 1
                             self.raw_bins.append(new_bin)
-                            # for pt in box:                      # the heck does this do
-                            #     type(tuple(pt))
-                            #     cv2.circle(self.numpy_frame, tuple(
-                            #         pt), 5, (255, 255, 255), -1, 8, 0)
-                            #     pts.append(pt)
 
             # Removes bins that have centers too close to others (to prevent bins inside bins)
             for bin1 in self.raw_bins[:]:
@@ -122,18 +113,22 @@ class BinsContourEntity(VisionEntity):
         for bin in self.raw_bins:
             self.match_bins(bin)
 
-        self.debug_final_frame = self.debug_numpy_frame
+        self.debug_final_frame = self.debug_frame
 
         self.sort_bins()
         self.draw_bins()
 
-        self.debug_final_frame = libvision.cv2_to_cv(self.debug_numpy_frame)
+        self.return_output()
+
+        self.debug_to_cv = libvision.cv2_to_cv(self.debug_frame)
         self.numpy_to_cv = libvision.cv2_to_cv(self.numpy_frame)
+        self.adaptive_to_cv = libvision.cv2_to_cv(self.adaptive_frame)
 
         svr.debug("processed", self.numpy_to_cv)
-        svr.debug("adaptive", self.adaptive_frame)
-        svr.debug("debug", self.debug_final_frame)
+        svr.debug("adaptive", self.adaptive_to_cv)
+        svr.debug("debug", self.debug_to_cv)
 
+        # TODO, CLEAN THIS UP SOME
     def match_bins(self, target):
         found = 0
         for bin in self.candidates:
@@ -162,6 +157,7 @@ class BinsContourEntity(VisionEntity):
             self.candidates.append(target)
             target.lastseen + 3
 
+        # TODO, CLEAN THIS UP SOME
     def sort_bins(self):
         for bin in self.candidates[:]:
             print "last seen is ", bin.lastseen
