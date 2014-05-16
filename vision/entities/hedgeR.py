@@ -297,7 +297,6 @@ class HedgeREntity(VisionEntity):
                    math.fabs(green_line[1] - red_line[1]) < self.GR_Threshold1:
                     vertical_linesG.remove(green_line)
 
-        
         for red_line in vertical_linesR:
             print "New Red Line:", red_line[0], ", ", red_line[1]
         for green_line in vertical_linesG:
@@ -328,7 +327,7 @@ class HedgeREntity(VisionEntity):
             if line[1] > math.pi / 2:
                 line = (line[0], math.pi - line[1])
                 print "Line changed to ", line
-        
+
         libvision.misc.draw_lines(Gframe, vertical_linesG)
         libvision.misc.draw_lines(Gframe, horizontal_lines)
         libvision.misc.draw_linesR(Rframe, vertical_linesR)
@@ -346,6 +345,3 @@ class HedgeREntity(VisionEntity):
         svr.debug("Original", self.test_frame)
         svr.debug("Red", Rframe)
         svr.debug("Green", Gframe)
-
-
-

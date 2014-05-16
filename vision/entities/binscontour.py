@@ -89,7 +89,8 @@ class BinsContourEntity(VisionEntity):
                     area = h * w
                     if self.min_area < area < self.max_area:
                         aspect_ratio = float(h) / w
-                        if .4 < aspect_ratio < .6 or 1.8 < aspect_ratio < 2.2:   # Depending on the orientation of the bin, "width" may be flipped with height, thus needs 2 conditions                     
+                        # Depending on the orientation of the bin, "width" may be flipped with height, thus needs 2 conditions for each case
+                        if .4 < aspect_ratio < .6 or 1.8 < aspect_ratio < 2.2:
                             new_bin = Bin(tuple(box[0]), tuple(
                                 box[1]), tuple(box[2]), tuple(box[3]))
                             new_bin.id = self.recent_id
