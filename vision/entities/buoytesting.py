@@ -58,7 +58,7 @@ class BuoyTestingEntity(VisionEntity):
 
         (self.frame1, self.frame2, self.frame3) = cv2.split(self.numpy_frame)
         # Change the frame number to determine what channel to focus on
-        self.numpy_frame = self.frame1
+        self.numpy_frame = self.frame2
 
         # Thresholding
         self.numpy_frame = cv2.adaptiveThreshold(self.numpy_frame,
