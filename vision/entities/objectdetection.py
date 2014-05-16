@@ -1,11 +1,11 @@
 from __future__ import division
 import math
-import cv
 import cv2
 import numpy
 import svr
 from base import VisionEntity
 #import libvision
+
 
 class VisionObject(object):
 
@@ -19,54 +19,39 @@ class VisionObject(object):
         self.seencount = 1
 
 
-def detect(img, cascade):
-    rects = cascade.detectMultiScale(img, scaleFactor=1.3, minNeighbors=4, minSize=(30, 30), flags = cv2.CASCADE_SCALE_IMAGE)
-    if len(rects) == 0:
-        return []
-    rects[:,2:] += rects[:,:2]
-    return rects
+class LBPCascade(VisionEntity):
 
-def draw_rects(img, rects, color):
-    for x1, y1, x2, y2 in rects:
-        cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+    def init(self):
 
-if __name__ == '__main__':
-    import sys, getopt
-    print help_message
+        self.adaptive_thresh_blocksize = 15
+        self.adaptive_thresh = 7
+        self.mid_sep = 50
+        self.min_area = 10000
 
-    args, video_src = getopt.getopt(sys.argv[1:], '', ['cascade=', 'nested-cascade='])
-    try:
-        video_src = video_src[0]
-    except:
-        video_src = 0
-    args = dict(args)
-    cascade_fn = args.get('--cascade', "../../data/haarcascades/haarcascade_frontalface_alt.xml")
-    nested_fn  = args.get('--nested-cascade', "../../data/haarcascades/haarcascade_eye.xml")
+        self.recent_id = 1
 
-    cascade = cv2.CascadeClassifier(cascade_fn)
-    nested = cv2.CascadeClassifier(nested_fn)
+        self.trans_thresh = 25
 
-    cam = create_capture(video_src, fallback='synth:bg=../cpp/lena.jpg:noise=0.05')
+        self.candidates = []
+        self.confirmed = []
 
-    while True:
-        ret, img = cam.read()
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        self.lastseen_thresh = 0
+        self.seencount_thresh = 2
+
+        self.cascade = cv2.CascadeClassifier("../../object.xml")
+
+    def draw_rects(self, frame, rects, color):
+            for x1, y1, x2, y2 in self.candidates:
+                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+
+    def process_frame(self, frame):
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.equalizeHist(gray)
+        self.candidates = self.cascade.detectMultiScale(
+            gray, scaleFactor=1.3, minNeighbors=4, minSize=(30, 30), flags = cv2.CASCADE_SCALE_IMAGE)
 
-        t = clock()
-        rects = detect(gray, cascade)
-        vis = img.copy()
-        draw_rects(vis, rects, (0, 255, 0))
-        for x1, y1, x2, y2 in rects:
-            roi = gray[y1:y2, x1:x2]
-            vis_roi = vis[y1:y2, x1:x2]
-            subrects = detect(roi.copy(), nested)
-            draw_rects(vis_roi, subrects, (255, 0, 0))
-        dt = clock() - t
+        self.candiates = cv2.detect(gray, self.cascade)
+        vis = frame.copy()
+        self.draw_rects(vis, self.candidates, (0, 255, 0))
 
-        draw_str(vis, (20, 20), 'time: %.1f ms' % (dt*1000))
-        cv2.imshow('facedetect', vis)
-
-        if 0xFF & cv2.waitKey(5) == 27:
-            break
-    cv2.destroyAllWindows()
+        svr.debug('facedetect', vis)

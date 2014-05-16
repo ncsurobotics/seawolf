@@ -16,8 +16,7 @@ class Bin(BaseObject):
         self.theta = 0
         self.midx = rect_midpointx(corner1, corner2, corner3, corner4)
         self.midy = rect_midpointy(corner1, corner2, corner3, corner4)
-        self.area = line_distance(
-            corner1, corner2) * line_distance(corner1, corner4)
+        self.area = 0
         self.id = 0        # id identifies which bin your looking at
         self.lastseen = 2  # how recently you have seen this bin
         # how many times you have seen this bin (if you see it enough it

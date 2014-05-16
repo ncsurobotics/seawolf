@@ -67,17 +67,9 @@ class BinsContourEntity(VisionEntity):
 
         if len(contours) > 1:
             cnt = contours[0]
-            cv2.drawContours(
-                self.numpy_frame, contours, -1, (255, 255, 255), 3)
-            self.masks = []
-            pts = []
+            cv2.drawContours(self.numpy_frame, contours, -1, (255, 255, 255), 3)
 
             for h, cnt in enumerate(contours):
-                mask = np.zeros(self.numpy_frame.shape, np.uint8)
-                cv2.drawContours(mask, [cnt], 0, 255, -1)
-                #mean = cv2.mean(self.debug_numpy_fram), mask=mask)
-                self.masks.append(mask)
-
                 #hull = cv2.convexHull(cnt)
                 rect = cv2.minAreaRect(cnt)
                 box = cv2.cv.BoxPoints(rect)
@@ -94,8 +86,9 @@ class BinsContourEntity(VisionEntity):
                             new_bin = Bin(tuple(box[0]), tuple(
                                 box[1]), tuple(box[2]), tuple(box[3]))
                             new_bin.id = self.recent_id
+                            new_bin.area = area
                             new_bin.theta = -theta
-                            self.recent_id = self.recent_id + 1
+                            self.recent_id += 1
                             self.raw_bins.append(new_bin)
 
             # Removes bins that have centers too close to others (to prevent bins inside bins)
@@ -114,8 +107,6 @@ class BinsContourEntity(VisionEntity):
         for bin in self.raw_bins:
             self.match_bins(bin)
 
-        self.debug_final_frame = self.debug_frame
-
         self.sort_bins()
         self.draw_bins()
 
@@ -132,7 +123,7 @@ class BinsContourEntity(VisionEntity):
         # TODO, CLEAN THIS UP SOME
     def match_bins(self, target):
         found = 0
-        for bin in self.candidates:
+        for bin in self.confirmed:
             if math.fabs(bin.midx - target.midx) < self.trans_thresh and \
                math.fabs(bin.midy - target.midy) < self.trans_thresh:
                 print bin.seencount
@@ -178,15 +169,15 @@ class BinsContourEntity(VisionEntity):
     def draw_bins(self):
         clr = (255, 0, 255)
         for bin in self.raw_bins:
-            cv2.circle(self.debug_final_frame,
+            cv2.circle(self.debug_frame,
                        bin.corner1, 5, clr, -1)
-            cv2.circle(self.debug_final_frame,
+            cv2.circle(self.debug_frame,
                        bin.corner2, 5, clr, -1)
-            cv2.circle(self.debug_final_frame,
+            cv2.circle(self.debug_frame,
                        bin.corner3, 5, clr, -1)
-            cv2.circle(self.debug_final_frame,
+            cv2.circle(self.debug_frame,
                        bin.corner4, 5, clr, -1)
-            cv2.circle(self.debug_final_frame, (
+            cv2.circle(self.debug_frame, (
                 int(bin.midx), int(bin.midy)), 5, clr, -1)
             # font = cv2.FONT_HERSHEY_SIMPLEX
             # cv2.putText(self.debug_final_frame, "theta=" + str(bin.theta), (int(bin.midx) - 50, int(bin.midy) + 20), font, .4, clr, 1, cv2.CV_AA)

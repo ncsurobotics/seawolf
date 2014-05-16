@@ -34,6 +34,7 @@ from blobtesting import BlobTesting
 from paths import PathsEntity
 from hedgeR import HedgeREntity
 # from oldhedge import OldHedgeEntity
+from buoytesting import BuoyTestingEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -45,6 +46,7 @@ entity_classes = {
     "buoynew": BuoyNewEntity,
     "buoytest": BuoyTestEntity,
     "buoy2011": Buoy2011Entity,
+    "buoytesting": BuoyTestingEntity,
     "hedge": HedgeEntity,
     "weapons": WeaponsEntity,
     "doublepath": DoublePathEntity,

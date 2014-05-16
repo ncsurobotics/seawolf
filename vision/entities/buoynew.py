@@ -6,7 +6,7 @@ from time import time
 from math import sqrt
 
 import cv
-
+import os
 import svr
 
 from base import VisionEntity, Container
@@ -140,12 +140,13 @@ class BuoyNewEntity(VisionEntity):
         grey = libvision.misc.get_channel(hsv, 2)
 
         # load a haar classifier
-        hc = cv.Load("/home/seawolf/software/seawolf5/vision/buoy_cascade_4.xml")
+        #hc = cv.Load("/home/seawolf/software/seawolf5/vision/buoy_cascade_4.xml")
+        hc = cv.Load(os.path.join(os.path.dirname(os.path.dirname(__file__)), "buoy_cascade_4.xml"))
 
         #use classifier to detect buoys
         minsize = (10, 10)
         maxsize = (200, 200)
-        buoys = cv.HaarDetectObjects(grey, hc, cv.CreateMemStorage(), min_neighbors=0, min_size=minsize, max_size=maxsize)
+        buoys = cv.HaarDetectObjects(grey, hc, cv.CreateMemStorage(), min_neighbors=0, min_size=minsize) #, max_size=maxsize
 
         if not buoys:
             return None, None
