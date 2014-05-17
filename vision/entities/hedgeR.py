@@ -77,95 +77,57 @@ class HedgeREntity(VisionEntity):
         self.GR_Threshold1 = 5
 
     def process_frame(self, frame):
-        self.debug_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        self.test_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        Rframe = cv.CreateImage(cv.GetSize(frame), 8, 3)
-        Gframe = cv.CreateImage(cv.GetSize(frame), 8, 3)
+        self.numpy_frame = libvision.cv_to_cv2(frame)
+        self.debug_frame = self.numpy_frame.copy()
+        self.test_frame = self.numpy_frame.copy()
 
-        cv.Copy(frame, self.test_frame)
-        cv.Copy(frame, Gframe)
-        cv.Copy(frame, Rframe)
+        self.numpy_frame = cv2.medianBlur(self.numpy_frame, 7)
+        self.numpy_frame = cv2.cvtColor(self.numpy_frame, cv2.COLOR_BGR2HSV)
 
-        # self.debug_frame = libvision.cv_to_cv2(frame)
-        # self.test_frame = self.debug_frame.copy()
-        # Rframe = self.debug_frame.copy()
-        # Gframe = self.debug_frame.copy()
+        (rf1, rf2, rf3) = cv2.split(self.numpy_frame)
 
-        Rframe = cv2.boxFilter(Rframe, (7, 7))
-
-    # Red frame
-        cv.Smooth(Rframe, Rframe, cv.CV_MEDIAN, 7, 7)
-
-        # Set binary image to have saturation channel
-        hsv = cv.CreateImage(cv.GetSize(Rframe), 8, 3)
-        Rbinary = cv.CreateImage(cv.GetSize(Rframe), 8, 1)
-        cv.CvtColor(Rframe, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 3)  #1 for only green pvc #3 for red pvc
-        cv.Copy(hsv, Rbinary)
-        cv.SetImageCOI(hsv, 0)
+        Rbinary = rf3
+        Gbinary = rf1
 
         #Adaptive Threshold
-        cv.AdaptiveThreshold(Rbinary, Rbinary,
-            255,
-            cv.CV_ADAPTIVE_THRESH_MEAN_C,
-            cv.CV_THRESH_BINARY_INV,
-            self.adaptive_thresh_blocksize,
-            self.adaptive_thresh,
-        )
+        Rbinary = cv2.adaptiveThreshold(Rbinary, 255,
+                                        cv2.ADAPTIVE_THRESH_MEAN_C,
+                                        cv2.THRESH_BINARY_INV,
+                                        self.adaptive_thresh_blocksize,
+                                        self.adaptive_thresh)
+
+        Gbinary = cv2.adaptiveThreshold(Gbinary, 255,
+                                        cv2.ADAPTIVE_THRESH_MEAN_C,
+                                        cv2.THRESH_BINARY_INV,
+                                        self.Gadaptive_thresh_blocksize,
+                                        self.Gadaptive_thresh)
 
         # Morphology
-        kernel = cv.CreateStructuringElementEx(5, 5, 3, 3, cv.CV_SHAPE_ELLIPSE)
-        cv.Erode(Rbinary, Rbinary, kernel, 1)
-        cv.Dilate(Rbinary, Rbinary, kernel, 1)
-        
-        cv.CvtColor(Rbinary, Rframe, cv.CV_GRAY2RGB)
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 
-    #Green frame
-        cv.Smooth(Gframe, Gframe, cv.CV_MEDIAN, 7, 7)
+        Rbinary = cv2.erode(Rbinary, kernel)
+        Rbinary = cv2.dilate(Rbinary, kernel)
+        Gbinary = cv2.erode(Gbinary, kernel)
+        Gbinary = cv2.dilate(Gbinary, kernel)
 
-        # Set binary image to have saturation channel
-        hsv = cv.CreateImage(cv.GetSize(Gframe), 8, 3)
-        Gbinary = cv.CreateImage(cv.GetSize(Gframe), 8, 1)
-        cv.CvtColor(Gframe, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 1)  #1 for only green pvc #3 for red pvc
-        cv.Copy(hsv, Gbinary)
-        cv.SetImageCOI(hsv, 0)
-        
-        #Adaptive Threshold
-        cv.AdaptiveThreshold(Gbinary, Gbinary,
-                             255,
-                             cv.CV_ADAPTIVE_THRESH_MEAN_C,
-                             cv.CV_THRESH_BINARY_INV,
-                             self.Gadaptive_thresh_blocksize,
-                             self.Gadaptive_thresh
-                             )
-
-        # Morphology
-        kernel = cv.CreateStructuringElementEx(5, 5, 3, 3, cv.CV_SHAPE_ELLIPSE)
-        cv.Erode(Gbinary, Gbinary, kernel, 1)
-        cv.Dilate(Gbinary, Gbinary, kernel, 1)
-
-        cv.CvtColor(Gbinary, Gframe, cv.CV_GRAY2RGB)
-
-        # Line Finding on Green pvc
+        Rframe = cv2.cvtColor(Rbinary, cv2.COLOR_GRAY2RGB)
+        Gframe = cv2.cvtColor(Gbinary, cv2.COLOR_GRAY2RGB)
 
         # Hough Transform
-        line_storage = cv.CreateMemStorage()
-        raw_linesG = cv.HoughLines2(Gbinary, line_storage, cv.CV_HOUGH_STANDARD,
-            rho=1,
-            theta=math.pi/180,
-            threshold=self.hough_thresholdG,
-            param1=0,
-            param2=0
-        )
+        raw_linesG = cv2.HoughLines(Gbinary,
+                                    rho=1,
+                                    theta=math.pi/180,
+                                    threshold=self.hough_thresholdG)
 
         # Get vertical lines
         vertical_linesG = []
-        for line in raw_linesG:
-            if line[1] < self.vertical_thresholdG or \
-                line[1] > math.pi-self.vertical_thresholdG:
+        for line in raw_linesG[0]:
+            rho = line[0]
+            theta = line[1]
+            if theta < self.vertical_thresholdG or \
+                theta > math.pi-self.vertical_thresholdG:
 
-                vertical_linesG.append((abs(line[0]), line[1]))
+                vertical_linesG.append((abs(rho), theta))
 
         # Group vertical lines
         vertical_line_groupsG = []  # A list of line groups which are each a line list
@@ -190,7 +152,9 @@ class HedgeREntity(VisionEntity):
 
         # Get horizontal lines
         horizontal_lines = []
-        for line in raw_linesG:
+        for line in raw_linesG[0]:
+            rho = line[0]
+            theta = line[1]
             dist_from_horizontal = (math.pi/2 + line[1]) % math.pi
             if dist_from_horizontal < self.horizontal_threshold or \
                 dist_from_horizontal > math.pi-self.horizontal_threshold:
@@ -222,6 +186,14 @@ class HedgeREntity(VisionEntity):
 
         self.left_pole = None
         self.right_pole = None
+
+        Rframe = libvision.cv2_to_cv(Rframe)
+        Gframe = libvision.cv2_to_cv(self.debug_frame)
+        Rbinary = libvision.cv2_to_cv(Rbinary)
+        self.debug_frame = libvision.cv2_to_cv(self.debug_frame)
+        self.test_frame = libvision.cv2_to_cv(self.test_frame)
+        Gbinary = libvision.cv2_to_cv(Gbinary)
+        
         if len(vertical_linesG) is 2:
             roi = cv.GetImageROI(frame)
             width = roi[2]
@@ -330,7 +302,7 @@ class HedgeREntity(VisionEntity):
 
         libvision.misc.draw_lines(Gframe, vertical_linesG)
         libvision.misc.draw_lines(Gframe, horizontal_lines)
-        libvision.misc.draw_linesR(Rframe, vertical_linesR)
+        libvision.misc.draw_lines(Rframe, vertical_linesR)
 
         for line in vertical_linesR:
             roi = cv.GetImageROI(frame)

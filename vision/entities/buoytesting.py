@@ -28,7 +28,7 @@ class BuoyTestingEntity(VisionEntity):
 
     def init(self):
         self.adaptive_thresh_blocksize = 15
-        self.adaptive_thresh = 10
+        self.adaptive_thresh = 13
         self.min_area = 500
         self.max_area = 5000
         self.recent_id = 1
@@ -95,7 +95,7 @@ class BuoyTestingEntity(VisionEntity):
                 x, y = center
 
                 if len(approx) > 10:
-                    if (radius > 17):
+                    if (radius > 25):
                         new_buoy = Buoy(int(x), int(y), int(radius))
                         new_buoy.id = self.recent_id
                         self.recent_id += 1

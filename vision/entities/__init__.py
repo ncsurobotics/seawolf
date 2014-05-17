@@ -12,12 +12,12 @@ from base import VisionEntity, MultiCameraVisionEntity
 # Entities
 from test import TestEntity
 from gate import GateEntity, GATE_BLACK, GATE_WHITE
-from binoculartest import BinocularTest
+#from binoculartest import BinocularTest
 from path import PathEntity
 from buoy import BuoyEntity
 from buoytest import BuoyTestEntity
 from buoynew import BuoyNewEntity
-from binocularbuoy import BinocularBuoy
+#from binocularbuoy import BinocularBuoy
 from weapons import WeaponsEntity 
 from buoy2011 import Buoy2011Entity
 from doublepath import DoublePathEntity
@@ -28,18 +28,20 @@ from hedge import HedgeEntity
 from binscontour import BinsContourEntity
 # from binshough import BinsHoughEntity
 from binshough2 import BinsHough2Entity
-from pizza import PizzaEntity
-from pizzacorner import PizzaCornerEntity
+#from pizza import PizzaEntity
+#from pizzacorner import PizzaCornerEntity
 from blobtesting import BlobTesting
 from paths import PathsEntity
 from hedgeR import HedgeREntity
+from hedgetesting import HedgeTestingEntity
 # from oldhedge import OldHedgeEntity
 from buoytesting import BuoyTestingEntity
 
 entity_classes = {
     "test": TestEntity,
-    "binoculartest": BinocularTest,
-    "binocularbuoy": BinocularBuoy,
+    "hedgetesting": HedgeTestingEntity,
+    #"binoculartest": BinocularTest,
+    #"binocularbuoy": BinocularBuoy,
     "gate": GateEntity,
     "path": PathEntity,
     "buoy": BuoyEntity,
@@ -56,8 +58,8 @@ entity_classes = {
     # "binshough": BinsHoughEntity,
     "binshough2": BinsHough2Entity,
     "doublepath2": DoublePath2Entity,
-    "pizza": PizzaEntity,
-    "pizzacorner": PizzaCornerEntity,
+    #"pizza": PizzaEntity,
+    #"pizzacorner": PizzaCornerEntity,
     "paths": PathsEntity,
     "blobtesting": BlobTesting,
     "hedgeR": HedgeREntity,
