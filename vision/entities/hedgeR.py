@@ -46,9 +46,9 @@ class HedgeREntity(VisionEntity):
 
         # Thresholds For Line Finding 
         self.vertical_thresholdG = .2 # How close to verticle lines must be
-        self.vertical_thresholdR = .7 # How close to verticle lines must be
-        self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_thresholdG = 200
+        self.vertical_thresholdR = .25 # How close to verticle lines must be
+        self.horizontal_threshold = 0.5  # How close to horizontal lines must be
+        self.hough_thresholdG = 150
         self.hough_thresholdR = 150
         self.max_range = 135
 
@@ -197,6 +197,7 @@ class HedgeREntity(VisionEntity):
 
         # Group horizontal lines
         horizontal_line_groups = []  # A list of line groups which are each a line list
+        print "Horizontal lines: ", 
         for line in horizontal_lines:
             group_found = False
             for line_group in horizontal_line_groups:
@@ -327,14 +328,20 @@ class HedgeREntity(VisionEntity):
         else:
             self.r = None
 
+        for i in range(len(vertical_linesR[:])):
+            if vertical_linesR[i][1] > math.pi/2:
+                vertical_linesR[i] = (vertical_linesR[i][0],-(math.pi-vertical_linesR[i][1]))
+                print "Line changed to ", vertical_linesR[i]
         for line in vertical_linesR:
-            if line[1] > math.pi/2:
-                line = (line[0],math.pi-line[1])
-                print "Line changed to ", line
-        
+            print line
+
         libvision.misc.draw_lines(Gframe, vertical_linesG)
         libvision.misc.draw_lines(Gframe, horizontal_lines)
-        libvision.misc.draw_linesR(Rframe, vertical_linesR)
+        libvision.misc.draw_lines(Rframe, vertical_linesR)
+
+        libvision.misc.draw_linesC(self.test_frame, vertical_linesG,(0,100,0))
+        libvision.misc.draw_linesC(self.test_frame, horizontal_lines,(0,100,0))
+        libvision.misc.draw_lines(self.test_frame, vertical_linesR)
 
         for line in vertical_linesR:
             roi = cv.GetImageROI(frame)
