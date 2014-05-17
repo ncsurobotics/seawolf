@@ -23,17 +23,18 @@ from buoy2011 import Buoy2011Entity
 from doublepath import DoublePathEntity
 from doublepath2 import DoublePath2Entity
 from hedge import HedgeEntity
-from bins import BinsEntity
-from binscorner import BinsCornerEntity
+# from bins import BinsEntity
+# from binscorner import BinsCornerEntity
 from binscontour import BinsContourEntity
-from binshough import BinsHoughEntity
+# from binshough import BinsHoughEntity
 from binshough2 import BinsHough2Entity
 from pizza import PizzaEntity
 from pizzacorner import PizzaCornerEntity
 from blobtesting import BlobTesting
 from paths import PathsEntity
 from hedgeR import HedgeREntity
-from oldhedge import OldHedgeEntity
+# from oldhedge import OldHedgeEntity
+from buoytesting import BuoyTestingEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -45,13 +46,14 @@ entity_classes = {
     "buoynew": BuoyNewEntity,
     "buoytest": BuoyTestEntity,
     "buoy2011": Buoy2011Entity,
+    "buoytesting": BuoyTestingEntity,
     "hedge": HedgeEntity,
     "weapons": WeaponsEntity,
     "doublepath": DoublePathEntity,
-    "bins": BinsEntity,
-    "binscorner": BinsCornerEntity,
+    # "bins": BinsEntity,
+    # "binscorner": BinsCornerEntity,
     "binscontour": BinsContourEntity,
-    "binshough": BinsHoughEntity,
+    # "binshough": BinsHoughEntity,
     "binshough2": BinsHough2Entity,
     "doublepath2": DoublePath2Entity,
     "pizza": PizzaEntity,
@@ -59,6 +61,6 @@ entity_classes = {
     "paths": PathsEntity,
     "blobtesting": BlobTesting,
     "hedgeR": HedgeREntity,
-    "oldhedge": OldHedgeEntity
+    # "oldhedge": OldHedgeEntity
 }
 

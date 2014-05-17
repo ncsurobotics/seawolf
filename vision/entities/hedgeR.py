@@ -2,7 +2,7 @@
 from __future__ import division
 import math
 import cv
-#import cv2
+import cv2
 import numpy as np
 import svr
 from base import VisionEntity
@@ -10,7 +10,7 @@ import libvision
 from sw3.util import circular_average, circular_range
 #import msvcrt
 import random
-       
+
 
 def line_slope(corner_a, corner_b):
     if corner_a[0] != corner_b[0]:
@@ -19,9 +19,10 @@ def line_slope(corner_a, corner_b):
 
 
 def line_distance(corner_a, corner_b):
-    distance = math.sqrt((corner_b[0]-corner_a[0])**2 + 
+    distance = math.sqrt((corner_b[0]-corner_a[0])**2 +
                          (corner_b[1]-corner_a[1])**2)
     return distance
+
 
 def line_group_accept_test(line_group, line, max_range):
     '''
@@ -39,6 +40,7 @@ def line_group_accept_test(line_group, line, max_range):
         if l[0] < min_rho:
             min_rho = l[0]
     return max_rho - min_rho < max_range
+
 
 class HedgeREntity(VisionEntity):
 
@@ -63,19 +65,16 @@ class HedgeREntity(VisionEntity):
         self.crossbar_depth = None
 
         #Adaptive threshold parameters (R)
-        self.adaptive_thresh_blocksize = 29 #35 for just green #29 for just red
+        self.adaptive_thresh_blocksize = 29  #35 for just green #29 for just red
         self.adaptive_thresh = 23
 
         #Adaptive threshold parameters (G)
-        self.Gadaptive_thresh_blocksize = 35 #35 for just green #29 for just red
+        self.Gadaptive_thresh_blocksize = 35  #35 for just green #29 for just red
         self.Gadaptive_thresh = 6
 
         self.GR_Threshold0 = 50
 
         self.GR_Threshold1 = 5
-
-
-
 
     def process_frame(self, frame):
         self.debug_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
@@ -87,18 +86,24 @@ class HedgeREntity(VisionEntity):
         cv.Copy(frame, Gframe)
         cv.Copy(frame, Rframe)
 
-	# Red frame
+        # self.debug_frame = libvision.cv_to_cv2(frame)
+        # self.test_frame = self.debug_frame.copy()
+        # Rframe = self.debug_frame.copy()
+        # Gframe = self.debug_frame.copy()
 
+        Rframe = cv2.boxFilter(Rframe, (7, 7))
+
+    # Red frame
         cv.Smooth(Rframe, Rframe, cv.CV_MEDIAN, 7, 7)
 
         # Set binary image to have saturation channel
         hsv = cv.CreateImage(cv.GetSize(Rframe), 8, 3)
         Rbinary = cv.CreateImage(cv.GetSize(Rframe), 8, 1)
         cv.CvtColor(Rframe, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 3) #1 for only green pvc #3 for red pvc
+        cv.SetImageCOI(hsv, 3)  #1 for only green pvc #3 for red pvc
         cv.Copy(hsv, Rbinary)
         cv.SetImageCOI(hsv, 0)
-        
+
         #Adaptive Threshold
         cv.AdaptiveThreshold(Rbinary, Rbinary,
             255,
@@ -115,35 +120,32 @@ class HedgeREntity(VisionEntity):
         
         cv.CvtColor(Rbinary, Rframe, cv.CV_GRAY2RGB)
 
-	#Green frame
-
+    #Green frame
         cv.Smooth(Gframe, Gframe, cv.CV_MEDIAN, 7, 7)
 
         # Set binary image to have saturation channel
         hsv = cv.CreateImage(cv.GetSize(Gframe), 8, 3)
         Gbinary = cv.CreateImage(cv.GetSize(Gframe), 8, 1)
         cv.CvtColor(Gframe, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 1) #1 for only green pvc #3 for red pvc
+        cv.SetImageCOI(hsv, 1)  #1 for only green pvc #3 for red pvc
         cv.Copy(hsv, Gbinary)
         cv.SetImageCOI(hsv, 0)
         
         #Adaptive Threshold
         cv.AdaptiveThreshold(Gbinary, Gbinary,
-            255,
-            cv.CV_ADAPTIVE_THRESH_MEAN_C,
-            cv.CV_THRESH_BINARY_INV,
-            self.Gadaptive_thresh_blocksize,
-            self.Gadaptive_thresh,
-        )
+                             255,
+                             cv.CV_ADAPTIVE_THRESH_MEAN_C,
+                             cv.CV_THRESH_BINARY_INV,
+                             self.Gadaptive_thresh_blocksize,
+                             self.Gadaptive_thresh
+                             )
 
         # Morphology
         kernel = cv.CreateStructuringElementEx(5, 5, 3, 3, cv.CV_SHAPE_ELLIPSE)
         cv.Erode(Gbinary, Gbinary, kernel, 1)
         cv.Dilate(Gbinary, Gbinary, kernel, 1)
-        
+
         cv.CvtColor(Gbinary, Gframe, cv.CV_GRAY2RGB)
-
-
 
         # Line Finding on Green pvc
 
@@ -163,7 +165,7 @@ class HedgeREntity(VisionEntity):
             if line[1] < self.vertical_thresholdG or \
                 line[1] > math.pi-self.vertical_thresholdG:
 
-                vertical_linesG.append( (abs(line[0]), line[1]) )
+                vertical_linesG.append((abs(line[0]), line[1]))
 
         # Group vertical lines
         vertical_line_groupsG = []  # A list of line groups which are each a line list
@@ -193,7 +195,7 @@ class HedgeREntity(VisionEntity):
             if dist_from_horizontal < self.horizontal_threshold or \
                 dist_from_horizontal > math.pi-self.horizontal_threshold:
 
-                horizontal_lines.append( (abs(line[0]), line[1]) )
+                horizontal_lines.append((abs(line[0]), line[1]))
 
         # Group horizontal lines
         horizontal_line_groups = []  # A list of line groups which are each a line list
@@ -243,12 +245,6 @@ class HedgeREntity(VisionEntity):
         else:
             self.crossbar_depth = None
 
-      
-
-
-
-
-
 
         # Line Finding on Red pvc
 
@@ -266,9 +262,9 @@ class HedgeREntity(VisionEntity):
         vertical_linesR = []
         for line in raw_linesR:
             if line[1] < self.vertical_thresholdR or \
-                line[1] > math.pi-self.vertical_thresholdR:
+               line[1] > math.pi-self.vertical_thresholdR:
 
-                vertical_linesR.append( (abs(line[0]), line[1]) )
+                vertical_linesR.append((abs(line[0]), line[1]))
 
         # Group vertical lines
         vertical_line_groupsR = []  # A list of line groups which are each a line list
@@ -298,14 +294,14 @@ class HedgeREntity(VisionEntity):
         '''
         for red_line in vertical_linesR:
             for green_line in vertical_linesG[:]: 
-                if math.fabs(green_line[0] - red_line[0]) < self.GR_Threshold0 and math.fabs(green_line[1] - red_line[1]) < self.GR_Threshold1:
+                if math.fabs(green_line[0] - red_line[0]) < self.GR_Threshold0 and \
+                   math.fabs(green_line[1] - red_line[1]) < self.GR_Threshold1:
                     vertical_linesG.remove(green_line)
 
-        
         for red_line in vertical_linesR:
-            print "New Red Line:", red_line[0],", ",red_line[1]
+            print "New Red Line:", red_line[0], ", ", red_line[1]
         for green_line in vertical_linesG:
-            print "New Green Line:", green_line[0],", ",green_line[1]
+            print "New Green Line:", green_line[0], ", ", green_line[1]
 
         if len(vertical_linesR) is 0:
             print "No Red Found"
@@ -316,15 +312,15 @@ class HedgeREntity(VisionEntity):
             roi = cv.GetImageROI(frame)
             width = roi[2]
             height = roi[3]
-            self.left_pole = round(min(vertical_linesR[0][0], vertical_linesR[1][0]), 2) - width/2
-            self.right_pole = round(max(vertical_linesR[0][0], vertical_linesR[1][0]), 2) - width/2
+            self.left_pole = round(min(vertical_linesR[0][0], vertical_linesR[1][0]), 2) - width / 2
+            self.right_pole = round(max(vertical_linesR[0][0], vertical_linesR[1][0]), 2) - width / 2
         #TODO: If one pole is seen, is it left or right pole?
 
         # Calculate planar distance r (assuming we are moving perpendicular to
         # the hedge)
         if self.left_pole and self.right_pole:
             theta = abs(self.left_pole - self.right_pole)
-            self.r = 3 / math.tan(math.radians(theta/2))
+            self.r = 3 / math.tan(math.radians(theta / 2))
         else:
             self.r = None
 
@@ -334,6 +330,9 @@ class HedgeREntity(VisionEntity):
                 print "Line changed to ", vertical_linesR[i]
         for line in vertical_linesR:
             print line
+            if line[1] > math.pi / 2:
+                line = (line[0], math.pi - line[1])
+                print "Line changed to ", line
 
         libvision.misc.draw_lines(Gframe, vertical_linesG)
         libvision.misc.draw_lines(Gframe, horizontal_lines)
@@ -349,13 +348,10 @@ class HedgeREntity(VisionEntity):
             height = roi[3]
             x = line[0]*math.cos(line[1])
             y = line[0]*math.sin(line[1])
-            cv.Circle(Rframe,(int(x),int(y)), 5, (0,255,0), -1,8,0)
-            if x > width or y > width or x<0 or y<0:
+            cv.Circle(Rframe, (int(x), int(y)), 5, (0, 255, 0), -1, 8, 0)
+            if x > width or y > width or x < 0 or y < 0:
                 print "Lost point  ", x
 
-        svr.debug("Original", self.test_frame) 
+        svr.debug("Original", self.test_frame)
         svr.debug("Red", Rframe)
         svr.debug("Green", Gframe)
-
-
-

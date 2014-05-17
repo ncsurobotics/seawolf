@@ -3,7 +3,7 @@ from __future__ import division
 import math
 
 import cv
-
+import os
 import svr
 
 from base import VisionEntity
@@ -89,7 +89,8 @@ class BuoyTestEntity(VisionEntity):
 
         # load a haar classifier
         #hc = cv.Load("/home/seawolf/software/seawolf5/vision/output.xml")
-        hc = cv.Load("/home/seawolf/software/seawolf5/vision/buoy_cascade_4.xml")
+        hc = cv.Load(os.path.join(os.path.dirname(os.path.dirname(__file__)), "buoy_cascade_4.xml"))
+        #hc = cv.Load("/home/seawolf/software/seawolf5/vision/buoy_cascade_4.xml")
         
         #use classifier to detect buoys
         minsize = (int(self.minsize), int(self.minsize))
