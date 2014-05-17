@@ -11,7 +11,7 @@ import sw3
 STRAFE_SPEED = 0.3
 
 
-class MissionTemplate(MissionBase):
+class StrafeMission(MissionBase):
 	
 	def __init__(self):
 		self.gate_seen = 0
