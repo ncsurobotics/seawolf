@@ -37,32 +37,32 @@ void set_motor_speed(Motor motor, int speed) {
     unsigned int dir_bit;
 
     switch(motor) {
-    case BOW:
+    case MOTOR6:
         TCD0.CCA = duty_cycle;
         dir_bit = 1 << 0;
         break;
-
-    case STERN:
+        
+    case BOW:
         TCD0.CCB = duty_cycle;
         dir_bit = 1 << 1;
         break;
 
-    case STRAFE:
+    case STERN:
         TCD0.CCC = duty_cycle;
         dir_bit = 1 << 2;
         break;
 
-    case PORT:
+    case STRAFE:
         TCD0.CCD = duty_cycle;
         dir_bit = 1 << 3;
         break;
 
-    case STAR:
+    case PORT:
         TCD1.CCA = duty_cycle;
         dir_bit = 1 << 4;
         break;
-    
-    case MOTOR6:
+
+    case STAR:
         TCD1.CCB = duty_cycle;
         dir_bit = 1 << 5;
         break;
