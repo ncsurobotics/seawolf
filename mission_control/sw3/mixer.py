@@ -9,6 +9,9 @@ class Mixer(object):
 
     def set_strafe(self, rate):
         sw.notify.send("THRUSTER_REQUEST", "Strafe %.4f" % (rate,))
+        
+    def set_roll(self, rate):
+	sw.notify.send("THRUSTER_REQUEST", "Roll %.4f" % (rate,))
 
     def set_yaw(self, rate):
         sw.notify.send("THRUSTER_REQUEST", "Yaw %.4f" % (rate,))
@@ -21,6 +24,7 @@ class Mixer(object):
 
     forward = property(lambda self: 0, set_forward)
     strafe = property(lambda self: 0, set_strafe)
+    roll = property(lambda self: 0, set_roll)
     yaw = property(lambda self: 0, set_yaw)
     depth = property(lambda self: 0, set_depth)
     pitch = property(lambda self: 0, set_pitch)
