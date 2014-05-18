@@ -28,6 +28,7 @@ void init_motors(void) {
     TCD0.CCC = 0x0000;
     TCD0.CCD = 0x0000;
     TCD1.CCA = 0x0000;
+    TCD1.CCB = 0x0000;
 }
 
 /* Set speed of motor. Value is -128 to 128 */
@@ -36,28 +37,33 @@ void set_motor_speed(Motor motor, int speed) {
     unsigned int dir_bit;
 
     switch(motor) {
-    case BOW:
+    case MOTOR6:
         TCD0.CCA = duty_cycle;
+        dir_bit = 1 << 0;
+        break;
+        
+    case BOW:
+        TCD0.CCB = duty_cycle;
         dir_bit = 1 << 1;
         break;
 
     case STERN:
-        TCD0.CCB = duty_cycle;
+        TCD0.CCC = duty_cycle;
         dir_bit = 1 << 2;
         break;
 
     case STRAFE:
-        TCD0.CCC = duty_cycle;
+        TCD0.CCD = duty_cycle;
         dir_bit = 1 << 3;
         break;
 
     case PORT:
-        TCD0.CCD = duty_cycle;
+        TCD1.CCA = duty_cycle;
         dir_bit = 1 << 4;
         break;
 
     case STAR:
-        TCD1.CCA = duty_cycle;
+        TCD1.CCB = duty_cycle;
         dir_bit = 1 << 5;
         break;
 
