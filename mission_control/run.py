@@ -74,6 +74,7 @@ from mission_controller import MissionController
 #  * Tuple - First item must be a mission class.  The rest of the tuple is
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
+    missions.StrafeMission,
     missions.GateMission,
     missions.PathMission,
     missions.SimpleBuoyMission,
