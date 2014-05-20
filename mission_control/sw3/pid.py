@@ -1,7 +1,7 @@
 
 import seawolf as sw
 
-__all__ = ["yaw", "pitch", "depth"]
+__all__ = ["yaw", "pitch", "depth", "strafe", "roll"]
 
 class PIDInterface(object):
     def __init__(self, namespace, setter=None):
@@ -34,6 +34,22 @@ def set_pitch(value):
     else:
         raise ValueError("That sort of pitch is total suicide!")
 
+def set_strafe(value):
+	
+	#TODO: get correct safe values
+    if -15.0 <= value <= 15.0:
+        sw.var.set("StrafePID.Heading", value)
+    else:
+        raise ValueError("That sort of strafe is total suicide!")
+
+def set_roll(value):
+	
+	#TODO: get correct safe values
+    if -15.0 <= value <= 15.0:
+        sw.var.set("RollPID.Heading", value)
+    else:
+        raise ValueError("That sort of roll is total suicide!")
+
 def set_depth(value):
     if 0.0 <= value <= 20.0:
         sw.var.set("DepthPID.Heading", value)
@@ -43,3 +59,5 @@ def set_depth(value):
 yaw = PIDInterface("YawPID", set_yaw)
 pitch = PIDInterface("PitchPID", set_pitch)
 depth = PIDInterface("DepthPID", set_depth)
+strafe = PIDInterface("StrafePID",set_strafe)
+roll = PIDInterface("RollPID",set_roll)

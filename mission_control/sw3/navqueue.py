@@ -7,7 +7,8 @@ import threading
 #                 "Forward",
 #                 "Depth",
 #                 "Pitch",
-#                 "Strafe")
+#               TODO  "Strafe",
+#               TODO  "Roll")
 
 from routines import NullRoutine
 
