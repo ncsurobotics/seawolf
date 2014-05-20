@@ -309,13 +309,8 @@ class HedgeREntity(VisionEntity):
         libvision.misc.draw_lines(Gframe, vertical_linesG)
         libvision.misc.draw_lines(Gframe, horizontal_lines)
         libvision.misc.draw_lines(Rframe, vertical_linesR)
-<<<<<<< HEAD
-=======
 
-        libvision.misc.draw_linesC(self.test_frame, vertical_linesG,(0,100,0))
-        libvision.misc.draw_linesC(self.test_frame, horizontal_lines,(0,100,0))
-        libvision.misc.draw_lines(self.test_frame, vertical_linesR)
->>>>>>> cc3b36a3314a7874a7a19c96a2994d09285cfb4e
+        # there was a merge error, these 3 lines conflicted b/c your copy out of date
 
         for line in vertical_linesR:
             roi = cv.GetImageROI(frame)
