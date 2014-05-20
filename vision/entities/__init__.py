@@ -14,12 +14,12 @@ from test import TestEntity
 from gate import GateEntity, GATE_BLACK, GATE_WHITE
 #from binoculartest import BinocularTest
 from path import PathEntity
-from buoy import BuoyEntity
-from buoytest import BuoyTestEntity
-from buoynew import BuoyNewEntity
+#from buoy import BuoyEntity
+#from buoytest import BuoyTestEntity
+#from buoynew import BuoyNewEntity
 #from binocularbuoy import BinocularBuoy
 from weapons import WeaponsEntity 
-from buoy2011 import Buoy2011Entity
+#from buoy2011 import Buoy2011Entity
 from doublepath import DoublePathEntity
 from doublepath2 import DoublePath2Entity
 from hedge import HedgeEntity
@@ -35,7 +35,7 @@ from paths import PathsEntity
 from hedgeR import HedgeREntity
 from hedgetesting import HedgeTestingEntity
 # from oldhedge import OldHedgeEntity
-from buoytesting import BuoyTestingEntity
+from buoycontour import BuoyContourEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -44,11 +44,11 @@ entity_classes = {
     #"binocularbuoy": BinocularBuoy,
     "gate": GateEntity,
     "path": PathEntity,
-    "buoy": BuoyEntity,
-    "buoynew": BuoyNewEntity,
-    "buoytest": BuoyTestEntity,
-    "buoy2011": Buoy2011Entity,
-    "buoytesting": BuoyTestingEntity,
+    #"buoy": BuoyEntity,
+    #"buoynew": BuoyNewEntity,
+    #"buoytest": BuoyTestEntity,
+    #"buoy2011": Buoy2011Entity,
+    "buoycontours": BuoyContourEntity,
     "hedge": HedgeEntity,
     "weapons": WeaponsEntity,
     "doublepath": DoublePathEntity,

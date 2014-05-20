@@ -40,6 +40,12 @@ def line_group_accept_test(line_group, line, max_range):
             min_rho = l[0]
     return max_rho - min_rho < max_range
 
+class Bar(object):
+    def __init__(self, p1, p2, _theta):
+        self.point1 = p1
+        self.point2 = p2
+        self.theta = _theta
+
 class HedgeTestingEntity(VisionEntity):
 
     def init(self):
@@ -85,108 +91,78 @@ class HedgeTestingEntity(VisionEntity):
         # RF2-inverted for red
         # RF1 for green
 
-        Rbinary = rf2
-       # Rbinary = cv2.bitwise_not(Rbinary)
-        Gbinary = rf1
+        rBinary = rf2
+       # rBinary = cv2.bitwise_not(rBinary)
+        gBinary = rf1
 
         #Adaptive Threshold
-        Rbinary = cv2.adaptiveThreshold(Rbinary, 255,
+        rBinary = cv2.adaptiveThreshold(rBinary, 255,
                                         cv2.ADAPTIVE_THRESH_MEAN_C,
                                         cv2.THRESH_BINARY_INV,
                                         self.adaptive_thresh_blocksize,
                                         self.adaptive_thresh)
 
-        Gbinary = cv2.adaptiveThreshold(Gbinary, 255,
+        gBinary = cv2.adaptiveThreshold(gBinary, 255,
                                         cv2.ADAPTIVE_THRESH_MEAN_C,
                                         cv2.THRESH_BINARY_INV,
                                         self.Gadaptive_thresh_blocksize,
                                         self.Gadaptive_thresh)
 
+        rFrame = rBinary.copy()
+        gFrame = gBinary.copy()
 
         # Morphology
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
 
-        Rbinary = cv2.erode(Rbinary, kernel)
-        Rbinary = cv2.dilate(Rbinary, kernel)
-        Gbinary = cv2.erode(Gbinary, kernel)
-        Gbinary = cv2.dilate(Gbinary, kernel)
+        rBinary = cv2.erode(rBinary, kernel)
+        rBinary = cv2.dilate(rBinary, kernel)
+        gBinary = cv2.erode(gBinary, kernel)
+        gBinary = cv2.dilate(gBinary, kernel)
 
-        Rcontours, Rhierarchy = cv2.findContours(Rbinary,
-                                               cv2.RETR_TREE, 
-                                               cv2.CHAIN_APPROX_SIMPLE)
+        gray = cv2.cvtColor(self.numpy_frame,cv2.COLOR_BGR2GRAY)
 
-        Gcontours, Ghierarchy = cv2.findContours(Gbinary,
-                                               cv2.RETR_TREE, 
-                                               cv2.CHAIN_APPROX_SIMPLE)
-        self.raw_reds = []
-        self.raw_greens = []
+        edges = cv2.Canny(gray,150,200,apertureSize = 3)
 
-        if len(Rcontours) > 1:
-            cnt = Rcontours[0]
-            #cv2.drawContours(self.numpy_frame, Rcontours, -1, (255, 255, 255), 3)
+        lines = cv2.HoughLines(edges,1,np.pi/180,275)
+        for rho,theta in lines[0]:
+            a = np.cos(theta)
+            b = np.sin(theta)
+            x0 = a*rho
+            y0 = b*rho
+            x1 = int(x0 + 1000*(-b)) # Here i have used int() instead of rounding the decimal value, so 3.8 --> 3
+            y1 = int(y0 + 1000*(a)) # But if you want to round the number, then use np.around() function, then 3.8 --> 4.0
+            x2 = int(x0 - 1000*(-b)) # But we need integers, so use int() function after that, ie int(np.around(x))
+            y2 = int(y0 - 1000*(a))
+            cv2.line(debug_frame,(x1,y1),(x2,y2),(0,255,0),2)
 
-            for h, cnt in enumerate(Rcontours):
-                #hull = cv2.convexHull(cnt)
-                rect = cv2.minAreaRect(cnt)
-                box = cv2.cv.BoxPoints(rect)
-                box = np.int0(box)
-
-                # test aspect ratio & area, create bin if matches
-                (x, y), (w, h), theta = rect
-                x, y, w, h = int(x), int(y), int(w), int(h)
-                if w > 0 and h > 0:
-                    area = h * w
-                    if 500 < area < 20000:
-                        aspect_ratio = float(h) / w
-                        # Depending on the orientation of the bin, "width" may be flipped with height, thus needs 2 conditions for each case
-                        if .01 < aspect_ratio < .2 or 8 < aspect_ratio < 100:
-                            cv2.line(self.debug_frame, tuple(box[0]), tuple(box[2]), (40, 0, 255), 5)
-
-        if len(Gcontours) > 1:
-            cnt = Gcontours[0]
-            #cv2.drawContours(self.numpy_frame, Gcontours, -1, (255, 255, 255), 3)
-
-            for h, cnt in enumerate(Gcontours):
-                #hull = cv2.convexHull(cnt)
-                rect = cv2.minAreaRect(cnt)
-                box = cv2.cv.BoxPoints(rect)
-                box = np.int0(box)
-
-                # test aspect ratio & area, create bin if matches
-                (x, y), (w, h), theta = rect
-                x, y, w, h = int(x), int(y), int(w), int(h)
-                if w > 0 and h > 0:
-                    area = h * w
-                    if 500 < area < 20000:
-                        aspect_ratio = float(h) / w
-                        # Depending on the orientation of the bin, "width" may be flipped with height, thus needs 2 conditions for each case
-                        if .01 < aspect_ratio < .2 or 8 < aspect_ratio < 100:
-                            cv2.line(self.debug_frame, tuple(box[0]), tuple(box[2]), (0, 255, 0), 5)
-
-
-        def reduce_lines(self):
-            pass
-
-
-        def draw_lines(self):
-            pass
-
-
-
-        Rbinary = libvision.cv2_to_cv(Rbinary)
-        Gbinary = libvision.cv2_to_cv(Gbinary)
+        rFrame = libvision.cv2_to_cv(rFrame)
+        gFrame = libvision.cv2_to_cv(gFrame)
         self.debug_frame = libvision.cv2_to_cv(self.debug_frame)
-        svr.debug("Rframe", Rbinary)
-        svr.debug("Gframe", Gbinary)
+        # svr.debug("Rframe", rFrame)
+        # svr.debug("Gframe", gFrame)
         svr.debug("debug", self.debug_frame)
+
+    def reduce_lines(self):
+        for ln in self.raw_reds[:]:
+            if abs(ln.theta) < 30:
+                self.raw_greens.append(ln)
+                self.raw_reds.remove(ln)
+
+    def draw_lines(self):
+        for ln in self.raw_reds:
+            print ln.theta
+            cv2.line(self.debug_frame, ln.point1, ln.point2, (40, 0, 255), 5)
+
+        for ln in self.raw_greens:
+            cv2.line(self.debug_frame, ln.point1, ln.point2, (0, 255, 0), 5)
 
         # # Line Finding on Green pvc
         # Rframe = libvision.cv2_to_cv(Rframe)
         # Gframe = libvision.cv2_to_cv(self.debug_frame)
-        # Rbinary = libvision.cv2_to_cv(Rbinary)
+        # rBinary = libvision.cv2_to_cv(rBinary)
         # self.debug_frame = libvision.cv2_to_cv(self.debug_frame)
         # self.test_frame = libvision.cv2_to_cv(self.test_frame)
-        # Gbinary = libvision.cv2_to_cv(Gbinary)
+        # gBinary = libvision.cv2_to_cv(gBinary)
 
         # svr.debug("Original", self.test_frame)
         # svr.debug("Red", Rframe)
