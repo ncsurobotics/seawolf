@@ -33,6 +33,9 @@ if __name__ == "__main__":
         os.mkdir(base_dir)
     capture_dir = get_next_dir(base_dir)
 
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480))
+
     while True:
 
         # Rate limit stream listing
