@@ -48,8 +48,7 @@ class BinsContourEntity(VisionEntity):
                               cv2.ADAPTIVE_THRESH_MEAN_C,
                               cv2.THRESH_BINARY_INV,
                               self.adaptive_thresh_blocksize,
-                              self.adaptive_thresh
-                              )
+                              self.adaptive_thresh)
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         #kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
