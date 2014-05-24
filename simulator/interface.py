@@ -267,7 +267,8 @@ class Interface(object):
         seawolf.var.set("Star", 0)
         seawolf.var.set("Bow", 0)
         seawolf.var.set("Stern", 0)
-        seawolf.var.set("Strafe", 0)
+        seawolf.var.set("StrafeT", 0)
+        seawolf.var.set("StrafeB", 0)
 
     def change_parameter_set(self, set_name):
         self.zero_thrusters()

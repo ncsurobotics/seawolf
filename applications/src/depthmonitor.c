@@ -43,7 +43,7 @@ static int control_heading(void) {
 }
 
 int main(void) {
-    float stern, port, star, bow, strafe;
+    float stern, port, star, bow, strafet, strafeb;
     float depth, depthheading, seapitch, searoll, seayaw;
 
     char* display = "  \n\
@@ -55,13 +55,12 @@ int main(void) {
       %10.2f   \tYaw   \n\
                        \n\
                        \n\
-         %7.2f         \n\
-                       \n\
-         %7.2f         \n\
-  %7.2f       %7.2f      \n\
-                       \n\
-                       \n\
-         %7.2f         \n\
+  Bow:       %7.2f      \n\
+  Port:      %7.2f      \n\
+  Star:      %7.2f      \n\
+  Stern:     %7.2f      \n\
+  StrafeT:   %7.2f      \n\
+  StrafeB:   %7.2f      \n\
 ";
     
     /* Init libseawolf */
@@ -76,7 +75,8 @@ int main(void) {
 
     Task_background(control_heading);
 
-    Var_bind("Strafe", &strafe);
+    Var_bind("StrafeT", &strafet);
+    Var_bind("StrafeB", &strafeb);
     Var_bind("Stern", &stern);
     Var_bind("Bow", &bow);
     Var_bind("Port", &port);
@@ -85,12 +85,11 @@ int main(void) {
     Var_bind("SEA.Pitch", &seapitch);
     Var_bind("SEA.Roll", &searoll);
     Var_bind("SEA.Yaw", &seayaw);
-    Var_bind("Depth", &depth);
     Var_bind("DepthPID.Heading", &depthheading);
     
     while(quit == false) {
         clear();
-        printw(display, depthheading, depth, seapitch, searoll, seayaw, bow, strafe, port, star, stern);
+        printw(display, depthheading, depth, seapitch, searoll, seayaw, bow, port, star, stern, strafet, strafeb);
         refresh();
 
         Var_sync();

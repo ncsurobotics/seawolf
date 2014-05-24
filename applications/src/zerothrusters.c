@@ -18,7 +18,8 @@ int main(void) {
     Var_set("Star", 0);
     Var_set("Bow", 0);
     Var_set("Stern", 0);
-    Var_set("Strafe", 0);
+    Var_set("StrafeT", 0);
+    Var_set("StrafeB", 0);
 
     Seawolf_close();
     return 0;

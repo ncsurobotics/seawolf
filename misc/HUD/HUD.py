@@ -16,7 +16,8 @@ PORT=0.0
 STAR = 0.0
 BOW = 0.0
 STERN = 0.0
-STRAFE = 0.0
+STRAFET = 0.0
+STRAFEB = 0.0
 DEPTH = 0.0
 DEPTH_HEADING = 0.0
 CUR_PITCH = 0.0
@@ -46,7 +47,7 @@ def ReSizeGLScene(Width, Height):
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     gluPerspective(45.0, float(Width)/float(Height), 0.1, 100.0)
-    glMatrixMode(GL_MODELVIEW)
+    glMatrixMode(GL_MODELVIEW)ccf
 
 def Update(d):
     glutTimerFunc(100,Update,0)
@@ -57,7 +58,8 @@ def SetVariables(number):
     global STAR
     global BOW
     global STERN
-    global STRAFE
+    global STRAFET
+    global STRAFEB
     global DEPTH
     global DEPTH_HEADING
     global CUR_PITCH
@@ -68,7 +70,8 @@ def SetVariables(number):
         STAR = random.randint(-100,100)*0.001
         BOW = random.randint(-100,100)*0.001
         STERN = random.randint(-100,100)*0.001
-        STRAFE = random.randint(-100,100)*0.001
+        STRAFET = random.randint(-100,100)*0.001
+        STRAFEB = random.randint(-100,100)*0.001
         DEPTH = random.randint(0,12)
         DEPTH_HEADING = random.randint(0,12)
         CUR_PITCH = random.randint(-10,10)
@@ -78,7 +81,8 @@ def SetVariables(number):
         STAR = sw.var.get("Star")
         BOW = sw.var.get("Bow")
         STERN = sw.var.get("Stern")
-        STRAFE = sw.var.get("Strafe")
+        STRAFET = sw.var.get("StrafeT")
+        STRAFEB = sw.var.get("StrafeB")
         DEPTH = sw.var.get("Depth")
         DEPTH_HEADING = sw.var.get("DepthPID.Heading")
         CUR_PITCH = sw.var.get("SEA.Pitch")
@@ -233,8 +237,10 @@ def drawThrusterGauge():
     drawText(1.3,-.3,GLUT_BITMAP_9_BY_15,'%6.3f' %BOW)
     drawText(.1,-1.1,GLUT_BITMAP_HELVETICA_18,"Stern Y")
     drawText(1.3,-1.1,GLUT_BITMAP_9_BY_15,'%6.3f' %STERN)
-    drawText(.1,-1.9,GLUT_BITMAP_HELVETICA_18,"Strafe")
-    drawText(1.3,-1.9,GLUT_BITMAP_9_BY_15,'%6.3f' %STRAFE)
+    drawText(.1,-1.9,GLUT_BITMAP_HELVETICA_18,"StrafeT")
+    drawText(1.3,-1.9,GLUT_BITMAP_9_BY_15,'%6.3f' %STRAFET)
+    drawText(.1,-1.9,GLUT_BITMAP_HELVETICA_18,"StrafeB")
+    drawText(1.3,-1.9,GLUT_BITMAP_9_BY_15,'%6.3f' %STRAFEB)
 
 def drawLevelGauge():
     drawText(-1,3,GLUT_BITMAP_HELVETICA_18,"LEVEL GAUGE")
@@ -313,7 +319,8 @@ def main():
     sw.var.subscribe("Star")
     sw.var.subscribe("Bow")
     sw.var.subscribe("Stern")
-    sw.var.subscribe("Strafe")
+    sw.var.subscribe("StrafeT")
+    sw.var.subscribe("StrafeB")
     sw.var.subscribe("SEA.Pitch")
     sw.var.subscribe("SEA.Roll")
 

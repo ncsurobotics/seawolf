@@ -2,11 +2,11 @@
 #include <sw.h>
 
 void init_motors(void) {
-    /* Set PD0 -> PD4 as output (these are the motor PWM outputs) */
-    PORTD.DIRSET = 0x1f;
+    /* Set PD0 -> PD5 as output (these are the motor PWM outputs) */
+    PORTD.DIRSET = 0x3f;
 
-    /* Set PC1 -> PC5 as output (these are the motor direction outputs) */
-    PORTC.DIRSET = 0x3e;
+    /* Set PC0 -> PC5 as output (these are the motor direction outputs) */
+    PORTC.DIRSET = 0x3f;
 
     /* Clock divider of 8 (from 2MHz) */
     TCD0.CTRLA = TC_CLKSEL_DIV8_gc;
@@ -15,7 +15,7 @@ void init_motors(void) {
     /* Enable all output compare OC0x pins and set waveform generation mode to
        single slope PWM */
     TCD0.CTRLB = 0xf3;
-    TCD1.CTRLB = 0x13;
+    TCD1.CTRLB = 0x33;
 
     /* Set period to 128 which at 2MHz/8 gives an output clock of approximately
        2 KHz */
@@ -28,6 +28,7 @@ void init_motors(void) {
     TCD0.CCC = 0x0000;
     TCD0.CCD = 0x0000;
     TCD1.CCA = 0x0000;
+    TCD1.CCB = 0x0000;
 }
 
 /* Set speed of motor. Value is -128 to 128 */
@@ -46,21 +47,27 @@ void set_motor_speed(Motor motor, int speed) {
         dir_bit = 1 << 2;
         break;
 
-    case STRAFE:
+    case PORT:
         TCD0.CCC = duty_cycle;
         dir_bit = 1 << 3;
         break;
 
-    case PORT:
+    case STAR:
         TCD0.CCD = duty_cycle;
         dir_bit = 1 << 4;
         break;
-
-    case STAR:
+    
+    case STRAFET:
         TCD1.CCA = duty_cycle;
         dir_bit = 1 << 5;
         break;
 
+    case STRAFEB:
+        TCD1.CCB = duty_cycle;
+        dir_bit = 1 << 0;
+        break;
+
+            
     default:
         return;
     }

@@ -41,11 +41,12 @@ typedef enum {
 } Solenoid;
 
 typedef enum {
-    BOW    = 0,
-    STERN  = 1,
-    STRAFE = 2,
-    PORT   = 3,
-    STAR   = 4
+    BOW     = 0,
+    STERN   = 1,
+    PORT    = 2,
+    STAR    = 3,
+    STRAFET = 4,
+    STRAFEB = 5,
 } Motor;
 
 typedef enum {

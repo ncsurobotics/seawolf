@@ -5,11 +5,12 @@
 #include <pthread.h>
 #include <math.h>
 
-#define PORT   0
-#define STAR   1
-#define STRAFE 2
-#define BOW    3
-#define STERN  4
+#define PORT    0
+#define STAR    1
+#define BOW     2
+#define STERN   3
+#define STRAFET 4
+#define STRAFEB 5
 
 /* Trim port/star values to compensate for rotation from strafing */
 #define STRAFE_TRIM 0.3
@@ -22,17 +23,18 @@
 #define UPDATE_TOLERANCE 0.01
 
 /* Simple summing mixing algorithm */
-static void mix(float req_pitch, float req_depth, float req_forward, float req_yaw, float req_strafe, float out[5]) {
+static void mix(float req_pitch, float req_depth, float req_forward, float req_yaw, float req_strafe, float req_roll, float out[6]) {
     out[BOW] = req_pitch + req_depth;
     out[STERN] = -req_pitch + req_depth;
     out[PORT] = req_forward + req_yaw;
     out[STAR] = req_forward - req_yaw;
-    out[STRAFE] = req_strafe;
+    out[STRAFET] = req_strafe + req_roll;
+    out[STRAFEB] = -req_strafe - req_roll;
 
     /* Trim port/starboad thrusters */
-    if(out[STRAFE] != 0) {
-        out[PORT] -= out[STRAFE] * STRAFE_TRIM;
-        out[STAR] += out[STRAFE] * STRAFE_TRIM;
+    if(req_strafe != 0) {
+        out[PORT] -= req_strafe * STRAFE_TRIM;
+        out[STAR] += req_strafe * STRAFE_TRIM;
     }
 
     /* Trim bow/stern thrusters */
@@ -42,8 +44,8 @@ static void mix(float req_pitch, float req_depth, float req_forward, float req_y
     }
 }
 
-static void setThrusters(float out[5]) {
-    static float old_out[] = {2.0, 2.0, 2.0, 2.0, 2.0};
+static void setThrusters(float out[6]) {
+    static float old_out[] = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
 
     /* Set all thurster values */
     if(fabs(old_out[BOW] - out[BOW]) > UPDATE_TOLERANCE) {
@@ -66,9 +68,14 @@ static void setThrusters(float out[5]) {
         Var_set("Star", out[STAR]);
     }
 
-    if(fabs(old_out[STRAFE] - out[STRAFE]) > UPDATE_TOLERANCE) {
-        old_out[STRAFE] = out[STRAFE];
-        Var_set("Strafe", out[STRAFE]);
+    if(fabs(old_out[STRAFET] - out[STRAFET]) > UPDATE_TOLERANCE) {
+        old_out[STRAFET] = out[STRAFET];
+        Var_set("StrafeT", out[STRAFET]);
+    }
+
+    if(fabs(old_out[STRAFEB] - out[STRAFEB]) > UPDATE_TOLERANCE) {
+        old_out[STRAFEB] = out[STRAFEB];
+        Var_set("StrafeB", out[STRAFEB]);
     }
 }
 
@@ -91,10 +98,11 @@ int main(void) {
     Seawolf_init("PID Mixer");
 
     /* Thruster values */
-    float out[] = {0.0, 0.0, 0.0, 0.0, 0.0};
+    float out[] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     /* Value requests from PID's */
     float req_strafe  = 0.0;
+    float req_roll    = 0.0;
     float req_pitch   = 0.0;
     float req_depth   = 0.0;
     float req_forward = 0.0;
@@ -130,19 +138,22 @@ int main(void) {
             req_depth = atof(value);
         } else if(strcmp(requester, "Strafe") == 0) {
             req_strafe = atof(value);
+        } else if(strcmp(requester, "Roll") == 0) {
+            req_roll = atof(value);
         } else {
             continue;
         }
 
         /* Mix */
-        mix(req_pitch, req_depth, req_forward, req_yaw, req_strafe, out);
+        mix(req_pitch, req_depth, req_forward, req_yaw, req_strafe, req_roll, out);
 
         /* Check bounds on all output values */
         out[BOW]    = Util_inRange(-1, out[BOW], 1);
         out[STERN]  = Util_inRange(-1, out[STERN], 1);
-        out[STRAFE] = Util_inRange(-1, out[STRAFE], 1);
         out[PORT]   = Util_inRange(-1, out[PORT], 1);
         out[STAR]   = Util_inRange(-1, out[STAR], 1);
+        out[STRAFET] = Util_inRange(-1, out[STRAFET], 1);
+        out[STRAFEB] = Util_inRange(-1, out[STRAFEB], 1);
 
         /* Output new thruster values */
         setThrusters(out);

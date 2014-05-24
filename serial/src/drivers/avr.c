@@ -45,7 +45,8 @@ typedef enum {
     STAR   = 1,
     STERN  = 2,
     BOW    = 3,
-    STRAFE = 4
+    STRAFET = 4,
+    STRAFEB = 5,
 } Motor;
 
 typedef enum {
@@ -233,7 +234,8 @@ int main(int argc, char** argv) {
 
     Var_subscribe("Bow");
     Var_subscribe("Stern");
-    Var_subscribe("Strafe");
+    Var_subscribe("StrafeT");
+    Var_subscribe("StrafeB");
     Var_subscribe("Port");
     Var_subscribe("Star");
 
@@ -258,8 +260,12 @@ int main(int argc, char** argv) {
             send_message(sp, SW_MOTOR, STERN, (int) (MOTOR_RANGE * Var_get("Stern")));
         }
 
-        if(Var_poked("Strafe")) {
-            send_message(sp, SW_MOTOR, STRAFE, (int) (MOTOR_RANGE * Var_get("Strafe")));
+        if(Var_poked("StrafeT")) {
+            send_message(sp, SW_MOTOR, STRAFET, (int) (MOTOR_RANGE * Var_get("StrafeT")));
+        }
+
+        if(Var_poked("StrafeB")) {
+            send_message(sp, SW_MOTOR, STRAFEB, (int) (MOTOR_RANGE * Var_get("StrafeB")));
         }
 
         if(Var_poked("Port")) {

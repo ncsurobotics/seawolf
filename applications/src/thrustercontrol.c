@@ -24,14 +24,15 @@ int main(void) {
     char* display = "   \n\
   Thruster Controller   \n\
                         \n\
-         %3.2f          \n\
-                        \n\
-  %3.2f  %3.2f   %3.2f  \n\
-                        \n\
-         %3.2f          \n\
+  Bow:       %3.2f      \n\
+  Port:      %3.2f      \n\
+  Star:      %3.2f      \n\
+  Stern:     %3.2f      \n\
+  StrafeT:   %3.2f      \n\
+  StrafeB:   %3.2f      \n\
 ";
 
-    float bow=0.0, stern=0.0, port=0.0, star=0.0, strafe=0.0;
+    float bow=0.0, stern=0.0, port=0.0, star=0.0, strafet=0.0, strafeb=0.0;
     int addsub = 1;
         
     /* Turn off drivers */
@@ -39,10 +40,11 @@ int main(void) {
     Var_set("Star", 0.0);
     Var_set("Bow", 0.0);
     Var_set("Stern", 0.0);
-    Var_set("Strafe", 0.0);
+    Var_set("StrafeT", 0.0);
+    Var_set("StrafeB", 0.0);
     
     while(true) {
-        printw(display, bow, port, strafe, star, stern);
+        printw(display, bow, port, star, stern, strafet, strafeb);
         refresh();
 
         c = getch();
@@ -60,7 +62,7 @@ int main(void) {
             Var_set("Bow", bow);
             break;
 
-        case 'x':
+        case 's':
             stern = ADJUST(stern + (addsub * STEP));
             Var_set("Stern", stern);
             break;
@@ -75,9 +77,14 @@ int main(void) {
             Var_set("Star", star);
             break;
 
-        case 's':
-            strafe = ADJUST(strafe + (addsub * STEP));
-            Var_set("Strafe", strafe);
+        case 'z':
+            strafet = ADJUST(strafet + (addsub * STEP));
+            Var_set("StrafeT", strafet);
+            break;
+
+        case 'x':
+            strafeb = ADJUST(strafeb + (addsub * STEP));
+            Var_set("StrafeB", strafeb);
             break;
         }
 
@@ -93,7 +100,8 @@ int main(void) {
     Var_set("Star", 0);
     Var_set("Bow", 0);
     Var_set("Stern", 0);
-    Var_set("Strafe", 0);
+    Var_set("StrafeT", 0);
+    Var_set("StrafeB", 0);
 
     Seawolf_close();
     return 0;

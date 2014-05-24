@@ -134,7 +134,7 @@ while True:
             print_table(variables, ["%.2f" % sw.var.get(v) for v in variables])
             print
 
-            variables = "Port", "Star", "Bow", "Stern", "Strafe"
+            variables = "Port", "Star", "Bow", "Stern", "StrafeT", "StrafeB"
             print_table(variables, ["%.2f" % sw.var.get(v) for v in variables])
             print
             
