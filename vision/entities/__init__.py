@@ -27,7 +27,7 @@ from hedge import HedgeEntity
 # from binscorner import BinsCornerEntity
 from binscontour import BinsContourEntity
 # from binshough import BinsHoughEntity
-from binshough2 import BinsHough2Entity
+#from binshough2 import BinsHough2Entity
 #from pizza import PizzaEntity
 #from pizzacorner import PizzaCornerEntity
 from blobtesting import BlobTesting
@@ -56,7 +56,7 @@ entity_classes = {
     # "binscorner": BinsCornerEntity,
     "binscontour": BinsContourEntity,
     # "binshough": BinsHoughEntity,
-    "binshough2": BinsHough2Entity,
+    #"binshough2": BinsHough2Entity,
     "doublepath2": DoublePath2Entity,
     #"pizza": PizzaEntity,
     #"pizzacorner": PizzaCornerEntity,
