@@ -15,6 +15,8 @@ from sys import argv
         also changed in main().  Everything else is in a function.
 '''
 
+### Fallback if no argument is provided ###
+path = 'FOOTAGE/cbins1.avi'
 
 def preprocessing(frame):
     '''
@@ -47,11 +49,11 @@ def test_adaptive_threshold(frame):
     kernel_size = 3
 
     frame = cv2.adaptiveThreshold(frame,
-                          255,
-                          cv2.ADAPTIVE_THRESH_MEAN_C,
-                          cv2.THRESH_BINARY_INV,
-                          block_size,
-                          threshold)
+                                  255,
+                                  cv2.ADAPTIVE_THRESH_MEAN_C,
+                                  cv2.THRESH_BINARY_INV,
+                                  block_size,
+                                  threshold)
 
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
     frame = cv2.erode(frame, kernel)
@@ -82,7 +84,7 @@ def test_hough_lines(frame):
     '''
         Detect lines in the image
     '''
-    frame = cv2.HoughLines(frame, )
+    #frame = cv2.HoughLines(frame, )
     pass
 
 
@@ -90,11 +92,9 @@ def main():
     '''
         Change the video file path and channel manually
     '''
-    filename = 'FOOTAGE/cbins1.avi'
-
-    BASE_DIR = os.path.dirname(__file__)
-    filename = os.path.join(BASE_DIR, filename)
-    if (len(argv) > 1):
+    base_dir = os.path.dirname(__file__)
+    filename = os.path.join(base_dir, path)
+    if len(argv) > 1:
         filename = argv[1]
 
     vc = cv2.VideoCapture(filename)

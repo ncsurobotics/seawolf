@@ -2,20 +2,24 @@ import os
 import cv2
 from sys import argv
 
+path = ''
+
 
 def main():
     def nothing(x):
         pass
 
-    path = ''
-
-    if (len(argv) > 1):
+    if len(argv) > 1:
         path = argv[1]
 
-    BASE_DIR = os.getcwd()
-    directory = os.path.join(BASE_DIR, path)
+    base_dir = os.getcwd()
+    directory = os.path.join(base_dir, path)
 
-    img_dirs = [image for image in os.listdir(directory) if 
+    if not os.path.exists(directory):
+        print "Invalid Path - Directory does not exist"
+        exit()
+
+    img_dirs = [image for image in os.listdir(directory) if
                 os.path.splitext(image)[1][1:] in ['png', 'jpg', 'bmp']]
 
     cv2.namedWindow('original')
