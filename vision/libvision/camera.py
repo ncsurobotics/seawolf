@@ -76,7 +76,7 @@ class Camera(object):
             # See if file is an image, not video
             if isinstance(self.identifier, basestring):
                 try:
-                    self.image = cv2.LoadImage(self.identifier)
+                    self.image = cv.LoadImage(self.identifier)
                 except IOError:
                     if self.frame_count > 1:
                         raise self.CaptureError("The video has run out of frames.")
