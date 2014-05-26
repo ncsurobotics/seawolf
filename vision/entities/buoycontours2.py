@@ -36,16 +36,21 @@ class Buoy(object):
             return Buoy.colors["unknown"]
 
 
-class BuoyContourEntity(VisionEntity):
+class BuoyContour2Entity(VisionEntity):
 
     def init(self):
-        self.adaptive_thresh_blocksize = 31
-        self.adaptive_thresh = 10
+        self.buoy_blocksize = 31
+        self.buoy_thresh = 10
+        self.led_blocksize = 19
+        self.led_thresh = 21
         self.min_area = 500
         self.max_area = 5000
         self.mid_sep = 50
         self.recent_id = 1
         self.trans_thresh = 30
+
+        self.LEDcandidates = []
+        self.LEDconfirmed = []
 
         self.candidates = []
         self.confirmed = []
@@ -54,10 +59,6 @@ class BuoyContourEntity(VisionEntity):
         self.seencount_thresh = 2
 
     def process_frame(self, frame):
-        # This is equivalent to the old routine, but it isn't actually necessary
-        #height, width, depth = libvision.cv_to_cv2(frame).shape
-        #self.debug_frame = np.zeros((height, width, 3), np.uint8)
-
         # Debug numpy is CV2
         self.debug_frame = libvision.cv_to_cv2(frame)
 
@@ -71,7 +72,7 @@ class BuoyContourEntity(VisionEntity):
         self.numpy_frame = self.frame2
 
         # Thresholding
-        self.numpy_frame = cv2.adaptiveThreshold(self.numpy_frame,
+        self.buoy_frame = cv2.adaptiveThreshold(self.numpy_frame,
                                                  255,
                                                  cv2.ADAPTIVE_THRESH_MEAN_C,
                                                  cv2.THRESH_BINARY_INV,
@@ -80,16 +81,17 @@ class BuoyContourEntity(VisionEntity):
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-    # kernel = np.ones((2,2), np.uint8)
-        self.numpy_frame = cv2.erode(self.numpy_frame, kernel)
-        self.numpy_frame = cv2.dilate(self.numpy_frame, kernel2)
 
-        self.adaptive_frame = self.numpy_frame.copy()
+        self.buoy_frame = cv2.erode(self.numpy_frame, kernel)
+        self.buoy_frame = cv2.dilate(self.numpy_frame, kernel2)
+
+        self.buoy_adaptive = self.buoy_frame.copy()
 
     # Find contours
         contours, hierarchy = cv2.findContours(self.numpy_frame,
                                                cv2.RETR_TREE,
                                                cv2.CHAIN_APPROX_SIMPLE)
+        self.raw_led = []
         self.raw_buoys = []
 
         if len(contours) > 1:

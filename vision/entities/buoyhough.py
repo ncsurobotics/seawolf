@@ -36,11 +36,11 @@ class Buoy(object):
             return Buoy.colors["unknown"]
 
 
-class BuoyContourEntity(VisionEntity):
+class BuoyHoughEntity(VisionEntity):
 
     def init(self):
-        self.adaptive_thresh_blocksize = 31
-        self.adaptive_thresh = 10
+        self.adaptive_thresh_blocksize = 29
+        self.adaptive_thresh = 21
         self.min_area = 500
         self.max_area = 5000
         self.mid_sep = 50
@@ -54,9 +54,6 @@ class BuoyContourEntity(VisionEntity):
         self.seencount_thresh = 2
 
     def process_frame(self, frame):
-        # This is equivalent to the old routine, but it isn't actually necessary
-        #height, width, depth = libvision.cv_to_cv2(frame).shape
-        #self.debug_frame = np.zeros((height, width, 3), np.uint8)
 
         # Debug numpy is CV2
         self.debug_frame = libvision.cv_to_cv2(frame)
@@ -80,59 +77,41 @@ class BuoyContourEntity(VisionEntity):
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-    # kernel = np.ones((2,2), np.uint8)
+
         self.numpy_frame = cv2.erode(self.numpy_frame, kernel)
         self.numpy_frame = cv2.dilate(self.numpy_frame, kernel2)
 
         self.adaptive_frame = self.numpy_frame.copy()
 
-    # Find contours
-        contours, hierarchy = cv2.findContours(self.numpy_frame,
-                                               cv2.RETR_TREE,
-                                               cv2.CHAIN_APPROX_SIMPLE)
-        self.raw_buoys = []
+        self.numpy_frame = cv2.Canny(self.adaptive_frame, 100, 250, apertureSize=3)
 
-        if len(contours) > 1:
-            cnt = contours[0]
-            cv2.drawContours(
-                self.numpy_frame, contours, -1, (255, 255, 255), 3)
+        self.raw_buoys = cv2.HoughCircles(self.numpy_frame, cv2.cv.CV_HOUGH_GRADIENT, 2, 50, np.array([]), 40, 80, 25, 100)
 
-            for h, cnt in enumerate(contours):
-                approx = cv2.approxPolyDP(
-                    cnt, 0.01 * cv2.arcLength(cnt, True), True)
+        if self.raw_buoys is not None and len(self.raw_buoys[0]) > 0:
+            for buoy in self.raw_buoys[0]:
+                (x, y, radius) = buoy
+                cv2.circle(self.debug_frame, (int(x), int(y)),
+                           int(radius) + 10, (255, 255, 255), 5)
 
-                center, radius = cv2.minEnclosingCircle(cnt)
-                x, y = center
-
-                if len(approx) > 12:
-                    if (radius > 30):
-                        new_buoy = Buoy(int(x), int(y), int(radius), "unknown")
-                        new_buoy.id = self.recent_id
-                        self.recent_id += 1
-                        self.raw_buoys.append(new_buoy)
-                        cv2.drawContours(
-                            self.numpy_frame, [cnt], 0, (0, 0, 255), -1)
-                        self.raw_buoys.append(new_buoy)
-
-        for buoy1 in self.raw_buoys[:]:
-            for buoy2 in self.raw_buoys[:]:
-                if buoy1 is buoy2:
-                    continue
-                if buoy1 in self.raw_buoys and buoy2 in self.raw_buoys and \
-                   math.fabs(buoy1.centerx - buoy2.centerx) > self.mid_sep and \
-                   math.fabs(buoy1.centery - buoy2.centery) > self.mid_sep:
-                    if buoy1.area < buoy2.area:
-                        self.raw_buoys.remove(buoy1)
-                    elif buoy2.area < buoy1.area:
-                        self.raw_buoys.remove(buoy2)
-
-        for buoy in self.raw_buoys:
-            self.match_buoys(buoy)
-
-        self.sort_buoys()
-        self.draw_buoys()
-
-        self.return_output()
+        # for buoy1 in self.raw_buoys[:]:
+        #     for buoy2 in self.raw_buoys[:]:
+        #         if buoy1 is buoy2:
+        #             continue
+        #         if buoy1 in self.raw_buoys and buoy2 in self.raw_buoys and \
+        #            math.fabs(buoy1.centerx - buoy2.centerx) > self.mid_sep and \
+        #            math.fabs(buoy1.centery - buoy2.centery) > self.mid_sep:
+        #             if buoy1.area < buoy2.area:
+        #                 self.raw_buoys.remove(buoy1)
+        #             elif buoy2.area < buoy1.area:
+        #                 self.raw_buoys.remove(buoy2)
+        #
+        # for buoy in self.raw_buoys:
+        #     self.match_buoys(buoy)
+        #
+        # self.sort_buoys()
+        # self.draw_buoys()
+        #
+        # self.return_output()
 
         self.debug_to_cv = libvision.cv2_to_cv(self.debug_frame)
         self.numpy_to_cv = libvision.cv2_to_cv(self.numpy_frame)

@@ -11,8 +11,8 @@ from entity_types.bin import Bin
 class BinsContourEntity(VisionEntity):
 
     def init(self):
-        self.adaptive_thresh_blocksize = 15
-        self.adaptive_thresh = 8
+        self.adaptive_thresh_blocksize = 15 # without canny, 15
+        self.adaptive_thresh = 8 # without canny, 8
         self.mid_sep = 50
         self.min_area = 4500
         self.max_area = 14000
@@ -79,9 +79,12 @@ class BinsContourEntity(VisionEntity):
                 if w > 0 and h > 0:
                     area = h * w
                     if self.min_area < area < self.max_area:
+                        approx = cv2.approxPolyDP(
+                            cnt, 0.01 * cv2.arcLength(cnt, True), True)
+
                         aspect_ratio = float(h) / w
                         # Depending on the orientation of the bin, "width" may be flipped with height, thus needs 2 conditions for each case
-                        if .4 < aspect_ratio < .6 or 1.8 < aspect_ratio < 2.2:
+                        if 2 <= len(approx) < 10 and (.4 < aspect_ratio < .6 or 1.8 < aspect_ratio < 2.2):
                             new_bin = Bin(tuple(box[0]), tuple(
                                 box[1]), tuple(box[2]), tuple(box[3]))
                             new_bin.id = self.recent_id
@@ -133,7 +136,7 @@ class BinsContourEntity(VisionEntity):
                 bin.corner3 = target.corner3
                 bin.corner4 = target.corner4
                 print "still ", bin.seencount
-                bin.seencount += 2
+                bin.seencount += 3
                 print "new seencount ", bin.seencount
                 bin.lastseen += 6
                 found = 1
@@ -146,7 +149,7 @@ class BinsContourEntity(VisionEntity):
                 found = 1
         if found == 0:
             self.candidates.append(target)
-            target.lastseen + 3
+            target.lastseen += 3
 
         # TODO, CLEAN THIS UP SOME
     def sort_bins(self):

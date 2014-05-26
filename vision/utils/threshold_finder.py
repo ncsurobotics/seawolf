@@ -1,5 +1,6 @@
 import os
 import cv2
+import numpy as np
 from sys import argv
 
 path = ''
@@ -34,7 +35,7 @@ def main():
         if cv2.getTrackbarPos('Play Video', 'original'):
             frame, debug = get_new_frame(vc)
             prior = debug.copy()
-        else:
+        else: #### For amusement and/or a seizure, comment out this else block and observe the result ####
             debug = prior.copy()
         debug = refresh_frame(debug)
         cv2.imshow('original', frame)
@@ -59,15 +60,27 @@ def refresh_frame(img):
         cv2.setTrackbarPos('Blocksize', 'original', block_size)
 
     adaptive = cv2.adaptiveThreshold(img, 255,
-                                      cv2.ADAPTIVE_THRESH_MEAN_C,
-                                      cv2.THRESH_BINARY_INV,
-                                      block_size,
-                                      threshold)
+                                     cv2.ADAPTIVE_THRESH_MEAN_C,
+                                     cv2.THRESH_BINARY_INV,
+                                     block_size,
+                                     threshold)
+
+    if draw_contours:
+        black = np.zeros((img.shape[0], img.shape[1], 3), np.uint8)
+        contours, hierarchy = cv2.findContours(adaptive,
+                                               cv2.RETR_TREE,
+                                               cv2.CHAIN_APPROX_SIMPLE)
+
+        cv2.drawContours(black, contours, -1, (255, 255, 255), 3)
+        return black
     return adaptive
 
 
 def get_new_frame(vc):
     rval, frame = vc.read()
+    if not rval:
+        print "End of clip"
+        exit()
     debug = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     (h, s, v) = cv2.split(debug)
     debug = s

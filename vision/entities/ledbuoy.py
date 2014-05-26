@@ -36,28 +36,54 @@ class Buoy(object):
             return Buoy.colors["unknown"]
 
 
-class BuoyContourEntity(VisionEntity):
+class LEDBuoy(Buoy):
+
+    buoy_id = 0
+    colors = {"red": (40, 0, 255),
+              "green": (0, 255, 0),
+              "blue": (255, 0, 0),
+              "orange": (0, 200, 255),
+              "unknown": (255, 255, 255),
+              }
+
+    def __init__(self, xcoor, ycoor, radius, color):
+        self.type = "LEDbuoy"
+        self.centerx = xcoor
+        self.centery = ycoor
+        self.radius = radius
+        self.color = color
+        self.area = 0
+        self.id = 0        # id identifies which buoy your looking at
+        self.lastseen = 2  # how recently you have seen this buoy
+        # how many times you have seen this buoy (if you see it enough it
+        # becomes confirmed)
+        self.seencount = 1
+
+    def get_color(self):
+        try:
+            return Buoy.colors[self.color]
+        except KeyError:
+            return Buoy.colors["unknown"]
+
+
+class LEDBuoyEntity(VisionEntity):
 
     def init(self):
-        self.adaptive_thresh_blocksize = 31
-        self.adaptive_thresh = 10
-        self.min_area = 500
-        self.max_area = 5000
+        self.s_blocksize = 19
+        self.s_thresh = 21
+        self.v_blocksize = 5
+        self.v_thresh = 8
         self.mid_sep = 50
         self.recent_id = 1
         self.trans_thresh = 30
 
-        self.candidates = []
-        self.confirmed = []
+        self.LEDcandidates = []
+        self.LEDconfirmed = []
 
         self.lastseen_thresh = 0
         self.seencount_thresh = 2
 
     def process_frame(self, frame):
-        # This is equivalent to the old routine, but it isn't actually necessary
-        #height, width, depth = libvision.cv_to_cv2(frame).shape
-        #self.debug_frame = np.zeros((height, width, 3), np.uint8)
-
         # Debug numpy is CV2
         self.debug_frame = libvision.cv_to_cv2(frame)
 
@@ -71,26 +97,26 @@ class BuoyContourEntity(VisionEntity):
         self.numpy_frame = self.frame2
 
         # Thresholding
-        self.numpy_frame = cv2.adaptiveThreshold(self.numpy_frame,
+        self.buoy_frame = cv2.adaptiveThreshold(self.numpy_frame,
                                                  255,
                                                  cv2.ADAPTIVE_THRESH_MEAN_C,
                                                  cv2.THRESH_BINARY_INV,
-                                                 self.adaptive_thresh_blocksize,
-                                                 self.adaptive_thresh)
+                                                 self.s_blocksize,
+                                                 self.s_thresh)
 
-        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-        kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
-    # kernel = np.ones((2,2), np.uint8)
-        self.numpy_frame = cv2.erode(self.numpy_frame, kernel)
-        self.numpy_frame = cv2.dilate(self.numpy_frame, kernel2)
+        # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        # kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))
+        #
+        # self.buoy_frame = cv2.erode(self.numpy_frame, kernel)
+        # self.buoy_frame = cv2.dilate(self.numpy_frame, kernel2)
 
-        self.adaptive_frame = self.numpy_frame.copy()
+        self.buoy_adaptive = self.buoy_frame.copy()
 
     # Find contours
         contours, hierarchy = cv2.findContours(self.numpy_frame,
                                                cv2.RETR_TREE,
                                                cv2.CHAIN_APPROX_SIMPLE)
-        self.raw_buoys = []
+        self.raw_led = []
 
         if len(contours) > 1:
             cnt = contours[0]

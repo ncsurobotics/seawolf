@@ -16,7 +16,7 @@ from sys import argv
 '''
 
 ### Fallback if no argument is provided ###
-path = 'FOOTAGE/cbins1.avi'
+path = '../FOOTAGE/cbuoy1.avi'
 
 def preprocessing(frame):
     '''
