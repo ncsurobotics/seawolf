@@ -22,7 +22,7 @@ class BinsContourEntity(VisionEntity):
         self.candidates = []
         self.confirmed = []
 
-        self.lastseen_thresh = 0
+        self.lastseen_thresh = 1
         self.seencount_thresh = 2
 
     def process_frame(self, frame):
@@ -60,8 +60,9 @@ class BinsContourEntity(VisionEntity):
 
         # Find contours
         contours, hierarchy = cv2.findContours(self.numpy_frame,
-                                               cv2.RETR_TREE, 
+                                               cv2.RETR_EXTERNAL,
                                                cv2.CHAIN_APPROX_SIMPLE)
+
         self.raw_bins = []
 
         if len(contours) > 1:
@@ -84,7 +85,7 @@ class BinsContourEntity(VisionEntity):
 
                         aspect_ratio = float(h) / w
                         # Depending on the orientation of the bin, "width" may be flipped with height, thus needs 2 conditions for each case
-                        if 2 <= len(approx) < 10 and (.4 < aspect_ratio < .6 or 1.8 < aspect_ratio < 2.2):
+                        if 2 <= len(approx) < 12 and (.4 < aspect_ratio < .6 or 1.8 < aspect_ratio < 2.2):
                             new_bin = Bin(tuple(box[0]), tuple(
                                 box[1]), tuple(box[2]), tuple(box[3]))
                             new_bin.id = self.recent_id
@@ -92,19 +93,6 @@ class BinsContourEntity(VisionEntity):
                             new_bin.theta = -theta
                             self.recent_id += 1
                             self.raw_bins.append(new_bin)
-
-            # Removes bins that have centers too close to others (to prevent bins inside bins)
-            for bin1 in self.raw_bins[:]:
-                for bin2 in self.raw_bins[:]:
-                    if bin1 is bin2:
-                        continue
-                    if bin1 in self.raw_bins and bin2 in self.raw_bins and \
-                       math.fabs(bin1.midx - bin2.midx) < self.mid_sep and \
-                       math.fabs(bin1.midy - bin2.midy) < self.mid_sep:
-                        if bin1.area < bin2.area:
-                            self.raw_bins.remove(bin1)
-                        elif bin2.area < bin1.area:
-                            self.raw_bins.remove(bin2)
 
         for bin in self.raw_bins:
             self.match_bins(bin)

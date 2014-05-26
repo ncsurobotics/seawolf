@@ -88,11 +88,11 @@ class BuoyContourEntity(VisionEntity):
 
     # Find contours
         contours, hierarchy = cv2.findContours(self.numpy_frame,
-                                               cv2.RETR_TREE,
+                                               cv2.RETR_EXTERNAL,
                                                cv2.CHAIN_APPROX_SIMPLE)
         self.raw_buoys = []
 
-        if len(contours) > 1:
+        if len(contours) > 0:
             cnt = contours[0]
             cv2.drawContours(
                 self.numpy_frame, contours, -1, (255, 255, 255), 3)
@@ -121,9 +121,9 @@ class BuoyContourEntity(VisionEntity):
                 if buoy1 in self.raw_buoys and buoy2 in self.raw_buoys and \
                    math.fabs(buoy1.centerx - buoy2.centerx) > self.mid_sep and \
                    math.fabs(buoy1.centery - buoy2.centery) > self.mid_sep:
-                    if buoy1.area < buoy2.area:
+                    if buoy1.radius < buoy2.radius:
                         self.raw_buoys.remove(buoy1)
-                    elif buoy2.area < buoy1.area:
+                    elif buoy2.radius < buoy1.radius:
                         self.raw_buoys.remove(buoy2)
 
         for buoy in self.raw_buoys:
