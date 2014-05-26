@@ -3,9 +3,8 @@ from __future__ import division
 from sys import argv
 from time import time
 import os.path
-
 import cv
-
+import cv2
 import svr
 svr.connect()
 
@@ -33,8 +32,8 @@ if __name__ == "__main__":
         os.mkdir(base_dir)
     capture_dir = get_next_dir(base_dir)
 
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480))
+    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480))
 
     while True:
 

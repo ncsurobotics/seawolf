@@ -46,6 +46,7 @@ class VisionEntity(object):
             self.capture = libvision.Camera(self.cameras[self.camera_name], display=self.debug)
         else:
             self.capture = svr.Stream(self.camera_name)
+            #self.capture = libvision.Camera(self.cameras[self.camera_name], display=self.debug)
             self.capture.unpause()
 
         self.output = Container()
