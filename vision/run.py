@@ -22,8 +22,6 @@ parent_directory = os.path.realpath(os.path.join(
 ))
 sys.path.append(parent_directory)
 
-import svr
-
 import entities
 import process_manager
 
