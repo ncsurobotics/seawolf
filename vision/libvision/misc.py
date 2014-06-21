@@ -66,6 +66,58 @@ def get_channel(frame, channel):
     cv.SetImageCOI(frame, previous_coi)
     return result
 
+def center_track(founds,candidates,confirmeds,max_trans,max_expand):
+    #The next section repeats three times. Try to simplify function?
+    for found in founds[:]: 
+        for candidate in candidates:
+            if math.fabs(found.midx-candidate.midx) < max_trans and math.fabs(found.midy-candidate.midy) < max_trans and math.fabs(found.size - candidate.size)<max_expand:
+                ID = candidate.id
+                candidate = found
+                candidate.id = ID
+                founds.remove(found)
+        
+    for found in founds[:]:
+        for confirmed in confirmeds:
+            if math.fabs(found.midx-confirmed.midx) < max_trans and math.fabs(found.midy-confirmed.midy) < max_trans and math.fabs(found.size - confirmed.size)<max_expand:
+                ID = confirmed.id
+                confirmed = found
+                confirmed.id = ID
+                founds.remove(found)
+
+    for candidate in candidates[:]:
+        for confirmed in confirmeds:
+            if math.fabs(candidate.midx-confirmed.midx) < max_trans and math.fabs(candidate.midy-confirmed.midy) < max_trans and math.fabs(candidate.size - confirmed.size)<max_expand:
+                ID = confirmed.id
+                confirmed = candidate
+                confirmed.id = ID
+                candidates.remove(candidate)
+
+
+#def update_center(candidates,confirmed,seencount_thresh, lastseen_thresh)
+
+
+#objs1 and objs2 should be lists of obj 
+def compare_mids_ObjList(objs1,objs2,max_trans,max_expand):
+    for obj1 in objs1[:]: 
+        for obj2 in objs2:
+            if math.fabs(obj1.midx-obj2.midx) < max_trans and math.fabs(obj1.midy-obj2.midy) < max_trans and math.fabs(obj1.size - obj2.size)<max_expand:
+                ID = obj2.id
+                obj2 = obj1
+                obj1.id = ID
+                obj1.remove(obj2)
+
+
+#obj1: one to be overwritten
+#obj2: one to overwrite with
+def overwrite_obj(obj1,obj2):
+    obj1.midx = obj2.midx
+    obj1.midy = obj2.midy
+    obj1.corner1 = obj2.corner1
+    obj1.corner2 = obj2.corner2
+    obj1.corner3 = obj2.corner3
+    obj1.corner4 = obj2.corner4
+
+
 def scale_32f_image(image):
 
     result = cv.CreateImage(cv.GetSize(image), 8, image.channels)
