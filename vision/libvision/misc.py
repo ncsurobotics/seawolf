@@ -65,7 +65,7 @@ def get_channel(frame, channel):
     cv.Copy(frame, result)
     cv.SetImageCOI(frame, previous_coi)
     return result
-
+'''
 def center_track(founds,candidates,confirmeds,max_trans,max_expand):
     #The next section repeats three times. Try to simplify function?
     for found in founds[:]: 
@@ -116,7 +116,7 @@ def overwrite_obj(obj1,obj2):
     obj1.corner2 = obj2.corner2
     obj1.corner3 = obj2.corner3
     obj1.corner4 = obj2.corner4
-
+'''
 
 def scale_32f_image(image):
 
