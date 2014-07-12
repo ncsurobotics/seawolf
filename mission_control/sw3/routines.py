@@ -200,7 +200,7 @@ class ZeroThrusters(NavRoutine):
         mixer.strafe = 0
 
         # Zero the thrusters
-        for v in ("Port", "Star", "Bow", "Stern", "Strafe"):
+        for v in ("Port", "Star", "Bow", "Stern", "StrafeT", "StrafeB"):
             sw.var.set(v, 0)
 
 class SetDepth(NavRoutine):
