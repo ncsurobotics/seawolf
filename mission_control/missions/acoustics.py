@@ -19,6 +19,7 @@ class AcousticsMission(MissionBase):
     def __init__(self):
         pass
     def init(self):
+        self.pinger_data = var_watch('Acoustics.Channels')
         self.process_manager.start_process(entities.AcousticsEntity, "acoustics", "down", debug=True)
         self.reference_angle = sw3.data.imu.yaw()
 
@@ -33,15 +34,14 @@ class AcousticsMission(MissionBase):
         self.state_num = 0
         self.state = self.states[self.state_num]
 
-    def step(self, vision_data, pinger_data):
+    def step(self, vision_data):
         if pinger_data is not None:
             self.orientdata = pinger_data.orientation
         if vision_data is not None:
             box = vision_data.box
-        #else:
-        #    self.orientdata = None:
 
         if self.state == "followpinger":
+            pinger_data = var_watch('Acoustics.Channels')
             self.followpinger(pinger_data)
         if self.state == "findbox":
             self.findbox(vision_data)
@@ -53,15 +53,8 @@ class AcousticsMission(MissionBase):
             self.findpath()
 
     def followpinger(self, pinger_data):
-        if pinger_data and self.orientdata:
-            sw3.nav.do(sw3.Forward(0,1))
-            orient_angle = self.orientdata*(180/pi)
-            print "orient"
-            orient = sw3.CompoundRoutine(sw3.Forward(0,5),sw3.RelativeYaw(orient_angle))
-            sw3.nav.do(orient)
-            if (abs(abs(sw3.data.imu.yaw()) - orient_angle) <= ORIENT_THRESH):
-                print "done orienting"
-                orient.on_done(lambda z: sw3.nav.do(sw3.Forward(FORWARD_SPEED, 1)))
+        if pinger_data:
+                
                 self.nextState()
 
     def findbox(self, vision_data):

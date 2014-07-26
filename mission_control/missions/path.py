@@ -55,7 +55,7 @@ class PathMission(MissionBase):
                         path_data = vision_data['path'].paths[1]
                     print "debug1"
                     print path_data
-                    if not path_data:
+                    if path_data:
                         return
                 if vision_data['path'].paths[1].theta+self.reference_angle < vision_data['path'].paths[0].theta+self.reference_angle:
                     if self.which_path == 0:
