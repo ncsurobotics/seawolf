@@ -1,8 +1,8 @@
 #!/bin/sh
 ./bin/mixer &
-./bin/yawpid &
-./bin/depthpid &
-./bin/pitchpid &
+./bin/yawpidpy &
+./bin/depthpidpy &
+./bin/pitchpidpy &
+./bin/rollpidpy &
 
-#./bin/rotpid &
-#./bin/rollpid &
+#./bin/rotpidpy &

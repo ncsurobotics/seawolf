@@ -27,6 +27,12 @@ PitchPID.i           = 0.0,  1,  0
 #PitchPID.p           = -0.8,  1,  0
 PitchPID.p           = 0.0,  1,  0
 
+RollPID.Heading     = 0.0,  0,  0
+RollPID.Paused      = 1.0,  0,  0
+RollPID.d           = 0.0,  1,  0
+RollPID.i           = 0.0,  1,  0
+RollPID.p           = 0.0,  1,  0
+
 YawPID.Heading       = 0.0,  0,  0
 YawPID.Paused        = 1.0,  0,  0
 YawPID.d             = 0.01, 1,  0
