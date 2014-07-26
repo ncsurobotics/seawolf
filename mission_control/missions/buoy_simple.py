@@ -72,11 +72,11 @@ class SimpleBuoyMission(MissionBase):
             tracking_buoy = None
             for buoy in buoys:
                 if buoy.id == self.tracking_buoy_id:
-                    tracking_buoy = buoy
+                    tracking_buoy = tracking_buoy + 1
 
             # Correct if we saw it
             if tracking_buoy:
-                print tracking_buoy.phi
+                print tracking_buoy
                 self.last_seen = time()
                 if depth:
                     depth_routine = sw3.SetDepth(depth)

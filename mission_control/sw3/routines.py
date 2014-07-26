@@ -343,19 +343,31 @@ class Forward(NavRoutine):
     def _start(self):
         mixer.forward = self.rate
 
-class Strafe(NavRoutine):
-    interactions = ("Strafe",)
+class StrafeT(NavRoutine):
+    interactions = ("StrafeT",)
 
     def __init__(self, rate, timeout=-1):
-        super(Strafe, self).__init__(timeout)
+        super(StrafeT, self).__init__(timeout)
         self.rate = rate
 
     def _start(self):
-        mixer.strafe = self.rate
+        mixer.strafet = self.rate
 
     def _cleanup(self):
-        mixer.strafe = 0.0
+        mixer.strafet = 0.0
 
+class StrafeB(NavRoutine):
+    interactions = ("StrafeB",)
+
+    def __init__(self, rate, timeout=-1):
+        super(StrafeB, self).__init__(timeout)
+        self.rate = rate
+
+    def _start(self):
+        mixer.strafeb = self.rate
+
+    def _cleanup(self):
+        mixer.strafeb = 0.0
 class EmergencyBreech(ZeroThrusters):
     def _start(self):
         # Zero the thrusters by calling to the super class
