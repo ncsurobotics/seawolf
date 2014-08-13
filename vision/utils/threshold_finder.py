@@ -9,10 +9,11 @@ draw_contours = False
 
 def main():
 
+    base_dir = os.getcwd()
+
     if len(argv) > 1:
         path = argv[1]
 
-    base_dir = os.getcwd()
     filename = os.path.join(base_dir, path)
 
     if not os.path.isfile(filename):
@@ -24,32 +25,35 @@ def main():
 
     vc = cv2.VideoCapture(filename)
 
-    frame, debug = get_new_frame(vc)
-    prior = debug.copy()
 
     cv2.createTrackbar('Threshold', 'original', 25, 75, nothing)
     cv2.createTrackbar('Blocksize', 'original', 25, 49, nothing)
     cv2.createTrackbar('Play Video', 'original', 0, 1, nothing)
+    cv2.createTrackbar('HSV', 'original', 1, 2, nothing)
 
-    while True:
+    hsv = cv2.getTrackbarPos('HSV', 'original')
+    frame, debug = get_new_frame(vc,hsv)
+    prior = debug.copy()
+
+    while vc.isOpened():
+        hsv = cv2.getTrackbarPos('HSV', 'original')
         if cv2.getTrackbarPos('Play Video', 'original'):
-            frame, debug = get_new_frame(vc)
+            frame, debug = get_new_frame(vc,hsv)
             prior = debug.copy()
         else: #### For amusement and/or a seizure, comment out this else block and observe the result ####
             debug = prior.copy()
         debug = refresh_frame(debug)
         cv2.imshow('original', frame)
         cv2.imshow('debug', debug)
-        cv2.waitKey(50)
-
-
-def nothing(x):
-        pass
+        cv2.waitKey(45)
+    cv2.destroyAllWindows()
+    vc.release()
 
 
 def refresh_frame(img):
     block_size = cv2.getTrackbarPos('Blocksize', 'original')
     threshold = cv2.getTrackbarPos('Threshold', 'original')
+    hsv = cv2.getTrackbarPos('HSV', 'original')
 
     if not block_size % 2 == 1:
         block_size += 1
@@ -58,7 +62,7 @@ def refresh_frame(img):
     if block_size <= 1:
         block_size = 3
         cv2.setTrackbarPos('Blocksize', 'original', block_size)
-
+    print img.shape
     adaptive = cv2.adaptiveThreshold(img, 255,
                                      cv2.ADAPTIVE_THRESH_MEAN_C,
                                      cv2.THRESH_BINARY_INV,
@@ -76,15 +80,29 @@ def refresh_frame(img):
     return adaptive
 
 
-def get_new_frame(vc):
+def get_new_frame(vc,hsv):
     rval, frame = vc.read()
     if not rval:
         print "End of clip"
+        cv2.destroyAllWindows()
+        vc.release()
         exit()
     debug = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    print "Debug is ", debug.shape
     (h, s, v) = cv2.split(debug)
-    debug = s
+    print "V is: ", v.shape
+    if hsv == 0:
+        debug = h
+    elif hsv == 1:
+        debug = s
+    else:
+        debug = v
+        print "worked"
     return frame, debug
+
+
+def nothing(x):
+        pass
 
 
 if __name__ == '__main__':
