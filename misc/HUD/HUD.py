@@ -47,7 +47,7 @@ def ReSizeGLScene(Width, Height):
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     gluPerspective(45.0, float(Width)/float(Height), 0.1, 100.0)
-    glMatrixMode(GL_MODELVIEW)ccf
+    glMatrixMode(GL_MODELVIEW)
 
 def Update(d):
     glutTimerFunc(100,Update,0)

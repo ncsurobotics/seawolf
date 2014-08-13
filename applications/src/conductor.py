@@ -12,6 +12,7 @@ APPS_TO_START = [
     "./bin/depthpid",
     "./bin/yawpid",
     "./bin/pitchpid",
+    "./bin/rollpid",
     "./bin/mixer",
 ]
 
