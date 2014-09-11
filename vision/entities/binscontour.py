@@ -24,6 +24,7 @@ class BinsContourEntity(VisionEntity):
 
         self.lastseen_thresh = 1
         self.seencount_thresh = 2
+        self.lastseen_max = 5
 
     def process_frame(self, frame):
         # This is equivalent to the old routine, but it isn't actually necessary
@@ -113,28 +114,33 @@ class BinsContourEntity(VisionEntity):
         # TODO, CLEAN THIS UP SOME
     def match_bins(self, target):
         found = 0
+        print "confirmed number: ",len(self.confirmed)
         for bin in self.confirmed:
             if math.fabs(bin.midx - target.midx) < self.trans_thresh and \
                math.fabs(bin.midy - target.midy) < self.trans_thresh:
-                print bin.seencount
                 bin.midx = target.midx
                 bin.midy = target.midy
                 bin.corner1 = target.corner1
                 bin.corner2 = target.corner2
                 bin.corner3 = target.corner3
                 bin.corner4 = target.corner4
-                print "still ", bin.seencount
                 bin.seencount += 3
-                print "new seencount ", bin.seencount
-                bin.lastseen += 6
-                found = 1
-        for bin in self.confirmed:
+                if bin.lastseen < self.lastseen_max:
+                  bin.lastseen += 6
+                found = 1        
+        for bin in self.candidates:
             if math.fabs(bin.midx - target.midx) < self.trans_thresh and \
                math.fabs(bin.midy - target.midy) < self.trans_thresh:
-                target.id = bin.id
-                bin = target
-                bin.lastseen += 6
-                found = 1
+                bin.midx = target.midx
+                bin.midy = target.midy
+                bin.corner1 = target.corner1
+                bin.corner2 = target.corner2
+                bin.corner3 = target.corner3
+                bin.corner4 = target.corner4
+                bin.seencount += 3
+                if bin.lastseen < self.lastseen_max:
+                  bin.lastseen += 6
+                found = 1        
         if found == 0:
             self.candidates.append(target)
             target.lastseen += 3
@@ -144,7 +150,7 @@ class BinsContourEntity(VisionEntity):
         for bin in self.candidates[:]:
             print "last seen is ", bin.lastseen
             print "seencount is ", bin.seencount
-            bin.lastseen -= 1
+            bin.lastseen -= 2
             if bin.seencount >= self.seencount_thresh:
                 self.confirmed.append(bin)
                 print "confirmed appended"
@@ -157,8 +163,8 @@ class BinsContourEntity(VisionEntity):
                 print "confirmed removed"
 
     def draw_bins(self):
-        clr = (255, 0, 255)
-        for bin in self.raw_bins:
+        clr = (0, 0, 255)
+        for bin in self.candidates:
             cv2.circle(self.debug_frame,
                        bin.corner1, 5, clr, -1)
             cv2.circle(self.debug_frame,
@@ -169,5 +175,7 @@ class BinsContourEntity(VisionEntity):
                        bin.corner4, 5, clr, -1)
             cv2.circle(self.debug_frame, (
                 int(bin.midx), int(bin.midy)), 5, clr, -1)
-            # font = cv2.FONT_HERSHEY_SIMPLEX
-            # cv2.putText(self.debug_final_frame, "theta=" + str(bin.theta), (int(bin.midx) - 50, int(bin.midy) + 20), font, .4, clr, 1, cv2.CV_AA)
+
+           
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            cv2.putText(self.debug_frame, "id=" + str(bin.id), (int(bin.midx) - 50, int(bin.midy) + 40), font, .8, clr, 1, cv2.CV_AA)
