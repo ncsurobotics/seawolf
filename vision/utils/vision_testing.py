@@ -4,19 +4,20 @@ import os
 from sys import argv
 
 '''
-    This test program allows for quick and easy checking of thresholds and 
-    other parameters against a test video.  Each test recieves a frame and 
-    returns a processed frame, allowing you to chain processing operations 
+    This test program allows for quick and easy checking of thresholds and
+    other parameters against a test video.  Each test recieves a frame and
+    returns a processed frame, allowing you to chain processing operations
     together.
 
     USAGE:
         The video file can be passed in as a command-line argument, or by using
-        the filename variable in main().  Channel (hue, saturation, etc), is 
+        the filename variable in main().  Channel (hue, saturation, etc), is
         also changed in main().  Everything else is in a function.
 '''
 
 ### Fallback if no argument is provided ###
 path = '../FOOTAGE/cbuoy1.avi'
+
 
 def preprocessing(frame):
     '''
@@ -28,8 +29,8 @@ def preprocessing(frame):
 
 
 def run_tests(frame):
-    ''' 
-        Change which tests are performed and chain them together.  By chaining 
+    '''
+        Change which tests are performed and chain them together.  By chaining
         together tests, you can quickly see the results of your changes
     '''
     frame = test_adaptive_threshold(frame)
@@ -41,7 +42,7 @@ def run_tests(frame):
 
 
 def test_adaptive_threshold(frame):
-    ''' 
+    '''
         Perform an adaptive threshold
     '''
     block_size = 25
@@ -66,14 +67,14 @@ def test_contours(frame):
         Takes the contours of the image
     '''
     contours, hierarchy = cv2.findContours(frame,
-                                           cv2.RETR_TREE, 
+                                           cv2.RETR_TREE,
                                            cv2.CHAIN_APPROX_SIMPLE)
     cv2.drawContours(frame, contours, -1, (255, 255, 255), 3)
     return frame
 
 
 def test_edge_detection(frame):
-    ''' 
+    '''
         Finds the edges of the image
     '''
     frame = cv2.Canny(frame, 100, 250, apertureSize=3)

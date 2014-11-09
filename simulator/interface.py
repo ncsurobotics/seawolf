@@ -13,9 +13,10 @@ import cv
 import seawolf
 import svr
 
+
 class Interface(object):
 
-    def __init__(self, cam_pos=(0,0,0), cam_pitch=0, cam_yaw=0,
+    def __init__(self, cam_pos=(0, 0, 0), cam_pitch=0, cam_yaw=0,
                  parameter_sets={}, svr_source=False):
 
         self.cam_pos = numpy.array(cam_pos, numpy.float)
@@ -45,7 +46,7 @@ class Interface(object):
         glutCreateWindow("Simulator")
 
         # OpenGL Settings
-        glClearColor(0,0,0,0)
+        glClearColor(0, 0, 0, 0)
         glShadeModel(GL_FLAT)
         glEnable(GL_NORMALIZE)
         glEnable(GL_DEPTH_TEST)
@@ -64,7 +65,7 @@ class Interface(object):
         glLightfv(GL_LIGHT1, GL_AMBIENT, (0, 0, 0, 1))
         glLightfv(GL_LIGHT1, GL_DIFFUSE, (0.5, 0.5, 0.5, 1))
         glLightfv(GL_LIGHT1, GL_SPECULAR, (0, 0, 0, 0))
-        #glShadeModel(GL_SMOOTH)
+        # glShadeModel(GL_SMOOTH)
         glEnable(GL_LIGHTING)
         glEnable(GL_LIGHT0)
         glEnable(GL_LIGHT1)
@@ -105,7 +106,7 @@ class Interface(object):
                 self.svr_sources[camera] = source
 
     def run(self, delay):
-        glutTimerFunc(0, self.timer_callback, int(1000*delay))
+        glutTimerFunc(0, self.timer_callback, int(1000 * delay))
         glutMainLoop()
 
     def draw(self):
@@ -138,11 +139,10 @@ class Interface(object):
         glVertex(1000, -1000, -16)
         glEnd()
 
-
         glFlush()
         glutSwapBuffers()
 
-        if self.svr_source and self.frame_number%2 == 0:
+        if self.svr_source and self.frame_number % 2 == 0:
             for camera in ["forward", "down"]:
 
                 # Create image and send it
@@ -153,7 +153,7 @@ class Interface(object):
                 glMatrixMode(GL_PROJECTION)
                 glLoadIdentity()
                 glViewport(0, 0, size[0], size[1])
-                gluPerspective(fovy, fovx/fovy, 0.1, 4000)
+                gluPerspective(fovy, fovx / fovy, 0.1, 4000)
                 glMatrixMode(GL_MODELVIEW)
                 glLoadIdentity()
                 self.simulator.robot.camera_transform(camera)
@@ -161,9 +161,9 @@ class Interface(object):
                     if entity is not self.simulator.robot:
                         entity.draw()
                 glFlush()
-                data = glReadPixels(0,0, size[0], size[1], GL_BGR, GL_UNSIGNED_BYTE)
+                data = glReadPixels(0, 0, size[0], size[1], GL_BGR, GL_UNSIGNED_BYTE)
                 image = cv.CreateImage(size, cv.IPL_DEPTH_8U, 3)
-                cv.SetData(image, data, 640*3)
+                cv.SetData(image, data, 640 * 3)
                 cv.Flip(image, flipMode=0)
                 self.svr_sources[camera].send_frame(image)
 
@@ -176,7 +176,7 @@ class Interface(object):
         glLoadIdentity()
         glViewport(0, 0, self.view_width, self.view_height)
         gluPerspective(self.fov,
-                       self.view_width/self.view_height,  # Aspect ratio
+                       self.view_width / self.view_height,  # Aspect ratio
                        0.1, 4000)  # Near and far
 
     def init_camera(self):
@@ -189,8 +189,8 @@ class Interface(object):
             # parallel to the viewing angle.
             if abs(self.cam_pitch) >= 90:
                 up_vector = (
-                    -cos(radians(self.cam_yaw)) * self.cam_pitch/90,
-                    -sin(radians(self.cam_yaw)) * self.cam_pitch/90,
+                    -cos(radians(self.cam_yaw)) * self.cam_pitch / 90,
+                    -sin(radians(self.cam_yaw)) * self.cam_pitch / 90,
                     0,
                 )
             else:
@@ -208,7 +208,7 @@ class Interface(object):
         elif self.camera_mode == "Down Cam":
             self.simulator.robot.camera_transform("down")
         else:
-            raise ValueError("Error: Bad camera mode: "+self.camera_mode)
+            raise ValueError("Error: Bad camera mode: " + self.camera_mode)
 
     def get_camera_direction(self):
         return (
@@ -225,7 +225,7 @@ class Interface(object):
             self.cam_pitch = -90
 
     def camera_move_yaw(self, yaw):
-        self.cam_yaw = (self.cam_yaw+yaw) % 360
+        self.cam_yaw = (self.cam_yaw + yaw) % 360
 
     def camera_move_forward(self, distance):
         camera_direction = self.get_camera_direction()
@@ -233,17 +233,17 @@ class Interface(object):
 
     def camera_move_right(self, distance):
         right_vector = (
-            cos(radians(self.cam_yaw+90)),
-            sin(radians(self.cam_yaw+90)),
+            cos(radians(self.cam_yaw + 90)),
+            sin(radians(self.cam_yaw + 90)),
             0,
         )
         self.camera_move(right_vector, distance)
 
     def camera_move_up(self, distance):
         up_vector = (
-            cos(radians(self.cam_yaw)) * sin(radians(-1*self.cam_pitch)),
-            sin(radians(self.cam_yaw)) * sin(radians(-1*self.cam_pitch)),
-            cos(radians(-1*self.cam_pitch)),
+            cos(radians(self.cam_yaw)) * sin(radians(-1 * self.cam_pitch)),
+            sin(radians(self.cam_yaw)) * sin(radians(-1 * self.cam_pitch)),
+            cos(radians(-1 * self.cam_pitch)),
         )
         self.camera_move(up_vector, distance)
 
@@ -302,7 +302,7 @@ class Interface(object):
 
         elif key == 'm':  # Cycle camera mode
             current_index = self.camera_modes.index(self.camera_mode)
-            next_index = (current_index+1) % len(self.camera_modes)
+            next_index = (current_index + 1) % len(self.camera_modes)
             self.camera_mode = self.camera_modes[next_index]
 
         elif key == 'r':  # Reset
@@ -327,19 +327,19 @@ class Interface(object):
     def mouse_motion_look_callback(self, x, y):
         self.camera_move_yaw((self.last_mouse_position[0] - x) * 0.5)
         self.camera_move_pitch((self.last_mouse_position[1] - y) * 0.5)
-        self.last_mouse_position = (x,y)
+        self.last_mouse_position = (x, y)
         glutPostRedisplay()
 
     def mouse_motion_move_callback(self, x, y):
         self.camera_move_right((self.last_mouse_position[0] - x) * 0.1)
         self.camera_move_up((self.last_mouse_position[1] - y) * 0.1)
-        self.last_mouse_position = (x,y)
+        self.last_mouse_position = (x, y)
         glutPostRedisplay()
 
     def mouse_callback(self, button, state, x, y):
         if button == GLUT_LEFT_BUTTON:
             if state == GLUT_DOWN:
-                self.last_mouse_position = (x,y)
+                self.last_mouse_position = (x, y)
                 glutMotionFunc(self.mouse_motion_look_callback)
                 self.left_mouse_down = True
             else:
@@ -348,7 +348,7 @@ class Interface(object):
 
         elif button == GLUT_MIDDLE_BUTTON:
             if state == GLUT_DOWN:
-                self.last_mouse_position = (x,y)
+                self.last_mouse_position = (x, y)
                 glutMotionFunc(self.mouse_motion_move_callback)
                 self.left_mouse_down = True
             else:

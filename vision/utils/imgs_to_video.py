@@ -16,8 +16,9 @@ def main():
         print "Invalid Path - Directory does not exist"
         exit()
 
-    img_dirs = [image for image in os.listdir(directory) if 
-                os.path.splitext(image)[1][1:] in ['png', 'jpg', 'bmp']]
+    img_dirs = [
+        image for image in os.listdir(directory) if os.path.splitext(image)[1][1:] in ['png', 'jpg', 'bmp']
+    ]
 
     out = cv2.VideoWriter(os.path.basename(os.path.normpath(directory)) + '.avi',
                           cv2.cv.FOURCC('X', 'V', 'I', 'D'), 20.0, (640, 480))

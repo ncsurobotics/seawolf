@@ -14,6 +14,7 @@ from sw3.util import circular_average
 GATE_BLACK = 0
 GATE_WHITE = 1
 
+
 def line_group_accept_test(line_group, line, max_range):
     '''
     Returns True if the line should be let into the line group.
@@ -30,6 +31,7 @@ def line_group_accept_test(line_group, line, max_range):
         if l[0] < min_rho:
             min_rho = l[0]
     return max_rho - min_rho < max_range
+
 
 class OldHedgeEntity(VisionEntity):
     name = "Hedge"
@@ -51,7 +53,7 @@ class OldHedgeEntity(VisionEntity):
 
         if self.debug:
             pass
-            #cv.NamedWindow("Hedge")
+            # cv.NamedWindow("Hedge")
             #self.create_trackbar("adaptive_thresh", 20)
             #self.create_trackbar("hough_threshold", 100)
 
@@ -76,12 +78,12 @@ class OldHedgeEntity(VisionEntity):
         cv.SetImageCOI(hsv, 0)
 
         cv.AdaptiveThreshold(binary, binary,
-            255,
-            cv.CV_ADAPTIVE_THRESH_MEAN_C,
-            cv.CV_THRESH_BINARY_INV,
-            self.adaptive_thresh_blocksize,
-            self.adaptive_thresh,
-        )
+                             255,
+                             cv.CV_ADAPTIVE_THRESH_MEAN_C,
+                             cv.CV_THRESH_BINARY_INV,
+                             self.adaptive_thresh_blocksize,
+                             self.adaptive_thresh,
+                             )
 
         # Morphology
         '''
@@ -98,20 +100,20 @@ class OldHedgeEntity(VisionEntity):
         # Hough Transform
         line_storage = cv.CreateMemStorage()
         raw_lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_STANDARD,
-            rho=1,
-            theta=math.pi/180,
-            threshold=self.hough_threshold,
-            param1=0,
-            param2=0
-        )
+                                   rho=1,
+                                   theta=math.pi / 180,
+                                   threshold=self.hough_threshold,
+                                   param1=0,
+                                   param2=0
+                                   )
 
         # Get vertical lines
         vertical_lines = []
         for line in raw_lines:
             if line[1] < self.vertical_threshold or \
-                line[1] > math.pi-self.vertical_threshold:
+                    line[1] > math.pi - self.vertical_threshold:
 
-                vertical_lines.append( (abs(line[0]), line[1]) )
+                vertical_lines.append((abs(line[0]), line[1]))
 
         # Group vertical lines
         vertical_line_groups = []  # A list of line groups which are each a line list
@@ -131,17 +133,17 @@ class OldHedgeEntity(VisionEntity):
         for line_group in vertical_line_groups:
             rhos = map(lambda line: line[0], line_group)
             angles = map(lambda line: line[1], line_group)
-            line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
+            line = (sum(rhos) / len(rhos), circular_average(angles, math.pi))
             vertical_lines.append(line)
 
         # Get horizontal lines
         horizontal_lines = []
         for line in raw_lines:
-            dist_from_horizontal = (math.pi/2 + line[1]) % math.pi
+            dist_from_horizontal = (math.pi / 2 + line[1]) % math.pi
             if dist_from_horizontal < self.horizontal_threshold or \
-                dist_from_horizontal > math.pi-self.horizontal_threshold:
+                    dist_from_horizontal > math.pi - self.horizontal_threshold:
 
-                horizontal_lines.append( (abs(line[0]), line[1]) )
+                horizontal_lines.append((abs(line[0]), line[1]))
 
         # Group horizontal lines
         horizontal_line_groups = []  # A list of line groups which are each a line list
@@ -160,7 +162,7 @@ class OldHedgeEntity(VisionEntity):
             self.seen_crossbar = True
             rhos = map(lambda line: line[0], horizontal_line_groups[0])
             angles = map(lambda line: line[1], horizontal_line_groups[0])
-            line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
+            line = (sum(rhos) / len(rhos), circular_average(angles, math.pi))
             horizontal_lines = [line]
         else:
             self.seen_crossbar = False
@@ -172,24 +174,23 @@ class OldHedgeEntity(VisionEntity):
             roi = cv.GetImageROI(frame)
             width = roi[2]
             height = roi[3]
-            self.left_pole = round(min(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
-            self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
-        #TODO: If one pole is seen, is it left or right pole?
+            self.left_pole = round(min(vertical_lines[0][0], vertical_lines[1][0]), 2) - width / 2
+            self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - width / 2
+        # TODO: If one pole is seen, is it left or right pole?
 
         # Calculate planar distance r (assuming we are moving perpendicular to
         # the hedge)
         if self.left_pole and self.right_pole:
             theta = abs(self.left_pole - self.right_pole)
-            self.r = 3 / tan(radians(theta/2))
+            self.r = 3 / tan(radians(theta / 2))
         else:
             self.r = None
 
         if self.r and self.seen_crossbar:
-            bar_phi = (-1*horizontal_lines[0][0] + frame.height/2) / (frame.height/2) * 32
+            bar_phi = (-1 * horizontal_lines[0][0] + frame.height / 2) / (frame.height / 2) * 32
             self.crossbar_depth = self.r * atan(radians(bar_phi))
         else:
             self.crossbar_depth = None
-
 
         if self.debug:
             cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
@@ -199,7 +200,7 @@ class OldHedgeEntity(VisionEntity):
             #cv.ShowImage("Hedge", cv.CloneImage(frame))
             svr.debug("Hedge", cv.CloneImage(frame))
 
-        #populate self.output with infos
+        # populate self.output with infos
         self.output.seen_crossbar = self.seen_crossbar
         self.output.left_pole = self.left_pole
         self.output.right_pole = self.right_pole

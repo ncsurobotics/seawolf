@@ -97,7 +97,7 @@ class BinsEntity(Entity):
 
         b = Container()
         b.theta, b.phi = robot.find_point("down", center)
-        b.found = b.theta != None and b.phi != None
+        b.found = b.theta is not None and b.phi is not None
         b.shape = SHAPE_NAMES[i]
 
         if b.found:

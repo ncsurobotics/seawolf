@@ -18,7 +18,7 @@ from path import PathEntity
 #from buoytest import BuoyTestEntity
 #from buoynew import BuoyNewEntity
 #from binocularbuoy import BinocularBuoy
-from weapons import WeaponsEntity 
+from weapons import WeaponsEntity
 #from buoy2011 import Buoy2011Entity
 from doublepath import DoublePathEntity
 from doublepath2 import DoublePath2Entity
@@ -70,4 +70,3 @@ entity_classes = {
     "hedgeR": HedgeREntity,
     # "oldhedge": OldHedgeEntity
 }
-

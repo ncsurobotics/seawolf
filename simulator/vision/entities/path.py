@@ -6,6 +6,7 @@ from OpenGL.GLU import *
 
 from base import Entity, Container
 
+
 class PathEntity(Entity):
 
     def __init__(self, *args, **kwargs):
@@ -28,11 +29,11 @@ class PathEntity(Entity):
 
     def find(self, robot):
         x, y = robot.find_point("down", self.absolute_point((0, 0, 0)))
-        if x != None and y != None:
+        if x is not None and y is not None:
             self.output.found = True
             self.output.x = x
             self.output.y = y
-            self.output.theta = radians(self.yaw-robot.yaw) % pi
+            self.output.theta = radians(self.yaw - robot.yaw) % pi
         else:
             self.output.found = False
         return self.output.found, self.output

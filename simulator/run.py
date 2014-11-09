@@ -74,10 +74,10 @@ opt_parser = OptionParser(
     description="Acts like the serialapp, but simulates the environment.",
 )
 opt_parser.add_option("-s", "--svr-source", action="store_true",
-    dest="svr_source", default=False,
-    help="Create an SVR source for each camera and stream what the robot is "
-    "seeing."
-)
+                      dest="svr_source", default=False,
+                      help="Create an SVR source for each camera and stream what the robot is "
+                      "seeing."
+                      )
 options, args = opt_parser.parse_args()
 if len(args) < 2:
     parameters = PARAMETER_SETS['gate']
@@ -87,7 +87,7 @@ elif args[1] in PARAMETER_SETS:
     parameter_set_name = args[1]
 else:
     print 'Parameter set "%s" not found!  Valid parameter sets:\n%s' % \
-            (args[1], PARAMETER_SETS.keys())
+        (args[1], PARAMETER_SETS.keys())
     sys.exit(1)
 
 cam_pos = parameters["cam_pos"]
@@ -102,15 +102,15 @@ seawolf.init("Simulator")
 
 # Initialize everything!
 interface = Interface(
-    cam_pos = cam_pos,
-    cam_yaw = cam_yaw,
-    cam_pitch = cam_pitch,
-    parameter_sets = PARAMETER_SETS,
-    svr_source = options.svr_source,
+    cam_pos=cam_pos,
+    cam_yaw=cam_yaw,
+    cam_pitch=cam_pitch,
+    parameter_sets=PARAMETER_SETS,
+    svr_source=options.svr_source,
 )
 robot = entities.RobotEntity(
-    pos = robot_pos,
-    yaw = robot_yaw,
+    pos=robot_pos,
+    yaw=robot_yaw,
 )
 simulator = Simulator(interface, robot, entities=[
 
@@ -118,10 +118,10 @@ simulator = Simulator(interface, robot, entities=[
 
     entities.GateEntity((25, 0, 0)),
     #entities.PathEntity((35, 0, -12), yaw=-45),
-    entities.BuoyEntity((35,2, -4), yaw=-15,
-                         pos_red=(0, 0, 1.5),
-                         pos_yellow=(0, 4, 0),
-                         pos_green=(0, -4, -1.5)),
+    entities.BuoyEntity((35, 2, -4), yaw=-15,
+                        pos_red=(0, 0, 1.5),
+                        pos_yellow=(0, 4, 0),
+                        pos_green=(0, -4, -1.5)),
     entities.PathEntity((45, 4, -12), yaw=-20),
     entities.HedgeEntity((58, 8, -5), yaw=-45),
     entities.PathEntity((60, 10, -12), yaw=-20),

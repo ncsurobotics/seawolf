@@ -19,8 +19,9 @@ def main():
         print "Invalid Path - Directory does not exist"
         exit()
 
-    img_dirs = [image for image in os.listdir(directory) if
-                os.path.splitext(image)[1][1:] in ['png', 'jpg', 'bmp']]
+    img_dirs = [
+        image for image in os.listdir(directory) if os.path.splitext(image)[1][1:] in ['png', 'jpg', 'bmp']
+    ]
 
     cv2.namedWindow('original')
     cv2.createTrackbar('Playback Speed:', 'original', 100, 200, nothing)

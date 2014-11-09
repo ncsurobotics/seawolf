@@ -18,7 +18,8 @@ import seawolf as sw
 import math
 from math import pi
 
-def circular_distance(a, b, high = 180, low = -180):
+
+def circular_distance(a, b, high=180, low=-180):
     ''' Finds the signed distance between a and b in a circular fashion.
 
     high and low are the ends of the wraparound point.  Going any higher than
@@ -40,15 +41,19 @@ def circular_distance(a, b, high = 180, low = -180):
     else:
         return math.copysign(circular_range - abs(diff), -diff)
 
+
 def get_yaw():
     return -sw3.data.imu.yaw()
+
 
 def angle_in_range(angle, low, high):
     if circular_distance(angle, low) > 0 and circular_distance(high, angle) > 0:
         return True
     return False
 
+
 class Path(object):
+
     def __init__(self):
         self.angles = []
         self.angle = 0
@@ -66,7 +71,9 @@ class Path(object):
     def count(self):
         return len(self.angles)
 
+
 class PathManager(object):
+
     def __init__(self, angle_hint, max_angle_distance):
         self.paths = []
         self.grouping_angle_threshold = 15
@@ -99,7 +106,7 @@ class PathManager(object):
         lines = [(line[0], self.get_absolute_angle(line[1])) for line in lines]
         angles = [line[1] for line in lines]
 
-        #print lines
+        # print lines
 
         for angle in angles:
             added = False
@@ -147,7 +154,7 @@ class PathManager(object):
 
         for path in paths:
             path.theta = sw3.util.circular_average([line[1] for line in path.lines], pi, 0)
-            #print path, path.angle, path.lines, path.angles
+            # print path, path.angle, path.lines, path.angles
 
         return paths
 
@@ -194,10 +201,11 @@ class PathManager(object):
         else:
             return None
 
+
 class DoublePathEntity(VisionEntity):
     name = "DoublePath"
 
-    def init(self, which_path = 0, angle_hint = 0, max_angle_distance = 80):
+    def init(self, which_path=0, angle_hint=0, max_angle_distance=80):
         self.which_path = which_path
         self.angle_hint = angle_hint
         self.max_angle_distance = max_angle_distance
@@ -241,11 +249,11 @@ class DoublePathEntity(VisionEntity):
         line_storage = cv.CreateMemStorage()
         lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_STANDARD,
                                rho=1,
-                               theta=math.pi/180,
+                               theta=math.pi / 180,
                                threshold=self.hough_threshold,
                                param1=0,
                                param2=0
-        )
+                               )
         lines = lines[:self.lines_to_consider]  # Limit number of lines
 
         if not lines:
@@ -282,7 +290,7 @@ class DoublePathEntity(VisionEntity):
             svr.debug("map", temp_map)
 
             self.path.center = (
-                 center[0] - (frame.width / 2),
+                center[0] - (frame.width / 2),
                 -center[1] + (frame.height / 2)
             )
 
@@ -310,18 +318,18 @@ class DoublePathEntity(VisionEntity):
             if theta < 0:
                 scale = math.cos(-2 * theta)
                 theta = pi + theta
-                libvision.misc.draw_lines(frame, [((-frame.width/2)*scale, theta)])
+                libvision.misc.draw_lines(frame, [((-frame.width / 2) * scale, theta)])
             else:
-                libvision.misc.draw_lines(frame, [(frame.width/2, theta)])
+                libvision.misc.draw_lines(frame, [(frame.width / 2, theta)])
 
             # Show lines
             if self.output.found:
                 rounded_center = (
                     int(round(center[0])),
                     int(round(center[1])),
-                    )
+                )
                 cv.Circle(frame, rounded_center, 5, (0, 255, 0))
-                libvision.misc.draw_lines(frame, [(frame.width/2, self.path.theta)])
+                libvision.misc.draw_lines(frame, [(frame.width / 2, self.path.theta)])
 
             else:
                 libvision.misc.draw_lines(frame, lines)
@@ -334,13 +342,13 @@ class DoublePathEntity(VisionEntity):
         mat = cv.GetMat(binary)
         moments = cv.Moments(mat)
         return (
-            int(moments.m10/moments.m00),
-            int(moments.m01/moments.m00)
+            int(moments.m10 / moments.m00),
+            int(moments.m01 / moments.m00)
         )
 
     def __repr__(self):
         if self.path:
-            theta = round((180/math.pi)*self.path.theta, 2)
+            theta = round((180 / math.pi) * self.path.theta, 2)
             return "<DoublePathEntity which=%d hint=%d center=%s theta=%>" % \
                 (self.which_path, self.angle_hint, self.path.center, theta)
         else:

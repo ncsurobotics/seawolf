@@ -13,6 +13,7 @@ from base import Entity
 from doublepath import DoublePathEntity
 import model
 
+
 class RobotEntity(Entity):
 
     DEPTH_CONSTANT = 1.5
@@ -27,7 +28,7 @@ class RobotEntity(Entity):
         #self.model = model.ObjModel(file("models/seawolf5.obj"))
         self.model = model.StlModel("models/seawolf6.stl", ambient=(1, 0, 0, 0), diffuse=(1, 0, 0, 0))
 
-        self.depth = -1*self.pos[2]
+        self.depth = -1 * self.pos[2]
         self.tracked_vars = {}
 
         seawolf.var.subscribe("Port")
@@ -53,10 +54,10 @@ class RobotEntity(Entity):
 
         # Depth
         self.depth = -self.pos[2]
-        self.depth = self.depth + (bow+stern) * self.DEPTH_CONSTANT * dt
+        self.depth = self.depth + (bow + stern) * self.DEPTH_CONSTANT * dt
         if self.depth < 0:
-            self.depth = self.depth + 1.0*dt
-        self.pos[2] = -1*self.depth
+            self.depth = self.depth + 1.0 * dt
+        self.pos[2] = -1 * self.depth
         seawolf.var.set("Depth", self.depth)
 
         # Velocity
@@ -67,8 +68,8 @@ class RobotEntity(Entity):
         self.pos[1] += sin(radians(-self.yaw)) * velocity * dt
 
         # Yaw
-        self.yaw = self.yaw + (port-star) * self.YAW_CONSTANT * dt
-        self.yaw = (self.yaw+180) % 360 - 180  # Range -180 to 180
+        self.yaw = self.yaw + (port - star) * self.YAW_CONSTANT * dt
+        self.yaw = (self.yaw + 180) % 360 - 180  # Range -180 to 180
         seawolf.var.set("SEA.Yaw", self.yaw)
         seawolf.notify.send("UPDATED", "IMU")
 
@@ -208,8 +209,8 @@ class RobotEntity(Entity):
         phi = degrees(atan2(new_point[1], -new_point[2]))
 
         # Scale from -fov to fov
-        half_horizontal_fov = self.get_camera_fov(camera, vertical=False)/2
-        half_vertical_fov = self.get_camera_fov(camera, vertical=True)/2
+        half_horizontal_fov = self.get_camera_fov(camera, vertical=False) / 2
+        half_vertical_fov = self.get_camera_fov(camera, vertical=True) / 2
         theta = theta / half_horizontal_fov
         phi = phi / half_vertical_fov
 
@@ -227,7 +228,7 @@ class RobotEntity(Entity):
     def get_camera_fov(self, camera, vertical=False):
         # All cameras are currently the same
         if vertical:
-            return 38  #TODO: We've never measured this, so this is a guess
+            return 38  # TODO: We've never measured this, so this is a guess
         else:
             return 42
 

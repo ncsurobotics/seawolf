@@ -27,6 +27,7 @@ TRACKING_SEARCH_AREA_MULTIPLIER = 0.6
 MAX_Y_SEPARATION = 20
 CENTER_ERROR_PERCENT = 0.2
 
+
 class BuoyEntity(VisionEntity):
 
     def init(self):
@@ -100,18 +101,18 @@ class BuoyEntity(VisionEntity):
             tracker = libvision.Tracker(
                 frame,
                 middle_buoy,
-                (buoy_dist*TRACKING_TEMPLATE_MULTIPLIER,
-                        buoy_dist*TRACKING_TEMPLATE_MULTIPLIER),
-                (buoy_dist*TRACKING_SEARCH_AREA_MULTIPLIER,
-                        buoy_dist*TRACKING_SEARCH_AREA_MULTIPLIER),
+                (buoy_dist * TRACKING_TEMPLATE_MULTIPLIER,
+                 buoy_dist * TRACKING_TEMPLATE_MULTIPLIER),
+                (buoy_dist * TRACKING_SEARCH_AREA_MULTIPLIER,
+                 buoy_dist * TRACKING_SEARCH_AREA_MULTIPLIER),
                 min_z_score=TRACKING_MIN_Z_SCORE,
                 alpha=TRACKING_ALPHA,
-                #debug=True,
+                # debug=True,
             )
 
         # Debug info
         if debug_frame and middle_buoy:
-            cv.Circle(debug_frame, (int(middle_buoy[0]),int(middle_buoy[1])), int(buoy_dist*TRACKING_TEMPLATE_MULTIPLIER/2), (0,255,0), 2)
+            cv.Circle(debug_frame, (int(middle_buoy[0]), int(middle_buoy[1])), int(buoy_dist * TRACKING_TEMPLATE_MULTIPLIER / 2), (0, 255, 0), 2)
 
         if tracker:
             return [tracker]
@@ -125,7 +126,7 @@ class BuoyEntity(VisionEntity):
         locations = []
 
         # Update trackers
-        id_colors = ((0,255,0), (0,255,255), (255,255,0))
+        id_colors = ((0, 255, 0), (0, 255, 255), (255, 255, 0))
         for i, tracker in enumerate(trackers):
             location = tracker.locate_object(frame)
 
@@ -148,16 +149,16 @@ class BuoyEntity(VisionEntity):
         for tripplet in combinations(features, 3):
 
             # Sort features by x value
-            feature1,feature2,feature3 = sorted(tripplet, key=lambda x:x[0])
+            feature1, feature2, feature3 = sorted(tripplet, key=lambda x: x[0])
 
             # Test that center feature is in middle of outside features
             center = (feature1[0] + feature3[0]) / 2
-            if abs(center - feature2[0]) > CENTER_ERROR_PERCENT * (feature3[0]-feature1[0]):
+            if abs(center - feature2[0]) > CENTER_ERROR_PERCENT * (feature3[0] - feature1[0]):
                 continue
 
             # Go through every pair
             tripplet_is_valid = True
-            for a,b in combinations((feature1,feature2,feature3), 2):
+            for a, b in combinations((feature1, feature2, feature3), 2):
 
                 # Ignore tripplets with pairs with large y separations
                 if abs(a[1] - b[1]) > MAX_Y_SEPARATION:
@@ -166,7 +167,7 @@ class BuoyEntity(VisionEntity):
             if not tripplet_is_valid:
                 continue
 
-            return feature2, feature3[0]-feature1[0]
+            return feature2, feature3[0] - feature1[0]
 
         return None, None
 
@@ -174,27 +175,28 @@ class BuoyEntity(VisionEntity):
         '''Find features in an image.'''
 
         # Get Channels
-        hsv = cv.CreateImage(cv.GetSize(frame), 8, 3);
+        hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
         grey = libvision.misc.get_channel(hsv, 2)
 
         # Feature Detection
-        eigimage = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_32F,1)
-        tmpimage = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_32F,1)
+        eigimage = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_32F, 1)
+        tmpimage = cv.CreateImage(cv.GetSize(frame), cv.IPL_DEPTH_32F, 1)
         cornercount = 4
         qualitylevel = .2
         mindistance = 40
         blockSize = 7
-        corners = cv.GoodFeaturesToTrack(grey,eigimage,tmpimage,cornercount,qualitylevel,mindistance,None,blockSize,0,0.4)
+        corners = cv.GoodFeaturesToTrack(grey, eigimage, tmpimage, cornercount, qualitylevel, mindistance, None, blockSize, 0, 0.4)
 
-        #determine if three corners are in a reasonable orientation
+        # determine if three corners are in a reasonable orientation
         if debug_image:
 
             for corner in corners:
-                corner_color = (0,0,255)
-                cv.Circle(debug_image, (int(corner[0]),int(corner[1])), 15, corner_color, 2,8,0)
+                corner_color = (0, 0, 255)
+                cv.Circle(debug_image, (int(corner[0]), int(corner[1])), 15, corner_color, 2, 8, 0)
 
         return corners
+
 
 def scale_in_place(image, new_size):
     '''Mutates image to have size of new_size.
@@ -208,6 +210,7 @@ def scale_in_place(image, new_size):
     cv.SetImageROI(image, (0, 0, new_size[0], new_size[1]))
     cv.Resize(copy, image, cv.CV_INTER_NN)
 
+
 def adjust_location(location, width, height):
     '''
     Move origin to center and flip along horizontal axis.  Right
@@ -215,7 +218,6 @@ def adjust_location(location, width, height):
     mission control.  Then scale from -1 to 1.
     '''
     return Point(
-        (location[0] - width/2) / (width/2),
-        (-1*location[1] + height/2) / (height/2),
+        (location[0] - width / 2) / (width / 2),
+        (-1 * location[1] + height / 2) / (height / 2),
     )
-

@@ -4,6 +4,7 @@ from OpenGL.GLU import *
 
 from base import Entity, Container
 
+
 class GateEntity(Entity):
 
     def __init__(self, *args, **kwargs):
@@ -42,9 +43,9 @@ class GateEntity(Entity):
         c.left_pole = robot.find_point("forward", self.absolute_point((0, 5)))
         c.right_pole = robot.find_point("forward", self.absolute_point((0, -5)))
         if c.left_pole:
-            c.left_pole *= self.image_width/2
+            c.left_pole *= self.image_width / 2
         if c.right_pole:
-            c.right_pole *= self.image_width/2
+            c.right_pole *= self.image_width / 2
 
         gate_found = False
         if c.left_pole is not None or c.right_pole is not None:

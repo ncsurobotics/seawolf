@@ -1,8 +1,8 @@
-# pylint: disable=E1101
 import cv
 
+
 def hsv_filter(src, low_h, high_h, min_s, max_s, min_v, max_v,
-    hue_bandstop=False):
+               hue_bandstop=False):
     '''Takes an 8-bit bgr src image and does simple hsv thresholding.
 
     A binary image of the same size will be returned.  HSV values have the
@@ -29,10 +29,10 @@ def hsv_filter(src, low_h, high_h, min_s, max_s, min_v, max_v,
     data = hsv.tostring()
     for y in xrange(0, hsv.height):
         for x in xrange(0, hsv.width):
-            index = y*hsv.width*3 + x*3
-            h = ord(data[0+index])
-            s = ord(data[1+index])
-            v = ord(data[2+index])
+            index = y * hsv.width * 3 + x * 3
+            h = ord(data[0 + index])
+            s = ord(data[1 + index])
+            v = ord(data[2 + index])
 
             if hue_bandstop:
                 if (h <= low_h or h >= high_h) and \
@@ -55,6 +55,7 @@ def hsv_filter(src, low_h, high_h, min_s, max_s, min_v, max_v,
 
     return binary
 
+
 def otsu_get_threshold(src):
     '''
     Find the optimal threshold value for a grey level image using Otsu's
@@ -69,7 +70,7 @@ def otsu_get_threshold(src):
         raise ValueError("Image must have one channel.")
 
     # Compute Histogram
-    hist = cv.CreateHist([256], cv.CV_HIST_ARRAY, [[0,255]], 1)
+    hist = cv.CreateHist([256], cv.CV_HIST_ARRAY, [[0, 255]], 1)
     cv.CalcHist([src], hist)
 
     # Convert to Probability Histogram
@@ -104,7 +105,7 @@ def otsu_get_threshold(src):
         mean_f = moment_f / weight_f
 
         variance_between = weight_b * weight_f * \
-            (mean_b - mean_f)**2
+            (mean_b - mean_f) ** 2
 
         if variance_between >= highest_variance:
             highest_variance = variance_between
@@ -112,8 +113,9 @@ def otsu_get_threshold(src):
 
     return best_threshold
 
+
 def otsu_threshold(src, max_value=255, threshold_type=cv.CV_THRESH_BINARY):
-    #TODO: Documentation
+    # TODO: Documentation
     threshold = otsu_get_threshold(src)
     dst = cv.CreateImage((src.width, src.height), 8, 1)
     cv.Threshold(src, dst, threshold, max_value, threshold_type)

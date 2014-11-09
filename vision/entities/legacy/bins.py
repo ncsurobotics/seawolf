@@ -15,25 +15,25 @@ from sw3.util import circular_average, circular_range
 class Bin(object):
 
     def __init__(self, type, center, angle, area):
-        #ID number used when tracking bins
+        # ID number used when tracking bins
         self.id = 0
 
-        #decisive type of letter in the bin
+        # decisive type of letter in the bin
         self.type = type
 
-        #center of bin
+        # center of bin
         self.center = center
 
-        #direction of the bin
+        # direction of the bin
         self.angle = angle
 
-        #area of the bin
+        # area of the bin
         self.area = area
 
-        #tracks timeout for bin
+        # tracks timeout for bin
         self.timeout = 10
 
-        #tracks our type decisions
+        # tracks our type decisions
         self.type_counts = [0, 0, 0, 0, 0]
 
 
@@ -47,7 +47,7 @@ def line_group_accept_test(line_group, line, max_range):
     """
 
     theta = line[1]
-    
+
 
 #    if circular_range(
 
@@ -64,18 +64,18 @@ def line_group_accept_test(line_group, line, max_range):
 class BinsEntity(VisionEntity):
 
     def init(self):
-    
-#   self.vertical_threshold = 15*math.pi/180  # How close to vertical lines must be
-#        self.horizontal_threshold = 0.2  # How close to horizontal lines must be
+
+# self.vertical_threshold = 15*math.pi/180  # How close to vertical lines must be
+# self.horizontal_threshold = 0.2  # How close to horizontal lines must be
         self.hough_threshold = 180
         self.adaptive_thresh_blocksize = 19
         self.adaptive_thresh = 6
         self.max_range = 100
 
     def process_frame(self, frame):
-        debug_frame = cv.CreateImage(cv.GetSize(frame),8,3)
+        debug_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
         cv.Copy(frame, debug_frame)
-        
+
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         # Set binary image to have saturation channel
@@ -98,24 +98,24 @@ class BinsEntity(VisionEntity):
         kernel = cv.CreateStructuringElementEx(5, 5, 3, 3, cv.CV_SHAPE_ELLIPSE)
         cv.Erode(binary, binary, kernel, 1)
         cv.Dilate(binary, binary, kernel, 1)
-    
+
         # Get Edges
         #cv.Canny(binary, binary, 30, 40)
-   
+
         cv.CvtColor(binary, debug_frame, cv.CV_GRAY2RGB)
-    
+
         # Hough Transform
         line_storage = cv.CreateMemStorage()
         raw_lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_STANDARD,
                                    rho=1,
-                                   theta=math.pi/180,
+                                   theta=math.pi / 180,
                                    threshold=self.hough_threshold,
                                    param1=0,
                                    param2=0
                                    )
-    
+
         line_groups = []  # A list of line groups which are each a line list
-            
+
         for line in raw_lines:
             group_found = False
             for line_group in line_groups:
@@ -132,11 +132,9 @@ class BinsEntity(VisionEntity):
             for line_group in line_groups:
                 rhos = map(lambda line: line[0], line_group)
                 angles = map(lambda line: line[1], line_group)
-                line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
+                line = (sum(rhos) / len(rhos), circular_average(angles, math.pi))
                 lines.append(line)
 
-        
         libvision.misc.draw_lines(debug_frame, raw_lines)
            # cv.CvtColor(color_filtered,debug_frame, cv.CV_GRAY2RGB)
         svr.debug("Bins", debug_frame)
-

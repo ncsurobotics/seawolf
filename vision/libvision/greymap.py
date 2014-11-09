@@ -2,6 +2,7 @@
 import ctypes
 from . import cmodules
 
+
 def greymap(img_in, img_out, mapping):
     if len(mapping) != 256:
         raise Exception("Greyscale mapping must providing mapping of 256 bytes")

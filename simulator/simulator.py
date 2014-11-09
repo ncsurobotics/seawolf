@@ -63,7 +63,7 @@ class Simulator(object):
 
         # Only capture every 1/self.camera_frame_rate secs
         t = time()
-        if t < self.last_capture_time + 1/self.camera_frame_rate:
+        if t < self.last_capture_time + 1 / self.camera_frame_rate:
             return
         self.last_capture_time = t
 
@@ -72,7 +72,7 @@ class Simulator(object):
         for entity in self.searching_entities:
             entity_data = self.robot.find_entity(entity)
             if entity_data:
-                data_list.append( (entity, entity_data) )
+                data_list.append((entity, entity_data))
 
         # Send data
         # self.searching_entities should be empty if self.connection=None, so

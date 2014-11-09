@@ -1,4 +1,3 @@
-# pylint: disable=E1101
 from __future__ import division
 import math
 import cv2
@@ -13,13 +12,13 @@ import random
 
 def line_slope(corner_a, corner_b):
     if corner_a[0] != corner_b[0]:
-        slope = (corner_b[1]-corner_a[1])/(corner_b[0]-corner_a[0])
+        slope = (corner_b[1] - corner_a[1]) / (corner_b[0] - corner_a[0])
         return slope
 
 
 def line_distance(corner_a, corner_b):
-    distance = math.sqrt((corner_b[0]-corner_a[0])**2 +
-                         (corner_b[1]-corner_a[1])**2)
+    distance = math.sqrt((corner_b[0] - corner_a[0]) ** 2 +
+                         (corner_b[1] - corner_a[1]) ** 2)
     return distance
 
 
@@ -40,17 +39,20 @@ def line_group_accept_test(line_group, line, max_range):
             min_rho = l[0]
     return max_rho - min_rho < max_range
 
+
 class Bar(object):
+
     def __init__(self, p1, p2, _theta):
         self.point1 = p1
         self.point2 = p2
         self.theta = _theta
 
+
 class HedgeTestingEntity(VisionEntity):
 
     def init(self):
 
-        # Thresholds For Line Finding 
+        # Thresholds For Line Finding
         self.vertical_thresholdG = .2  # How close to verticle lines must be
         self.vertical_thresholdR = .7  # How close to verticle lines must be
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
@@ -68,14 +70,14 @@ class HedgeTestingEntity(VisionEntity):
         self.seen_crossbar = False
         self.crossbar_depth = None
 
-        #Adaptive threshold parameters (R)
-        self.adaptive_thresh_blocksize = 29  #35 for just green #29 for just red
+        # Adaptive threshold parameters (R)
+        self.adaptive_thresh_blocksize = 29  # 35 for just green #29 for just red
         self.adaptive_thresh = 8
 
-        #Adaptive threshold parameters (G)
-        self.Gadaptive_thresh_blocksize = 35 #35 for just green #29 for just red
+        # Adaptive threshold parameters (G)
+        self.Gadaptive_thresh_blocksize = 35  # 35 for just green #29 for just red
         self.Gadaptive_thresh = 6
-# 
+#
         self.GR_Threshold0 = 50
 
         self.GR_Threshold1 = 5
@@ -95,7 +97,7 @@ class HedgeTestingEntity(VisionEntity):
        # rBinary = cv2.bitwise_not(rBinary)
         gBinary = rf1
 
-        #Adaptive Threshold
+        # Adaptive Threshold
         rBinary = cv2.adaptiveThreshold(rBinary, 255,
                                         cv2.ADAPTIVE_THRESH_MEAN_C,
                                         cv2.THRESH_BINARY_INV,
@@ -119,21 +121,21 @@ class HedgeTestingEntity(VisionEntity):
         gBinary = cv2.erode(gBinary, kernel)
         gBinary = cv2.dilate(gBinary, kernel)
 
-        gray = cv2.cvtColor(self.numpy_frame,cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(self.numpy_frame, cv2.COLOR_BGR2GRAY)
 
-        edges = cv2.Canny(gray,150,200,apertureSize = 3)
+        edges = cv2.Canny(gray, 150, 200, apertureSize=3)
 
-        lines = cv2.HoughLines(edges,1,np.pi/180,275)
-        for rho,theta in lines[0]:
+        lines = cv2.HoughLines(edges, 1, np.pi / 180, 275)
+        for rho, theta in lines[0]:
             a = np.cos(theta)
             b = np.sin(theta)
-            x0 = a*rho
-            y0 = b*rho
-            x1 = int(x0 + 1000*(-b)) # Here i have used int() instead of rounding the decimal value, so 3.8 --> 3
-            y1 = int(y0 + 1000*(a)) # But if you want to round the number, then use np.around() function, then 3.8 --> 4.0
-            x2 = int(x0 - 1000*(-b)) # But we need integers, so use int() function after that, ie int(np.around(x))
-            y2 = int(y0 - 1000*(a))
-            cv2.line(debug_frame,(x1,y1),(x2,y2),(0,255,0),2)
+            x0 = a * rho
+            y0 = b * rho
+            x1 = int(x0 + 1000 * (-b))  # Here i have used int() instead of rounding the decimal value, so 3.8 --> 3
+            y1 = int(y0 + 1000 * (a))  # But if you want to round the number, then use np.around() function, then 3.8 --> 4.0
+            x2 = int(x0 - 1000 * (-b))  # But we need integers, so use int() function after that, ie int(np.around(x))
+            y2 = int(y0 - 1000 * (a))
+            cv2.line(debug_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
         rFrame = libvision.cv2_to_cv(rFrame)
         gFrame = libvision.cv2_to_cv(gFrame)
@@ -156,7 +158,7 @@ class HedgeTestingEntity(VisionEntity):
         for ln in self.raw_greens:
             cv2.line(self.debug_frame, ln.point1, ln.point2, (0, 255, 0), 5)
 
-        # # Line Finding on Green pvc
+        # Line Finding on Green pvc
         # Rframe = libvision.cv2_to_cv(Rframe)
         # Gframe = libvision.cv2_to_cv(self.debug_frame)
         # rBinary = libvision.cv2_to_cv(rBinary)

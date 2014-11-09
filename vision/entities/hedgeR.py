@@ -1,4 +1,3 @@
-# pylint: disable=E1101
 from __future__ import division
 import math
 import cv
@@ -14,13 +13,13 @@ import random
 
 def line_slope(corner_a, corner_b):
     if corner_a[0] != corner_b[0]:
-        slope = (corner_b[1]-corner_a[1])/(corner_b[0]-corner_a[0])
+        slope = (corner_b[1] - corner_a[1]) / (corner_b[0] - corner_a[0])
         return slope
 
 
 def line_distance(corner_a, corner_b):
-    distance = math.sqrt((corner_b[0]-corner_a[0])**2 +
-                         (corner_b[1]-corner_a[1])**2)
+    distance = math.sqrt((corner_b[0] - corner_a[0]) ** 2 +
+                         (corner_b[1] - corner_a[1]) ** 2)
     return distance
 
 
@@ -46,9 +45,9 @@ class HedgeREntity(VisionEntity):
 
     def init(self):
 
-        # Thresholds For Line Finding 
-        self.vertical_thresholdG = .2 # How close to verticle lines must be
-        self.vertical_thresholdR = .25 # How close to verticle lines must be
+        # Thresholds For Line Finding
+        self.vertical_thresholdG = .2  # How close to verticle lines must be
+        self.vertical_thresholdR = .25  # How close to verticle lines must be
         self.horizontal_threshold = 0.5  # How close to horizontal lines must be
         self.hough_thresholdG = 150
         self.hough_thresholdR = 150
@@ -64,12 +63,12 @@ class HedgeREntity(VisionEntity):
         self.seen_crossbar = False
         self.crossbar_depth = None
 
-        #Adaptive threshold parameters (R)
-        self.adaptive_thresh_blocksize = 29  #35 for just green #29 for just red
+        # Adaptive threshold parameters (R)
+        self.adaptive_thresh_blocksize = 29  # 35 for just green #29 for just red
         self.adaptive_thresh = 23
 
-        #Adaptive threshold parameters (G)
-        self.Gadaptive_thresh_blocksize = 35  #35 for just green #29 for just red
+        # Adaptive threshold parameters (G)
+        self.Gadaptive_thresh_blocksize = 35  # 35 for just green #29 for just red
         self.Gadaptive_thresh = 6
 
         self.GR_Threshold0 = 50
@@ -89,7 +88,7 @@ class HedgeREntity(VisionEntity):
         Rbinary = rf3
         Gbinary = rf1
 
-        #Adaptive Threshold
+        # Adaptive Threshold
         Rbinary = cv2.adaptiveThreshold(Rbinary, 255,
                                         cv2.ADAPTIVE_THRESH_MEAN_C,
                                         cv2.THRESH_BINARY_INV,
@@ -116,7 +115,7 @@ class HedgeREntity(VisionEntity):
         # Hough Transform
         raw_linesG = cv2.HoughLines(Gbinary,
                                     rho=1,
-                                    theta=math.pi/180,
+                                    theta=math.pi / 180,
                                     threshold=self.hough_thresholdG)
 
         # Get vertical lines
@@ -125,7 +124,7 @@ class HedgeREntity(VisionEntity):
             rho = line[0]
             theta = line[1]
             if theta < self.vertical_thresholdG or \
-                theta > math.pi-self.vertical_thresholdG:
+                    theta > math.pi - self.vertical_thresholdG:
 
                 vertical_linesG.append((abs(rho), theta))
 
@@ -147,7 +146,7 @@ class HedgeREntity(VisionEntity):
         for line_group in vertical_line_groupsG:
             rhos = map(lambda line: line[0], line_group)
             angles = map(lambda line: line[1], line_group)
-            line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
+            line = (sum(rhos) / len(rhos), circular_average(angles, math.pi))
             vertical_linesG.append(line)
 
         # Get horizontal lines
@@ -155,15 +154,15 @@ class HedgeREntity(VisionEntity):
         for line in raw_linesG[0]:
             rho = line[0]
             theta = line[1]
-            dist_from_horizontal = (math.pi/2 + line[1]) % math.pi
+            dist_from_horizontal = (math.pi / 2 + line[1]) % math.pi
             if dist_from_horizontal < self.horizontal_threshold or \
-                dist_from_horizontal > math.pi-self.horizontal_threshold:
+                    dist_from_horizontal > math.pi - self.horizontal_threshold:
 
                 horizontal_lines.append((abs(line[0]), line[1]))
 
         # Group horizontal lines
         horizontal_line_groups = []  # A list of line groups which are each a line list
-        print "Horizontal lines: ", 
+        print "Horizontal lines: ",
         for line in horizontal_lines:
             group_found = False
             for line_group in horizontal_line_groups:
@@ -179,7 +178,7 @@ class HedgeREntity(VisionEntity):
             self.seen_crossbar = True
             rhos = map(lambda line: line[0], horizontal_line_groups[0])
             angles = map(lambda line: line[1], horizontal_line_groups[0])
-            line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
+            line = (sum(rhos) / len(rhos), circular_average(angles, math.pi))
             horizontal_lines = [line]
         else:
             self.seen_crossbar = False
@@ -194,47 +193,45 @@ class HedgeREntity(VisionEntity):
         self.debug_frame = libvision.cv2_to_cv(self.debug_frame)
         self.test_frame = libvision.cv2_to_cv(self.test_frame)
         Gbinary = libvision.cv2_to_cv(Gbinary)
-        
+
         if len(vertical_linesG) is 2:
             roi = cv.GetImageROI(frame)
             width = roi[2]
             height = roi[3]
-            self.left_pole = round(min(vertical_linesG[0][0], vertical_linesG[1][0]), 2) - width/2
-            self.right_pole = round(max(vertical_linesG[0][0], vertical_linesG[1][0]), 2) - width/2
-        #TODO: If one pole is seen, is it left or right pole?
+            self.left_pole = round(min(vertical_linesG[0][0], vertical_linesG[1][0]), 2) - width / 2
+            self.right_pole = round(max(vertical_linesG[0][0], vertical_linesG[1][0]), 2) - width / 2
+        # TODO: If one pole is seen, is it left or right pole?
 
         # Calculate planar distance r (assuming we are moving perpendicular to
         # the hedge)
         if self.left_pole and self.right_pole:
             theta = abs(self.left_pole - self.right_pole)
-            self.r = 3 / math.tan(math.radians(theta/2))
+            self.r = 3 / math.tan(math.radians(theta / 2))
         else:
             self.r = None
 
         if self.r and self.seen_crossbar:
-            bar_phi = (-1*horizontal_lines[0][0] + Gframe.height/2) / (Gframe.height/2) * 32
+            bar_phi = (-1 * horizontal_lines[0][0] + Gframe.height / 2) / (Gframe.height / 2) * 32
             self.crossbar_depth = self.r * math.atan(math.radians(bar_phi))
         else:
             self.crossbar_depth = None
 
-
         # Line Finding on Red pvc
-
         # Hough Transform
         line_storage = cv.CreateMemStorage()
         raw_linesR = cv.HoughLines2(Rbinary, line_storage, cv.CV_HOUGH_STANDARD,
-            rho=1,
-            theta=math.pi/180,
-            threshold=self.hough_thresholdR,
-            param1=0,
-            param2=0
-        )
+                                    rho=1,
+                                    theta=math.pi / 180,
+                                    threshold=self.hough_thresholdR,
+                                    param1=0,
+                                    param2=0
+                                    )
 
         # Get vertical lines
         vertical_linesR = []
         for line in raw_linesR:
             if line[1] < self.vertical_thresholdR or \
-               line[1] > math.pi-self.vertical_thresholdR:
+               line[1] > math.pi - self.vertical_thresholdR:
 
                 vertical_linesR.append((abs(line[0]), line[1]))
 
@@ -256,7 +253,7 @@ class HedgeREntity(VisionEntity):
         for line_group in vertical_line_groupsR:
             rhos = map(lambda line: line[0], line_group)
             angles = map(lambda line: line[1], line_group)
-            line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
+            line = (sum(rhos) / len(rhos), circular_average(angles, math.pi))
             vertical_linesR.append(line)
         '''
         for red_line in vertical_linesR:
@@ -265,7 +262,7 @@ class HedgeREntity(VisionEntity):
             print "Green Line:", green_line[0],", ",green_line[1]
         '''
         for red_line in vertical_linesR:
-            for green_line in vertical_linesG[:]: 
+            for green_line in vertical_linesG[:]:
                 if math.fabs(green_line[0] - red_line[0]) < self.GR_Threshold0 and \
                    math.fabs(green_line[1] - red_line[1]) < self.GR_Threshold1:
                     vertical_linesG.remove(green_line)
@@ -286,7 +283,7 @@ class HedgeREntity(VisionEntity):
             height = roi[3]
             self.left_pole = round(min(vertical_linesR[0][0], vertical_linesR[1][0]), 2) - width / 2
             self.right_pole = round(max(vertical_linesR[0][0], vertical_linesR[1][0]), 2) - width / 2
-        #TODO: If one pole is seen, is it left or right pole?
+        # TODO: If one pole is seen, is it left or right pole?
 
         # Calculate planar distance r (assuming we are moving perpendicular to
         # the hedge)
@@ -297,8 +294,8 @@ class HedgeREntity(VisionEntity):
             self.r = None
 
         for i in range(len(vertical_linesR[:])):
-            if vertical_linesR[i][1] > math.pi/2:
-                vertical_linesR[i] = (vertical_linesR[i][0],-(math.pi-vertical_linesR[i][1]))
+            if vertical_linesR[i][1] > math.pi / 2:
+                vertical_linesR[i] = (vertical_linesR[i][0], -(math.pi - vertical_linesR[i][1]))
                 print "Line changed to ", vertical_linesR[i]
         for line in vertical_linesR:
             print line
@@ -316,8 +313,8 @@ class HedgeREntity(VisionEntity):
             roi = cv.GetImageROI(frame)
             width = roi[2]
             height = roi[3]
-            x = line[0]*math.cos(line[1])
-            y = line[0]*math.sin(line[1])
+            x = line[0] * math.cos(line[1])
+            y = line[0] * math.sin(line[1])
             cv.Circle(Rframe, (int(x), int(y)), 5, (0, 255, 0), -1, 8, 0)
             if x > width or y > width or x < 0 or y < 0:
                 print "Lost point  ", x

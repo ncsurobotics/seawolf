@@ -7,16 +7,19 @@ import numpy
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 
+
 class Container(object):
+
     '''a blank container object'''
 
     def __repr__(self):
         return str(self.__dict__)
 
+
 class Entity(object):
 
-    def __init__(self, pos, color=(0.5,0.5,0.5), yaw=0, pitch=0, roll=0):
-        assert len(color)==3 or len(color)==4
+    def __init__(self, pos, color=(0.5, 0.5, 0.5), yaw=0, pitch=0, roll=0):
+        assert len(color) == 3 or len(color) == 4
         self.set_pos(pos)
         self.color = color
         self.yaw = yaw
@@ -28,7 +31,7 @@ class Entity(object):
         self.simulator = simulator
 
     def set_pos(self, pos):
-        assert len(pos)==3
+        assert len(pos) == 3
         self.pos = numpy.array(pos, numpy.float)
 
     def step(self, dt):
@@ -94,7 +97,9 @@ class Entity(object):
     def find(self, robot):
         raise NotImplementedError("This entity is not searchable.  Implement the find method to add this functionality.")
 
+
 class ModelEntity(Entity):
+
     def __init__(self, model, yaw_offset=0, *args, **kwargs):
         self.model = model
         self.yaw_offset = yaw_offset
@@ -106,7 +111,9 @@ class ModelEntity(Entity):
         self.model.draw()
         self.post_draw()
 
+
 class CubeEntity(Entity):
+
     def __init__(self, size, *args, **kwargs):
         self.size = size
         super(CubeEntity, self).__init__(*args, **kwargs)
@@ -116,9 +123,10 @@ class CubeEntity(Entity):
         glutSolidCube(self.size)
         self.post_draw()
 
+
 class AxisEntity(Entity):
 
-    def __init__(self, pos=[0,0,0], *args, **kwargs):
+    def __init__(self, pos=[0, 0, 0], *args, **kwargs):
         super(AxisEntity, self).__init__(pos, *args, **kwargs)
 
     def draw(self):
@@ -126,19 +134,19 @@ class AxisEntity(Entity):
         glBegin(GL_LINES)
 
         # X
-        glColor(1,0,0)
-        glVertex(0,0,0)
-        glVertex(1,0,0)
+        glColor(1, 0, 0)
+        glVertex(0, 0, 0)
+        glVertex(1, 0, 0)
 
         # Y
-        glColor(0,1,0)
-        glVertex(0,0,0)
-        glVertex(0,1,0)
+        glColor(0, 1, 0)
+        glVertex(0, 0, 0)
+        glVertex(0, 1, 0)
 
         # Z
-        glColor(0,0,1)
-        glVertex(0,0,0)
-        glVertex(0,0,1)
+        glColor(0, 0, 1)
+        glVertex(0, 0, 0)
+        glVertex(0, 0, 1)
 
         glEnd()
         self.post_draw()

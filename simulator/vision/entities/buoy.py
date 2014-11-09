@@ -9,19 +9,20 @@ from OpenGL.GLUT import *
 
 from base import Entity, Container
 
+
 class BuoyEntity(Entity):
 
     def __init__(self, *args, **kwargs):
         self.positions = [
-            numpy.array(kwargs.pop("pos_red", (0,0,0))),
-            numpy.array(kwargs.pop("pos_green", (0,0,0))),
-            numpy.array(kwargs.pop("pos_yellow", (0,0,0))),
+            numpy.array(kwargs.pop("pos_red", (0, 0, 0))),
+            numpy.array(kwargs.pop("pos_green", (0, 0, 0))),
+            numpy.array(kwargs.pop("pos_yellow", (0, 0, 0))),
         ]
         super(BuoyEntity, self).__init__(*args, **kwargs)
         self.colors = [
-            (1,0,0),
-            (0,1,0),
-            (1,1,0),
+            (1, 0, 0),
+            (0, 1, 0),
+            (1, 1, 0),
         ]
         self.color_names = ("red", "green", "yellow")
         self.output = Container()
@@ -44,7 +45,7 @@ class BuoyEntity(Entity):
 
     def find(self, robot):
 
-        self.buoys = filter(lambda x:x.found, self.buoys)
+        self.buoys = filter(lambda x: x.found, self.buoys)
         for buoy in self.buoys:
             buoy.found = False
 
@@ -52,12 +53,12 @@ class BuoyEntity(Entity):
         for pos, color in izip(self.positions, self.color_names):
             absolute_pos = self.absolute_point(pos)
             theta, phi = robot.find_point("forward", absolute_pos)
-            dist = numpy.linalg.norm(absolute_pos-robot.pos)
+            dist = numpy.linalg.norm(absolute_pos - robot.pos)
             if dist > 6 and dist < 25 and \
                     theta != None and \
                     phi != None:
-                theta *= robot.get_camera_fov("forward", vertical=False)/2
-                phi *= robot.get_camera_fov("forward", vertical=True)/2
+                theta *= robot.get_camera_fov("forward", vertical=False) / 2
+                phi *= robot.get_camera_fov("forward", vertical=True) / 2
 
                 # Find existing bouy with similar theta and phi
                 similar_buoy_found = False

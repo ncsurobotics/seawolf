@@ -2,7 +2,9 @@
 import ctypes
 from . import cmodules
 
+
 class Blob(object):
+
     def __init__(self, cblob):
         # Id of blob. This is the index used in the image output by find_blobs
         # for this blob
@@ -19,6 +21,7 @@ class Blob(object):
                     cblob.contents.x_1 - cblob.contents.x_0,
                     cblob.contents.y_1 - cblob.contents.y_0)
 
+
 def find_blobs(img_in, img_out, min_blob_size, max_blobs, out_coloring=0):
     """ find_blobs(img_in, img_out, min_blob_size, max_blobs, out_coloring=0)
 
@@ -27,7 +30,7 @@ def find_blobs(img_in, img_out, min_blob_size, max_blobs, out_coloring=0):
     mean these requirements are returned as a list, and also written to the
     indexed image img_out. The index of a pixel in img_out is the id of the blob
     it belongs too (with 0 being no blob).
-    
+
     """
 
     num_blobs = ctypes.c_int()

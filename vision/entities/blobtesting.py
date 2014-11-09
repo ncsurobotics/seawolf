@@ -8,9 +8,10 @@ from base import VisionEntity
 #import libvision
 from entity_types.bin import Bin
 
+
 def cv_to_cv2(frame):
     '''Convert a cv image into cv2 format.
-        
+
     Keyword Arguments:
     frame -- a cv image
     Returns a numpy array that can be used by cv2.
@@ -21,7 +22,7 @@ def cv_to_cv2(frame):
 
 def cv2_to_cv(frame):
     '''Convert a cv2 image into cv format.
-        
+
     Keyword Arguments:
     frame -- a cv2 numpy array representing an image.
     Returns a cv image.
@@ -46,10 +47,10 @@ def cv2_to_cv(frame):
 #         self.midy = rect_midpointy(corner1, corner2, corner3, corner4)
 #         self.area = line_distance(
 #             corner1, corner2) * line_distance(corner1, corner4)
-#         self.id = 0        # id identifies which bin your looking at
-#         self.lastseen = 2  # how recently you have seen this bin
-#         # how many times you have seen this bin (if you see it enough it
-#         # becomes confirmed)
+# self.id = 0        # id identifies which bin your looking at
+# self.lastseen = 2  # how recently you have seen this bin
+# how many times you have seen this bin (if you see it enough it
+# becomes confirmed)
 #         self.seencount = 1
 
 
@@ -102,7 +103,7 @@ class BlobTesting(VisionEntity):
 
         [self.frame1, self.frame2, self.frame3] = numpy.dsplit(
             self.numpy_frame, 3)
-        #Change the frame number to determine what channel to focus on
+        # Change the frame number to determine what channel to focus on
         self.numpy_frame = self.frame3
 
         '''Temporarily converts the image to a cv frame to do the adaptive threshold '''

@@ -11,8 +11,8 @@ from entity_types.bin import Bin
 class BinsContourEntity(VisionEntity):
 
     def init(self):
-        self.adaptive_thresh_blocksize = 15 # without canny, 15
-        self.adaptive_thresh = 8 # without canny, 8
+        self.adaptive_thresh_blocksize = 15  # without canny, 15
+        self.adaptive_thresh = 8  # without canny, 8
         self.mid_sep = 50
         self.min_area = 4500
         self.max_area = 14000
@@ -45,11 +45,11 @@ class BinsContourEntity(VisionEntity):
 
         # Thresholding
         self.numpy_frame = cv2.adaptiveThreshold(self.numpy_frame,
-                              255,
-                              cv2.ADAPTIVE_THRESH_MEAN_C,
-                              cv2.THRESH_BINARY_INV,
-                              self.adaptive_thresh_blocksize,
-                              self.adaptive_thresh)
+                                                 255,
+                                                 cv2.ADAPTIVE_THRESH_MEAN_C,
+                                                 cv2.THRESH_BINARY_INV,
+                                                 self.adaptive_thresh_blocksize,
+                                                 self.adaptive_thresh)
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         #kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
@@ -114,7 +114,7 @@ class BinsContourEntity(VisionEntity):
         # TODO, CLEAN THIS UP SOME
     def match_bins(self, target):
         found = 0
-        print "confirmed number: ",len(self.confirmed)
+        print "confirmed number: ", len(self.confirmed)
         for bin in self.confirmed:
             if math.fabs(bin.midx - target.midx) < self.trans_thresh and \
                math.fabs(bin.midy - target.midy) < self.trans_thresh:
@@ -126,9 +126,9 @@ class BinsContourEntity(VisionEntity):
                 bin.corner4 = target.corner4
                 bin.seencount += 3
                 if bin.lastseen < self.lastseen_max:
-                  bin.lastseen += 6
-                found = 1  
-                       
+                    bin.lastseen += 6
+                found = 1
+
         for bin in self.candidates:
             if math.fabs(bin.midx - target.midx) < self.trans_thresh and \
                math.fabs(bin.midy - target.midy) < self.trans_thresh:
@@ -140,8 +140,8 @@ class BinsContourEntity(VisionEntity):
                 bin.corner4 = target.corner4
                 bin.seencount += 3
                 if bin.lastseen < self.lastseen_max:
-                  bin.lastseen += 6
-                found = 1        
+                    bin.lastseen += 6
+                found = 1
         if found == 0:
             self.candidates.append(target)
             target.lastseen += 3
@@ -151,7 +151,7 @@ class BinsContourEntity(VisionEntity):
         for bin in self.candidates[:]:
             bin.lastseen -= 2
             if bin.seencount >= self.seencount_thresh:
-                self.confirmed.append(bin) 
+                self.confirmed.append(bin)
                 self.candidates.remove(bin)
                 print "confirmed appended"
             if bin.lastseen < self.lastseen_thresh:
@@ -161,8 +161,6 @@ class BinsContourEntity(VisionEntity):
             if bin.lastseen < self.lastseen_thresh:
                 self.confirmed.remove(bin)
                 print "confirmed removed"
-
-
 
     def draw_bins(self):
         clr = (0, 0, 255)
@@ -179,6 +177,5 @@ class BinsContourEntity(VisionEntity):
             cv2.circle(self.debug_frame, (
                 int(bin.midx), int(bin.midy)), 5, clr, -1)
 
-           
             font = cv2.FONT_HERSHEY_SIMPLEX
             cv2.putText(self.debug_frame, "id=" + str(bin.id), (int(bin.midx) - 50, int(bin.midy) + 40), font, .8, clr, 1, cv2.CV_AA)
