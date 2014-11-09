@@ -1,0 +1,6 @@
+*.pyc
+.idea/
+*.so
+*/bin
+*/__pycache__
+/vision/FOOTAGE
