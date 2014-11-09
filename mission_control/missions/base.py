@@ -3,11 +3,15 @@ import seawolf
 
 from time import time
 
+
 class MissionControlReset(Exception):
+
     '''Indicates that a mission reset was signaled from an outside source.'''
     pass
 
+
 class MissionBase(object):
+
     '''A base class for missions.'''
 
     def register_mission_controller(self, mission_controller):
@@ -103,6 +107,7 @@ class MissionBase(object):
 
 
 class SearchMission(MissionBase):
+
     '''
     Does nothing but search and print entity results.  Useful for testing
     simulated entities.

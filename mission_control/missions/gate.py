@@ -11,6 +11,7 @@ DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.3
 
+
 class GateMission(MissionBase):
 
     def __init__(self):
@@ -26,13 +27,15 @@ class GateMission(MissionBase):
         ))
 
     def step(self, vision_data):
-        if not vision_data: return
+        if not vision_data:
+            return
         gate_data = vision_data['gate']
-        if not gate_data: return
+        if not gate_data:
+            return
         print gate_data
 
         if gate_data and gate_data.left_pole and gate_data.right_pole:
-            gate_center = DEGREE_PER_PIXEL*(gate_data.left_pole + gate_data.right_pole)/2  # degrees
+            gate_center = DEGREE_PER_PIXEL * (gate_data.left_pole + gate_data.right_pole) / 2  # degrees
 
             # If both poles are seen, point toward it then go forward.
             self.set_entity_timeout(MISSION_TIMEOUT)
