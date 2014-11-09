@@ -14,7 +14,9 @@ Error: Could not import library "seawolf".
     Make sure the libseawolf python bindings are installed.
 ''')
 
+
 class MissionController(object):
+
     '''Orchestrates the execution of a queue of missions.'''
 
     def __init__(self, process_manager, wait_for_go=False):
@@ -59,7 +61,7 @@ class MissionController(object):
         elif seawolf.var.get("MissionReset"):
             seawolf.var.set("MissionReset", 0)
 
-        try :
+        try:
             # Run missions
             while self.execute_next():
                 pass
@@ -85,12 +87,12 @@ class MissionController(object):
         self.last_mission = self.current_mission
         try:
             self.current_mission = self.mission_queue.popleft()
-        except IndexError: # deque raises IndexError when it is empty
+        except IndexError:  # deque raises IndexError when it is empty
             return False
         print "Starting mission:", self.current_mission
 
         if isinstance(self.current_mission, sw3.NavRoutine):
-            #6/15/2013 this may be where the instant finish problem is
+            # 6/15/2013 this may be where the instant finish problem is
             try:
                 sw3.nav.do(self.current_mission)
                 self.current_mission.wait()
@@ -100,13 +102,12 @@ class MissionController(object):
         else:
             self.current_mission.init()
             try:
-               if not self.current_mission.execute():
-                   print "MISSION FAILED"
-               else:
-                   print "MISSION FINISHED"
+                if not self.current_mission.execute():
+                    print "MISSION FAILED"
+                else:
+                    print "MISSION FINISHED"
             except KillSignal:
                 sys.exit(0)
 
         self.process_manager.kill()
         return True
-

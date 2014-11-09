@@ -2,7 +2,9 @@
 import threading
 import time
 
+
 class RateLimiter(object):
+
     """ Rate limit some incoming data
 
     A rate limiter has a callback and a maximum rate. A rate limiter accepts
@@ -39,7 +41,7 @@ class RateLimiter(object):
                 self.item = None
             self.callback(my_item)
             time.sleep(self.wait_time)
-        
+
     def provide(self, obj):
         """ Offer a new input
 
