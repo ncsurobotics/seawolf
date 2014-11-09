@@ -16,6 +16,7 @@ APPS_TO_START = [
     "./bin/mixer",
 ]
 
+
 def zero_thrusters():
 
     seawolf.var.set("DepthPID.Paused", 1)
@@ -31,6 +32,7 @@ def zero_thrusters():
     seawolf.var.set("Stern", 0)
     seawolf.var.set("StrafeT", 0)
     seawolf.var.set("StrafeB", 0)
+
 
 def main():
 
