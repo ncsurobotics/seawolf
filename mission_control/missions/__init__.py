@@ -15,7 +15,7 @@ from strafetest import StrafeMission
 #from buoy_demo import BuoyDemoMission
 
 mission_classes = {
-    'strafetest' : StrafeMission,
+    'strafetest': StrafeMission,
     'test': TestMission,
     'search': SearchMission,
     'gate': GateMission,

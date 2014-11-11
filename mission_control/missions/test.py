@@ -2,6 +2,7 @@
 from vision import entities
 from missions.base import MissionBase
 
+
 class TestMission(MissionBase):
 
     def __init__(self, entity_cls=None):

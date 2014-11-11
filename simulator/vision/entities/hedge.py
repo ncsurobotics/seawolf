@@ -7,7 +7,9 @@ from OpenGL.GLU import *
 
 from base import Entity, Container
 
+
 class HedgeEntity(Entity):
+
     '''
     The center of the hedge is directly between the top point of the vertical
     poles.
@@ -28,14 +30,14 @@ class HedgeEntity(Entity):
         glPopMatrix()
 
         # Center Pole
-        glColor(1,0,0)
+        glColor(1, 0, 0)
         glPushMatrix()
-        glTranslate(0,0,-4)
+        glTranslate(0, 0, -4)
         gluCylinder(gluNewQuadric(), 0.2, 0.2, 4, 10, 1)
         glPopMatrix()
 
         # Left Pole
-        glColor(0,1,0)
+        glColor(0, 1, 0)
         glPushMatrix()
         glTranslate(0, -3, -4)
         gluCylinder(gluNewQuadric(), 0.2, 0.2, 1, 10, 1)
@@ -55,24 +57,24 @@ class HedgeEntity(Entity):
         c = Container()
         c.left_pole = robot.find_point("forward", self.absolute_point((0, 3)))
         c.right_pole = robot.find_point("forward", self.absolute_point((0, -3)))
-        c.center_pole = robot.find_point("forward", self.absolute_point((0,0)))
+        c.center_pole = robot.find_point("forward", self.absolute_point((0, 0)))
         bottom_pole = robot.find_point("forward", self.absolute_point((0, 0, -4)))[1]
 
         if c.left_pole:
-            c.left_pole *= robot.get_camera_fov("forward")/2
+            c.left_pole *= robot.get_camera_fov("forward") / 2
         if c.right_pole:
-            c.right_pole *= robot.get_camera_fov("forward")/2
+            c.right_pole *= robot.get_camera_fov("forward") / 2
         if c.center_pole:
-            c.center_pole *= robot.get_camera_fov("forward")/2
+            c.center_pole *= robot.get_camera_fov("forward") / 2
         if bottom_pole:
-            bottom_pole *= robot.get_camera_fov("forward", vertical=True)/2
+            bottom_pole *= robot.get_camera_fov("forward", vertical=True) / 2
 
         if c.left_pole and c.right_pole:
             theta = abs(c.left_pole - c.right_pole)
-            c.r = 3 / tan(radians(theta/2))
+            c.r = 3 / tan(radians(theta / 2))
         elif c.center_pole:
             theta = abs(c.center_pole)
-            c.r = 3 / tan(radians(theta/2))
+            c.r = 3 / tan(radians(theta / 2))
         else:
             c.r = None
 

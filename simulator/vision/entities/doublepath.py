@@ -1,6 +1,7 @@
 
 from base import Entity, Container
 
+
 class DoublePathEntity(Entity):
 
     def __init__(self, *args, **kwargs):

@@ -3,18 +3,20 @@ import seawolf as sw
 
 __all__ = ["mixer"]
 
+
 class Mixer(object):
+
     def set_forward(self, rate):
         sw.notify.send("THRUSTER_REQUEST", "Forward %.4f" % (rate,))
 
     def set_strafet(self, rate):
         sw.notify.send("THRUSTER_REQUEST", "StrafeT %.4f" % (rate,))
-    
+
     def set_strafeb(self, rate):
         sw.notify.send("THRUSTER_REQUEST", "StrafeB %.4f" % (rate,))
-        
+
     def set_roll(self, rate):
-	sw.notify.send("THRUSTER_REQUEST", "Roll %.4f" % (rate,))
+        sw.notify.send("THRUSTER_REQUEST", "Roll %.4f" % (rate,))
 
     def set_yaw(self, rate):
         sw.notify.send("THRUSTER_REQUEST", "Yaw %.4f" % (rate,))

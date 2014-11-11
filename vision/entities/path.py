@@ -11,6 +11,7 @@ from base import VisionEntity
 import libvision
 from sw3.util import circular_average
 
+
 class PathEntity(VisionEntity):
     name = "Path"
 
@@ -26,8 +27,8 @@ class PathEntity(VisionEntity):
         self.max_value = 255
         self.theta_threshold = 0.1
         self.hough_threshold = 55
-        self.lines_to_consider = 4 # Only consider the strongest so many lines
-        self.seen_in_a_row_threshold = 2 # Must see path this many times in a row before reporting it
+        self.lines_to_consider = 4  # Only consider the strongest so many lines
+        self.seen_in_a_row_threshold = 2  # Must see path this many times in a row before reporting it
 
         # Position/orientation
         self.theta = None
@@ -53,7 +54,7 @@ class PathEntity(VisionEntity):
         found_path = False
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
-        #use RGB color finder
+        # use RGB color finder
         binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame, 250, 125, 0, 1500, 500, .3)
 
         if self.debug:
@@ -66,7 +67,7 @@ class PathEntity(VisionEntity):
         line_storage = cv.CreateMemStorage()
         lines = cv.HoughLines2(binary, line_storage, cv.CV_HOUGH_STANDARD,
                                rho=1,
-                               theta=math.pi/180,
+                               theta=math.pi / 180,
                                threshold=self.hough_threshold,
                                param1=0,
                                param2=0
@@ -93,7 +94,7 @@ class PathEntity(VisionEntity):
             # crosses this vertical line, the range will be way too large.  To
             # correct for this, we always take the smallest angle between the
             # min and max.
-            if theta_range > math.pi/2:
+            if theta_range > math.pi / 2:
                 theta_range = math.pi - theta_range
 
             if theta_range < self.theta_threshold:
@@ -107,7 +108,7 @@ class PathEntity(VisionEntity):
         else:
             self.seen_in_a_row = 0
 
-        #stores whether or not we are confident about the path's presence
+        # stores whether or not we are confident about the path's presence
         object_present = False
 
         if self.seen_in_a_row >= self.seen_in_a_row_threshold:
@@ -115,8 +116,8 @@ class PathEntity(VisionEntity):
             self.image_coordinate_center = self.find_centroid(binary)
             # Move the origin to the center of the image
             self.center = (
-                self.image_coordinate_center[0] - frame.width/2,
-                self.image_coordinate_center[1]*-1 + frame.height/2
+                self.image_coordinate_center[0] - frame.width / 2,
+                self.image_coordinate_center[1] * -1 + frame.height / 2
             )
 
         if self.debug:
@@ -141,20 +142,20 @@ class PathEntity(VisionEntity):
                     int(round(self.image_coordinate_center[1])),
                 )
                 cv.Circle(frame, rounded_center, 5, (0, 255, 0))
-                libvision.misc.draw_lines(frame, [(frame.width/2, self.theta)])
+                libvision.misc.draw_lines(frame, [(frame.width / 2, self.theta)])
             else:
                 libvision.misc.draw_lines(frame, lines)
 
             #cv.ShowImage("Path", frame)
             svr.debug("Path", frame)
 
-        #populate self.output with infos
+        # populate self.output with infos
         self.output.found = object_present
         self.output.theta = self.theta
         if self.center:
-            #scale center coordinates of path based on frame size
-            self.output.x = self.center[0]/(frame.width/2)
-            self.output.y = self.center[1]/(frame.height/2)
+            # scale center coordinates of path based on frame size
+            self.output.x = self.center[0] / (frame.width / 2)
+            self.output.y = self.center[1] / (frame.height / 2)
         else:
             self.output.x = None
             self.output.y = None
@@ -168,14 +169,14 @@ class PathEntity(VisionEntity):
         mat = cv.GetMat(binary)
         moments = cv.Moments(mat)
         return (
-            int(moments.m10/moments.m00),
-            int(moments.m01/moments.m00)
+            int(moments.m10 / moments.m00),
+            int(moments.m01 / moments.m00)
         )
 
     def __repr__(self):
         if self.theta is None:
             theta = None
         else:
-            theta = round((180/math.pi)*self.theta, 2)
+            theta = round((180 / math.pi) * self.theta, 2)
         return "<PathEntity center=%s theta=%s>" % \
             (self.center, theta)

@@ -15,5 +15,7 @@ import util
 nav = NavQueue()
 
 # Emergency breech function
+
+
 def emergency_breech():
     nav.do(EmergencyBreech())

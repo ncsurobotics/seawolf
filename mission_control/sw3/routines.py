@@ -11,6 +11,7 @@ import util
 from mixer import mixer
 from data import data
 
+
 class NavRoutine(object):
     RESET = 0
     RUNNING = 1
@@ -128,10 +129,13 @@ class NavRoutine(object):
     def on_done_clear_callbacks(self):
         self.on_done_callbacks = []
 
+
 class CompoundInterferenceException(Exception):
     pass
 
+
 class CompoundRoutine(NavRoutine):
+
     """ Run multiple routines simultaneously """
 
     def __init__(self, *args, **kwargs):
@@ -176,12 +180,16 @@ class CompoundRoutine(NavRoutine):
         for routine in self.routines:
             routine.reset()
 
+
 class NullRoutine(NavRoutine):
+
     """ The Null routine does nothing """
     pass
 
+
 def HoldPosition():
     return CompoundRoutine((Forward(0), Strafe(0)))
+
 
 class ZeroThrusters(NavRoutine):
     interactions = ("Depth", "Yaw", "Stafe", "Forward")
@@ -203,6 +211,7 @@ class ZeroThrusters(NavRoutine):
         for v in ("Port", "Star", "Bow", "Stern", "StrafeT", "StrafeB"):
             sw.var.set(v, 0)
 
+
 class SetDepth(NavRoutine):
     interactions = ("Depth",)
 
@@ -218,6 +227,7 @@ class SetDepth(NavRoutine):
 
     def _start(self):
         pid.depth.heading = self.depth
+
 
 class RelativeDepth(NavRoutine):
     interactions = ("Depth",)
@@ -237,12 +247,15 @@ class RelativeDepth(NavRoutine):
         self.target_depth = max(data.depth() + self.amount, 0)
         pid.depth.heading = self.target_depth
 
+
 class HoldDepth(RelativeDepth):
+
     def __init__(self, timeout=-1):
         super(HoldDepth, self).__init__(0, timeout)
 
     def _poll(self):
         self.wait()
+
 
 class SetRotate(NavRoutine):
     interactions = ("Yaw",)
@@ -256,6 +269,7 @@ class SetRotate(NavRoutine):
         #pid.rotate.heading = self.rate
         pid.yaw.pause()
         sw.notify.send("THRUSTER_REQUEST", "Yaw %.2f" % (self.rate,))
+
 
 class SetYaw(NavRoutine):
     interactions = ("Yaw",)
@@ -287,6 +301,7 @@ class SetYaw(NavRoutine):
 
     def _start(self):
         pid.yaw.heading = self.angle
+
 
 class RelativeYaw(NavRoutine):
     interactions = ("Yaw",)
@@ -320,18 +335,23 @@ class RelativeYaw(NavRoutine):
             self.target_yaw = (self.target_yaw + 360)
         pid.yaw.heading = self.target_yaw
 
+
 class HoldYaw(RelativeYaw):
+
     def __init__(self, timeout=-1):
         super(HoldYaw, self).__init__(0, timeout)
 
     def _poll(self):
         self.wait()
 
+
 def TurnRight():
     return RelativeYaw(90)
 
+
 def TurnLeft():
     return RelativeYaw(-90)
+
 
 class Forward(NavRoutine):
     interactions = ("Forward",)
@@ -342,6 +362,7 @@ class Forward(NavRoutine):
 
     def _start(self):
         mixer.forward = self.rate
+
 
 class StrafeT(NavRoutine):
     interactions = ("StrafeT",)
@@ -356,6 +377,7 @@ class StrafeT(NavRoutine):
     def _cleanup(self):
         mixer.strafet = 0.0
 
+
 class StrafeB(NavRoutine):
     interactions = ("StrafeB",)
 
@@ -368,7 +390,10 @@ class StrafeB(NavRoutine):
 
     def _cleanup(self):
         mixer.strafeb = 0.0
+
+
 class EmergencyBreech(ZeroThrusters):
+
     def _start(self):
         # Zero the thrusters by calling to the super class
         super(EmergencyBreech, self)._start()
@@ -382,7 +407,8 @@ class EmergencyBreech(ZeroThrusters):
 
     def _stop(self):
         # Zero depth thrusters
-        mixer.depth = 0.0;
+        mixer.depth = 0.0
+
 
 def sequence_routines(*routines):
     """ Chains the given routines together with on_done callbacks such that
@@ -391,8 +417,8 @@ def sequence_routines(*routines):
     Return the first routine in the sequence.
 
     """
-    for i in xrange(1, len(routines)-1):
-        routines[i-1].on_done(routines[i])
+    for i in xrange(1, len(routines) - 1):
+        routines[i - 1].on_done(routines[i])
     return routines[0]
 
 
@@ -404,10 +430,12 @@ def loop_routines(*routines):
 
     """
     for i in xrange(len(routines)):
-        routines[i-1].on_done(routines[i])
+        routines[i - 1].on_done(routines[i])
     return routines[0]
 
+
 class LoopRoutine(NavRoutine):
+
     """ Routine that executes the given routines in order then repeats. """
 
     def __init__(self, *args, **kwargs):
@@ -442,7 +470,7 @@ class LoopRoutine(NavRoutine):
 
         if new_state == NavRoutine.COMPLETED or new_state == NavRoutine.TIMEDOUT:
             # Move to next routine
-            self.routine_counter = (self.routine_counter+1) % len(self.routines)
+            self.routine_counter = (self.routine_counter + 1) % len(self.routines)
             new_routine = self.routines[self.routine_counter]
             new_routine.start()
 
@@ -458,7 +486,9 @@ class LoopRoutine(NavRoutine):
         for routine in self.routines:
             routine.reset()
 
+
 class SequentialRoutine(NavRoutine):
+
     """ Routine that executes the given routines in order then exits. """
 
     def __init__(self, *args, **kwargs):

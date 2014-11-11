@@ -1,4 +1,3 @@
-# pylint: disable=E1101
 from __future__ import division
 from time import time
 
@@ -20,7 +19,9 @@ MATCH_METHOD_MIN_OR_MAX = {
     cv.CV_TM_CCOEFF_NORMED: MAX,
 }
 
+
 class Tracker(object):
+
     '''Tracks an object between a sequence of frames.
 
     On initialization, a frame is given with the location and size of the
@@ -35,7 +36,7 @@ class Tracker(object):
     '''
 
     def __init__(self, frame, center, size, search_size, alpha=0.2,
-        min_z_score=5.0, match_method=DEFAULT_MATCH_METHOD, debug=False):
+                 min_z_score=5.0, match_method=DEFAULT_MATCH_METHOD, debug=False):
         '''
         Arguments:
 
@@ -81,8 +82,8 @@ class Tracker(object):
         self.debug = debug
 
         template_rect = clip_rectangle((
-            center[0]-size[0]/2,
-            center[1]-size[1]/2,
+            center[0] - size[0] / 2,
+            center[1] - size[1] / 2,
             size[0],
             size[1],
         ), frame.width, frame.height)
@@ -122,14 +123,14 @@ class Tracker(object):
 
         '''
         match_rectangle = (
-            int(coordinates[0]-self._template.width/2),
-            int(coordinates[1]-self._template.height/2),
+            int(coordinates[0] - self._template.width / 2),
+            int(coordinates[1] - self._template.height / 2),
             int(self._template.width),
             int(self._template.height)
         )
         cv.SetImageROI(search_image, match_rectangle)
 
-        cv.ConvertScale(self._template, self._template, 1-self.alpha)
+        cv.ConvertScale(self._template, self._template, 1 - self.alpha)
         cv.ScaleAdd(search_image, self.alpha, self._template, self._template)
 
         cv.ResetImageROI(search_image)
@@ -150,18 +151,18 @@ class Tracker(object):
                                "unpickled.")
 
         search_rect = clip_rectangle((
-            self.object_center[0]-self.search_size[0]/2,  # x
-            self.object_center[1]-self.search_size[1]/2,  # y
+            self.object_center[0] - self.search_size[0] / 2,  # x
+            self.object_center[1] - self.search_size[1] / 2,  # y
             self.search_size[0],  # width
             self.search_size[1],  # height
         ), frame.width, frame.height)
         search_image = self._preprocess(crop(frame, search_rect))
         result = cv.CreateImage(
-                (
-                    search_image.width - self._template.width + 1,
-                    search_image.height - self._template.height + 1
-                ),
-                cv.IPL_DEPTH_32F, 1)
+            (
+                search_image.width - self._template.width + 1,
+                search_image.height - self._template.height + 1
+            ),
+            cv.IPL_DEPTH_32F, 1)
         cv.MatchTemplate(search_image, self._template, result, self.match_method)
         min_or_max = MATCH_METHOD_MIN_OR_MAX[self.match_method]
         minmaxloc = cv.MinMaxLoc(result)
@@ -172,22 +173,22 @@ class Tracker(object):
         # Change from result image coordinates to search region coordinates to
         # image coordinates
         match_in_search_region = (
-            match_in_result[0] + self._template.width/2,
-            match_in_result[1] + self._template.height/2,
+            match_in_result[0] + self._template.width / 2,
+            match_in_result[1] + self._template.height / 2,
         )
         object_center = (
             match_in_search_region[0] + search_rect[0],
             match_in_search_region[1] + search_rect[1],
         )
         object_center = (
-            int(in_range(0, object_center[0], frame.width-1)),
-            int(in_range(0, object_center[1], frame.height-1)),
+            int(in_range(0, object_center[0], frame.width - 1)),
+            int(in_range(0, object_center[1], frame.height - 1)),
         )
 
         # Determine if the max/min is significant.
-        hist = cv.CreateHist([256], cv.CV_HIST_ARRAY, [[0,255]], 1)
+        hist = cv.CreateHist([256], cv.CV_HIST_ARRAY, [[0, 255]], 1)
         cv.CalcHist([scale_32f_image(result)], hist)
-        #XXX stddevs from mean should be calculated from either 0 or 255
+        # XXX stddevs from mean should be calculated from either 0 or 255
         #    depending on min or max
         distance = abs(libvision.hist.num_stddev_from_mean(hist, 255))
         if distance < self.min_z_score:
@@ -201,8 +202,8 @@ class Tracker(object):
 
             result_8bit = scale_32f_image(result)
             if object_found:
-                cv.Circle(result_8bit, match_in_result, 5, (0,255,0))
-                cv.Circle(search_image, match_in_search_region, 5, (0,255,0))
+                cv.Circle(result_8bit, match_in_result, 5, (0, 255, 0))
+                cv.Circle(search_image, match_in_search_region, 5, (0, 255, 0))
             hist_image = libvision.hist.histogram_image(hist)
 
             cv.ShowImage("match", result_8bit)
@@ -247,7 +248,7 @@ def scale_32f_image(image):
     result = cv.CreateImage(cv.GetSize(image), 8, image.channels)
     channel_image = cv.CreateImage(cv.GetSize(image), cv.IPL_DEPTH_32F, 1)
     channel_scaled = cv.CreateImage(cv.GetSize(image), 8, 1)
-    for channel_num in xrange(1, image.channels+1):
+    for channel_num in xrange(1, image.channels + 1):
 
         cv.SetImageCOI(image, channel_num)
         cv.Copy(image, channel_image)
@@ -255,9 +256,9 @@ def scale_32f_image(image):
         minimum = minmaxloc[0]
         maximum = minmaxloc[1]
         if maximum - minimum > 0:
-            cv.ConvertScale(channel_image, channel_scaled, 255/(maximum-minimum), -255/(maximum-minimum)*minimum)
+            cv.ConvertScale(channel_image, channel_scaled, 255 / (maximum - minimum), -255 / (maximum - minimum) * minimum)
         else:
-            cv.ConvertScale(channel_image, channel_scaled, 0, -255/minimum)
+            cv.ConvertScale(channel_image, channel_scaled, 0, -255 / minimum)
 
         cv.SetImageCOI(result, channel_num)
         cv.Copy(channel_scaled, result)
@@ -265,6 +266,7 @@ def scale_32f_image(image):
     cv.SetImageCOI(image, 0)
     cv.SetImageCOI(result, 0)
     return result
+
 
 def crop(frame, rect):
     '''Crops the image to a given CvRect.
@@ -279,19 +281,21 @@ def crop(frame, rect):
     cv.ResetImageROI(frame)
     return cropped
 
+
 def clip_rectangle(rect, width, height):
     '''
     Returns the clipped CvRect that will fit inside a width x height image.
 
     '''
-    x = in_range(0, rect[0], width-1)
-    y = in_range(0, rect[1], height-1)
+    x = in_range(0, rect[0], width - 1)
+    y = in_range(0, rect[1], height - 1)
     return (
         int(x),
         int(y),
-        int(rect[2] - abs(x-rect[0])),
-        int(rect[3] - abs(y-rect[1])),
+        int(rect[2] - abs(x - rect[0])),
+        int(rect[3] - abs(y - rect[1])),
     )
+
 
 def in_range(min, x, max):
     '''Returns x clipped to the range of min and max.'''

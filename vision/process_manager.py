@@ -8,6 +8,7 @@ import svr
 
 import sw3
 
+
 class ProcessManager(object):
 
     def __init__(self, extra_kwargs={}):
@@ -15,7 +16,7 @@ class ProcessManager(object):
         :param extra_kwargs:
             Keyward args that are passed to each process started.
         '''
-        #holds the list currently running processes
+        # holds the list currently running processes
         self.extra_kwargs = extra_kwargs
         self.process_list = {}
 
@@ -48,14 +49,14 @@ class ProcessManager(object):
 
                 output = process.get_data(delay)
 
-                if output != None:
+                if output is not None:
                     vision_data_empty = False
 
                 vision_data[process.name] = output
             else:
                 raise ValueError("Attempted to get data from a non-existant process")
 
-        #if vision_data is empty, return None
+        # if vision_data is empty, return None
         if vision_data_empty:
             return None
         else:
@@ -84,28 +85,29 @@ class ProcessManager(object):
 
         self.process_list = {}
 
+
 class VisionProcess(object):
 
     def __init__(self, process_manager, entity_cls, name):
-        #assign the vision entity this process handles
+        # assign the vision entity this process handles
         self.process_manager = process_manager
         self.entity_cls = entity_cls
         self.name = name
 
     def get_data(self, delay=0):
         '''check for incoming data from this process'''
-        #return any new data from the queue
+        # return any new data from the queue
         if self.downstream_conn.poll(delay):
-            data =  self.downstream_conn.recv()
+            data = self.downstream_conn.recv()
             if isinstance(data, KillSignal):
                 self.process_manager.kill()
                 raise data
-            #elif str(data.__class__) == str(SensorCapture):
+            # elif str(data.__class__) == str(SensorCapture):
             elif isinstance(data, SensorCapture):
                 sw3.data.freeze(self.name)
             else:
-                #print "Data:", data
-                #print str(data.__class__), str(SensorCapture)
+                # print "Data:", data
+                # print str(data.__class__), str(SensorCapture)
                 return data
 
     def send_data(self, data):
@@ -120,8 +122,9 @@ class VisionProcess(object):
         '''runs this process'''
         parent_conn, child_conn = Pipe()
         self.downstream_conn = parent_conn
-        self.process = Process(target=run_entity, args = (child_conn, self.entity_cls) + args, kwargs = kwargs)
+        self.process = Process(target=run_entity, args=(child_conn, self.entity_cls) + args, kwargs = kwargs)
         self.process.start()
+
 
 def run_entity(upstream_conn, entity_cls, *args, **kwargs):
     '''perpetually loops the vision class entity_cls, and outputs data
@@ -136,10 +139,12 @@ def run_entity(upstream_conn, entity_cls, *args, **kwargs):
         traceback.print_exc()
         sys.exit()
 
+
 class KillSignal(Exception):
     pass
 
+
 class SensorCapture(object):
+
     '''Sent to entity's parent process when it is capturing a frame.'''
     pass
-

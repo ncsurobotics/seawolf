@@ -5,7 +5,9 @@ __all__ = ["data"]
 
 VARS_TO_FREEZE = ["SEA.Yaw", "Depth"]
 
+
 class Imu(object):
+
     def __init__(self, data):
         self.data = data
 
@@ -18,7 +20,9 @@ class Imu(object):
     def roll(self):
         return self.data.var_get("SEA.Roll")
 
+
 class Data(object):
+
     def __init__(self):
         self.imu = Imu(self)
         self.freezes = {}  # Map freeze name to variable dictionary

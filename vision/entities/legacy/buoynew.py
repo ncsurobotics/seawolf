@@ -19,7 +19,8 @@ INIT_TRACKING_THRESHOLD = 6  # Frames to see buoys before tracking
 TRACKING_MIN_Z_SCORE = 10
 TRACKING_ALPHA = 0.2
 MOVEMENT_THRESHOLD = 50  # Pixel distance the buoys are considered the same when finding buoys to track
-CANDIDATE_TIMEOUT = 2 # Time before the current buoy candidate is forgotten
+CANDIDATE_TIMEOUT = 2  # Time before the current buoy candidate is forgotten
+
 
 class BuoyNewEntity(VisionEntity):
 
@@ -57,7 +58,7 @@ class BuoyNewEntity(VisionEntity):
             if debug_frame:
                 for tracker in self.trackers:
                     print "Drawing Circle!!!!", tracker.object_center
-                    cv.Circle(debug_frame, (int(tracker.object_center[0]),int(tracker.object_center[1])), tracker.size[0], (0,0,255), 2)
+                    cv.Circle(debug_frame, (int(tracker.object_center[0]), int(tracker.object_center[1])), tracker.size[0], (0, 0, 255), 2)
 
         if debug_frame:
             svr.debug("Buoy", debug_frame)
@@ -80,7 +81,7 @@ class BuoyNewEntity(VisionEntity):
 
         middle_buoy, buoy_scale = self.detect_buoys(frame, debug_frame)
 
-        if middle_buoy and (not self.last_buoy or sqrt((middle_buoy[0]-self.last_buoy[0])**2 + (middle_buoy[1]-self.last_buoy[1])**2) < MOVEMENT_THRESHOLD):
+        if middle_buoy and (not self.last_buoy or sqrt((middle_buoy[0] - self.last_buoy[0]) ** 2 + (middle_buoy[1] - self.last_buoy[1]) ** 2) < MOVEMENT_THRESHOLD):
             self.seen_buoy_count += 1
             self.last_buoy = middle_buoy
             self.last_buoy_time = time()
@@ -102,7 +103,7 @@ class BuoyNewEntity(VisionEntity):
                 tracking_size,
                 min_z_score=TRACKING_MIN_Z_SCORE,
                 alpha=TRACKING_ALPHA,
-                #debug=True,
+                # debug=True,
             )
 
         if tracker:
@@ -117,7 +118,7 @@ class BuoyNewEntity(VisionEntity):
         locations = []
 
         # Update trackers
-        id_colors = ((0,255,0), (0,255,255), (255,255,0))
+        id_colors = ((0, 255, 0), (0, 255, 255), (255, 255, 0))
         for i, tracker in enumerate(trackers):
             location = tracker.locate_object(frame)
 
@@ -143,17 +144,18 @@ class BuoyNewEntity(VisionEntity):
         #hc = cv.Load("/home/seawolf/software/seawolf5/vision/buoy_cascade_4.xml")
         hc = cv.Load(os.path.join(os.path.dirname(os.path.dirname(__file__)), "buoy_cascade_4.xml"))
 
-        #use classifier to detect buoys
+        # use classifier to detect buoys
         minsize = (10, 10)
         maxsize = (200, 200)
-        buoys = cv.HaarDetectObjects(grey, hc, cv.CreateMemStorage(), min_neighbors=0, min_size=minsize) #, max_size=maxsize
+        buoys = cv.HaarDetectObjects(grey, hc, cv.CreateMemStorage(), min_neighbors=0, min_size=minsize)  # , max_size=maxsize
 
         if not buoys:
             return None, None
 
         # We'll probably only see one buoy at a time, so take the first one
-        (x,y,w,h),n = buoys[0]
-        return (x,y), w
+        (x, y, w, h), n = buoys[0]
+        return (x, y), w
+
 
 def scale_in_place(image, new_size):
     '''Mutates image to have size of new_size.
@@ -167,6 +169,7 @@ def scale_in_place(image, new_size):
     cv.SetImageROI(image, (0, 0, new_size[0], new_size[1]))
     cv.Resize(copy, image, cv.CV_INTER_NN)
 
+
 def adjust_location(location, width, height):
     '''
     Move origin to center and flip along horizontal axis.  Right
@@ -174,7 +177,6 @@ def adjust_location(location, width, height):
     mission control.  Then scale from -1 to 1.
     '''
     return Point(
-        (location[0] - width/2) / (width/2),
-        (-1*location[1] + height/2) / (height/2),
+        (location[0] - width / 2) / (width / 2),
+        (-1 * location[1] + height / 2) / (height / 2),
     )
-

@@ -1,0 +1,14 @@
+*.pyc
+.idea/
+*.so
+*.swo
+*/bin
+*/__pycache__
+/vision/FOOTAGE
+
+*.mp4
+*.avi
+*.mp3
+*.png
+*.jpeg
+*.jpg

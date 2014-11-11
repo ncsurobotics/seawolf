@@ -12,13 +12,15 @@ import threading
 
 from routines import NullRoutine
 
+
 class NavQueue(object):
+
     def __init__(self):
         self.current_routine = None
 
     def do(self, routine):
         """ Equivalent to a called to clear() followed by append() """
-        if self.current_routine != None:
+        if self.current_routine is not None:
             self.current_routine.cancel()
         self.current_routine = routine
         routine.start()
@@ -45,4 +47,3 @@ class NavQueue(object):
     def idle(self):
         """ Clear the queue and run the idle routine """
         raise NotImplementedError("Functionality removed!")
-

@@ -73,11 +73,11 @@ class BuoyContour2Entity(VisionEntity):
 
         # Thresholding
         self.buoy_frame = cv2.adaptiveThreshold(self.numpy_frame,
-                                                 255,
-                                                 cv2.ADAPTIVE_THRESH_MEAN_C,
-                                                 cv2.THRESH_BINARY_INV,
-                                                 self.adaptive_thresh_blocksize,
-                                                 self.adaptive_thresh)
+                                                255,
+                                                cv2.ADAPTIVE_THRESH_MEAN_C,
+                                                cv2.THRESH_BINARY_INV,
+                                                self.adaptive_thresh_blocksize,
+                                                self.adaptive_thresh)
 
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
         kernel2 = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (4, 4))

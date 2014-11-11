@@ -1,10 +1,11 @@
-# pylint: disable=E1101
 import os
 import cv
 import cv2
 import svr
 
+
 class Camera(object):
+
     '''An wrapper for OpenCV's camera functionality.
 
     Supports camera indexes, video files, and image files.
@@ -12,7 +13,7 @@ class Camera(object):
     '''
 
     def __init__(self, identifier, display=False, window_name=None,
-        record_path=False):
+                 record_path=False):
         '''
         Arguments:
 
@@ -40,13 +41,13 @@ class Camera(object):
         self.display = display
         self.window_name = window_name
         self.record_path = record_path
-        self.image = None # Stored image, if identifier is an image filename
-        self.capture = None # Underlying opencv capture object
+        self.image = None  # Stored image, if identifier is an image filename
+        self.capture = None  # Underlying opencv capture object
         self.frame_count = 0
         self.dc1394_capture = None
 
         if display:
-            pass #cv.NamedWindow(self.get_window_name())
+            pass  # cv.NamedWindow(self.get_window_name())
 
     def get_window_name(self):
         if self.window_name:
@@ -82,18 +83,18 @@ class Camera(object):
                         raise self.CaptureError("The video has run out of frames.")
                     else:
                         raise self.CaptureError("Either a read error occured "
-                            "with the file, or the file is not a valid video "
-                            "or image file.")
+                                                "with the file, or the file is not a valid video "
+                                                "or image file.")
                 if self.image:
                     return cv.CloneImage(self.image)
                 else:
                     raise self.CaptureError("This shouldn't happen.  Please "
-                        " report a bug!  Include this traceback!!")
+                                            " report a bug!  Include this traceback!!")
             else:
                 raise self.CaptureError("Could not capture frame from "
-                    'identifier "%s"' % self.identifier)
+                                        'identifier "%s"' % self.identifier)
 
-            #TODO: Weird GStreamer error occured when a folder is incorrectly
+            # TODO: Weird GStreamer error occured when a folder is incorrectly
             #      specified as a video file, or when the user doesn't have
             #      permissions for the file.
 
@@ -120,7 +121,7 @@ class Camera(object):
             pass
         if isinstance(self.identifier, basestring):
             self.capture = cv.CaptureFromFile(self.identifier)
-            self.record_path = False # Don't re-record avi files
+            self.record_path = False  # Don't re-record avi files
         else:
             self.capture = cv.CaptureFromCAM(self.identifier)
 
@@ -143,6 +144,7 @@ class Camera(object):
     __del__ = close
 
     class CaptureError(ValueError):
+
         '''Represents an error in capturing a frame.'''
         pass
 

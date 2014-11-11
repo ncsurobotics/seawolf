@@ -31,6 +31,7 @@ TRACKING_SEARCH_AREA_MULTIPLIER = 6
 
 BLOB_MARGIN_PERCENT = 0.15
 
+
 class Buoy2011Entity(VisionEntity):
 
     name = "Buoy2011Entity"
@@ -91,8 +92,8 @@ class Buoy2011Entity(VisionEntity):
         self.output.buoys = []
         for location in self.buoy_locations:
             buoy = Container()
-            buoy.theta = location[0] * (34/(frame.width/2))
-            buoy.phi = location[1] * (30/(frame.height/2))  # Complete guess on vertical fov
+            buoy.theta = location[0] * (34 / (frame.width / 2))
+            buoy.phi = location[1] * (30 / (frame.height / 2))  # Complete guess on vertical fov
             buoy.id = 1
             self.output.buoys.append(buoy)
 
@@ -113,10 +114,10 @@ class Buoy2011Entity(VisionEntity):
             tracker = libvision.Tracker(
                 frame,
                 blob.centroid,
-                (blob.roi[2]*TRACKING_TEMPLATE_MULTIPLIER,
-                        blob.roi[3]*TRACKING_TEMPLATE_MULTIPLIER),
-                (blob.roi[2]*TRACKING_SEARCH_AREA_MULTIPLIER,
-                        blob.roi[3]*TRACKING_SEARCH_AREA_MULTIPLIER),
+                (blob.roi[2] * TRACKING_TEMPLATE_MULTIPLIER,
+                 blob.roi[3] * TRACKING_TEMPLATE_MULTIPLIER),
+                (blob.roi[2] * TRACKING_SEARCH_AREA_MULTIPLIER,
+                 blob.roi[3] * TRACKING_SEARCH_AREA_MULTIPLIER),
                 min_z_score=TRACKING_MIN_Z_SCORE,
                 alpha=TRACKING_ALPHA,
                 debug=False,
@@ -127,7 +128,7 @@ class Buoy2011Entity(VisionEntity):
         if debug_frame and blobs:
             for blob in blobs:
                 cv.Rectangle(debug_frame, (blob.roi[0], blob.roi[1]),
-                         (blob.roi[0]+blob.roi[2], blob.roi[1]+blob.roi[3]), (0,255,0))
+                             (blob.roi[0] + blob.roi[2], blob.roi[1] + blob.roi[3]), (0, 255, 0))
 
         return trackers
 
@@ -146,14 +147,14 @@ class Buoy2011Entity(VisionEntity):
 
                 # Draw buoy on debug frame
                 if debug_frame:
-                    cv.Circle(debug_frame, location, 10, (0,0,255))
+                    cv.Circle(debug_frame, location, 10, (0, 0, 255))
 
                 # Move origin to center and flip along horizontal axis.  Right
                 # and up will then be positive, which makes more sense for
                 # mission control.
                 adjusted_location = Point(
-                    location[0] - frame.width/2,
-                    -1*location[1] + frame.height/2
+                    location[0] - frame.width / 2,
+                    -1 * location[1] + frame.height / 2
                 )
                 locations.append(adjusted_location)
 
@@ -169,10 +170,10 @@ class Buoy2011Entity(VisionEntity):
         if blob.size < 50 or blob.size > 700:
             return False
 
-        if blob.centroid[0] < image.width*BLOB_MARGIN_PERCENT or \
-            blob.centroid[0] > image.width*(1-BLOB_MARGIN_PERCENT) or \
-            blob.centroid[1] < image.height*BLOB_MARGIN_PERCENT or \
-            blob.centroid[1] > image.height*(1-BLOB_MARGIN_PERCENT):
+        if blob.centroid[0] < image.width * BLOB_MARGIN_PERCENT or \
+                blob.centroid[0] > image.width * (1 - BLOB_MARGIN_PERCENT) or \
+                blob.centroid[1] < image.height * BLOB_MARGIN_PERCENT or \
+                blob.centroid[1] > image.height * (1 - BLOB_MARGIN_PERCENT):
 
             return False
 
@@ -195,26 +196,26 @@ class Buoy2011Entity(VisionEntity):
         '''
 
         # Get Channels
-        hsv = cv.CreateImage(cv.GetSize(frame), 8, 3);
+        hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
         saturation = libvision.misc.get_channel(hsv, 1)
         red = libvision.misc.get_channel(frame, 2)
 
         # Adaptive Threshold
         cv.AdaptiveThreshold(saturation, saturation,
-            255,
-            cv.CV_ADAPTIVE_THRESH_MEAN_C,
-            cv.CV_THRESH_BINARY_INV,
-            self.saturation_adaptive_thresh_blocksize - self.saturation_adaptive_thresh_blocksize%2 + 1,
-            self.saturation_adaptive_thresh,
-        )
+                             255,
+                             cv.CV_ADAPTIVE_THRESH_MEAN_C,
+                             cv.CV_THRESH_BINARY_INV,
+                             self.saturation_adaptive_thresh_blocksize - self.saturation_adaptive_thresh_blocksize % 2 + 1,
+                             self.saturation_adaptive_thresh,
+                             )
         cv.AdaptiveThreshold(red, red,
-            255,
-            cv.CV_ADAPTIVE_THRESH_MEAN_C,
-            cv.CV_THRESH_BINARY,
-            self.red_adaptive_thresh_blocksize - self.red_adaptive_thresh_blocksize%2 + 1,
-            -1*self.red_adaptive_thresh,
-        )
+                             255,
+                             cv.CV_ADAPTIVE_THRESH_MEAN_C,
+                             cv.CV_THRESH_BINARY,
+                             self.red_adaptive_thresh_blocksize - self.red_adaptive_thresh_blocksize % 2 + 1,
+                             -1 * self.red_adaptive_thresh,
+                             )
 
         kernel = cv.CreateStructuringElementEx(9, 9, 4, 4, cv.CV_SHAPE_ELLIPSE)
         cv.Erode(saturation, saturation, kernel, 1)
@@ -238,6 +239,7 @@ class Buoy2011Entity(VisionEntity):
 
     def __repr__(self):
         return "<BuoysEntity buoy_locations=%s>" % self.buoy_locations
+
 
 def scale_in_place(image, new_size):
     '''Mutates image to have size of new_size.

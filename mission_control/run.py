@@ -18,30 +18,30 @@ if __name__ == "__main__":
     # Parse Arguments
     opt_parser = OptionParser()
     opt_parser.add_option("-i", "--initial-mission", action="store", default=0,
-        dest="initial_mission", type="int",
-        help="Specifies a mission index to start at.  Default 0.")
+                          dest="initial_mission", type="int",
+                          help="Specifies a mission index to start at.  Default 0.")
     opt_parser.add_option("-w", "--wait-for-go", action="store_true",
-        default=False, dest="wait_for_go",
-        help="Wait for mission go signal. (default)")
+                          default=False, dest="wait_for_go",
+                          help="Wait for mission go signal. (default)")
     opt_parser.add_option("-W", "--no-wait-for-go", action="store_false",
-        dest="wait_for_go",
-        help="Do not wait fo the go signal.")
+                          dest="wait_for_go",
+                          help="Do not wait fo the go signal.")
     opt_parser.add_option("-c", "--camera", nargs=2, action="append",
-        type="string", metavar="<camera> <index/filename>",
-        dest="cameras", default=[],
-        help="Specifies that the camera given should use the given index or "
-            "file to capture its frames.  If this option is not given for a "
-            "camera, SVR is used.")
+                          type="string", metavar="<camera> <index/filename>",
+                          dest="cameras", default=[],
+                          help="Specifies that the camera given should use the given index or "
+                          "file to capture its frames.  If this option is not given for a "
+                          "camera, SVR is used.")
     opt_parser.add_option("-d", "--delay", type="int",
-        dest="delay", default=0,
-        help="Delay between frames, in milliseconds, or -1 to wait for "
-            "keypress.  Default is 0.")
+                          dest="delay", default=0,
+                          help="Delay between frames, in milliseconds, or -1 to wait for "
+                          "keypress.  Default is 0.")
     opt_parser.add_option("-G", "--non-graphical", action="store_false",
-        dest="graphical", default=True,
-        help="Takes vision out of debug mode, disallowing windows to be displayed.")
+                          dest="graphical", default=True,
+                          help="Takes vision out of debug mode, disallowing windows to be displayed.")
     opt_parser.add_option("-s", "--simulator", action="store_true",
-        default=False, dest="simulator",
-        help="Connect to the simulator instead of starting vision processes.")
+                          default=False, dest="simulator",
+                          help="Connect to the simulator instead of starting vision processes.")
     options, args = opt_parser.parse_args(sys.argv)
 
     if len(args) > 1:
@@ -140,4 +140,3 @@ if __name__ == "__main__":
     finally:
         process_manager.kill()
         mission_controller.kill()
-

@@ -5,6 +5,7 @@ import math
 import select
 import struct
 
+
 class JoystickDriver(object):
     EVENT_BUTTON = 0x01
     EVENT_AXIS = 0x02
@@ -26,7 +27,9 @@ class JoystickDriver(object):
     def close(self):
         self.dev.close()
 
+
 class Axis(object):
+
     def __init__(self, axis, name=None):
         self.axis = axis
         self.name = name
@@ -36,7 +39,7 @@ class Axis(object):
     @property
     def mag(self):
         scalar = 1.0 / 32767
-        return (self.x**2 + self.y**2)**0.5 * scalar
+        return (self.x ** 2 + self.y ** 2) ** 0.5 * scalar
 
     @property
     def math_angle(self):
@@ -71,7 +74,9 @@ class Axis(object):
     def __repr__(self):
         return "%s: (%d, %d)" % (self.name, self.x, self.y)
 
+
 class Button(object):
+
     def __init__(self, number, name=None):
         self.number = number
         self.name = name
@@ -80,7 +85,9 @@ class Button(object):
     def __repr__(self):
         return "%s: %d" % (self.name, self.value)
 
+
 class Joystick(object):
+
     def __init__(self, device_path, mapping):
         self.joystick = JoystickDriver(device_path)
         self.mapping = mapping
@@ -125,6 +132,7 @@ class Joystick(object):
 
     def close(self):
         self.joystick.close()
+
 
 def get_devices():
     return glob.glob("/dev/js*") + glob.glob("/dev/input/js*")

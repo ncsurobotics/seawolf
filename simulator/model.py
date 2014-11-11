@@ -21,6 +21,7 @@ def get_displaylist():
 
 
 class Model(object):
+
     """A model that can be drawn on the screen"""
 
     def __init__(self):
@@ -52,12 +53,14 @@ class Model(object):
 
 
 class _Material(object):
+
     """Defines a particular material"""
-    def __init__(self, ambient, diffuse, specular=(0,0,0,0), emission=(0,0,0,0)):
-        assert len(ambient)==4
-        assert len(diffuse)==4
-        assert len(specular)==4
-        assert len(emission)==4
+
+    def __init__(self, ambient, diffuse, specular=(0, 0, 0, 0), emission=(0, 0, 0, 0)):
+        assert len(ambient) == 4
+        assert len(diffuse) == 4
+        assert len(specular) == 4
+        assert len(emission) == 4
         self.ambient = ambient
         self.diffuse = diffuse
         self.specular = specular
@@ -73,8 +76,11 @@ class _Material(object):
         glMaterialfv(GL_FRONT, GL_SPECULAR, self.specular)
         glMaterialfv(GL_FRONT, GL_EMISSION, self.emission)
 
+
 class ObjModel(Model):
+
     """A model loaded from an obj file"""
+
     def __init__(self, fileobj, scale=1):
         self._parse_model(fileobj)
         self._create_displaylist(scale)
@@ -98,7 +104,7 @@ class ObjModel(Model):
         # Each of those is a list of (vertex, normal), where normal
         # and vertex are numpy vectors. Together, the list of points define a
         # single polygon
-        self.polys = defaultdict(lambda: ([],[],[]))
+        self.polys = defaultdict(lambda: ([], [], []))
         currentmat = None
 
         for line in fileobj:
@@ -164,10 +170,10 @@ class ObjModel(Model):
                     # Start a new material
                     matname = line.split()[1]
                     # Stores four quadruplets: ambient, diffuse, specular, emission
-                    mat = [(0,0,0,0)] * 4
+                    mat = [(0, 0, 0, 0)] * 4
 
                 elif lineparts[0] in ("Ka", "Kd", "Ks", "Ke"):
-                    m = {'a':0, 'd':1, 's': 2, 'e': 3}
+                    m = {'a': 0, 'd': 1, 's': 2, 'e': 3}
                     color = [float(x) for x in line.split()[1:]]
                     if len(color) == 1:
                         color *= 3
@@ -192,7 +198,7 @@ class ObjModel(Model):
             triangles, quads, polys = polygons
             if triangles:
                 glBegin(GL_TRIANGLES)
-                for (pt1,n1),(pt2,n2),(pt3,n3) in triangles:
+                for (pt1, n1), (pt2, n2), (pt3, n3) in triangles:
                     glNormal3dv(n1)
                     glVertex3dv(pt1)
                     glNormal3dv(n2)
@@ -203,7 +209,7 @@ class ObjModel(Model):
 
             if quads:
                 glBegin(GL_QUADS)
-                for (pt1,n1),(pt2,n2),(pt3,n3),(pt4,n4) in quads:
+                for (pt1, n1), (pt2, n2), (pt3, n3), (pt4, n4) in quads:
                     glNormal3dv(n1)
                     glVertex3dv(pt1)
                     glNormal3dv(n2)
@@ -221,19 +227,21 @@ class ObjModel(Model):
                     glVertex3dv(pt)
                 glEnd()
 
+
 class StlModel(Model):
+
     """A model loaded from an stl file"""
 
-    def __init__(self, fileobj, scale=1, ambient=(0,0,0,0), diffuse=(0,0,0,0), specular=(0,0,0,0), emission=(0,0,0,0)):
+    def __init__(self, fileobj, scale=1, ambient=(0, 0, 0, 0), diffuse=(0, 0, 0, 0), specular=(0, 0, 0, 0), emission=(0, 0, 0, 0)):
 
         if isinstance(fileobj, (str, unicode)):
             fileobj = open(fileobj, 'rb')
         self.f = fileobj
 
-        assert len(ambient)==4
-        assert len(diffuse)==4
-        assert len(specular)==4
-        assert len(emission)==4
+        assert len(ambient) == 4
+        assert len(diffuse) == 4
+        assert len(specular) == 4
+        assert len(emission) == 4
         self.ambient = ambient
         self.diffuse = diffuse
         self.specular = specular
@@ -255,14 +263,14 @@ class StlModel(Model):
         glMaterialfv(GL_FRONT, GL_EMISSION, self.emission)
 
         fmt = '12fxx'
-        triangle_size = 4*12 + 2  # In bytes
-        data = self.f.read(triangle_size*n_triangles)
-        triangles = struct.unpack('<'+(fmt*n_triangles), data)
+        triangle_size = 4 * 12 + 2  # In bytes
+        data = self.f.read(triangle_size * n_triangles)
+        triangles = struct.unpack('<' + (fmt * n_triangles), data)
 
         glBegin(GL_TRIANGLES)
-        for i in xrange(0, n_triangles*12, 12):
-            glNormal3f(triangles[i], triangles[i+1], triangles[i+2])
-            glVertex3f(triangles[i+3], triangles[i+4], triangles[i+5])
-            glVertex3f(triangles[i+6], triangles[i+7], triangles[i+8])
-            glVertex3f(triangles[i+9], triangles[i+10], triangles[i+11])
+        for i in xrange(0, n_triangles * 12, 12):
+            glNormal3f(triangles[i], triangles[i + 1], triangles[i + 2])
+            glVertex3f(triangles[i + 3], triangles[i + 4], triangles[i + 5])
+            glVertex3f(triangles[i + 6], triangles[i + 7], triangles[i + 8])
+            glVertex3f(triangles[i + 9], triangles[i + 10], triangles[i + 11])
         glEnd()
