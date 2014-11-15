@@ -1,7 +1,7 @@
 #!/bin/sh
 ./bin/mixer &
 ./bin/yawpidpy &
-./bin/depthpidpy &
+./bin/depthpid &
 ./bin/pitchpidpy &
 ./bin/rollpidpy &
 
