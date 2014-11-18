@@ -123,10 +123,10 @@ class BinsContourEntity(VisionEntity):
         for bin in self.confirmed:
 
             print type(bin.patch)
-            #svr.debug("Patch"+str(bin.id),libvision.cv2_to_cv(bin.patch))
+            svr.debug("Patch"+str(bin.id),libvision.cv2_to_cv(bin.patch))
             print bin.id
 
-            svr.debug("Patch" + str(bin.id), bin.patch)
+            #svr.debug("Patch" + str(bin.id), bin.patch)
 
 
         # TODO, CLEAN THIS UP SOME
@@ -220,7 +220,7 @@ class BinsContourEntity(VisionEntity):
         clr = (0, 0, 255)
         for bin in self.confirmed:
 
-            bin.patch = self.subimage(self.debug_frame, (int(bin.midx), int(bin.midy)),
+            bin.patch = self.subimage2(self.debug_frame, (int(bin.midx), int(bin.midy)),
                                       bin.theta, bin.width, bin.height)
             # cv.SaveImage('patch.jpg',patch)
 
