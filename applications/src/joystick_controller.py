@@ -14,6 +14,7 @@ FORWARD_SPEED = 0.4
 
 yaw_heading = 0
 
+
 def update_axis(event):
     global yaw_heading
     angle = event.math_angle
@@ -31,20 +32,21 @@ def update_axis(event):
     else:
         for_p = forward / total
         rate_p = rate / total
-        
+
         total = min(total, 1.0)
         forward = for_p * total
         rate = rate_p * total
 
         sw3.nav.do(sw3.CompoundRoutine((sw3.SetRotate(rate), sw3.Forward(forward))))
-        
+
+
 def print_table(headings, *values):
     max_widths = [max(len(heading), 4) + 1 for heading in headings]
     for vs in values:
         widths = [max(len(v), 4) + 1 for v in vs]
         for i in range(0, len(max_widths)):
             max_widths[i] = max(widths[i], max_widths[i])
-        
+
     format = "%-*s" * len(headings)
     heading_l = reduce(lambda x, y: x + list(y), zip(max_widths, headings), [])
 
@@ -52,6 +54,7 @@ def print_table(headings, *values):
     for vs in values:
         vs_l = reduce(lambda x, y: x + list(y), zip(max_widths, vs), [])
         print format % tuple(vs_l)
+
 
 def print_help():
     print "R1: Depth up   R2: Depth down"
@@ -80,7 +83,7 @@ print_help()
 
 while True:
     event = js.poll()
- 
+
     if isinstance(event, joystick.Axis):
         if event.name == "leftStick":
             rate_limiter.provide(event)
@@ -137,7 +140,7 @@ while True:
             variables = "Port", "Star", "Bow", "Stern", "StrafeT", "StrafeB"
             print_table(variables, ["%.2f" % sw.var.get(v) for v in variables])
             print
-            
+
         elif event.name == "button10":
             print "Quiting"
             sw3.nav.do(sw3.ZeroThrusters())
