@@ -1,7 +1,7 @@
 
 import seawolf as sw
 
-__all__ = ["yaw", "pitch", "depth", "strafet", "strafeb"]
+__all__ = ["yaw", "pitch", "depth", "roll"]
 
 
 class PIDInterface(object):
@@ -25,40 +25,47 @@ class PIDInterface(object):
         sw.var.set(self.namespace + ".Paused", 1.0)
 
 
+limits = {
+    "yaw.max": 180.0,
+    "yaw.min": -180.0,
+    "roll.max": 180.0,
+    "roll.min": -180.0,
+    "pitch.max": 180.0,
+    "pitch.min": -180.0,
+    "depth.max": 20.0,
+    "depth.min": 0.0,
+}
+
+
 def set_yaw(value):
-    if -180.0 <= value <= 180.0:
+    if limits['yaw.min'] <= value <= limits['yaw.max']:
         sw.var.set("YawPID.Heading", value)
     else:
-        raise ValueError("Value for yaw heading out of range!")
+        raise ValueError("Value for yaw heading must be in range {low} to {high}".format(
+            low=limits['yaw.min'], high=limits['yaw.max'])
+        )
 
 
 def set_pitch(value):
-    if -15.0 <= value <= 15.0:
+    if limits['pitch.min'] <= value <= limits['pitch.max']:
         sw.var.set("PitchPID.Heading", value)
     else:
-        raise ValueError("That sort of pitch is total suicide!")
+        raise ValueError("Value for pitch heading must be in range {low} to {high}".format(
+            low=limits['pitch.min'], high=limits['pitch.max'])
+        )
 
 
-def set_strafet(value):
-
-        # TODO: get correct safe values
-    if -15.0 <= value <= 15.0:
-        sw.var.set("StrafeTPID.Heading", value)
+def set_roll(value):
+    if limits['roll.min'] <= value <= limits['roll.max']:
+        sw.var.set("RollPID.Heading", value)
     else:
-        raise ValueError("That sort of strafe is total suicide!")
-
-
-def set_strafeb(value):
-
-        # TODO: get correct safe values
-    if -15.0 <= value <= 15.0:
-        sw.var.set("StrafeBPID.Heading", value)
-    else:
-        raise ValueError("That sort of strafeb is total suicide!")
+        raise ValueError("Value for roll heading must be in range {low} to {high}".format(
+            low=limits['roll.min'], high=limits['roll.max'])
+        )
 
 
 def set_depth(value):
-    if 0.0 <= value <= 20.0:
+    if limits['depth.min'] <= value <= limits['depth.max']:
         sw.var.set("DepthPID.Heading", value)
     else:
         raise ValueError("Cowardly refusing to dive so far! (%.4f)" % (value,))
@@ -66,5 +73,4 @@ def set_depth(value):
 yaw = PIDInterface("YawPID", set_yaw)
 pitch = PIDInterface("PitchPID", set_pitch)
 depth = PIDInterface("DepthPID", set_depth)
-strafet = PIDInterface("StrafeTPID", set_strafet)
-strafeb = PIDInterface("StrafeBPID", set_strafeb)
+roll = PIDInterface("RollPID", set_roll)

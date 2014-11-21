@@ -199,6 +199,7 @@ class ZeroThrusters(NavRoutine):
         pid.yaw.pause()
         pid.pitch.pause()
         pid.depth.pause()
+        pid.roll.pause()
 
         # Zero the mixer
         mixer.depth = 0
@@ -265,8 +266,6 @@ class SetRotate(NavRoutine):
         self.rate = rate
 
     def _start(self):
-        # lol, this doesn't really work
-        #pid.rotate.heading = self.rate
         pid.yaw.pause()
         sw.notify.send("THRUSTER_REQUEST", "Yaw %.2f" % (self.rate,))
 
