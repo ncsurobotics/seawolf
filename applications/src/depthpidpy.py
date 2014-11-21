@@ -57,16 +57,6 @@ def main():
     while(True):
         seawolf.var.sync()
 
-        if (seawolf.var.stale("DepthPID.p") or seawolf.var.stale("DepthPID.i") or seawolf.var.stale("DepthPID.d")):
-
-            pid.setCoefficients(
-                seawolf.var.get("DepthPID.p"),
-                seawolf.var.get("DepthPID.i"),
-                seawolf.var.get("DepthPID.d")
-            )
-
-            e_dt = initial_e_dt(seawolf.var.get("DepthPID.i"))
-
         if (seawolf.var.stale("Depth")):
             depth = seawolf.var.get("Depth")
 
@@ -76,6 +66,16 @@ def main():
             if paused:
                 seawolf.var.set("DepthPID.Paused", 0.0)
                 seawolf.var.set("PitchPID.Paused", 0.0)
+
+        if (seawolf.var.stale("DepthPID.p") or seawolf.var.stale("DepthPID.i") or seawolf.var.stale("DepthPID.d")):
+
+            pid.setCoefficients(
+                seawolf.var.get("DepthPID.p"),
+                seawolf.var.get("DepthPID.i"),
+                seawolf.var.get("DepthPID.d")
+            )
+
+            e_dt = initial_e_dt(seawolf.var.get("DepthPID.i"))
 
         if (seawolf.var.stale("DepthPID.Paused")):
             paused = seawolf.var.get("DepthPID.Paused")

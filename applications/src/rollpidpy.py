@@ -38,29 +38,35 @@ def main():
 
     while(True):
         seawolf.var.sync()
-        if(seawolf.var.stale("SEA.Roll") and not paused):
-            roll = seawolf.var.get("SEA.Roll")
-            mv = pid.update(roll)
-        elif(seawolf.var.stale("RollPID.p") or seawolf.var.stale("RollPID.i") or seawolf.var.stale("RollPID.d")):
-            pid.setCoefficients(seawolf.var.get("RollPID.p"), seawolf.var.get("RollPID.i"), seawolf.var.get("RollPID.d"))
-            pid.resetIntegral()  # init e dt
-        elif(seawolf.var.poked("RollPID.Heading")):
-            pid.setSetPoint(seawolf.var.get("RollPID.Heading"))
-            mv = pid.update(seawolf.var.get("SEA.Roll"))
-            if(paused):
-                seawolf.var.set("RollPID.Paused", 0.0)
-        elif(seawolf.var.stale("RollPID.Paused")):
-            p = seawolf.var.get("RollPID.Paused")
-            if(p == paused):
-                continue
 
-            paused = p
-            if(paused):
+        if (seawolf.var.stale("SEA.Roll") and not paused):
+            roll = seawolf.var.get("SEA.Roll")
+
+        if (seawolf.var.stale("RollPID.p") or seawolf.var.stale("RollPID.i") or seawolf.var.stale("RollPID.d")):
+
+            pid.setCoefficients(
+                seawolf.var.get("RollPID.p"),
+                seawolf.var.get("RollPID.i"),
+                seawolf.var.get("RollPID.d")
+            )
+            pid.resetIntegral()  # init e dt
+
+        if (seawolf.var.poked("RollPID.Heading")):
+            pid.setSetPoint(seawolf.var.get("RollPID.Heading"))
+
+            if paused:
+                seawolf.var.set("RollPID.Paused", 0.0)
+
+        if (seawolf.var.stale("RollPID.Paused")):
+            paused = seawolf.var.get("RollPID.Paused")
+
+            if paused:
                 dataOut(0.0)
                 seawolf.notify.send("PIDPAUSED", "Roll")
                 pid.pause()
 
         if not paused:
+            mv = pid.update(roll)
             dataOut(mv)
 
     seawolf.close()

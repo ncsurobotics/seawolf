@@ -45,6 +45,15 @@ def main():
     while(True):
         seawolf.var.sync()
 
+        if (seawolf.var.stale("SEA.Pitch") and not paused):
+            pitch = seawolf.var.get("SEA.Pitch")
+
+        if (seawolf.var.poked("PitchPID.Heading") and not paused):
+            pid.setSetPoint(seawolf.var.get("PitchPID.Heading"))
+
+            if paused:
+                seawolf.var.set("PitchPID.Paused", 0.0)
+
         if (seawolf.var.stale("PitchPID.p") or seawolf.var.stale("PitchPID.i") or seawolf.var.stale("PitchPID.d")):
 
             pid.setCoefficients(
@@ -53,14 +62,6 @@ def main():
                 seawolf.var.get("PitchPID.d")
             )
             pid.resetIntegral()  # init e dt
-
-        if (seawolf.var.stale("SEA.Pitch") and not paused):
-            pitch = seawolf.var.get("SEA.Pitch")
-
-        if (seawolf.var.poked("PitchPID.Heading") and not paused):
-            pid.setSetPoint(seawolf.var.get("PitchPID.Heading"))
-            if paused:
-                seawolf.var.set("PitchPID.Paused", 0.0)
 
         if (seawolf.var.stale("PitchPID.Paused")):
             paused = seawolf.var.get("PitchPID.Paused")
