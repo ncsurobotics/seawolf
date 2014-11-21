@@ -17,15 +17,13 @@ DepthPID.Heading     = 0.0,  0,  0
 DepthPID.Paused      = 1.0,  0,  0
 DepthPID.d           = 0.0,  1,  0
 DepthPID.i           = 0.0,  1,  0
-DepthPID.p           = 0.0,  1,  0
+DepthPID.p           = -0.2,  1,  0
 
 PitchPID.Heading     = 0.0,  0,  0
 PitchPID.Paused      = 1.0,  0,  0
-#PitchPID.d          = -0.2, 1,  0
 PitchPID.d           = 0.0,  1,  0
 PitchPID.i           = 0.0,  1,  0
-#PitchPID.p          = -0.8, 1,  0
-PitchPID.p           = 0.0,  1,  0
+PitchPID.p           = .05,  1,  0
 
 RollPID.Heading      = 0.0,  0,  0
 RollPID.Paused       = 1.0,  0,  0
