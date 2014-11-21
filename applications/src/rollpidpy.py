@@ -31,7 +31,12 @@ def main():
 
     roll = seawolf.var.get("SEA.Roll")
     paused = seawolf.var.get("RollPID.Paused")
-    pid = seawolf.PID(seawolf.var.get("RollPID.Heading"), seawolf.var.get("RollPID.p"), seawolf.var.get("RollPID.i"), seawolf.var.get("RollPID.d"))
+    pid = seawolf.PID(
+        seawolf.var.get("RollPID.Heading"),
+        seawolf.var.get("RollPID.p"),
+        seawolf.var.get("RollPID.i"),
+        seawolf.var.get("RollPID.d")
+    )
 
     dataOut(0.0)
     mv = 0.0
