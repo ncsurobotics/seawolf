@@ -44,7 +44,12 @@ def main():
     depth = seawolf.var.get("Depth")
     paused = seawolf.var.get("DepthPID.Paused")
 
-    pid = seawolf.PID(seawolf.var.get("DepthPID.Heading"), seawolf.var.get("DepthPID.p"), seawolf.var.get("DepthPID.i"), seawolf.var.get("DepthPID.d"))
+    pid = seawolf.PID(
+        seawolf.var.get("DepthPID.Heading"),
+        seawolf.var.get("DepthPID.p"),
+        seawolf.var.get("DepthPID.i"),
+        seawolf.var.get("DepthPID.d")
+    )
 
     e_dt = initial_e_dt(seawolf.var.get("DepthPID.i"))
     dataOut(0.0)
@@ -52,23 +57,30 @@ def main():
     while(True):
         seawolf.var.sync()
 
-        if (seawolf.var.stale("Depth")):
-            depth = seawolf.var.get("Depth")
-
         if (seawolf.var.stale("DepthPID.p") or seawolf.var.stale("DepthPID.i") or seawolf.var.stale("DepthPID.d")):
-            pid.setCoefficients(seawolf.var.get("DepthPID.p"), seawolf.var.get("DepthPID.i"), seawolf.var.get("DepthPID.d"))
+
+            pid.setCoefficients(
+                seawolf.var.get("DepthPID.p"),
+                seawolf.var.get("DepthPID.i"),
+                seawolf.var.get("DepthPID.d")
+            )
 
             e_dt = initial_e_dt(seawolf.var.get("DepthPID.i"))
 
+        if (seawolf.var.stale("Depth")):
+            depth = seawolf.var.get("Depth")
+
         if (seawolf.var.poked("DepthPID.Heading")):
             pid.setSetPoint(seawolf.var.get("DepthPID.Heading"))
-            if(paused):
+
+            if paused:
                 seawolf.var.set("DepthPID.Paused", 0.0)
                 seawolf.var.set("PitchPID.Paused", 0.0)
 
         if (seawolf.var.stale("DepthPID.Paused")):
             paused = seawolf.var.get("DepthPID.Paused")
-            if (paused):
+
+            if paused:
                 dataOut(0.0)
                 seawolf.notify.send("PIDPAUSED", "Depth")
                 pid.pause()
@@ -80,7 +92,8 @@ def main():
 
             dataOut(-1.0)
             time.sleep(panic_time)
-        elif paused == False:
+
+        elif not paused:
             mv = pid.update(depth)
             mv = in_range(-thruster_cap, mv, thruster_cap)
             dataOut(mv)

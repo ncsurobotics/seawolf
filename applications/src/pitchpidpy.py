@@ -31,7 +31,13 @@ def main():
 
     pitch = seawolf.var.get("SEA.Pitch")
     paused = seawolf.var.get("PitchPID.Paused")
-    pid = seawolf.PID(seawolf.var.get("PitchPID.Heading"), seawolf.var.get("PitchPID.p"), seawolf.var.get("PitchPID.i"), seawolf.var.get("PitchPID.d"))
+
+    pid = seawolf.PID(
+        seawolf.var.get("PitchPID.Heading"),
+        seawolf.var.get("PitchPID.p"),
+        seawolf.var.get("PitchPID.i"),
+        seawolf.var.get("PitchPID.d")
+    )
 
     dataOut(0.0)
     mv = 0.0
@@ -59,7 +65,7 @@ def main():
         if (seawolf.var.stale("PitchPID.Paused")):
             paused = seawolf.var.get("PitchPID.Paused")
 
-            if(paused):
+            if paused:
                 dataOut(0.0)
                 seawolf.notify.send("PIDPAUSED", "Pitch")
                 pid.pause()
