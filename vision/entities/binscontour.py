@@ -116,14 +116,18 @@ class BinsContourEntity(VisionEntity):
         self.debug_to_cv = libvision.cv2_to_cv(self.debug_frame)
         self.numpy_to_cv = libvision.cv2_to_cv(self.numpy_frame)
         self.adaptive_to_cv = libvision.cv2_to_cv(self.adaptive_frame)
-        
-        svr.debug("processed", self.numpy_to_cv)
-        svr.debug("adaptive", self.adaptive_to_cv)
-        svr.debug("debug", self.debug_to_cv)
+
+        # svr.debug("processed", self.numpy_to_cv)
+        # svr.debug("adaptive", self.adaptive_to_cv)
+        # svr.debug("debug", self.debug_to_cv)
+        self.debug_stream("debug", self.debug_frame)
+        self.debug_stream("processed", self.numpy_frame)
+        self.debug_stream("adaptive", self.adaptive_frame)
         for bin in self.confirmed:
 
             print type(bin.patch)
-            svr.debug("Patch"+str(bin.id),libvision.cv2_to_cv(bin.patch))
+            self.debug_stream("Patch"+str(bin.id),bin.patch)
+            # svr.debug("Patch"+str(bin.id),libvision.cv2_to_cv(bin.patch))
             print bin.id
 
             #svr.debug("Patch" + str(bin.id), bin.patch)
