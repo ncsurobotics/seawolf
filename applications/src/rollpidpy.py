@@ -72,6 +72,7 @@ def main():
 
         if not paused:
             mv = pid.update(roll)
+            print mv
             dataOut(mv)
 
     seawolf.close()
