@@ -43,6 +43,7 @@ def main():
 
     while(True):
         seawolf.var.sync()
+        print mv
 
         if seawolf.var.stale("SEA.Roll"):
             roll = seawolf.var.get("SEA.Roll")
@@ -72,7 +73,6 @@ def main():
 
         if not paused:
             mv = pid.update(roll)
-            print mv
             dataOut(mv)
 
     seawolf.close()
