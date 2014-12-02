@@ -45,10 +45,10 @@ def main():
     while(True):
         seawolf.var.sync()
 
-        if (seawolf.var.stale("SEA.Pitch") and not paused):
+        if seawolf.var.stale("SEA.Pitch"):
             pitch = seawolf.var.get("SEA.Pitch")
 
-        if (seawolf.var.poked("PitchPID.Heading") and not paused):
+        if seawolf.var.poked("PitchPID.Heading"):
             pid.setSetPoint(seawolf.var.get("PitchPID.Heading"))
 
             if paused:

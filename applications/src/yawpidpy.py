@@ -63,7 +63,7 @@ def main():
 
         seawolf.var.sync()
 
-        if (seawolf.var.stale("SEA.Yaw")):
+        if seawolf.var.stale("SEA.Yaw"):
             yaw = seawolf.var.get("SEA.Yaw")
 
         if (seawolf.var.stale("YawPID.p") or seawolf.var.stale("YawPID.i") or seawolf.var.stale("YawPID.d")):

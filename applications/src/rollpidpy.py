@@ -44,8 +44,14 @@ def main():
     while(True):
         seawolf.var.sync()
 
-        if (seawolf.var.stale("SEA.Roll") and not paused):
+        if seawolf.var.stale("SEA.Roll"):
             roll = seawolf.var.get("SEA.Roll")
+
+        if seawolf.var.poked("RollPID.Heading"):
+            pid.setSetPoint(seawolf.var.get("RollPID.Heading"))
+
+            if paused:
+                seawolf.var.set("RollPID.Paused", 0.0)
 
         if (seawolf.var.stale("RollPID.p") or seawolf.var.stale("RollPID.i") or seawolf.var.stale("RollPID.d")):
 
@@ -55,12 +61,6 @@ def main():
                 seawolf.var.get("RollPID.d")
             )
             pid.resetIntegral()  # init e dt
-
-        if (seawolf.var.poked("RollPID.Heading")):
-            pid.setSetPoint(seawolf.var.get("RollPID.Heading"))
-
-            if paused:
-                seawolf.var.set("RollPID.Paused", 0.0)
 
         if (seawolf.var.stale("RollPID.Paused")):
             paused = seawolf.var.get("RollPID.Paused")
