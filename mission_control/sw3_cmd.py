@@ -11,7 +11,7 @@ def zero_thrusters():
     nav.do(NullRoutine())
 
     pid.yaw.pause()
-    pid.rotate.pause()
+    pid.roll.pause()
     pid.pitch.pause()
     pid.depth.pause()
 
