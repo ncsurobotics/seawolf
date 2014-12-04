@@ -4,6 +4,7 @@
 *.swo
 */bin
 */__pycache__
+
 /vision/FOOTAGE
 /db/seawolf_var.db
 
