@@ -9,6 +9,7 @@ from copy import copy
 
 import wx
 
+
 class AppRunnerFrame(wx.Frame):
 
     def __init__(self, parent, id, title, size):
@@ -17,22 +18,22 @@ class AppRunnerFrame(wx.Frame):
         self.app_panels = []
         self.Bind(wx.EVT_CLOSE, self.on_close)
 
-        self.sizer = wx.GridSizer(1,1,0,0)
+        self.sizer = wx.GridSizer(1, 1, 0, 0)
         self.SetSizer(self.sizer)
 
         self.main_split = wx.SplitterWindow(self, -1)
         self.main_split.SetMinimumPaneSize(120)
 
         self.panel_left = wx.Panel(self.main_split, -1)
-        self.panel_left_sizer = wx.GridSizer(1,1,0,0)
+        self.panel_left_sizer = wx.GridSizer(1, 1, 0, 0)
         self.panel_left.SetSizer(self.panel_left_sizer)
 
         self.panel_right = wx.Panel(self.main_split, -1)
-        self.panel_right_sizer = wx.GridSizer(1,1,0,0)
+        self.panel_right_sizer = wx.GridSizer(1, 1, 0, 0)
         self.panel_right.SetSizer(self.panel_right_sizer)
 
         self.current_app_panel = None
-        self.app_tree = wx.TreeCtrl(self.panel_left, -1, wx.DefaultPosition, (-1,-1), wx.TR_FULL_ROW_HIGHLIGHT|wx.TR_HAS_BUTTONS|wx.TR_HIDE_ROOT)
+        self.app_tree = wx.TreeCtrl(self.panel_left, -1, wx.DefaultPosition, (-1, -1), wx.TR_FULL_ROW_HIGHLIGHT | wx.TR_HAS_BUTTONS | wx.TR_HIDE_ROOT)
         self.read_apps()
         self.app_tree.Bind(wx.EVT_TREE_SEL_CHANGED, self.on_app_select, id=self.app_tree.GetId())
         self.app_tree.SetFocus()
@@ -54,26 +55,26 @@ class AppRunnerFrame(wx.Frame):
         '''Populates the application tree.'''
         applications = {
             "Communication": {
-                "Hub": AppPanel(self.panel_right, ["seawolf-hub","-c","../conf/hub.conf"], "db/"),
+                "Hub": AppPanel(self.panel_right, ["seawolf-hub", "-c", "../conf/hub.conf"], "db/"),
                 "Serial App": AppPanel(self.panel_right, ["./bin/serialapp"], "serial/"),
                 "SVR": AppPanel(self.panel_right, ["svrd"], ""),
-                "SVR Record": AppPanel(self.panel_right, ["python","misc/svr_record_all.py","capture/"], ""),
+                "SVR Record": AppPanel(self.panel_right, ["python", "vision/svr_record_all.py", "vision/capture/"], ""),
             },
             "Debugging": {
-                "Simulator": AppPanel(self.panel_right, ["python","run.py"], "simulator/",
-                    options=[
-                        CheckBoxOption("--svr-source", "", "SVR Source", False),
-                    ]),
-                "SVR Watch": AppPanel(self.panel_right, ["python","svr_watch_all.py"], "misc/"),
-                "HUD": AppPanel(self.panel_right, ["python","HUD.py"], "misc/HUD/"),
-                "Vision": AppPanel(self.panel_right, ["python","run.py"], "vision/",
-                    options=[
-                        TextOption("Entity: ", ignore_empty=False),
-                        CheckBoxOption("-s", None, "Single Process", False),
-                        CheckBoxOption(None, "-G", "Debug", True),
-                        TextOption("Delay: ", "10", "-d"),
-                        VisionCameraOption(),
-                    ]
+                "Simulator": AppPanel(self.panel_right, ["python", "run.py"], "simulator/",
+                                      options=[
+                    CheckBoxOption("--svr-source", "", "SVR Source", False),
+                ]),
+                "SVR Watch": AppPanel(self.panel_right, ["python", "vision/svr_watch_all.py"], ""),
+                "HUD": AppPanel(self.panel_right, ["python", "HUD.py"], "misc/HUD/"),
+                "Vision": AppPanel(self.panel_right, ["python", "run.py"], "vision/",
+                                   options=[
+                    TextOption("Entity: ", ignore_empty=False),
+                    CheckBoxOption("-s", None, "Single Process", False),
+                    CheckBoxOption(None, "-G", "Debug", True),
+                    TextOption("Delay: ", "10", "-d"),
+                    VisionCameraOption(),
+                ]
                 ),
             },
             "PID": {
@@ -86,8 +87,8 @@ class AppRunnerFrame(wx.Frame):
                 "Steering Wheel Controller": AppPanel(self.panel_right, ["./bin/steering_controller"], "applications/"),
                 "Zero Thrusters": AppPanel(self.panel_right, ["./bin/zerothrusters"], "applications/"),
             },
-           "Missions (Simulator)": {
-                "Run All Missions": AppPanel(self.panel_right, ["python","run.py","-s"], "mission_control/"),
+            "Missions (Simulator)": {
+                "Run All Missions": AppPanel(self.panel_right, ["python", "run.py", "-s"], "mission_control/"),
 
             },
         }
@@ -144,7 +145,9 @@ class AppRunnerFrame(wx.Frame):
             app.stop()
         self.Destroy()
 
+
 class AppPanel(wx.Panel):
+
     '''A self contained panel that represents a subprocess.
 
     :param parent_window:
@@ -202,11 +205,11 @@ class AppPanel(wx.Panel):
 
         # output_box to display app's stdout
         self.output_box = wx.TextCtrl(self, -1, '', style=
-                wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH |
-                wx.TE_NOHIDESEL | wx.TE_LEFT)
+                                      wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH |
+                                      wx.TE_NOHIDESEL | wx.TE_LEFT)
         self.output_box.SetDefaultStyle(
-                wx.TextAttr("black", "white", wx.Font(8, wx.FONTFAMILY_TELETYPE,
-                wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL), False)
+            wx.TextAttr("black", "white", wx.Font(8, wx.FONTFAMILY_TELETYPE,
+                                                  wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL), False)
         )
         self.output_box.Fit()
 
@@ -254,7 +257,7 @@ class AppPanel(wx.Panel):
 
         self.app_tree.SetItemBold(self.tree_item, True)
         self.run_button.SetLabel("Stop")
-        self.output_box.SetValue(self.short_directory+" $ "+command_to_string(command)+"\n")
+        self.output_box.SetValue(self.short_directory + " $ " + command_to_string(command) + "\n")
 
     def stop(self):
         if self.pid:
@@ -284,7 +287,9 @@ class AppPanel(wx.Panel):
                 if text:
                     self.output_box.AppendText(text)
 
+
 class AppOption(wx.Control):
+
     '''A user configurable option for an application.
 
     Instances will be displayed in their application panel.  The user can then
@@ -351,6 +356,7 @@ class CheckBoxOption(AppOption, wx.CheckBox):
         else:
             return []
 
+
 class TextOption(AppOption, wx.Panel):
 
     def __init__(self, text, default="", option=None, ignore_empty=True):
@@ -398,6 +404,7 @@ class TextOption(AppOption, wx.Panel):
         else:
             return []
 
+
 class VisionCameraOption(AppOption, wx.Panel):
 
     def __init__(self):
@@ -420,7 +427,8 @@ class VisionCameraOption(AppOption, wx.Panel):
         if self.checkbox.GetValue():  # Use SVR
             return [self.textbox.GetValue()]
         else:  # No SVR
-            return ["camera","-c","camera",self.textbox.GetValue()]
+            return ["camera", "-c", "camera", self.textbox.GetValue()]
+
 
 class ConstantOption(AppOption):
 
@@ -432,6 +440,7 @@ class ConstantOption(AppOption):
 
     def get_options(self):
         return [option]
+
 
 def command_to_string(command):
     result = []
