@@ -61,12 +61,11 @@ class AppRunnerFrame(wx.Frame):
                 "SVR Record": AppPanel(self.panel_right, ["python", "vision/svr_record_all.py", "vision/capture/"], ""),
             },
             "Debugging": {
-                "Simulator": AppPanel(self.panel_right, ["python", "run.py"], "simulator/",
-                                      options=[
+                "Simulator": AppPanel(self.panel_right, ["python", "run.py"], "utils/simulator/", options=[
                     CheckBoxOption("--svr-source", "", "SVR Source", False),
                 ]),
                 "SVR Watch": AppPanel(self.panel_right, ["python", "vision/svr_watch_all.py"], ""),
-                "HUD": AppPanel(self.panel_right, ["python", "HUD.py"], "misc/HUD/"),
+                "HUD": AppPanel(self.panel_right, ["python", "HUD.py"], "utils/HUD/"),
                 "Vision": AppPanel(self.panel_right, ["python", "run.py"], "vision/",
                                    options=[
                     TextOption("Entity: ", ignore_empty=False),

@@ -15,7 +15,7 @@ import model
 # Add mission_control/ to sys.path
 parent_directory = os.path.realpath(os.path.join(
     os.path.abspath(__file__),
-    "../.."
+    "../../.."
 ))
 mission_control_directory = os.path.join(parent_directory, "mission_control/")
 sys.path.append(mission_control_directory)
