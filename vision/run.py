@@ -11,9 +11,6 @@ given for binocular entities.
 
 import sys
 import os.path
-if sys.version_info < (2, 6):
-    raise RuntimeError("Python version 2.6 or greater required.")
-from optparse import OptionParser
 
 # Add repository root to sys.path
 parent_directory = os.path.realpath(os.path.join(
@@ -24,90 +21,107 @@ sys.path.append(parent_directory)
 
 import entities
 import process_manager
+import argparse
 
-#spawn a process manager, and start the correct vision process
 
-if __name__ == "__main__":
+def setup_parser():
+    parser = argparse.ArgumentParser(description=__doc__)
 
-    opt_parser = OptionParser(
-        usage="%prog [options] entity camera_name",
-        description=__doc__,
-    )
-    opt_parser.add_option("-s", "--single-process", action="store_true",
-        dest="single_process", default=False,
-        help="Do not run a subprocess for vision processing.  This is useful "
-            "for debugging, but it isn't the way which mission control "
-            "interacts with vision.")
-    opt_parser.add_option("-c", "--camera", nargs=2, action="append",
-        type="string", metavar="<camera> <index/filename>",
-        dest="cameras", default=[],
-        help="Specifies that the camera given should use the given index or "
-            "file to capture its frames.  If this option is not given for a "
-            "camera, SVR is used.")
-    opt_parser.add_option("-d", "--delay", type="int",
-        dest="delay", default=10,
-        help="Delay between frames, in milliseconds, or -1 to wait for "
-            "keypress.  Default is 10.")
-    opt_parser.add_option("-G", "--non-graphical", action="store_false",
-        dest="graphical", default=True,
-        help="Turns off debug mode so no graphical windows are displayed.")
+    parser.add_argument("entity",
+                        type=str, help="The vision entity to run")
 
-    options, args = opt_parser.parse_args()
-    if len(args) == 0:
-        opt_parser.error("No entity given!  Valid entities are: "+str(entities.entity_classes.keys()))
-    elif len(args) == 1:
-        opt_parser.error("No camera given!")
-    entity_name = args[0]
-    camera_names = args[1:]
+    parser.add_argument('streams', nargs="+",
+                        type=str, help='an integer for the accumulator')
 
-    # Put camera option into dictionary format
-    cameras_dict = {}
-    for name, index in options.cameras:
-        cameras_dict[name] = index
+    parser.add_argument("-c", "--camera",
+                        help="""Specifies the sorce of frames for the entity""",
+                        type=str, dest="cameras", default=[], nargs=2, action="append",
+                        metavar="<camera> <index/filename>")
 
-    if options.single_process:
+    parser.add_argument("-d", "--delay",
+                        help="Delay between frames, in milliseconds, or -1 to wait for keypress. Default is 10",
+                        type=int, dest="delay", default=10)
 
+    parser.add_argument("-ng", "--non-graphical",
+                        help="Turns off debug mode so no graphical windows are displayed.",
+                        dest="graphical", default=True, action="store_false")
+
+    parser.add_argument("-s", "--single-process",
+                        help="""Do not run a subprocess for vision processing. This is useful
+                        for debugging, but it isn't the way which mission control interacts with vision""",
+                        dest="single_process", default=False, action="store_true")
+
+    return parser
+
+
+def main():
+    parser = setup_parser()
+    args = parser.parse_args()
+
+    entity = args.entity                  # get the entity from the argparser
+    streams = args.streams                # the video streams to feed to the entity
+    cameras_list = args.cameras           # get the cameras from the argparser
+    graphical = args.graphical            # whether or not to show the streams
+    delay = args.delay                    # delay in between frames
+    single_process = args.single_process  # whether to run it in a single process
+
+    if len(cameras_list) < 1:
+        # user must provide at least one camera
+        parser.error("No camera given!")
+
+    if entity not in entities.entity_classes:
+        parser.error("'%s' is not a valid entity. Please check entities.entity_classes for valid names" % entity)
+
+     # convert the camera list to a dictionary format
+    cameras = {name: source for name, source in cameras_list}
+
+    if single_process:
         class FakePipe(object):
+
             def poll(self):
                 return None
+
             def send(self, data):
                 print data
+
         process_manager.run_entity(
             FakePipe(),
-            entities.entity_classes[entity_name],
-            *camera_names,
-            cameras = cameras_dict,
-            delay = options.delay,
-            debug = options.graphical
+            entities.entity_classes[entity],
+            *streams,
+            cameras=cameras,
+            delay=delay,
+            debug=graphical
         )
 
     else:
+        # spawn a process manager
+        pm = process_manager.ProcessManager(
+            extra_kwargs={
+                "cameras": cameras,
+                "delay": delay,
+                "debug": graphical,
+            }
+        )
 
-        #spawn a process manager
-        pm = process_manager.ProcessManager(extra_kwargs={
-            "cameras": cameras_dict,
-            "delay": options.delay,
-            "debug": options.graphical,
-        })
-
-        #start the requested vision entity
+        # start the requested vision entity
         pm.start_process(
-            entities.entity_classes[entity_name],
-            entity_name,
-            *camera_names
+            entities.entity_classes[entity],
+            entity,
+            *streams
         )
 
         try:
             while True:
-                #for debugging, print out entity output
                 output = pm.get_data()
+                # for debugging, print out entity output
                 if output:
-                    #print output
-                    pass
-
-        except process_manager.KillSignal:
-            # Exit if the subprocess tells us to
+                    print output
+        except process_manager.KillSignal:  # Exit if the subprocess tells us to
             pass
         except Exception:
             pm.kill()
             raise
+
+
+if __name__ == "__main__":
+    main()
