@@ -5,6 +5,7 @@ import libvision
 import vision
 import svr
 
+import cv2
 import cv
 
 
@@ -127,6 +128,10 @@ class VisionEntity(object):
 
     def send_message(self, data):
         self.child_conn.send(data)
+
+    def debug_stream(self, name, frame):
+        cv2.imshow(name, frame)
+        cv2.waitKey(1)
 
     def process_frame(self, frame, debug=True):
         """ process this frame, then place output in self.output """
