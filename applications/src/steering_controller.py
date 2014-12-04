@@ -14,6 +14,7 @@ yaw_heading = 0
 x_activated = False
 y_activated = False
 
+
 def update_axis(event):
     global yaw_heading
     global x_activated
@@ -33,14 +34,14 @@ def update_axis(event):
     else:
         # Steering wheel goes from left 0 to right 32767.
         # Normalize so 0 is center and scale from -1 to 1.
-        turn_rate = (event.x - 32767/2) / (32767/2)
+        turn_rate = (event.x - 32767 / 2) / (32767 / 2)
 
     if not y_activated:
         forward_rate = 0
     elif event.y < 15000:  # Forward
         forward_rate = 1 - event.y / 15000
     elif event.y > 20000:  # Backward
-        forward_rate = -1 * (event.y - 20000) / (32767-20000)
+        forward_rate = -1 * (event.y - 20000) / (32767 - 20000)
     else:
         forward_rate = 0
 
@@ -57,6 +58,7 @@ def update_axis(event):
             sw3.Forward(forward_rate)
         ]))
 
+
 def print_table(headings, *values):
     max_widths = [max(len(heading), 4) + 1 for heading in headings]
     for vs in values:
@@ -71,6 +73,7 @@ def print_table(headings, *values):
     for vs in values:
         vs_l = reduce(lambda x, y: x + list(y), zip(max_widths, vs), [])
         print format % tuple(vs_l)
+
 
 def print_help():
     print "Look at the button labels for help."

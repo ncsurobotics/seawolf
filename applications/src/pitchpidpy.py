@@ -31,36 +31,48 @@ def main():
 
     pitch = seawolf.var.get("SEA.Pitch")
     paused = seawolf.var.get("PitchPID.Paused")
-    pid = seawolf.PID(seawolf.var.get("PitchPID.Heading"), seawolf.var.get("PitchPID.p"), seawolf.var.get("PitchPID.i"), seawolf.var.get("PitchPID.d"))
+
+    pid = seawolf.PID(
+        seawolf.var.get("PitchPID.Heading"),
+        seawolf.var.get("PitchPID.p"),
+        seawolf.var.get("PitchPID.i"),
+        seawolf.var.get("PitchPID.d")
+    )
 
     dataOut(0.0)
     mv = 0.0
 
     while(True):
         seawolf.var.sync()
-        if (seawolf.var.stale("SEA.Pitch") and paused == False):
-            pitch = seawolf.var.get("SEA.Pitch")
-            mv = pid.update(pitch)
-        elif (seawolf.var.stale("PitchPID.p") or seawolf.var.stale("PitchPID.i") or seawolf.var.stale("PitchPID.d")):
-            pid.setCoefficients(seawolf.var.get("PitchPID.p"), seawolf.var.get("PitchPID.i"), seawolf.var.get("PitchPID.d"))
-            pid.resetIntegral()  # init e dt
-        elif (seawolf.var.poked("PitchPID.Heading")):
-            pid.setSetPoint(seawolf.var.get("PitchPID.Heading"))
-            mv = pid.update(seawolf.var.get("SEA.Pitch"))
-            if(paused):
-                seawolf.var.set("PitchPID.Paused", 0.0)
-        elif (seawolf.var.stale("PitchPID.Paused")):
-            p = seawolf.var.get("PitchPID.Paused")
-            if(p == paused):
-                continue
 
-            paused = p
-            if(paused):
+        if seawolf.var.stale("SEA.Pitch"):
+            pitch = seawolf.var.get("SEA.Pitch")
+
+        if seawolf.var.poked("PitchPID.Heading"):
+            pid.setSetPoint(seawolf.var.get("PitchPID.Heading"))
+
+            if paused:
+                seawolf.var.set("PitchPID.Paused", 0.0)
+
+        if (seawolf.var.stale("PitchPID.p") or seawolf.var.stale("PitchPID.i") or seawolf.var.stale("PitchPID.d")):
+
+            pid.setCoefficients(
+                seawolf.var.get("PitchPID.p"),
+                seawolf.var.get("PitchPID.i"),
+                seawolf.var.get("PitchPID.d")
+            )
+            pid.resetIntegral()  # init e dt
+
+        if (seawolf.var.stale("PitchPID.Paused")):
+            paused = seawolf.var.get("PitchPID.Paused")
+
+            if paused:
                 dataOut(0.0)
                 seawolf.notify.send("PIDPAUSED", "Pitch")
                 pid.pause()
 
-        if (paused == False):
+        if not paused:
+            mv = pid.update(pitch)
             dataOut(mv)
 
     seawolf.close()

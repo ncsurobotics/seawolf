@@ -1,7 +1,7 @@
 
 import seawolf as sw
 
-__all__ = ["yaw", "pitch", "depth", "strafet", "strafeb"]
+__all__ = ["yaw", "pitch", "depth", "roll"]
 
 
 class PIDInterface(object):
@@ -26,45 +26,53 @@ class PIDInterface(object):
 
 
 def set_yaw(value):
-    if -180.0 <= value <= 180.0:
+    min = -180
+    max = 180
+
+    if min <= value <= max:
         sw.var.set("YawPID.Heading", value)
     else:
-        raise ValueError("Value for yaw heading out of range!")
+        raise ValueError(
+            "Value for yaw heading must be in range {low} to {high}".format(low=min, high=max)
+        )
 
 
 def set_pitch(value):
-    if -15.0 <= value <= 15.0:
+    min = -25
+    max = 25
+
+    if min <= value <= max:
         sw.var.set("PitchPID.Heading", value)
     else:
-        raise ValueError("That sort of pitch is total suicide!")
+        raise ValueError(
+            "Value for pitch heading must be in range {low} to {high}".format(low=min, high=max)
+        )
 
 
-def set_strafet(value):
+def set_roll(value):
+    min = -180
+    max = 180
 
-        # TODO: get correct safe values
-    if -15.0 <= value <= 15.0:
-        sw.var.set("StrafeTPID.Heading", value)
+    if min <= value <= max:
+        sw.var.set("RollPID.Heading", value)
     else:
-        raise ValueError("That sort of strafe is total suicide!")
-
-
-def set_strafeb(value):
-
-        # TODO: get correct safe values
-    if -15.0 <= value <= 15.0:
-        sw.var.set("StrafeBPID.Heading", value)
-    else:
-        raise ValueError("That sort of strafeb is total suicide!")
+        raise ValueError(
+            "Value for roll heading must be in range {low} to {high}".format(low=min, high=max)
+        )
 
 
 def set_depth(value):
-    if 0.0 <= value <= 20.0:
+    min = 0
+    max = 20
+
+    if min <= value <= max:
         sw.var.set("DepthPID.Heading", value)
     else:
-        raise ValueError("Cowardly refusing to dive so far! (%.4f)" % (value,))
+        raise ValueError(
+            "Value for depth heading must be in range {low} to {high}".format(low=min, high=max)
+        )
 
 yaw = PIDInterface("YawPID", set_yaw)
 pitch = PIDInterface("PitchPID", set_pitch)
 depth = PIDInterface("DepthPID", set_depth)
-strafet = PIDInterface("StrafeTPID", set_strafet)
-strafeb = PIDInterface("StrafeBPID", set_strafeb)
+roll = PIDInterface("RollPID", set_roll)

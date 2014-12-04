@@ -5,6 +5,7 @@
 */bin
 */__pycache__
 /vision/FOOTAGE
+/db/seawolf_var.db
 
 *.mp4
 *.avi
