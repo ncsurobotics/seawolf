@@ -43,7 +43,6 @@ def main():
 
     while(True):
         seawolf.var.sync()
-        print mv
 
         if seawolf.var.stale("SEA.Roll"):
             roll = seawolf.var.get("SEA.Roll")
