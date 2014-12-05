@@ -1,0 +1,38 @@
+# To use this session setup, install tmuxp ('pip install tmuxp')
+# Then use 'tmuxp load pid_test.yaml' to open the session
+
+session_name: PID Testing
+start_directory: ./
+
+windows:
+  - window_name: Serial
+    start_directory: serial/
+    shell_command_before: './bin/serialapp'
+    panes:
+    -
+
+  - window_name: Mixer
+    start_directory: applications/
+    shell_command_before: './bin/mixer'
+    panes:
+    -
+
+  - window_name: PIDs
+    layout: tiled
+    start_directory: applications/
+    panes:
+    - shell_command: './bin/depthpidpy'
+    - shell_command: './bin/pitchpidpy'
+    - shell_command: './bin/rollpidpy'
+    - shell_command: './bin/yawpidpy'
+
+  - window_name: Watch
+    start_directory: applications/
+    panes:
+    -
+
+  - window_name: SW3
+    focus: true
+    start_directory: mission_control/
+    panes:
+    - shell_command: python sw3_cmd.py

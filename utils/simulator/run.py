@@ -17,6 +17,7 @@ parent_directory = os.path.realpath(os.path.join(
     os.path.abspath(__file__),
     "../../.."
 ))
+print parent_directory
 mission_control_directory = os.path.join(parent_directory, "mission_control/")
 sys.path.append(mission_control_directory)
 
@@ -97,7 +98,7 @@ robot_pos = parameters["robot_pos"]
 robot_yaw = parameters["robot_yaw"]
 
 # libseawolf Init
-seawolf.loadConfig("../conf/seawolf.conf")
+seawolf.loadConfig("../../conf/seawolf.conf")
 seawolf.init("Simulator")
 
 # Initialize everything!
