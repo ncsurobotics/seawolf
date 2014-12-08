@@ -7,15 +7,13 @@ start_directory: ./
 windows:
   - window_name: Serial
     start_directory: serial/
-    shell_command_before: './bin/serialapp'
     panes:
-    -
+    - shell_command: './bin/serialapp'
 
   - window_name: Mixer
     start_directory: applications/
-    shell_command_before: './bin/mixer'
     panes:
-    -
+    - shell_command: './bin/mixer'
 
   - window_name: PIDs
     layout: tiled
@@ -26,10 +24,15 @@ windows:
     - shell_command: './bin/rollpidpy'
     - shell_command: './bin/yawpidpy'
 
-  - window_name: Watch
+  - window_name: Modify
     start_directory: applications/
     panes:
     -
+
+  - window_name: Watch
+    start_directory: applications/
+    panes:
+    - shell_command: './bin/watchvariables SEA.Yaw SEA.Pitch SEA.Roll strafet strafeb port star bow stern'
 
   - window_name: SW3
     focus: true
