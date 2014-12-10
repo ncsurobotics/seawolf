@@ -11,7 +11,14 @@ import math
 import struct
 
 
+def get_devices():
+    """ Return a list of connected joystick devices
+    """
+    return glob.glob("/dev/js*") + glob.glob("/dev/input/js*")
+
+
 class JoystickDriver(object):
+
     EVENT_BUTTON = 0x01
     EVENT_AXIS = 0x02
     EVENT_INIT = 0x80
@@ -36,6 +43,17 @@ class JoystickDriver(object):
         self.dev.close()
 
 
+class Button(object):
+
+    def __init__(self, number, name=None):
+        self.number = number
+        self.name = name
+        self.value = 0
+
+    def __repr__(self):
+        return "{name}: {val}".format(name=self.name, val=self.value)
+
+
 class Axis(object):
 
     def __init__(self, axis, name=None):
@@ -45,21 +63,36 @@ class Axis(object):
         self.y = 0
 
     @property
-    def mag(self):
+    def magnitude(self):
+        """ Returns the current magnitude of the stick
+        """
         scalar = 1.0 / 32767
         return math.sqrt(math.pow(self.x, 2) + math.pow(self.y, 2)) * scalar
 
     @property
-    def math_angle(self):
+    def angle_degrees(self):
+        """ Returns the angle of the stick in degrees, from -180 to 180, with 0 at due east
+        """
+        return math.degrees(self.angle_radians)
+
+    @property
+    def angle_radians(self):
+        """ Returns the angle of the stick in radians, from -pi to pi, with 0 at due east
+        """
         x, y = self.x, -self.y
 
         if x == 0:
-            return (math.pi / 2) if y > 0 else (- math.pi / 2)
+            if y > 0:
+                return math.pi / 2
+            else:
+                return -math.pi / 2
 
         return math.atan2(y, x)
 
     @property
-    def angle(self):
+    def bearing_degrees(self):
+        """ Returns the angle of the stick in degrees, from -180 to 180, with 0 at due north
+        """
         x, y = self.x, -self.y
 
         if x == 0 and y < 0:
@@ -80,19 +113,14 @@ class Axis(object):
         else:
             return 180 - angle
 
-    def __repr__(self):
-        return "%s: (%d, %d)" % (self.name, self.x, self.y)
-
-
-class Button(object):
-
-    def __init__(self, number, name=None):
-        self.number = number
-        self.name = name
-        self.value = 0
+    @property
+    def bearing_radians(self):
+        """ Returns the angle of the stick in degrees, from -pi to pi, with 0 at due north
+        """
+        return math.radians(self.bearing_degrees)
 
     def __repr__(self):
-        return "%s: %d" % (self.name, self.value)
+        return "{name}: ({x}, {y})".format(name=self.name, x=self.x, y=self.y)
 
 
 class Joystick(object):
@@ -100,17 +128,18 @@ class Joystick(object):
     def __init__(self, device_path, mapping):
         self.joystick = JoystickDriver(device_path)
         self.mapping = mapping
-        self.axises = dict()
+        self.axes = dict()
         self.buttons = dict()
 
         for i in self.mapping:
             if isinstance(i, Button):
                 self.buttons[i.number] = i
             elif isinstance(i, Axis):
-                self.axises[i.axis[0]] = i
-                self.axises[i.axis[1]] = i
+                self.axes[i.axis[0]] = i
+                self.axes[i.axis[1]] = i
 
     def poll(self):
+        # Here be magic
         event = None
         event_type = JoystickDriver.EVENT_INIT
 
@@ -127,7 +156,7 @@ class Joystick(object):
             return copy.deepcopy(button)
 
         elif event_type & JoystickDriver.EVENT_AXIS:
-            axis = self.axises[event_number]
+            axis = self.axes[event_number]
 
             if event_number == axis.axis[0]:
                 axis.x = event_value
@@ -142,9 +171,6 @@ class Joystick(object):
     def close(self):
         self.joystick.close()
 
-
-def get_devices():
-    return glob.glob("/dev/js*") + glob.glob("/dev/input/js*")
 
 LOGITECH = (
     Axis((0, 1), "leftStick"),
@@ -180,6 +206,7 @@ STEERINGWHEEL = (
     Button(9, "button10")
 )
 
+# Testing purposes only
 if __name__ == '__main__':
     available = get_devices()
 

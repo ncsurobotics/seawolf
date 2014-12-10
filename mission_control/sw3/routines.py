@@ -41,6 +41,9 @@ class NavRoutine(object):
         """ Perform any cleanup needed after the routine has finished """
         pass
 
+    def _poll(self):
+        pass
+
     def start(self):
         with self.routine_lock:
             self.done_event.clear()

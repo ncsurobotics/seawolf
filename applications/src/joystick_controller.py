@@ -1,3 +1,5 @@
+""" Joystick Control script for Seawolf """
+
 from __future__ import division
 
 import sys
@@ -15,12 +17,25 @@ FORWARD_SPEED = 0.4
 
 yaw_heading = 0
 
+CONTROL_DOC = """\
+Controls:
+    Navigate:         Left Joystick
+    Depth Up:         R1
+    Depth Down:       R2
+    Zero Thrusters:   Button1
+    Emergency Breech: Button4 (requires confirmation)
+
+    Print Variables:  Button3
+    Help:             Button9
+    Quit:             Button10
+"""
+
 
 def update_axis(event):
     global yaw_heading
-    angle = event.math_angle
+    angle = event.angle_radians
 
-    mag = max(min(event.mag, 1.0), -1.0)
+    mag = max(min(event.magnitude, 1.0), -1.0)
 
     forward = (mag * sin(angle))
     rate = (mag * cos(angle))
@@ -58,12 +73,7 @@ def print_table(headings, *values):
 
 
 def print_help():
-    print "R1: Depth up   R2: Depth down"
-    print "Button1: Zero thrusters   Button3: Print variables"
-    print "Button4: Emergency breech (requires confirmation)"
-    print "Left Joystick: Navigate"
-    print "Button9: Help   Button10: Quit"
-    print
+    print CONTROL_DOC
 
 
 def main():
@@ -148,6 +158,8 @@ def main():
                 print "Quitting"
                 sw3.nav.do(sw3.ZeroThrusters())
                 break
+
+    sw.close()
 
 if __name__ == '__main__':
     main()

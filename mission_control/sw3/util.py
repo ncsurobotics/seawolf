@@ -3,9 +3,6 @@ from __future__ import division
 import math
 import random
 
-import pid
-from mixer import mixer
-
 
 def pairwise_disjoint(*args):
     for i in range(0, len(args) - 1):
@@ -106,7 +103,7 @@ def k_means(objects, k, max_iterations=100,
             average=points_average,
             error=0.001):
 
-    if initial_means_objects == None:
+    if initial_means_objects is None:
         # Choose k initial elements as means
         means = map(position, random.sample(objects, k))
     else:
