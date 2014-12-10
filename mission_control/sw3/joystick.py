@@ -1,8 +1,13 @@
+"""
+Linux joystick driver created using Linux joystick API
+https://www.kernel.org/doc/Documentation/input/joystick-api.txt
+"""
+
+from __future__ import division, print_function
 
 import copy
 import glob
 import math
-import select
 import struct
 
 
@@ -10,18 +15,21 @@ class JoystickDriver(object):
     EVENT_BUTTON = 0x01
     EVENT_AXIS = 0x02
     EVENT_INIT = 0x80
+    EVENT_FORMAT = "@IhBB"  # [uint][short][char][char]
+    EVENT_SIZE = struct.calcsize(EVENT_FORMAT)
 
     def __init__(self, device_path):
         self.path = device_path
-        self.dev = open(self.path, "r")
-        self.struct = struct.Struct("@IhBB")
+        self.dev = open(self.path, "rb")
+        self.dev.flush()
+        self.struct = struct.Struct(JoystickDriver.EVENT_FORMAT)
 
     def _unpack(self, s):
         unpacked = self.struct.unpack(s)
         return dict(zip(("time", "value", "type", "number"), unpacked))
 
     def get_event(self):
-        s = self.dev.read(self.struct.size)
+        s = self.dev.read(JoystickDriver.EVENT_SIZE)
         return self._unpack(s)
 
     def close(self):
@@ -39,7 +47,7 @@ class Axis(object):
     @property
     def mag(self):
         scalar = 1.0 / 32767
-        return (self.x ** 2 + self.y ** 2) ** 0.5 * scalar
+        return math.sqrt(math.pow(self.x, 2) + math.pow(self.y, 2)) * scalar
 
     @property
     def math_angle(self):
@@ -47,6 +55,7 @@ class Axis(object):
 
         if x == 0:
             return (math.pi / 2) if y > 0 else (- math.pi / 2)
+
         return math.atan2(y, x)
 
     @property
@@ -137,31 +146,47 @@ class Joystick(object):
 def get_devices():
     return glob.glob("/dev/js*") + glob.glob("/dev/input/js*")
 
-LOGITECH = (Axis((0, 1), "leftStick"),
-            Axis((2, 3), "rightStick"),
-            Axis((4, 5), "hat"),
-            Button(0, "button1"),
-            Button(1, "button2"),
-            Button(2, "button3"),
-            Button(3, "button4"),
-            Button(4, "button5"),
-            Button(5, "button6"),
-            Button(6, "button7"),
-            Button(7, "button8"),
-            Button(8, "button9"),
-            Button(9, "button10"),
-            Button(10, "leftStickButton"),
-            Button(11, "rightStickButton"))
-STEERINGWHEEL = (Axis((0, 1), "wheelAndThrottle"),
-                 Axis((2, 3), "padX"),
-                 Axis((4, 5), "padY"),
-                 Button(0, "button1"),
-                 Button(1, "button2"),
-                 Button(2, "button3"),
-                 Button(3, "button4"),
-                 Button(4, "button5"),
-                 Button(5, "button6"),
-                 Button(6, "button7"),
-                 Button(7, "button8"),
-                 Button(8, "button9"),
-                 Button(9, "button10"))
+LOGITECH = (
+    Axis((0, 1), "leftStick"),
+    Axis((2, 3), "rightStick"),
+    Axis((4, 5), "hat"),
+    Button(0, "button1"),
+    Button(1, "button2"),
+    Button(2, "button3"),
+    Button(3, "button4"),
+    Button(4, "button5"),
+    Button(5, "button6"),
+    Button(6, "button7"),
+    Button(7, "button8"),
+    Button(8, "button9"),
+    Button(9, "button10"),
+    Button(10, "leftStickButton"),
+    Button(11, "rightStickButton")
+)
+
+STEERINGWHEEL = (
+    Axis((0, 1), "wheelAndThrottle"),
+    Axis((2, 3), "padX"),
+    Axis((4, 5), "padY"),
+    Button(0, "button1"),
+    Button(1, "button2"),
+    Button(2, "button3"),
+    Button(3, "button4"),
+    Button(4, "button5"),
+    Button(5, "button6"),
+    Button(6, "button7"),
+    Button(7, "button8"),
+    Button(8, "button9"),
+    Button(9, "button10")
+)
+
+if __name__ == '__main__':
+    available = get_devices()
+
+    if len(available) < 1:
+        print("No joystick available")
+
+    testj = Joystick(available[0], LOGITECH)
+
+    while True:
+        print(testj.poll())
