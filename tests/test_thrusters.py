@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from __future__ import division, print_function
 
 import time
@@ -21,6 +23,7 @@ def test_thruster(name):
     print("Setting {} to ".format(name), end="")
 
     for val in VALUE_RANGE:
+        assert(-1 <= val <= 1)
         seawolf.var.set(name, val)
 
         print("{}".format(val), end="  ")
