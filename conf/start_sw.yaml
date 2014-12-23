@@ -13,12 +13,12 @@ windows:
 
   - window_name: Serial
     start_directory: serial/
-    shell_command_before: sleep .1
+    shell_command_before: 'sleep .1'
     panes:
     - shell_command: './bin/serialapp'
 
   - window_name: Applications
     start_directory: applications/
-    shell_command_before: sleep .1
+    shell_command_before: 'sleep .1'
     panes:
     - shell_command: './suite.sh'

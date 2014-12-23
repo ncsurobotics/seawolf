@@ -31,7 +31,8 @@ def test_thruster(name):
 
         time.sleep(.7)
 
-    print()
+    seawolf.var.set(name, 0.0)
+    print("0.0")
 
 
 for thruster in THRUSTERS:
