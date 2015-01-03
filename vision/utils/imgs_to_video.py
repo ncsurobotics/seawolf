@@ -21,7 +21,7 @@ def main():
     ]
 
     out = cv2.VideoWriter(os.path.basename(os.path.normpath(directory)) + '.avi',
-                          cv2.cv.FOURCC('X', 'V', 'I', 'D'), 20.0, (640, 480))
+                          cv2.cv.FOURCC('M', 'J', 'P', 'G'), 20.0, (640, 480))
 
     for image in sorted(img_dirs):
         frame = cv2.imread(os.path.join(directory, image))

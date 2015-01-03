@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import cv2
 import numpy as np
@@ -6,26 +8,36 @@ from sys import argv
 path = ''
 draw_contours = False
 
+# Constants for the names of the trackbars, since they're specified by name
+tbar_play_video_name = 'Play Video'
+tbar_channel_select_name = 'Select Channel (HSV)'
+tbar_block_size_name = 'Block Size'
+tbar_thresh_name = 'Threshold'
+
+# Contants for the names of the windows, since they're specified by name
+win_default_name = 'original'
+win_debug_name = 'debug'
+
 
 def main():
-
     base_dir = os.getcwd()
 
     if len(argv) > 1:
         path = argv[1]
 
     if not path:
-        raise Exception("Must provide a path to get footage from")
+        print("Must provide a path to get footage from")
+        exit()
 
     filename = os.path.join(base_dir, path)
 
     if not os.path.isfile(filename):
-        print "Invalid Path - File does not exist"
+        print("Invalid Path - File does not exist")
         exit()
 
-    vc = cv2.VideoCapture(filename)
-
     create_interface()
+
+    vc = cv2.VideoCapture(filename)
     run(vc)
     vc.release()
 
@@ -34,46 +46,35 @@ def run(capture):
     current_frame = get_new_frame(capture)
 
     while capture.isOpened():
+        if cv2.getTrackbarPos(tbar_play_video_name, win_debug_name):
+            try:
+                current_frame = get_new_frame(capture)
+            except StopIteration:
+                print("End of clip")
+                break
 
-        if cv2.getTrackbarPos('Play Video', 'debug'):
-            current_frame = get_new_frame(capture)
+        debug_frame = process_frame(current_frame.copy())
 
-        try:
-            debug_frame = process_frame(current_frame.copy())
-        except StopIteration:
-            print "End of clip"
-            break
-
-        refresh_display(current_frame, debug_frame)
-
-
-def get_channel(frame, channel):
-    splitf = cv2.split(frame)
-
-    return splitf[channel]
-
-
-def refresh_display(ref, debug):
-    cv2.imshow('original', ref)
-    cv2.imshow('debug', debug)
-    cv2.waitKey(40)
+        cv2.imshow(win_default_name, current_frame)
+        cv2.imshow(win_debug_name, debug_frame)
+        cv2.waitKey(40)
 
 
 def process_frame(frame):
-    channel = cv2.getTrackbarPos('HSV', 'debug')
+    channel = cv2.getTrackbarPos(tbar_channel_select_name, win_debug_name)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     frame = get_channel(frame, channel)
 
-    block_size = cv2.getTrackbarPos('Block size', 'debug')
-    threshold = cv2.getTrackbarPos('Threshold', 'debug')
+    block_size = cv2.getTrackbarPos(tbar_block_size_name, win_debug_name)
+    threshold = cv2.getTrackbarPos(tbar_thresh_name, win_debug_name)
 
     if not block_size % 2 == 1:
         block_size += 1
-        cv2.setTrackbarPos('Block size', 'debug', block_size)
+        cv2.setTrackbarPos(tbar_block_size_name, win_debug_name, block_size)
 
     if block_size <= 1:
         block_size = 3
-        cv2.setTrackbarPos('Block size', 'debug', block_size)
+        cv2.setTrackbarPos(tbar_block_size_name, win_debug_name, block_size)
 
     adaptive = cv2.adaptiveThreshold(frame, 255,
                                      cv2.ADAPTIVE_THRESH_MEAN_C,
@@ -93,25 +94,31 @@ def process_frame(frame):
         return adaptive
 
 
-def create_interface():
-    cv2.namedWindow('original')
-    cv2.namedWindow('debug')
-
-    # Function that activates on trackbar movement
-    def nothing(x):
-        pass
-
-    cv2.createTrackbar('Threshold', 'debug', 25, 75, nothing)
-    cv2.createTrackbar('Block size', 'debug', 25, 49, nothing)
-    cv2.createTrackbar('Play Video', 'debug', 0, 1, nothing)
-    cv2.createTrackbar('HSV', 'debug', 1, 2, nothing)
-
-
 def get_new_frame(vc):
     rval, frame = vc.read()
     if not rval:
         raise StopIteration
     return frame
+
+
+def get_channel(frame, channel):
+    splitf = cv2.split(frame)
+
+    return splitf[channel]
+
+
+def create_interface():
+    cv2.namedWindow(win_default_name)
+    cv2.namedWindow(win_debug_name)
+
+    # Function that activates on trackbar movement
+    def nothing(x):
+        pass
+
+    cv2.createTrackbar(tbar_play_video_name, win_debug_name, 0, 1, nothing)
+    cv2.createTrackbar(tbar_channel_select_name, win_debug_name, 1, 2, nothing)
+    cv2.createTrackbar(tbar_thresh_name, win_debug_name, 25, 75, nothing)
+    cv2.createTrackbar(tbar_block_size_name, win_debug_name, 25, 49, nothing)
 
 
 if __name__ == '__main__':
