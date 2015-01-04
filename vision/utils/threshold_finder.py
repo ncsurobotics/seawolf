@@ -40,6 +40,7 @@ def main():
     vc = cv2.VideoCapture(filename)
     run(vc)
     vc.release()
+    cv2.destroyAllWindows()
 
 
 def run(capture):
