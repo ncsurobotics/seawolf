@@ -65,9 +65,9 @@ def main():
     delay = args.delay                    # delay in between frames
     single_process = args.single_process  # whether to run it in a single process
 
-    if len(cameras_list) < 1:
+    if len(streams) < 1:
         # user must provide at least one camera
-        parser.error("No camera given!")
+        parser.error("No camera stream given!")
 
     if entity not in entities.entity_classes:
         parser.error("'%s' is not a valid entity. Please check entities.entity_classes for valid names" % entity)

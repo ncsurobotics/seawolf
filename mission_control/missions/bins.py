@@ -1,14 +1,12 @@
 from __future__ import division
+
 import math
-from math import pi
 
 import seawolf
-from time import time
-from missions.base import MissionBase
-from vision import process_manager
-from vision import entities
 import sw3
-from sw3 import util
+
+from missions.base import MissionBase
+from vision import entities
 
 BIN_DEPTH = 8
 CENTER_THRESH = 6
@@ -179,7 +177,7 @@ class BinsMission(MissionBase):
     def drop(self, bins):
         # print "Marker Dropped"
         if bins and self.orientdata:
-            orient_angle = self.orientdata * (180 / pi)
+            orient_angle = self.orientdata * (180 / math.pi)
             print "orient"
             orient = sw3.CompoundRoutine(sw3.Forward(0), sw3.RelativeYaw(orient_angle), timeout=5)
             sw3.nav.do(orient)

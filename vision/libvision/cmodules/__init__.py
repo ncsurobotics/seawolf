@@ -58,8 +58,8 @@ Limitations
 TODO
 
 '''
-#TODO: Write Limitations section
-#TODO: Where does documentation for modules go?
+# TODO: Write Limitations section
+# TODO: Where does documentation for modules go?
 
 import ctypes
 
@@ -80,8 +80,10 @@ target_color_hsv = CModule("target_color_hsv.so", [
 ])
 
 # Shape Detect Module
+
+
 class cRect(ctypes.Structure):
-    _fields_  = [
+    _fields_ = [
         ("area", ctypes.c_int32),
         ("c_x", ctypes.c_int32),
         ("c_y", ctypes.c_int32),
@@ -92,12 +94,14 @@ cRect_p = ctypes.POINTER(cRect)
 cRect_p_p = ctypes.POINTER(cRect_p)
 
 shape_detect = CModule("shape_detect.so", [
-    CFunction("match_letters",ctypes.c_int,[IplImage_p,ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]),
-    CFunction("find_bins", cRect_p_p,[IplImage_p, ctypes.POINTER(ctypes.c_int)]),
+    CFunction("match_letters", ctypes.c_int, [IplImage_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int]),
+    CFunction("find_bins", cRect_p_p, [IplImage_p, ctypes.POINTER(ctypes.c_int)]),
     CFunction("free_bins", None, [cRect_p_p, ctypes.c_int])
 ])
 
 # Buoy Analysis Module
+
+
 class BuoyROIStruct(ctypes.Structure):
     _fields_ = [
         ("x", ctypes.c_int),
@@ -107,8 +111,8 @@ class BuoyROIStruct(ctypes.Structure):
     ]
 BuoyROIStruct_p = ctypes.POINTER(BuoyROIStruct)
 BuoyROIStruct_p_p = ctypes.POINTER(BuoyROIStruct_p)
-buoy_analyzer = CModule("buoy_analyzer.so",[
-    CFunction("buoy_color", ctypes.POINTER(ctypes.c_int),[IplImage_p, BuoyROIStruct_p_p, ctypes.c_int])
+buoy_analyzer = CModule("buoy_analyzer.so", [
+    CFunction("buoy_color", ctypes.POINTER(ctypes.c_int), [IplImage_p, BuoyROIStruct_p_p, ctypes.c_int])
 ])
 
 # Instantiate CModule objects below:
@@ -118,6 +122,8 @@ test = CModule("test.so", [
 ])
 
 # blob module
+
+
 class BlobStruct(ctypes.Structure):
     _fields_ = [
         ("top", ctypes.c_int),
@@ -136,6 +142,7 @@ blob = CModule("blob.so", [
     CFunction("find_blobs", ctypes.c_int, [IplImage_p, BlobStruct_p_p, ctypes.c_int, ctypes.c_int]),
     CFunction("blob_free", None, [BlobStruct_p, ctypes.c_int]),
 ])
+
 
 class cBlob(ctypes.Structure):
     _fields_ = [
@@ -158,5 +165,5 @@ cblob_mod = CModule("blob2.so", [
 ])
 
 cgreymap_mod = CModule("greymap.so", [
-        CFunction("_wrap_greymap", None, [ctypes.py_object, ctypes.py_object, ctypes.c_ubyte * 256])
+    CFunction("_wrap_greymap", None, [ctypes.py_object, ctypes.py_object, ctypes.c_ubyte * 256])
 ])
