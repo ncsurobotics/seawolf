@@ -34,7 +34,7 @@ windows:
     start_directory: applications/
     shell_command_before: 'sleep .1'
     panes:
-    - shell_command: './bin/watchvariables SEA.Yaw SEA.Pitch SEA.Roll strafet strafeb port star bow stern'
+    - shell_command: './bin/watchvariables SEA.Yaw SEA.Pitch SEA.Roll StrafeT StrafeB Port Star Bow Stern'
 
   - window_name: SW3
     focus: true
