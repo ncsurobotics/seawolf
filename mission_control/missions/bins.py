@@ -2,7 +2,6 @@ from __future__ import division
 
 import math
 
-import seawolf
 import sw3
 
 from missions.base import MissionBase

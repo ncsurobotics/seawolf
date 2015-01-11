@@ -3,11 +3,8 @@ from __future__ import division
 
 from vision import entities
 from missions.base import MissionBase
-from vision import process_manager
+
 import sw3
-import math
-from math import pi
-from sw3 import util
 
 MISSION_TIMEOUT = 10
 FORWARD_SPEED = 0.3
