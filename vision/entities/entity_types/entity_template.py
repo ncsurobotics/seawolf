@@ -1,4 +1,7 @@
+import math
+
 from base_object import BaseObject
+
 
 class Obj(BaseObject):
 
@@ -6,7 +9,7 @@ class Obj(BaseObject):
         self.id = 1
         self.midx = rect_midpointx(corner1, corner2, corner3, corner4)
         self.midy = rect_midpointy(corner1, corner2, corner3, corner4)
-        self.corner1 = corner1 #Corners of the object boundaries. 
+        self.corner1 = corner1  # Corners of the object boundaries.
         self.corner2 = corner2
         self.corner3 = corner3
         self.corner4 = corner4
@@ -21,11 +24,7 @@ class Obj(BaseObject):
         # becomes confirmed)
         self.seencount = 1
 
-        self.type = "" #Use this for a unique property: color, shape, etc
-
-
-
-
+        self.type = ""  # Use this for a unique property: color, shape, etc
 
 
 def line_distance(corner_a, corner_b):

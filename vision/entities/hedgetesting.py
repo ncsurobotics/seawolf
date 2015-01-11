@@ -5,9 +5,6 @@ import numpy as np
 import svr
 from base import VisionEntity
 import libvision
-from sw3.util import circular_average, circular_range
-#import msvcrt
-import random
 
 
 def line_slope(corner_a, corner_b):
@@ -135,7 +132,7 @@ class HedgeTestingEntity(VisionEntity):
             y1 = int(y0 + 1000 * (a))  # But if you want to round the number, then use np.around() function, then 3.8 --> 4.0
             x2 = int(x0 - 1000 * (-b))  # But we need integers, so use int() function after that, ie int(np.around(x))
             y2 = int(y0 - 1000 * (a))
-            cv2.line(debug_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.line(self.debug_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
         rFrame = libvision.cv2_to_cv(rFrame)
         gFrame = libvision.cv2_to_cv(gFrame)
@@ -144,11 +141,11 @@ class HedgeTestingEntity(VisionEntity):
         # svr.debug("Gframe", gFrame)
         svr.debug("debug", self.debug_frame)
 
-    def reduce_lines(self):
-        for ln in self.raw_reds[:]:
-            if abs(ln.theta) < 30:
-                self.raw_greens.append(ln)
-                self.raw_reds.remove(ln)
+    # def reduce_lines(self):
+    #     for ln in self.raw_reds[:]:
+    #         if abs(ln.theta) < 30:
+    #             self.raw_greens.append(ln)
+    #             self.raw_reds.remove(ln)
 
     def draw_lines(self):
         for ln in self.raw_reds:
