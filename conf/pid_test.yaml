@@ -41,4 +41,4 @@ windows:
     start_directory: mission_control/
     shell_command_before: 'sleep .1'
     panes:
-    - shell_command: 'python sw3_cmd.py'
+    - shell_command: './sw_control'

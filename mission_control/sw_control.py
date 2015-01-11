@@ -1,9 +1,10 @@
+#!/usr/bin/env python
 
 import seawolf as sw
 from sw3 import *
 
 sw.loadConfig("../conf/seawolf.conf")
-sw.init("SW3 Command Line Interface")
+sw.init("Seawolf Command Line Interface")
 
 
 def zero_thrusters():
