@@ -1,3 +1,12 @@
+#!/usr/bin/env python
+"""
+Program for finding thresholds on some given channel
+
+Usage:
+
+    ./threshold_finder.py [path to media]
+"""
+
 from __future__ import print_function
 
 import os
@@ -62,6 +71,7 @@ def run(capture):
 
 
 def process_frame(frame):
+    """ Process frame based on user input """
     channel = cv2.getTrackbarPos(tbar_channel_select_name, win_debug_name)
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
     frame = get_channel(frame, channel)
@@ -96,6 +106,7 @@ def process_frame(frame):
 
 
 def get_new_frame(vc):
+    """ Get a new image from a media source """
     rval, frame = vc.read()
     if not rval:
         raise StopIteration
@@ -103,12 +114,14 @@ def get_new_frame(vc):
 
 
 def get_channel(frame, channel):
+    """ Get a specific channel from an image"""
     splitf = cv2.split(frame)
 
     return splitf[channel]
 
 
 def create_interface():
+    """ Create windows and trackbars """
     cv2.namedWindow(win_default_name)
     cv2.namedWindow(win_debug_name)
 

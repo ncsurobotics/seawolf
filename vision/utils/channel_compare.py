@@ -1,9 +1,17 @@
+#!/usr/bin/env python
+"""
+Compare Hue, Saturation, and Value channels in some media
+
+Usage:
+
+    ./channel_compare.py [path to media]
+"""
+
 from __future__ import print_function
 
 import os
 import cv2
-import numpy as np
-from sys import argv
+import sys
 
 path = ''
 draw_contours = False
@@ -22,8 +30,8 @@ win_val_name = 'value channel'
 def main():
     base_dir = os.getcwd()
 
-    if len(argv) > 1:
-        path = argv[1]
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
 
     if not path:
         print("Must provide a path to get footage from")
@@ -44,6 +52,7 @@ def main():
 
 
 def run(capture):
+    """ Update display based on user input """
     current_frame = get_new_frame(capture)
 
     while capture.isOpened():
@@ -74,6 +83,7 @@ def run(capture):
 
 
 def get_new_frame(vc):
+    """ Read new frame from camera """
     rval, frame = vc.read()
     if not rval:
         raise StopIteration
@@ -81,6 +91,7 @@ def get_new_frame(vc):
 
 
 def create_interface():
+    """ Create gui, windows and trackbars """
     cv2.namedWindow(win_default_name)
     cv2.namedWindow(win_hue_name)
     cv2.namedWindow(win_sat_name)
