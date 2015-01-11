@@ -1,13 +1,22 @@
+#!/usr/bin/env python
+"""
+Convert a directory of images into a video file
+
+Usage:
+
+    ./imgs_to_video.py [path to media directory]
+"""
+
 import cv2
-from sys import argv
+import sys
 import os
 
 path = ''
 
 
 def main():
-    if len(argv) > 1:
-        path = argv[1]
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
 
     base_dir = os.getcwd()
     directory = os.path.join(base_dir, path)
