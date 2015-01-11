@@ -8,7 +8,6 @@ import sys
 import os
 from optparse import OptionParser
 from time import sleep
-import subprocess
 import sw3
 
 simulator = False
