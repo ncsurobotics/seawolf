@@ -38,7 +38,7 @@ Use git clone to get these:
 https://github.com/ncsurobotics/libseawolf.git
 https://github.com/ncsurobotics/swpycv.git
 https://github.com/ncsurobotics/svr.git
-https://github.com/ncsurobotics/seawolf5.git
+https://github.com/ncsurobotics/seawolf.git
 
 Installation
 
@@ -79,7 +79,7 @@ $ python
 
 Seawolf
 
-Go into the seawolf5 directory and run:
+Go into the seawolf directory and run:
 
 $ make
 
