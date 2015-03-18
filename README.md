@@ -1,93 +1,104 @@
-Seawolf Software Install
+## Seawolf Software Install
 
 Notes on installing Seawolf stuff.
 
-Written with Fedora, Debian, Mint, and Ubuntu in mind. All the software _should_ work on Mac as well.
+URC's software was written with Fedora, Debian, Mint, and Ubuntu in mind. All the software _should_ work on Mac as well.
 
 We assume some basic command line knowledge in order to complete this.
 
-
-System Packages
+### System Packages
 
 Install these system packages with your package manager. The package names given are Debian, Ubuntu, or Mint packages. If you have Fedora, use the packages in parenthesis.
 
-python-dev (python-devel)
-python-opengl
-python-wxtools (wxPython)
-gcc
-g++
-git
-swig
-libopencv-dev, libcv-dev, libhighgui-dev (opencv-devel)
-python-numpy-dev
-python-opencv (opencv-python)
-libjpeg-dev (libjpeg-turbo-devel)
-ncurses-dev (ncurses-devel) (Try libncurses5-dev and libncursesw5-dev on Ubuntu if ncurses-dev doesn't work)
+* python-dev (python-devel)
+* python-opengl
+* python-wxtools (wxPython)
+* build-essential
+* git
+* swig
+* libopencv-dev, libcv-dev, libhighgui-dev (opencv-devel)
+* python-numpy-dev
+* python-opencv (opencv-python)
+* libjpeg-dev (libjpeg-turbo-devel)
+* ncurses-dev (ncurses-devel) (Try libncurses5-dev and libncursesw5-dev on Ubuntu if ncurses-dev doesn't work)
+
 You can install OpenCV from source if you want. If you do, skip installing the opencv- packages. There is a tutorial for installing OpenCV from source on the wiki: Installing OpenCV
 
 
-Software Repositories
+### Software Repositories
 
 Seawolf's software is split into a number of repositories, all hosted online on github: https://github.com/ncsurobotics
 
 You will use the git version control system to get these repositories. To clone a repository, use the git clone command:
 
-$ git clone <url>
-Use git clone to get these:
+```$ git clone <url>```
 
-https://github.com/ncsurobotics/libseawolf.git
-https://github.com/ncsurobotics/swpycv.git
-https://github.com/ncsurobotics/svr.git
-https://github.com/ncsurobotics/seawolf.git
+Do this for each of the following URLs
 
-Installation
+* https://github.com/ncsurobotics/libseawolf.git
+* https://github.com/ncsurobotics/swpycv.git
+* https://github.com/ncsurobotics/svr.git
+* https://github.com/ncsurobotics/seawolf.git
+
+### Installation
 
 
-libseawolf
+##### libseawolf
 
 Go into the libseawolf directory and run:
 
+```
 $ make
 $ sudo make install
 $ make pylib
 $ sudo make pylib-install
 $ sudo ldconfig
+```
+
 To test:
 
+```
 $ python
 >>> import seawolf
+```
 
-swpycv
+##### swpycv
 
 Go into the swpycv directory and run:
 
+```
 $ make
 $ sudo make install
 $ sudo ldconfig
+```
 
-svr
+##### svr
 
 Go into the svr directory and run:
 
+```
 $ make
 $ sudo make install
 $ sudo ldconfig
+```
+
 To test:
 
+```
 $ python
 >>> import svr
+```
 
-Seawolf
+##### Seawolf
 
 Go into the seawolf directory and run:
 
-$ make
+```$ make```
 
-Troubleshooting
+### Troubleshooting
 
 For Fedora (or other systems where stropts.h is missing):
 
-create blank file stropts.h in /usr/includecreated blank file stropts.h in /usr/include
-If something like “libsvr.so.0” is missing, try:
+Create a blank file stropts.h in /usr/includecreated blank file stropts.h in /usr/include
 
-create file “seawolf.conf” containing ”/usr/local/lib” in /etc/ld.so.conf.d
+If something like “libsvr.so.0” is missing, try createing the file “seawolf.conf” containing ”/usr/local/lib” in /etc/ld.so.conf.d
