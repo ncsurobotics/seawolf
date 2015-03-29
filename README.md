@@ -31,14 +31,14 @@ Seawolf's software is split into a number of repositories, all hosted online on 
 
 You will use the git version control system to get these repositories. To clone a repository, use the git clone command:
 
-```$ git clone <url>```
+    $ git clone <url>
 
 Do this for each of the following URLs
 
-* https://github.com/ncsurobotics/libseawolf.git
-* https://github.com/ncsurobotics/swpycv.git
-* https://github.com/ncsurobotics/svr.git
-* https://github.com/ncsurobotics/seawolf.git
+* git@github.com:ncsurobotics/libseawolf.git
+* git@github.com:ncsurobotics/swpycv.git
+* git@github.com:ncsurobotics/svr.git
+* git@github.com:ncsurobotics/seawolf.git
 
 ### Installation
 
@@ -47,53 +47,43 @@ Do this for each of the following URLs
 
 Go into the libseawolf directory and run:
 
-```
-$ make
-$ sudo make install
-$ make pylib
-$ sudo make pylib-install
-$ sudo ldconfig
-```
+    $ make
+    $ sudo make install
+    $ make pylib
+    $ sudo make pylib-install
+    $ sudo ldconfig
 
 To test:
 
-```
-$ python
->>> import seawolf
-```
+    $ python
+    >>> import seawolf
 
 ##### swpycv
 
 Go into the swpycv directory and run:
 
-```
-$ make
-$ sudo make install
-$ sudo ldconfig
-```
+    $ make
+    $ sudo make install
+    $ sudo ldconfig
 
 ##### svr
 
 Go into the svr directory and run:
 
-```
-$ make
-$ sudo make install
-$ sudo ldconfig
-```
+    $ make
+    $ sudo make install
+    $ sudo ldconfig
 
 To test:
 
-```
-$ python
->>> import svr
-```
+    $ python
+    >>> import svr
 
 ##### Seawolf
 
 Go into the seawolf directory and run:
 
-```$ make```
+    $ make
 
 ### Troubleshooting
 
