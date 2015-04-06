@@ -87,8 +87,6 @@ Go into the seawolf directory and run:
 
 ### Troubleshooting
 
-For Fedora (or other systems where stropts.h is missing):
+For Fedora (or other systems where stropts.h is missing), create a blank file stropts.h in /usr/include
 
-Create a blank file stropts.h in /usr/includecreated blank file stropts.h in /usr/include
-
-If something like “libsvr.so.0” is missing, try createing the file “seawolf.conf” containing ”/usr/local/lib” in /etc/ld.so.conf.d
+If something like “libsvr.so.0” is missing, try creating the file “seawolf.conf” containing ”/usr/local/lib” in /etc/ld.so.conf.d
