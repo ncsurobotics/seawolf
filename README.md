@@ -22,7 +22,7 @@ Install these system packages with your package manager. The package names given
 * libjpeg-dev (libjpeg-turbo-devel)
 * ncurses-dev (ncurses-devel) (Try libncurses5-dev and libncursesw5-dev on Ubuntu if ncurses-dev doesn't work)
 
-You can install OpenCV from source if you want. If you do, skip installing the opencv- packages. There is a tutorial for installing OpenCV from source on the wiki: Installing OpenCV
+You can install OpenCV from source if you want. If you do, skip installing the opencv- packages. Instructions for installing OpenCV from source can be found [here](http://docs.opencv.org/doc/tutorials/introduction/linux_install/linux_install.html#linux-installation).
 
 
 ### Software Repositories
@@ -35,10 +35,12 @@ You will use the git version control system to get these repositories. To clone 
 
 Do this for each of the following URLs
 
-* git@github.com:ncsurobotics/libseawolf.git
-* git@github.com:ncsurobotics/swpycv.git
-* git@github.com:ncsurobotics/svr.git
-* git@github.com:ncsurobotics/seawolf.git
+* `git@github.com:ncsurobotics/libseawolf.git`
+* `git@github.com:ncsurobotics/swpycv.git`
+* `git@github.com:ncsurobotics/svr.git`
+* `git@github.com:ncsurobotics/seawolf.git`
+
+In order push changes to our code back to ncsurobotics repositories, you will need to create a github account and have it added to our organization. You will also need to set up an SSH key on your computer by following [these instructions](https://help.github.com/articles/generating-ssh-keys/).
 
 ### Installation
 
