@@ -66,14 +66,12 @@ class AppRunnerFrame(wx.Frame):
                 ]),
                 "SVR Watch": AppPanel(self.panel_right, ["python", "vision/svr_watch_all.py"], ""),
                 "HUD": AppPanel(self.panel_right, ["python", "HUD.py"], "utils/HUD/"),
-                "Vision": AppPanel(self.panel_right, ["python", "run.py"], "vision/",
-                                   options=[
+                "Vision": AppPanel(self.panel_right, ["python", "run.py"], "vision/", options=[
                     TextOption("Entity: ", ignore_empty=False),
                     CheckBoxOption("-s", None, "Single Process", False),
                     CheckBoxOption(None, "-G", "Debug", True),
                     TextOption("Delay: ", "10", "-d"),
-                    VisionCameraOption(),
-                ]
+                    VisionCameraOption()]
                 ),
             },
             "PID": {

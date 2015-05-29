@@ -1,6 +1,15 @@
+#!/usr/bin/env python
+"""
+Find important frame #s and filenames in a directory of images
+
+Usage:
+
+    ./find_frame.py [path to media directory]
+"""
+
 import os
 import cv2
-from sys import argv
+import sys
 
 path = ''
 
@@ -9,8 +18,8 @@ def main():
     def nothing(x):
         pass
 
-    if len(argv) > 1:
-        path = argv[1]
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
 
     base_dir = os.getcwd()
     directory = os.path.join(base_dir, path)

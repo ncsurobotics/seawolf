@@ -7,38 +7,35 @@ mission_control_directory = os.path.realpath(os.path.join(
 ))
 sys.path.append(mission_control_directory)
 
-from base import VisionEntity, MultiCameraVisionEntity
-
 # Entities
-from test import TestEntity
-from gate import GateEntity, GATE_BLACK, GATE_WHITE
-#from binoculartest import BinocularTest
-from path import PathEntity
-#from buoy import BuoyEntity
-#from buoytest import BuoyTestEntity
-#from buoynew import BuoyNewEntity
-#from binocularbuoy import BinocularBuoy
-from weapons import WeaponsEntity
-#from buoy2011 import Buoy2011Entity
-from doublepath import DoublePathEntity
-from doublepath2 import DoublePath2Entity
-from hedge import HedgeEntity
-# from bins import BinsEntity
-# from binscorner import BinsCornerEntity
-from binscontour import BinsContourEntity
-# from binshough import BinsHoughEntity
-#from binshough2 import BinsHough2Entity
-#from pizza import PizzaEntity
-#from pizzacorner import PizzaCornerEntity
-from blobtesting import BlobTesting
-from paths import PathsEntity
-from hedgeR import HedgeREntity
-from hedgetesting import HedgeTestingEntity
-# from oldhedge import OldHedgeEntity
-from buoycontour import BuoyContourEntity
-from buoycontours2 import BuoyContour2Entity
-from buoyhough import BuoyHoughEntity
-from ledbuoy import LEDBuoyEntity
+from .test import TestEntity
+from .gate import GateEntity, GATE_BLACK, GATE_WHITE
+#from .binoculartest import BinocularTest
+from .path import PathEntity
+#from .buoy import BuoyEntity
+#from .buoytest import BuoyTestEntity
+#from .buoynew import BuoyNewEntity
+#from .binocularbuoy import BinocularBuoy
+from .weapons import WeaponsEntity
+#from .buoy2011 import Buoy2011Entity
+from .doublepath import DoublePathEntity
+from .doublepath2 import DoublePath2Entity
+from .hedge import HedgeEntity
+# from .bins import BinsEntity
+# from .binscorner import BinsCornerEntity
+from .binscontour import BinsContourEntity
+# from .binshough import BinsHoughEntity
+#from .binshough2 import BinsHough2Entity
+#from .pizza import PizzaEntity
+#from .pizzacorner import PizzaCornerEntity
+from .blobtesting import BlobTesting
+from .paths import PathsEntity
+from .hedgeR import HedgeREntity
+from .hedgetesting import HedgeTestingEntity
+# from .oldhedge import OldHedgeEntity
+from .buoycontour import BuoyContourEntity
+from .buoycontours2 import BuoyContour2Entity
+from .buoyhough import BuoyHoughEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -53,7 +50,6 @@ entity_classes = {
     #"buoy2011": Buoy2011Entity,
     "buoycontours": BuoyContourEntity,
     "buoyhough": BuoyHoughEntity,
-    "ledbuoy": LEDBuoyEntity,
     "hedge": HedgeEntity,
     "weapons": WeaponsEntity,
     "doublepath": DoublePathEntity,

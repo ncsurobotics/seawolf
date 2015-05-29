@@ -6,7 +6,7 @@ import time
 
 def dataOut(mv):
     out = in_range(-.4, mv, .4)
-    seawolf.notify.send("THRUSTER_REQUEST", "Roll {} {}".format(out, -out))
+    seawolf.notify.send("THRUSTER_REQUEST", "Roll {}".format(out))
 
 
 def in_range(a, x, b):

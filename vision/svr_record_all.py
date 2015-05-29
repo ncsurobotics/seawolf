@@ -4,7 +4,7 @@ from sys import argv
 from time import time
 import os.path
 import cv
-import cv2
+# import cv2
 import svr
 svr.connect()
 

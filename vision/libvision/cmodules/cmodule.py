@@ -17,8 +17,9 @@ SOURCE_DIRECTORY = path.realpath(
 )
 
 CFunction = namedtuple("CFunction",
-    ['name', 'return_type', 'argument_types']
-)
+                       ['name', 'return_type', 'argument_types']
+                       )
+
 
 def iplimage_errcheck(iplimage_pointer, func, arguments):
     '''Convert an IplImage struct into an OpenCV Python object.
@@ -26,17 +27,18 @@ def iplimage_errcheck(iplimage_pointer, func, arguments):
     This function should be used only for IplImages that were created in C code
     and returned as a return value from a C function.
     '''
-    #TODO: It seems that widthStep doesn't get set correctly here.  The
+    # TODO: It seems that widthStep doesn't get set correctly here.  The
     #      structure has the correct widthStep, but I don't know how to set
     #      widthStep on the Python IplImage type.
 
     iplimage = iplimage_pointer.contents
     converted_image = cv.CreateImageHeader((iplimage.width, iplimage.height),
-        iplimage.depth, iplimage.nChannels)
+                                           iplimage.depth, iplimage.nChannels)
     cv.SetData(converted_image,
-        iplimage.imageData[:iplimage.width*iplimage.height*iplimage.nChannels])
+               iplimage.imageData[:iplimage.width * iplimage.height * iplimage.nChannels])
     _internal_c.releaseImage(iplimage_pointer)
     return converted_image
+
 
 def to_iplimage_p(image):
     '''Turns an OpenCV Python IplImage type into a ctypes struct.'''
@@ -44,32 +46,34 @@ def to_iplimage_p(image):
     Four_C_Int = ctypes.c_int * 4
     Four_C_Char = ctypes.c_char * 4
     iplimage_struct = IplImage(
-        nSize = ctypes.sizeof(IplImage),
-        ID = 0,  # Ignored by OpenCV
-        nChannels = image.nChannels,
-        alphaChannel = 0,  # Ignored by OpenCV
-        depth = image.depth,
-        colorModel = "0000",  # Ignored by OpenCV
-        channelSeq = "0000",  # Ignored by OpenCV
-        dataOrder = 0,  # Interleaved color channels
-        origin = 0,  # Top left
-        align = 4,  # Ignored by OpenCV
-        width = image.width,
-        height = image.height,
-        roi = ctypes.c_void_p(),  # No ROI
-        maskROI = ctypes.c_void_p(),  # Ignored by OpenCV
-        imageId = ctypes.c_void_p(),  # Ignored by OpenCV
-        tileInfo = ctypes.c_void_p(),  # Ignored by OpenCV
-        imageSize = image.width * image.height * image.nChannels,
-        imageData = image_data,
-        widthStep = image.width * image.nChannels,
-        BorderMode = Four_C_Int(0,0,0,0),  # Ignored by OpenCV
-        BorderConst = Four_C_Int(0,0,0,0),  # Ignored by OpenCV
-        imageDataOrigin = image_data,
+        nSize=ctypes.sizeof(IplImage),
+        ID=0,  # Ignored by OpenCV
+        nChannels=image.nChannels,
+        alphaChannel=0,  # Ignored by OpenCV
+        depth=image.depth,
+        colorModel="0000",  # Ignored by OpenCV
+        channelSeq="0000",  # Ignored by OpenCV
+        dataOrder=0,  # Interleaved color channels
+        origin=0,  # Top left
+        align=4,  # Ignored by OpenCV
+        width=image.width,
+        height=image.height,
+        roi=ctypes.c_void_p(),  # No ROI
+        maskROI=ctypes.c_void_p(),  # Ignored by OpenCV
+        imageId=ctypes.c_void_p(),  # Ignored by OpenCV
+        tileInfo=ctypes.c_void_p(),  # Ignored by OpenCV
+        imageSize=image.width * image.height * image.nChannels,
+        imageData=image_data,
+        widthStep=image.width * image.nChannels,
+        BorderMode=Four_C_Int(0, 0, 0, 0),  # Ignored by OpenCV
+        BorderConst=Four_C_Int(0, 0, 0, 0),  # Ignored by OpenCV
+        imageDataOrigin=image_data,
     )
-    return ctypes.pointer( iplimage_struct )
+    return ctypes.pointer(iplimage_struct)
+
 
 class CModule(object):
+
     '''Represents a shared object that can be called from Python.
 
     This class is a wrapper around ctypes that handles the conversion of
@@ -111,8 +115,8 @@ class CModule(object):
             function that can be called in this object.
 
     '''
-    #TODO: Check argument types for IplImage_p
-    #TODO: Check number of arguments and return a reasonable error.
+    # TODO: Check argument types for IplImage_p
+    # TODO: Check number of arguments and return a reasonable error.
 
     def __init__(self, file_name, functions):
         self.file_name = file_name

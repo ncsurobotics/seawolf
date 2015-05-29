@@ -1,13 +1,22 @@
+#!/usr/bin/env python
+"""
+Convert a directory of images into a video file
+
+Usage:
+
+    ./imgs_to_video.py [path to media directory]
+"""
+
 import cv2
-from sys import argv
+import sys
 import os
 
 path = ''
 
 
 def main():
-    if len(argv) > 1:
-        path = argv[1]
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
 
     base_dir = os.getcwd()
     directory = os.path.join(base_dir, path)
@@ -21,7 +30,7 @@ def main():
     ]
 
     out = cv2.VideoWriter(os.path.basename(os.path.normpath(directory)) + '.avi',
-                          cv2.cv.FOURCC('X', 'V', 'I', 'D'), 20.0, (640, 480))
+                          cv2.cv.FOURCC('M', 'J', 'P', 'G'), 20.0, (640, 480))
 
     for image in sorted(img_dirs):
         frame = cv2.imread(os.path.join(directory, image))

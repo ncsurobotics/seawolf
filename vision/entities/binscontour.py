@@ -11,7 +11,6 @@ import Image
 import random
 
 
-
 class BinsContourEntity(VisionEntity):
 
     def init(self):
@@ -126,12 +125,11 @@ class BinsContourEntity(VisionEntity):
         for bin in self.confirmed:
 
             print type(bin.patch)
-            self.debug_stream("Patch"+str(bin.id),bin.patch)
+            self.debug_stream("Patch" + str(bin.id), bin.patch)
             # svr.debug("Patch"+str(bin.id),libvision.cv2_to_cv(bin.patch))
             print bin.id
 
             #svr.debug("Patch" + str(bin.id), bin.patch)
-
 
         # TODO, CLEAN THIS UP SOME
     def match_bins(self, target):
@@ -185,39 +183,35 @@ class BinsContourEntity(VisionEntity):
                 self.confirmed.remove(bin)
                 print "confirmed removed"
 
-
     def subimage(self, image, center, theta, width, height):
-       print "theta is:", theta
-       theta = theta
-       image = libvision.cv2_to_cv(image)
-       output_image = cv.CreateImage((int(width), int(height)), image.depth, image.nChannels)
-       mapping = np.array([[np.cos(theta), -np.sin(theta), center[0]],
-                           [np.sin(theta), np.cos(theta), center[1]]])
-       map_matrix_cv = cv.fromarray(mapping)
-       print mapping
-       cv.GetQuadrangleSubPix(image, output_image, map_matrix_cv)
-       return output_image
-
-
-    def subimage2(self,image,center, theta, width, height):
         print "theta is:", theta
-        M = cv2.getRotationMatrix2D(center, theta/np.pi*180, 1.0)
+        theta = theta
+        image = libvision.cv2_to_cv(image)
+        output_image = cv.CreateImage((int(width), int(height)), image.depth, image.nChannels)
+        mapping = np.array([[np.cos(theta), -np.sin(theta), center[0]],
+                            [np.sin(theta), np.cos(theta), center[1]]])
+        map_matrix_cv = cv.fromarray(mapping)
+        print mapping
+        cv.GetQuadrangleSubPix(image, output_image, map_matrix_cv)
+        return output_image
+
+    def subimage2(self, image, center, theta, width, height):
+        print "theta is:", theta
+        M = cv2.getRotationMatrix2D(center, theta / np.pi * 180, 1.0)
         rotated = cv2.warpAffine(image, M, (image.shape[0], image.shape[1]))
 
-        pts = [(center[0]-width/2,center[1]),(center[0]+width/2,center[1]),(center[0],center[1]-height/2), (center[0],center[1]+height/2)]
+        pts = [(center[0] - width / 2, center[1]), (center[0] + width / 2, center[1]), (center[0], center[1] - height / 2), (center[0], center[1] + height / 2)]
 
-        cropped = rotated[int(center[1]-height/2):int(center[1]+height/2), int(center[0]-width/2):int(center[0]+width/2)]
+        cropped = rotated[int(center[1] - height / 2):int(center[1] + height / 2), int(center[0] - width / 2):int(center[0] + width / 2)]
         print cropped.shape
         cropped = cropped.copy()
-        cv2.circle(rotated, center, 3,(255,255,255))
+        cv2.circle(rotated, center, 3, (255, 255, 255))
         for pt in pts:
-            cv2.circle(rotated, (int(pt[0]),int(pt[1])), 4,(255,0,255))
-        name = "Patches/"+str(int(theta*1000))+ ".jpg"
+            cv2.circle(rotated, (int(pt[0]), int(pt[1])), 4, (255, 0, 255))
+        name = "Patches/" + str(int(theta * 1000)) + ".jpg"
         print name
         #cv2.imwrite(name, cropped)
         return cropped
-
-
 
     def draw_bins(self):
         self.ind_bins = []
@@ -225,7 +219,7 @@ class BinsContourEntity(VisionEntity):
         for bin in self.confirmed:
 
             bin.patch = self.subimage2(self.debug_frame, (int(bin.midx), int(bin.midy)),
-                                      bin.theta, bin.width, bin.height)
+                                       bin.theta, bin.width, bin.height)
             # cv.SaveImage('patch.jpg',patch)
 
             cv2.circle(self.debug_frame,

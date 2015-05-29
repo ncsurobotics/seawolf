@@ -12,32 +12,26 @@ STRAFE_SPEED = 0.3
 
 
 class StrafeMission(MissionBase):
-	
-	def __init__(self):
-		self.gate_seen = 0
-		self.gate_lost = 0
-		
-	
-	
-	def init(self):
-		self.process_manager.start_process(entities.GateEntity, "gate", "forward", debug=True)
-		sw3.nav.do(sw3.CompoundRoutine(
-			sw3.Strafe(STRAFE_SPEED),
-			sw3.SetDepth(2),
-			sw3.HoldYaw(),
-			))
-		
-		
-	def step(self):
-		if not vision_data: 
-			return
-		
-		gate_data = vision_data['gate']
-		
-		if not gate_data: 
-			return
-		
-		print gate_data
-		
-		
-		
+
+    def __init__(self):
+        self.gate_seen = 0
+        self.gate_lost = 0
+
+    def init(self):
+        self.process_manager.start_process(entities.GateEntity, "gate", "forward", debug=True)
+        sw3.nav.do(sw3.CompoundRoutine(
+            sw3.Strafe(STRAFE_SPEED),
+            sw3.SetDepth(2),
+            sw3.HoldYaw(),
+        ))
+
+    def step(self):
+        if not vision_data:
+            return
+
+        gate_data = vision_data['gate']
+
+        if not gate_data:
+            return
+
+        print gate_data

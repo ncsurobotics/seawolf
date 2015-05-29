@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+"""
+Program for finding thresholds on some given channel
+
+Usage:
+
+    ./threshold_finder.py [path to media]
+"""
+
+from __future__ import print_function
+
 import os
 import cv2
 import numpy as np
@@ -6,106 +17,122 @@ from sys import argv
 path = ''
 draw_contours = False
 
+# Constants for the names of the trackbars, since they're specified by name
+tbar_play_video_name = 'Play Video'
+tbar_channel_select_name = 'Select Channel (HSV)'
+tbar_block_size_name = 'Block Size'
+tbar_thresh_name = 'Threshold'
+
+# Contants for the names of the windows, since they're specified by name
+win_default_name = 'original'
+win_debug_name = 'debug'
+
 
 def main():
-
     base_dir = os.getcwd()
 
     if len(argv) > 1:
         path = argv[1]
 
     if not path:
-        raise Exception("Must provide a path to get footage from")
+        print("Must provide a path to get footage from")
+        exit()
 
     filename = os.path.join(base_dir, path)
 
     if not os.path.isfile(filename):
-        print "Invalid Path - File does not exist"
+        print("Invalid Path - File does not exist")
         exit()
 
-    cv2.namedWindow('original')
-    cv2.namedWindow('debug')
+    create_interface()
 
     vc = cv2.VideoCapture(filename)
-
-    cv2.createTrackbar('Threshold', 'original', 25, 75, nothing)
-    cv2.createTrackbar('Blocksize', 'original', 25, 49, nothing)
-    cv2.createTrackbar('Play Video', 'original', 0, 1, nothing)
-    cv2.createTrackbar('HSV', 'original', 1, 2, nothing)
-
-    channel = cv2.getTrackbarPos('HSV', 'original')
-    frame = get_new_frame(vc)
-    prior = frame.copy()
-
-    while vc.isOpened():
-        channel = cv2.getTrackbarPos('HSV', 'original')
-        if cv2.getTrackbarPos('Play Video', 'original'):
-            frame = get_new_frame(vc)
-            prior = frame.copy()
-        else:  #### For amusement and/or a seizure, comment out this else block and observe the result ####
-            frame = prior.copy()
-
-        debug = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-        # print "Debug is ", debug.shape
-        (h, s, v) = cv2.split(debug)
-        # print "V is: ", v.shape
-        if channel == 0:
-            debug = h
-        elif channel == 1:
-            debug = s
-        else:
-            debug = v
-        # print "worked"
-        debug = refresh_frame(debug)
-        cv2.imshow('original', frame)
-        cv2.imshow('debug', debug)
-        cv2.waitKey(45)
-    cv2.destroyAllWindows()
+    run(vc)
     vc.release()
+    cv2.destroyAllWindows()
 
 
-def refresh_frame(img):
-    block_size = cv2.getTrackbarPos('Blocksize', 'original')
-    threshold = cv2.getTrackbarPos('Threshold', 'original')
-    # channel = cv2.getTrackbarPos('HSV', 'original')
+def run(capture):
+    current_frame = get_new_frame(capture)
+
+    while capture.isOpened():
+        if cv2.getTrackbarPos(tbar_play_video_name, win_debug_name):
+            try:
+                current_frame = get_new_frame(capture)
+            except StopIteration:
+                print("End of clip")
+                break
+
+        debug_frame = process_frame(current_frame.copy())
+
+        cv2.imshow(win_default_name, current_frame)
+        cv2.imshow(win_debug_name, debug_frame)
+        cv2.waitKey(40)
+
+
+def process_frame(frame):
+    """ Process frame based on user input """
+    channel = cv2.getTrackbarPos(tbar_channel_select_name, win_debug_name)
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+    frame = get_channel(frame, channel)
+
+    block_size = cv2.getTrackbarPos(tbar_block_size_name, win_debug_name)
+    threshold = cv2.getTrackbarPos(tbar_thresh_name, win_debug_name)
 
     if not block_size % 2 == 1:
         block_size += 1
-        cv2.setTrackbarPos('Blocksize', 'original', block_size)
+        cv2.setTrackbarPos(tbar_block_size_name, win_debug_name, block_size)
 
     if block_size <= 1:
         block_size = 3
-        cv2.setTrackbarPos('Blocksize', 'original', block_size)
-    # print img.shape
-    adaptive = cv2.adaptiveThreshold(img, 255,
+        cv2.setTrackbarPos(tbar_block_size_name, win_debug_name, block_size)
+
+    adaptive = cv2.adaptiveThreshold(frame, 255,
                                      cv2.ADAPTIVE_THRESH_MEAN_C,
                                      cv2.THRESH_BINARY_INV,
                                      block_size,
                                      threshold)
 
     if draw_contours:
-        black = np.zeros((img.shape[0], img.shape[1], 3), np.uint8)
+        cframe = np.zeros((frame.shape[0], frame.shape[1], 3), np.uint8)
         contours, hierarchy = cv2.findContours(adaptive,
                                                cv2.RETR_TREE,
                                                cv2.CHAIN_APPROX_SIMPLE)
 
-        cv2.drawContours(black, contours, -1, (255, 255, 255), 3)
-        return black
-    return adaptive
+        cv2.drawContours(cframe, contours, -1, (255, 255, 255), 3)
+        return cframe
+    else:
+        return adaptive
 
 
 def get_new_frame(vc):
+    """ Get a new image from a media source """
     rval, frame = vc.read()
     if not rval:
-        print "End of clip"
-        cv2.destroyAllWindows()
-        vc.release()
-        exit()
+        raise StopIteration
     return frame
 
 
-def nothing(x):
+def get_channel(frame, channel):
+    """ Get a specific channel from an image"""
+    splitf = cv2.split(frame)
+
+    return splitf[channel]
+
+
+def create_interface():
+    """ Create windows and trackbars """
+    cv2.namedWindow(win_default_name)
+    cv2.namedWindow(win_debug_name)
+
+    # Function that activates on trackbar movement
+    def nothing(x):
         pass
+
+    cv2.createTrackbar(tbar_play_video_name, win_debug_name, 0, 1, nothing)
+    cv2.createTrackbar(tbar_channel_select_name, win_debug_name, 1, 2, nothing)
+    cv2.createTrackbar(tbar_thresh_name, win_debug_name, 25, 75, nothing)
+    cv2.createTrackbar(tbar_block_size_name, win_debug_name, 25, 49, nothing)
 
 
 if __name__ == '__main__':
