@@ -6,38 +6,74 @@ import time
 import sys
 import seawolf
 
-seawolf.loadConfig("../conf/seawolf.conf")
-seawolf.init("Thruster Test")
-
 # Names of all the thrusters to be tested
 THRUSTERS = ["Bow", "Stern", "Port", "Star", "StrafeB", "StrafeT"]
 
 
-def test_thruster_constant(name, val=.3):
+def main(args):
+    # Connect to hub
+    seawolf.loadConfig("../conf/seawolf.conf")
+    seawolf.init("Thruster Test")
+
+    # Default test function
+    default = test_thruster_constant
+
+    # Arguments
+    opts = {
+        "const": test_thruster_constant,
+        "range": test_thruster_over_range
+    }
+
+    # If the name of a test function was provided by the user as an argument, use it
+    func = opts.get(args[0], default) if args else default
+
+    print("Running test", func.__name__, "\n")
+
+    # Run the chosen test function against all the thrusters
+    try:
+        for thruster in THRUSTERS:
+            # test_thruster_over_range(thruster, .3, -.3, -.1)
+            func(thruster, duration=4)
+            print()
+
+    # Safely exit if CTRL+C
+    except (KeyboardInterrupt, AssertionError) as e:
+        print()
+        print(e)
+        print("Setting all thrusters to 0")
+        for thruster in THRUSTERS:
+            seawolf.var.set(thruster, 0.0)
+
+    seawolf.close()
+
+
+def test_thruster_constant(name, duration=4, val=.3):
     """ Test a named thruster at a given value ::val between -1 and 1
     """
 
     assert(-1 <= val <= 1)
 
     print("Testing {}".format(name))
-    print("----------------")
+    print("--------------------")
     print("Setting {} to {} ".format(name, val), end="")
     sys.stdout.flush()
 
     seawolf.var.set(name, val)
 
-    # a simple time.sleep(3.5) here would suffice, but this is prettier
-    for i in range(0, 6):
+    # a simple time.sleep(length) here would suffice, but this is prettier
+    wait_time = duration / 8
+
+    for i in range(0, 8):
         print(".", end="")
         sys.stdout.flush()
-        time.sleep(.5)
+        time.sleep(wait_time)
 
     seawolf.var.set(name, 0.0)
 
-    print(" 0.0")
+    print(" END")
 
 
-def test_thruster_over_range(name, begin=-.3, end=.3, inc=.1):
+def test_thruster_over_range(name, duration=.45, begin=-.3, end=.3, inc=.1):
     """ Test a named thruster over a range of values from ::begin to ::end with increment ::incr
     """
 
@@ -65,12 +101,8 @@ def test_thruster_over_range(name, begin=-.3, end=.3, inc=.1):
         time.sleep(.7)
 
     seawolf.var.set(name, 0.0)
-    print("0.0")
+    print("END")
 
 
-for thruster in THRUSTERS:
-    # test_thruster_over_range(thruster, .3, -.3, -.1)
-    test_thruster_constant(thruster, .3)
-    print()
-
-seawolf.close()
+if __name__ == '__main__':
+    main(sys.argv[1:])
