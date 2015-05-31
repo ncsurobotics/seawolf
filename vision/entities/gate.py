@@ -63,6 +63,9 @@ class GateEntity(VisionEntity):
 
         found_gate = False
 
+        unchanged_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
+        cv.Copy(frame,unchanged_frame)
+
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         # Set binary image to have saturation channel
@@ -181,6 +184,8 @@ class GateEntity(VisionEntity):
 
             #cv.ShowImage("Gate", cv.CloneImage(frame))
             svr.debug("Gate", cv.CloneImage(frame))
+            svr.debug("Unchanged",cv.CloneImage(unchanged_frame))
+
 
         #populate self.output with infos
         self.output.seen_crossbar = self.seen_crossbar
