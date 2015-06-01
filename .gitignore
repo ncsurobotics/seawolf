@@ -1,13 +1,23 @@
-*.pyc
-.idea/
-*.so
-*.swo
-*/bin
+### Byte-compiled ###
+*.py[cod]
 */__pycache__
 
+### Object files ###
+*.so
+*.swo
+
+### IDE cruft ###
+.idea/
+
+### Build directories ###
+*/bin
+*/build
+
+### misc. directories ###
 /vision/FOOTAGE
 /db/seawolf_var.db
 
+### media formats ###
 *.mp4
 *.avi
 *.mp3

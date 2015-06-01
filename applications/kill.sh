@@ -8,5 +8,7 @@ killall pitchpid
 pkill -f ".*pitchpidpy"
 pkill -f ".*yawpidpy"
 pkill -f ".*rollpidpy"
+pkill -f ".*depthpidpy"
 
 ./bin/zerothrusters
+

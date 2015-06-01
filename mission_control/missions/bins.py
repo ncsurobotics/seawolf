@@ -76,7 +76,7 @@ class BinsMission(MissionBase):
         if bins and self.orientdata:
             sw3.nav.do(sw3.Forward(0, 1))
             # print bins
-            pos_x = math.atan2(bins[0].theta, bins[0].phi) * (180 / pi)
+            pos_x = math.atan2(bins[0].theta, bins[0].phi) * (180 / math.pi)
             print pos_x
             pos_rho = math.sqrt(bins[0].theta ** 2 + bins[0].phi ** 2)
            # sw3.nav.do(sw3.Forward(0,0))
@@ -101,7 +101,7 @@ class BinsMission(MissionBase):
 
     def orient(self, bins):
         if bins and self.orientdata:
-            orient_angle = self.orientdata * (180 / pi)
+            orient_angle = self.orientdata * (180 / math.pi)
             # print "forward"
             #center = sw3.Forward(0.5,2)
             #centering =  sw3.nav.do(center)

@@ -6,6 +6,7 @@ from missions.base import MissionBase
 
 import sw3
 
+
 MISSION_TIMEOUT = 10
 FORWARD_SPEED = 0.3
 BACKWARD_SPEED = -0.3
