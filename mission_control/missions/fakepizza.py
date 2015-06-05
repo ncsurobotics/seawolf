@@ -1,14 +1,8 @@
 from __future__ import division
-import math
-from math import pi
 
-import seawolf
-from time import time
 from missions.base import MissionBase
-from vision import process_manager
 from vision import entities
 import sw3
-from sw3 import util
 
 
 class FakePizzaMission(MissionBase):

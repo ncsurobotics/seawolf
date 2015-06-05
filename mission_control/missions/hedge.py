@@ -4,7 +4,6 @@ from __future__ import division
 
 from vision import entities
 from missions.base import MissionBase
-from vision import process_manager
 import sw3
 
 MISSION_TIMEOUT = 3
