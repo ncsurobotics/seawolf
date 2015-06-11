@@ -57,7 +57,7 @@ vision_directory = os.path.join(parent_directory, "vision/")
 sys.path.append(vision_directory)
 if simulator:
     print "Using Simulator..."
-    simulator_directory = os.path.join(parent_directory, "simulator/")
+    simulator_directory = os.path.join(parent_directory, "utils/simulator/")
     sys.path.append(simulator_directory)
 else:
     sys.path.append(parent_directory)
@@ -73,7 +73,6 @@ from mission_controller import MissionController
 #  * Tuple - First item must be a mission class.  The rest of the tuple is
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
-    missions.StrafeMission,
     missions.GateMission,
     missions.PathMission,
     missions.SimpleBuoyMission,
