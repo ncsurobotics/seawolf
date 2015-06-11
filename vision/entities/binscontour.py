@@ -7,7 +7,7 @@ from base import VisionEntity
 import libvision
 from entity_types.bin import Bin
 import cv
-import Image
+#import Image
 import random
 
 
