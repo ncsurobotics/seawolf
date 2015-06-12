@@ -118,7 +118,7 @@ simulator = Simulator(interface, robot, entities=[
     entities.AxisEntity(),
 
     entities.GateEntity((25, 0, 0)),
-    #entities.PathEntity((35, 0, -12), yaw=-45),
+    entities.PathEntity((35, 0, -12), yaw=-45),
     entities.BuoyEntity((35, 2, -4), yaw=-15,
                         pos_red=(0, 0, 1.5),
                         pos_yellow=(0, 4, 0),
@@ -126,8 +126,7 @@ simulator = Simulator(interface, robot, entities=[
     entities.PathEntity((45, 4, -12), yaw=-20),
     entities.HedgeEntity((58, 8, -5), yaw=-45),
     entities.PathEntity((60, 10, -12), yaw=-20),
-    entities.PathEntity((58, 58, -12), yaw=65),
-    entities.BinsEntity((55, 70, -12), yaw=0),
+    entities.BinsEntity((65, 15, -12), yaw=45),
 ])
 
 print """

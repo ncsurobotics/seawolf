@@ -9,7 +9,7 @@ MISSION_TIMEOUT = 6
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.3
-
+DEPTH = 2
 
 class GateMission(MissionBase):
 
@@ -20,8 +20,8 @@ class GateMission(MissionBase):
     def init(self):
         self.process_manager.start_process(entities.GateEntity, "gate", "forward", debug=True)
         sw3.nav.do(sw3.CompoundRoutine(
+            sw3.SetDepth(DEPTH),
             sw3.Forward(FORWARD_SPEED),
-            sw3.SetDepth(2),
             sw3.HoldYaw(),
         ))
 
