@@ -4,7 +4,6 @@ from __future__ import division
 
 from vision import entities
 from missions.base import MissionBase
-from vision import process_manager
 import sw3
 
 
@@ -26,10 +25,10 @@ class StrafeMission(MissionBase):
         ))
 
     def step(self):
-        if not vision_data:
+        if not self.vision_data:
             return
 
-        gate_data = vision_data['gate']
+        gate_data = self.vision_data['gate']
 
         if not gate_data:
             return

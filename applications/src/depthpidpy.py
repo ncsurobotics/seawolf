@@ -87,8 +87,8 @@ def main():
                 e_dt = initial_e_dt(seawolf.var.get("DepthPID.i"))
 
         if (depth > panic_depth):
-            seawolf.logging.log(CRITICAL, "Depth: {}\n".format(depth))
-            seawolf.logging.log(CRITICAL, "I'm too deep! Rising full force!\n")
+            seawolf.logging.log(seawolf.CRITICAL, "Depth: {}\n".format(depth))
+            seawolf.logging.log(seawolf.CRITICAL, "I'm too deep! Rising full force!\n")
 
             dataOut(-1.0)
             time.sleep(panic_time)
