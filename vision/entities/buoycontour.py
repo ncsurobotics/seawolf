@@ -6,6 +6,7 @@ import svr
 from base import VisionEntity
 import libvision
 
+from base import VisionEntity, Container
 
 class Buoy(object):
     buoy_id = 0
@@ -39,6 +40,7 @@ class Buoy(object):
 class BuoyContourEntity(VisionEntity):
 
     def init(self):
+        self.output = Container()	
         self.adaptive_thresh_blocksize = 31
         self.adaptive_thresh = 10
         self.min_area = 500
@@ -141,6 +143,22 @@ class BuoyContourEntity(VisionEntity):
         svr.debug("processed", self.numpy_to_cv)
         svr.debug("adaptive", self.adaptive_to_cv)
         svr.debug("debug", self.debug_to_cv)
+
+        # Convert to output format
+        self.output.buoys = []
+        if self.raw_buoys is not None and len(self.raw_buoys) > 0:
+    	    for buoy in self.raw_buoys:
+		x = buoy.centerx
+                y = buoy.centery
+                buoy = Container()
+                buoy.theta = x
+                buoy.phi = y
+                buoy.id = 1
+                self.output.buoys.append(buoy)
+
+        if self.output.buoys:
+            self.return_output()
+        return self.output
 
     # TODO, CLEAN THIS UP SOME
     def match_buoys(self, target):
