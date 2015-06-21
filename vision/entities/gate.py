@@ -41,7 +41,7 @@ class GateEntity(VisionEntity):
         self.hough_threshold = 45
         self.adaptive_thresh_blocksize = 19
         self.adaptive_thresh = 7
-        self.max_range = 100
+        self.max_range = 120
 
         self.left_pole = None
         self.right_pole = None
@@ -72,7 +72,7 @@ class GateEntity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 2)
+        cv.SetImageCOI(hsv, 1)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 

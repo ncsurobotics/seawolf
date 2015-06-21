@@ -26,10 +26,10 @@
 static void mix(float req_pitch, float req_depth, float req_forward, float req_yaw, float req_strafe, float req_roll, float out[6]) {
     out[BOW] = req_pitch + req_depth;
     out[STERN] = -req_pitch - req_depth;
-    out[PORT] = req_forward + req_yaw;
-    out[STAR] = (req_forward - req_yaw) * .95;
-    out[STRAFET] = req_strafe - req_roll;
-    out[STRAFEB] = -req_strafe - req_roll;
+    out[PORT] = -req_forward - req_yaw;
+    out[STAR] = -(req_forward + req_yaw);
+    out[STRAFET] = req_strafe + req_roll;
+    out[STRAFEB] = -req_strafe + req_roll;
 
     /* Trim port/starboad thrusters */
     if(req_strafe != 0) {
@@ -93,6 +93,7 @@ static int rate(void) {
     return 0;
 }
 
+static char data[64];
 int main(void) {
     Seawolf_loadConfig("../conf/seawolf.conf");
     Seawolf_init("PID Mixer");
@@ -109,7 +110,6 @@ int main(void) {
     float req_yaw     = 0.0;
 
     /* Notify buffers */
-    char data[64];
     char requester[16], value[16];
 
     /* Zero thrusters */
