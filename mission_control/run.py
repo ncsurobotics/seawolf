@@ -25,6 +25,7 @@ if __name__ == "__main__":
     opt_parser.add_option("-W", "--no-wait-for-go", action="store_false",
                           dest="wait_for_go",
                           help="Do not wait fo the go signal.")
+    opt_parser.add_option("-l", "--logfile", dest="logfile")
     opt_parser.add_option("-c", "--camera", nargs=2, action="append",
                           type="string", metavar="<camera> <index/filename>",
                           dest="cameras", default=[],
@@ -98,6 +99,9 @@ if __name__ == "__main__":
     if options.graphical and options.delay == 0:
         options.delay = 10
 
+    if options.logfile:
+        sys.stdout = open(logfile, "a")
+    print "here"
     process_manager = vision.ProcessManager(extra_kwargs={
         "delay": options.delay,
         "cameras": cameras_dict,
