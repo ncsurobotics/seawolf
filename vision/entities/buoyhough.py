@@ -6,6 +6,8 @@ import svr
 from base import VisionEntity
 import libvision
 
+from base import VisionEntity, Container
+
 
 class Buoy(object):
     buoy_id = 0
@@ -17,6 +19,7 @@ class Buoy(object):
               }
 
     def __init__(self, xcoor, ycoor, radius, color):
+        self.output = Container()
         self.type = "buoy"
         self.centerx = xcoor
         self.centery = ycoor
@@ -40,7 +43,7 @@ class BuoyHoughEntity(VisionEntity):
 
     def init(self):
         self.adaptive_thresh_blocksize = 29
-        self.adaptive_thresh = 21
+        self.adaptive_thresh = 33
         self.min_area = 500
         self.max_area = 5000
         self.mid_sep = 50
@@ -120,6 +123,23 @@ class BuoyHoughEntity(VisionEntity):
         svr.debug("processed", self.numpy_to_cv)
         svr.debug("adaptive", self.adaptive_to_cv)
         svr.debug("debug", self.debug_to_cv)
+
+
+
+        # Convert to output format
+        self.output.buoys = []
+        if self.raw_buoys is not None and len(self.raw_buoys[0]) > 0:
+	    for buoy in self.raw_buoys[0]:
+                (x, y, radius) = buoy
+                buoy = Container()
+                buoy.theta = x
+                buoy.phi = y
+                buoy.id = 1
+                self.output.buoys.append(buoy)
+
+        if self.output.buoys:
+            self.return_output()
+        return self.output
 
     # TODO, CLEAN THIS UP SOME
     def match_buoys(self, target):

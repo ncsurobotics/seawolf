@@ -8,7 +8,7 @@ import sw3
 MISSION_TIMEOUT = 6
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
-FORWARD_SPEED = 0.3
+FORWARD_SPEED = 0.5
 DEPTH = 2
 
 class GateMission(MissionBase):
@@ -21,8 +21,8 @@ class GateMission(MissionBase):
         self.process_manager.start_process(entities.GateEntity, "gate", "forward", debug=True)
         sw3.nav.do(sw3.CompoundRoutine(
             sw3.SetDepth(DEPTH),
-            sw3.Forward(FORWARD_SPEED),
             sw3.HoldYaw(),
+            sw3.Forward(FORWARD_SPEED),
         ))
 
     def step(self, vision_data):
@@ -55,7 +55,7 @@ class GateMission(MissionBase):
         elif self.gate_seen > 20:
             self.gate_lost += 1
 
-        if self.gate_lost > 20:
+        if self.gate_lost > 30:
             print "Heading Locked"
             self.finish_mission()
             return

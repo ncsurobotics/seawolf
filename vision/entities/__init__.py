@@ -49,6 +49,7 @@ entity_classes = {
     #"buoytest": BuoyTestEntity,
     #"buoy2011": Buoy2011Entity,
     "buoycontours": BuoyContourEntity,
+    "buoycontours2": BuoyContour2Entity,
     "buoyhough": BuoyHoughEntity,
     "hedge": HedgeEntity,
     "weapons": WeaponsEntity,

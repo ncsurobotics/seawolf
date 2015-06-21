@@ -152,13 +152,17 @@ class PathEntity(VisionEntity):
         # populate self.output with infos
         self.output.found = object_present
         self.output.theta = self.theta
+
         if self.center:
             # scale center coordinates of path based on frame size
             self.output.x = self.center[0] / (frame.width / 2)
             self.output.y = self.center[1] / (frame.height / 2)
+            libvision.misc.draw_linesC(frame, [(frame.width / 2, self.output.theta)],[255,0,255])
+	    print "Output Returned!!! ", self.output.theta 
         else:
             self.output.x = None
             self.output.y = None
+	    print "No output..."
 
         if self.output.found and self.center:
             print self.output
