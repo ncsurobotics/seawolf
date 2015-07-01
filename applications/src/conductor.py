@@ -9,10 +9,10 @@ STATUS_LIGHT_BLINK = 1
 STATUS_LIGHT_ON = 2
 
 APPS_TO_START = [
-    "python depthpidpy.py",
-    "python yawpidpy.py",
-    "python pitchpidpy.py",
-    "python rollpidpy.py",
+    "./bin/depthpidpy",
+    "./bin/yawpidpy",
+    "./bin/pitchpidpy",
+    "./bin/rollpidpy",
     "./bin/mixer",
 ]
 
