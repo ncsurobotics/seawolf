@@ -1,14 +1,14 @@
 #!/bin/sh
 
 killall mixer
-killall depthpid
-killall yawpid
-killall pitchpid
+killall depthpidpy
+killall yawpidpy
+killall pitchpidpy
 
-pkill -f ".*pitchpidpy"
-pkill -f ".*yawpidpy"
-pkill -f ".*rollpidpy"
-pkill -f ".*depthpidpy"
+#pkill -f ".*pitchpidpy"
+#pkill -f ".*yawpidpy"
+#pkill -f ".*rollpidpy"
+#pkill -f ".*depthpidpy"
 
 ./bin/zerothrusters
 
