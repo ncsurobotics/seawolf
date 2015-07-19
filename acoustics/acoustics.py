@@ -71,7 +71,17 @@ class Acoustics:
     def get_data(self):
         self.send('get_data')
         data = self.read()
-        return data
+        return ast.literal_eval(data)
+
+    def start_logger(self, log_filename):
+        "return of filename"
+        "logging is not active"
+        "logging is active"
+        # send the correct command to BBB
+        self.send('start_log,'+log_filename)
+
+        # Recieve Response
+        logger_reply = ast.literal_eval( self.read() )
 
         
 def test():
