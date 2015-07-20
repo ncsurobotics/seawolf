@@ -80,6 +80,13 @@ class Acoustics:
         # Recieve Response
         return self.read()
 
+    def kill(self):
+        # dummy method to trick mission into thinking this is a process_manager
+        pass
+
+    def ping(self):
+        # dummy method to trick mission into thinking this is a process_manager
+        pass
         
 def test():
     def query_user_for_port():

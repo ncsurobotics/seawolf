@@ -1,89 +1,66 @@
-#########################################
-#
-#      BROKEN CODE
-#
-#########################################
+from __future__ import division
+
+from acoustics import acoustics
+from missions.base import MissionBase
+import sw3
+import math
+from math import pi
+from sw3 import util
+
+import seawolf as sw
+
+PORT_NAME = 'port'
+MISSION_TIMEOUT = 5
+# for which_path, 0 = right, 1 = left
 
 
+class AcousticsMission(MissionBase):
+
+    #### OVERRIDING VISION-BASED MISSION ####
+    def register_mission_controller(self, mission_controller):
+        ''' Called by the mission controller when the mission is added.'''
+        self.mission_controller = mission_controller
+        self.process_manager = acoustics
+
+    def execute(self):
+        '''Runs the mission.
+
+        This is a blocking call that returns when the mission completes.
+        '''
+
+        if not hasattr(self, "timers"):
+            self.timers = {}
+
+        self._entity_timeout = getattr(self, "_entity_timeout", None)
+        self._mission_done = getattr(self, "_mission_done", False)
+        self._mission_fail = getattr(self, "_mission_fail", False)
+        last_entity_timestamp = time()
+
+        while not self._mission_done:
+
+            if seawolf.var.get("MissionReset"):
+                print "MISSION RESET"
+                raise MissionControlReset()
+
+            acoustics_data = self.process_manager.get_data(delay=0.05)
+
+            self.step(vision_data)
+
+            # Timer callbacks
+            current_time = time()
+            for name, (t, delay, callback, args) in self.timers.items():
+                if t + delay <= current_time:
+                    self.delete_timer(name)
+                    callback(*args)
+
+            if self._mission_fail:
+                return False
+        return True
 
 
-# from __future__ import division
-# import math
-# from math import pi
+    def init(self):
+        '''runs at start of mission '''
+        
 
-# import seawolf
-# from time import time
-# from missions.base import MissionBase
-# from vision import process_manager
-# from vision import entities
-# import sw3
-# from sw3 import util
-
-# BOX_DEPTH = 8
-# FORWARD_SPEED = .3
-# ORIENT_THRESH = 15
-
-
-# class AcousticsMission(MissionBase):
-
-#     def __init__(self):
-#         pass
-
-#     def init(self):
-#         self.pinger_data = var_watch('Acoustics.Channels')
-#         self.process_manager.start_process(entities.AcousticsEntity, "acoustics", "down", debug=True)
-#         self.reference_angle = sw3.data.imu.yaw()
-
-#         self.orientdata = None
-#         self.states = [
-#             "followpinger",
-#             "findbox",
-#             "grab",
-#             "drop",
-#             "findpath"
-#         ]
-#         self.state_num = 0
-#         self.state = self.states[self.state_num]
-
-#     def step(self, vision_data):
-#         if pinger_data is not None:
-#             self.orientdata = pinger_data.orientation
-#         if vision_data is not None:
-#             box = vision_data.box
-
-#         if self.state == "followpinger":
-#             pinger_data = var_watch('Acoustics.Channels')
-#             self.followpinger(pinger_data)
-#         if self.state == "findbox":
-#             self.findbox(vision_data)
-#         if self.state == "grab":
-#             self.grab(box)
-#         if self.state == "drop":
-#             self.drop()
-#         if self.state == "findpath":
-#             self.findpath()
-
-#     def followpinger(self, pinger_data):
-#         if pinger_data:
-
-#             self.nextState()
-
-#     def findbox(self, vision_data):
-#         self.nextState()
-
-#     def grab(self, box):
-#         self.nextState()
-
-#     def drop(self):
-#         self.nextState()
-
-#     def findpath(self):
-#         sw3.nav.do(sw3.Forward(.1, 2))
-#         self.finish_mission()
-
-#     def nextState(self):
-#         self.state_num += 1
-#         # if self.state_num >= len(self.states):
-#             # self.finish_mission()
-#         self.state = self.states[self.state_num]
-#         print "State:", self.state
+    def step(self, vision_data):
+        
