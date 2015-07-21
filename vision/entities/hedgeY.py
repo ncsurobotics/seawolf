@@ -322,3 +322,4 @@ class HedgeYEntity(VisionEntity):
         svr.debug("Original", self.test_frame)
         svr.debug("Red", Rframe)
         svr.debug("Green", Gframe)
+        svr.debug("Green Binary", Gbinary)
