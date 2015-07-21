@@ -75,6 +75,7 @@ from mission_controller import MissionController
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
     missions.GateMission,
+    sw3.CompoundRoutine(sw3.SetDepth(2, timeout=1), sw3.Forward(.2), sw3.HoldYaw()),
     missions.PathMission,
     missions.SimpleBuoyMission,
     missions.PathMission,
