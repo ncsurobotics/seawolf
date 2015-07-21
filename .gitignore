@@ -5,6 +5,7 @@
 ### Object files ###
 *.so
 *.swo
+*.swp
 
 ### IDE cruft ###
 .idea/

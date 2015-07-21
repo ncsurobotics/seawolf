@@ -46,14 +46,13 @@ class HedgeYEntity(VisionEntity):
     def init(self):
 
         # Thresholds For Line Finding
-        self.vertical_thresholdG = .2  # How close to verticle lines must be
-        self.vertical_thresholdR = .25  # How close to verticle lines must be
+        self.vertical_thresholdG = .2  # How close to verticle lines must be self.vertical_thresholdR = .25  # How close to verticle lines must be
         self.horizontal_threshold = 0.5  # How close to horizontal lines must be
         self.hough_thresholdG = 150
         self.hough_thresholdR = 150
         self.max_range = 135
 
-        self.min_length = 50
+        self.min_length = 30
         self.max_gap = 10
 
         self.hor_threshold = 2
@@ -69,7 +68,7 @@ class HedgeYEntity(VisionEntity):
 
         # Adaptive threshold parameters (G)
         self.Gadaptive_thresh_blocksize = 35  # 35 for just green #29 for just red
-        self.Gadaptive_thresh = 6
+        self.Gadaptive_thresh = 3
 
         self.GR_Threshold0 = 50
 
@@ -131,6 +130,7 @@ class HedgeYEntity(VisionEntity):
         # Group vertical lines
         vertical_line_groupsG = []  # A list of line groups which are each a line list
         for line in vertical_linesG:
+            #print "Green Line Grouping Possibility:", line[0], ", ", line[1]
             group_found = False
             for line_group in vertical_line_groupsG:
 
@@ -146,6 +146,10 @@ class HedgeYEntity(VisionEntity):
         for line_group in vertical_line_groupsG:
             rhos = map(lambda line: line[0], line_group)
             angles = map(lambda line: line[1], line_group)
+            for rho in rhos:
+                print "rho: ", rho
+            for angle in angles:
+                print "angle: ", angle
             line = (sum(rhos) / len(rhos), circular_average(angles, math.pi))
             vertical_linesG.append(line)
 
@@ -162,7 +166,6 @@ class HedgeYEntity(VisionEntity):
 
         # Group horizontal lines
         horizontal_line_groups = []  # A list of line groups which are each a line list
-        print "Horizontal lines: ",
         for line in horizontal_lines:
             group_found = False
             for line_group in horizontal_line_groups:
@@ -200,6 +203,7 @@ class HedgeYEntity(VisionEntity):
             height = roi[3]
             self.left_pole = round(min(vertical_linesG[0][0], vertical_linesG[1][0]), 2) - width / 2
             self.right_pole = round(max(vertical_linesG[0][0], vertical_linesG[1][0]), 2) - width / 2
+
         # TODO: If one pole is seen, is it left or right pole?
 
         # Calculate planar distance r (assuming we are moving perpendicular to
@@ -270,7 +274,9 @@ class HedgeYEntity(VisionEntity):
         for red_line in vertical_linesR:
             print "New Red Line:", red_line[0], ", ", red_line[1]
         for green_line in vertical_linesG:
-            print "New Green Line:", green_line[0], ", ", green_line[1]
+            print "New Green VLine:", green_line[0], ", ", green_line[1]
+        for green_line in horizontal_lines:
+            print "New Green HLine:", green_line[0], ", ", green_line[1]
 
         if len(vertical_linesR) is 0:
             print "No Red Found"
@@ -304,7 +310,7 @@ class HedgeYEntity(VisionEntity):
                 print "Line changed to ", line
 
         libvision.misc.draw_lines(Gframe, vertical_linesG)
-        libvision.misc.draw_lines(Gframe, horizontal_lines)
+        #libvision.misc.draw_lines(Gframe, horizontal_lines)
         libvision.misc.draw_lines(Rframe, vertical_linesR)
 
         # there was a merge error, these 3 lines conflicted b/c your copy out of date
