@@ -46,14 +46,12 @@ class HedgeYEntity(VisionEntity):
     def init(self):
 
         # Thresholds For Line Finding
-        self.vertical_thresholdG = .2  # How close to verticle lines must be self.vertical_thresholdR = .25  # How close to verticle lines must be
+        self.vertical_thresholdG = .2  # How close to verticle lines must be
+        self.vertical_thresholdR = .25  # How close to verticle lines must be
         self.horizontal_threshold = 0.5  # How close to horizontal lines must be
         self.hough_thresholdG = 150
         self.hough_thresholdR = 150
         self.max_range = 135
-
-        self.min_length = 30
-        self.max_gap = 10
 
         self.hor_threshold = 2
 
@@ -146,10 +144,6 @@ class HedgeYEntity(VisionEntity):
         for line_group in vertical_line_groupsG:
             rhos = map(lambda line: line[0], line_group)
             angles = map(lambda line: line[1], line_group)
-            for rho in rhos:
-                print "rho: ", rho
-            for angle in angles:
-                print "angle: ", angle
             line = (sum(rhos) / len(rhos), circular_average(angles, math.pi))
             vertical_linesG.append(line)
 
@@ -310,7 +304,7 @@ class HedgeYEntity(VisionEntity):
                 print "Line changed to ", line
 
         libvision.misc.draw_lines(Gframe, vertical_linesG)
-        #libvision.misc.draw_lines(Gframe, horizontal_lines)
+        libvision.misc.draw_lines(Gframe, horizontal_lines)
         libvision.misc.draw_lines(Rframe, vertical_linesR)
 
         # there was a merge error, these 3 lines conflicted b/c your copy out of date
