@@ -31,6 +31,7 @@ from .binscontour import BinsContourEntity
 from .blobtesting import BlobTesting
 from .paths import PathsEntity
 from .hedgeR import HedgeREntity
+from .hedgeY import HedgeYEntity
 from .hedgetesting import HedgeTestingEntity
 # from .oldhedge import OldHedgeEntity
 from .buoycontour import BuoyContourEntity
@@ -65,5 +66,6 @@ entity_classes = {
     "paths": PathsEntity,
     "blobtesting": BlobTesting,
     "hedgeR": HedgeREntity,
+    "hedgeY": HedgeYEntity,
     # "oldhedge": OldHedgeEntity
 }
