@@ -22,9 +22,9 @@ tbar_invert_name = 'Invert Frame'
 
 # Contants for the names of the windows, since they're specified by name
 win_default_name = 'original'
-win_hue_name = 'Blue channel'
-win_sat_name = 'Green channel'
-win_val_name = 'Red channel'
+win_hue_name = 'Hue channel'
+win_sat_name = 'Saturation channel'
+win_val_name = 'Value channel'
 
 
 def main():
@@ -63,8 +63,9 @@ def run(capture):
                 print("End of clip")
                 break
 
-        #This IS NOT HSV. This is BGR
-        (hue_frame, sat_frame, val_frame) = cv2.split(current_frame)
+
+
+        (hue_frame, sat_frame, val_frame) = cv2.split(cv2.cvtColor(current_frame, cv2.COLOR_BGR2HSV))
 
         if cv2.getTrackbarPos(tbar_invert_name, win_hue_name):
             hue_frame = cv2.bitwise_not(hue_frame)
