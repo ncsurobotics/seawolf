@@ -3,43 +3,25 @@ import math
 import cv2
 import numpy as np
 import svr
-from base import VisionEntity
-import libvision
-
 from base import VisionEntity, Container
-
-
-class Buoy(object):
-    buoy_id = 0
-    colors = {"red": (40, 0, 255),
-              "green": (0, 255, 0),
-              "blue": (255, 0, 0),
-              "orange": (0, 200, 255),
-              "unknown": (255, 255, 255),
-              }
-
-    def __init__(self, xcoor, ycoor, radius, color):
-        self.output = Container()
-        self.type = "buoy"
-        self.centerx = xcoor
-        self.centery = ycoor
-        self.radius = radius
-        self.color = color
-        self.area = 0
-        self.id = 0        # id identifies which buoy your looking at
-        self.lastseen = 2  # how recently you have seen this buoy
-        # how many times you have seen this buoy (if you see it enough it
-        # becomes confirmed)
-        self.seencount = 1
-
-    def get_color(self):
-        try:
-            return Buoy.colors[self.color]
-        except KeyError:
-            return Buoy.colors["unknown"]
+import libvision
 
 
 class BuoyHoughEntity(VisionEntity):
+
+    def init(self):
+
+        # Adaptive threshold variables
+        self.adaptive_thresh_blocksize = 35 # 35: yellow, orange, 55: green
+        self.adaptive_thresh = 20   # 35: yellow, 25: orange, 10: green
+
+        # Hough buoy variables
+        self.inv_res_ratio = 2
+        self.center_sep = 100
+        self.upper_canny_thresh = 40 # 40
+        self.acc_thresh = 30 # 20
+        self.min_radius = 0
+        self.max_radius = 100
 
     def init(self):
         self.adaptive_thresh_blocksize = 29
@@ -88,35 +70,26 @@ class BuoyHoughEntity(VisionEntity):
 
         self.numpy_frame = cv2.Canny(self.adaptive_frame, 100, 250, apertureSize=3)
 
-        self.raw_buoys = cv2.HoughCircles(self.numpy_frame, cv2.cv.CV_HOUGH_GRADIENT, 2, 50, np.array([]), 40, 80, 1, 1000)
-	if self.raw_buoys:
-  	    print len(self.raw_buoys)
+        self.raw_buoys = cv2.HoughCircles(
+                                self.numpy_frame, 
+                                cv2.cv.CV_HOUGH_GRADIENT,
+                                self.inv_res_ratio, 
+                                self.center_sep,
+                                np.array([]),
+                                self.upper_canny_thresh,
+                                self.acc_thresh,
+                                self.min_radius,
+                                self.max_radius,
+                        )
 
         if self.raw_buoys is not None and len(self.raw_buoys[0]) > 0:
+            print len(self.raw_buoys)
+            print len(self.raw_buoys[0])
             for buoy in self.raw_buoys[0]:
                 (x, y, radius) = buoy
                 cv2.circle(self.debug_frame, (int(x), int(y)),
                            int(radius) + 10, (255, 255, 255), 5)
 
-        # for buoy1 in self.raw_buoys[:]:
-        #     for buoy2 in self.raw_buoys[:]:
-        #         if buoy1 is buoy2:
-        #             continue
-        #         if buoy1 in self.raw_buoys and buoy2 in self.raw_buoys and \
-        #            math.fabs(buoy1.centerx - buoy2.centerx) > self.mid_sep and \
-        #            math.fabs(buoy1.centery - buoy2.centery) > self.mid_sep:
-        #             if buoy1.area < buoy2.area:
-        #                 self.raw_buoys.remove(buoy1)
-        #             elif buoy2.area < buoy1.area:
-        #                 self.raw_buoys.remove(buoy2)
-        #
-        # for buoy in self.raw_buoys:
-        #     self.match_buoys(buoy)
-        #
-        # self.sort_buoys()
-        # self.draw_buoys()
-        #
-        # self.return_output()
 
         self.debug_to_cv = libvision.cv2_to_cv(self.debug_frame)
         self.numpy_to_cv = libvision.cv2_to_cv(self.numpy_frame)
@@ -131,7 +104,7 @@ class BuoyHoughEntity(VisionEntity):
         # Convert to output format
         self.output.buoys = []
         if self.raw_buoys is not None and len(self.raw_buoys[0]) > 0:
-	    for buoy in self.raw_buoys[0]:
+            for buoy in self.raw_buoys[0]:
                 (x, y, radius) = buoy
                 buoy = Container()
                 buoy.theta = x
@@ -143,54 +116,3 @@ class BuoyHoughEntity(VisionEntity):
             self.return_output()
         return self.output
 
-    # TODO, CLEAN THIS UP SOME
-    def match_buoys(self, target):
-        found = 0
-        for buoy in self.candidates:
-            if math.fabs(buoy.centerx - target.centerx) < self.trans_thresh and \
-               math.fabs(buoy.centery - target.centery) < self.trans_thresh:
-                print buoy.seencount
-                buoy.centerx = target.centerx
-                buoy.centery = target.centery
-                print "still ", buoy.seencount
-                buoy.seencount += 2
-                print "new seencount ", buoy.seencount
-                buoy.lastseen += 6
-                found = 1
-        for buoy in self.confirmed:
-            if math.fabs(buoy.centerx - target.centerx) < self.trans_thresh and \
-               math.fabs(buoy.centery - target.centery) < self.trans_thresh:
-                target.id = buoy.id
-                buoy = target
-                buoy.lastseen += 6
-                found = 1
-        if found == 0:
-            self.candidates.append(target)
-            target.lastseen + 3
-
-        # TODO, CLEAN THIS UP SOME
-    def sort_buoys(self):
-        for buoy in self.candidates[:]:
-            print "last seen is ", buoy.lastseen
-            print "seencount is ", buoy.seencount
-            buoy.lastseen -= 1
-            if buoy.seencount >= self.seencount_thresh:
-                self.confirmed.append(buoy)
-                print "confirmed appended"
-            if buoy.lastseen < self.lastseen_thresh:
-                self.candidates.remove(buoy)
-        for buoy in self.confirmed[:]:
-            buoy.lastseen -= 1
-            if buoy.lastseen < self.lastseen_thresh:
-                self.confirmed.remove(buoy)
-                print "confirmed removed"
-
-    def draw_buoys(self):
-        clr = (255, 0, 255)
-        for buoy in self.raw_buoys:
-            cv2.circle(self.debug_frame, (buoy.centerx, buoy.centery),
-                       buoy.radius + 10, buoy.get_color(), 5)
-            cv2.circle(
-                self.debug_frame, (buoy.centerx, buoy.centery), 2, buoy.get_color(), 3)
-            # font = cv2.FONT_HERSHEY_SIMPLEX
-            # cv2.putText(self.debug_final_frame, "theta=" + str(buoy.theta), (int(buoy.midx) - 50, int(buoy.midy) + 20), font, .4, clr, 1, cv2.CV_AA)
