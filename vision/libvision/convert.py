@@ -1,6 +1,5 @@
 import numpy as np
-import cv
-import cv2
+import cv2.cv as cv
 
 
 def cv_to_cv2(frame):
