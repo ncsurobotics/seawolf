@@ -8,6 +8,7 @@ from buoy import BuoyMission
 from buoy_simple import SimpleBuoyMission
 from hedge import HedgeMission
 from bins import BinsMission
+from acoustics import AcousticsMission
 from new_bins import NewBinsMission
 from fakepizza import FakePizzaMission
 from strafetest import StrafeMission
@@ -26,5 +27,6 @@ mission_classes = {
     'bins': BinsMission,
     'new_bins': NewBinsMission,
     'fakepizza': FakePizzaMission,
-    'strafetest': StrafeMission
+    'strafetest': StrafeMission,
+    'acoustics': AcousticsMission
 }

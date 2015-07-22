@@ -264,3 +264,9 @@ def test():
     # Show user the data and end test
     print data
     print("ENDING ACOUSTICS TEST")
+
+
+def start_logger():
+    ac = Acoustics()
+    ac.connect('/dev/ttyUSB4')
+    ac.start_logger('surveys')
