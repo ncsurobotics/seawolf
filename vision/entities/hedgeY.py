@@ -117,13 +117,16 @@ class HedgeYEntity(VisionEntity):
 
         # Get vertical lines
         vertical_linesG = []
-        for line in raw_linesG[0]:
-            rho = line[0]
-            theta = line[1]
-            if theta < self.vertical_thresholdG or \
-                    theta > math.pi - self.vertical_thresholdG:
 
-                vertical_linesG.append((abs(rho), theta))
+        if raw_linesG is None:
+            raw_linesG = []
+
+        if len(raw_linesG) > 0:
+            for line in raw_linesG[0]:
+                rho = line[0]
+                theta = line[1]
+                if theta < self.vertical_thresholdG or theta > (math.pi - self.vertical_thresholdG):
+                    vertical_linesG.append((rho, theta))
 
         # Group vertical lines
         vertical_line_groupsG = []  # A list of line groups which are each a line list
@@ -149,14 +152,13 @@ class HedgeYEntity(VisionEntity):
 
         # Get horizontal lines
         horizontal_lines = []
-        for line in raw_linesG[0]:
-            rho = line[0]
-            theta = line[1]
-            dist_from_horizontal = (math.pi / 2 + line[1]) % math.pi
-            if dist_from_horizontal < self.horizontal_threshold or \
-                    dist_from_horizontal > math.pi - self.horizontal_threshold:
-
-                horizontal_lines.append((abs(line[0]), line[1]))
+        if len(raw_linesG) > 0:
+            for line in raw_linesG[0]:
+                rho = line[0]
+                theta = line[1]
+                dist_from_horizontal = (math.pi / 2 + line[1]) % math.pi
+                if dist_from_horizontal < self.horizontal_threshold or dist_from_horizontal > math.pi - self.horizontal_threshold:
+                    horizontal_lines.append((abs(line[0]), line[1]))
 
         # Group horizontal lines
         horizontal_line_groups = []  # A list of line groups which are each a line list
