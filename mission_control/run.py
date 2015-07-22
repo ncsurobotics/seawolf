@@ -56,6 +56,8 @@ parent_directory = os.path.realpath(os.path.join(
 ))
 vision_directory = os.path.join(parent_directory, "vision/")
 sys.path.append(vision_directory)
+acoustics_directory = os.path.join(parent_directory, "acoustics/")
+sys.path.append(acoustics_directory)
 if simulator:
     print "Using Simulator..."
     simulator_directory = os.path.join(parent_directory, "utils/simulator/")
@@ -65,6 +67,7 @@ else:
 
 import vision
 import missions
+import acoustics
 from mission_controller import MissionController
 
 # Ordered list of tasks.  Can be one of the following types:
@@ -75,19 +78,20 @@ from mission_controller import MissionController
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
     missions.GateMission,
-    sw3.CompoundRoutine(sw3.SetDepth(2, timeout=1), sw3.Forward(.2), sw3.HoldYaw()),
+<<<<<<< HEAD
     missions.PathMission,
     missions.SimpleBuoyMission,
     missions.PathMission,
-    sw3.SetDepth(8.0, timeout=5),
     missions.HedgeMission,
-    missions.HedgeMission,
-    (missions.PathMission, True, 1),
-    sw3.Forward(.5, 1),
-    missions.NewBinsMission,
-    (missions.PathMission, True, 1),
-    missions.HedgeMission,
-    missions.FakePizzaMission
+    missions.PathMission, 
+    missions.AcousticsMission,
+    #missions.HedgeMission,
+    #(missions.PathMission, True, 1),
+    #sw3.Forward(.5, 1),
+    #missions.NewBinsMission,
+    #(missions.PathMission, True, 1),
+    #missions.HedgeMission,
+    #missions.FakePizzaMission
 ]
 
 if __name__ == "__main__":

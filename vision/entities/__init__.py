@@ -13,8 +13,8 @@ from .gate import GateEntity, GATE_BLACK, GATE_WHITE
 #from .binoculartest import BinocularTest
 from .path import PathEntity
 #from .buoy import BuoyEntity
-#from .buoytest import BuoyTestEntity
-#from .buoynew import BuoyNewEntity
+from .buoytest import BuoyTestEntity
+from .buoynew import BuoyNewEntity
 #from .binocularbuoy import BinocularBuoy
 from .weapons import WeaponsEntity
 #from .buoy2011 import Buoy2011Entity
@@ -31,11 +31,13 @@ from .binscontour import BinsContourEntity
 from .blobtesting import BlobTesting
 from .paths import PathsEntity
 from .hedgeR import HedgeREntity
+from .hedgeY import HedgeYEntity
 from .hedgetesting import HedgeTestingEntity
 # from .oldhedge import OldHedgeEntity
 from .buoycontour import BuoyContourEntity
 from .buoycontours2 import BuoyContour2Entity
 from .buoyhough import BuoyHoughEntity
+from .greatscott import GreatScottEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -45,11 +47,11 @@ entity_classes = {
     "gate": GateEntity,
     "path": PathEntity,
     #"buoy": BuoyEntity,
-    #"buoynew": BuoyNewEntity,
-    #"buoytest": BuoyTestEntity,
+    "buoynew": BuoyNewEntity,
+    "buoytest": BuoyTestEntity,
     #"buoy2011": Buoy2011Entity,
-    "buoycontours": BuoyContourEntity,
-    "buoycontours2": BuoyContour2Entity,
+    "buoycontour": BuoyContourEntity,
+    "buoycontour2": BuoyContour2Entity,
     "buoyhough": BuoyHoughEntity,
     "hedge": HedgeEntity,
     "weapons": WeaponsEntity,
@@ -65,5 +67,7 @@ entity_classes = {
     "paths": PathsEntity,
     "blobtesting": BlobTesting,
     "hedgeR": HedgeREntity,
-    # "oldhedge": OldHedgeEntity
+    "hedgeY": HedgeYEntity,
+    # "oldhedge": OldHedgeEntityi
+    "greatscott":GreatScottEntity
 }

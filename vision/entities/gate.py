@@ -36,12 +36,12 @@ class GateEntity(VisionEntity):
     def init(self):
 
         # Thresholds
-        self.vertical_threshold = 15*math.pi/180  # How close to vertical lines must be
+        self.vertical_threshold = .26  # How close to vertical lines must be
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 45
-        self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 7
-        self.max_range = 120
+        self.hough_threshold = 35
+        self.adaptive_thresh_blocksize = 15
+        self.adaptive_thresh = 1
+        self.max_range = 135
 
         self.left_pole = None
         self.right_pole = None
@@ -72,7 +72,7 @@ class GateEntity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 1)
+        cv.SetImageCOI(hsv, 2)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
@@ -110,6 +110,7 @@ class GateEntity(VisionEntity):
             if line[1] < self.vertical_threshold or \
                line[1] > math.pi-self.vertical_threshold:
 
+                #absolute value does better grouping currently
                 vertical_lines.append((abs(line[0]), line[1]))
 
         # Group vertical lines
@@ -191,6 +192,8 @@ class GateEntity(VisionEntity):
         self.output.seen_crossbar = self.seen_crossbar
         self.output.left_pole = self.left_pole
         self.output.right_pole = self.right_pole
+
+	print "Returning ", 0.1 * (self.left_pole + self.right_pole)/2
 
         self.return_output()
         print self
