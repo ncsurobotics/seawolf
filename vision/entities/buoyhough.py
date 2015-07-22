@@ -3,10 +3,8 @@ import math
 import cv2
 import numpy as np
 import svr
-from base import VisionEntity
-import libvision
-
 from base import VisionEntity, Container
+import libvision
 
 
 class Buoy(object):
@@ -42,9 +40,9 @@ class Buoy(object):
 class BuoyHoughEntity(VisionEntity):
 
     def init(self):
-        self.adaptive_thresh_blocksize = 29
-        self.adaptive_thresh = 33
-        self.min_area = 500
+        self.adaptive_thresh_blocksize = 35
+        self.adaptive_thresh = 15
+        self.min_area = 1000
         self.max_area = 5000
         self.mid_sep = 50
         self.recent_id = 1
