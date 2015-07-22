@@ -72,7 +72,7 @@ class GateEntity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 2)
+        cv.SetImageCOI(hsv, 1)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
