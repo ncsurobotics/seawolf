@@ -227,6 +227,10 @@ class logger():
 def get_date_str():
     return str(datetime.datetime.now()).split('.')[0]
 
+# ###########################
+#### Test ###################
+#############################
+        
 def test():
     def query_user_for_port():
         # Show human user list of possible acoustics ports
@@ -260,3 +264,9 @@ def test():
     # Show user the data and end test
     print data
     print("ENDING ACOUSTICS TEST")
+
+
+def start_logger():
+    ac = Acoustics()
+    ac.connect('/dev/ttyUSB4')
+    ac.start_logger('surveys')

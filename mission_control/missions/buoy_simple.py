@@ -10,13 +10,13 @@ import seawolf as sw
 
 FORWARD_SPEED = 0.6
 BUOY_CENTER_THRESHOLD = 5
-DEPTH_BUMP = 3
+DEPTH_BUMP = 6
 
 
 class SimpleBuoyMission(MissionBase):
 
     def init(self):
-        self.process_manager.start_process(entities.BuoyTestEntity, "buoy", "forward", debug=True)
+        self.process_manager.start_process(entities.BuoyHoughEntity, "buoy", "forward", debug=True)
         sw3.nav.do(sw3.CompoundRoutine(
             sw3.Forward(FORWARD_SPEED),
             sw3.SetDepth(DEPTH_BUMP),
