@@ -193,7 +193,7 @@ class GateEntity(VisionEntity):
         self.output.left_pole = self.left_pole
         self.output.right_pole = self.right_pole
 
-	print "Returning ", 0.1 * (self.left_pole + self.right_pole)/2
+	#print "Returning ", 0.1 * (self.left_pole + self.right_pole)/2
 
         self.return_output()
         print self
