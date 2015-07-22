@@ -37,6 +37,7 @@ from .hedgetesting import HedgeTestingEntity
 from .buoycontour import BuoyContourEntity
 from .buoycontours2 import BuoyContour2Entity
 from .buoyhough import BuoyHoughEntity
+from .greatscott import GreatScottEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -67,5 +68,6 @@ entity_classes = {
     "blobtesting": BlobTesting,
     "hedgeR": HedgeREntity,
     "hedgeY": HedgeYEntity,
-    # "oldhedge": OldHedgeEntity
+    # "oldhedge": OldHedgeEntityi
+    "greatscott":GreatScottEntity
 }
