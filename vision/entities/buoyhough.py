@@ -12,14 +12,14 @@ class BuoyHoughEntity(VisionEntity):
     def init(self):
 
         # Adaptive threshold variables
-        self.adaptive_thresh_blocksize = 21 # 35: yellow, orange, 55: green
-        self.adaptive_thresh = 6   # 35: yellow, 25: orange, 10: green
+        self.adaptive_thresh_blocksize = 55 # 35: yellow, orange, 55: green
+        self.adaptive_thresh = 10   # 35: yellow, 25: orange, 10: green
 
         # Hough buoy variables
         self.inv_res_ratio = 2
         self.center_sep = 100
         self.upper_canny_thresh = 40 # 40
-        self.acc_thresh = 10 # 20, 50 with green settings
+        self.acc_thresh = 50 # 20, 50 with green settings
         self.min_radius = 0
         self.max_radius = 50
 
