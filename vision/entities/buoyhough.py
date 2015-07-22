@@ -23,12 +23,6 @@ class BuoyHoughEntity(VisionEntity):
         self.min_radius = 0
         self.max_radius = 50
 
-    def init(self):
-        self.adaptive_thresh_blocksize = 29
-        self.adaptive_thresh = 15
-        self.min_area = 500
-        self.max_area = 5000
-        self.mid_sep = 50
         self.recent_id = 1
         self.trans_thresh = 30
 
