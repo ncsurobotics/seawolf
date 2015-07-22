@@ -7,22 +7,20 @@ from base import VisionEntity, Container
 import libvision
 
 
-
-
 class BuoyHoughEntity(VisionEntity):
 
     def init(self):
 
         # Adaptive threshold variables
-        self.adaptive_thresh_blocksize = 35
-        self.adaptive_thresh = 15
+        self.adaptive_thresh_blocksize = 35 # 35: yellow, orange, 55: green
+        self.adaptive_thresh = 20   # 35: yellow, 25: orange, 10: green
 
         # Hough buoy variables
         self.inv_res_ratio = 2
-        self.center_sep = 50
-        self.upper_canny_thresh = 40 # 40 250 200
-        self.acc_thresh = 80
-        self.min_radius = 1
+        self.center_sep = 100
+        self.upper_canny_thresh = 40 # 40
+        self.acc_thresh = 30 # 20
+        self.min_radius = 0
         self.max_radius = 100
 
         self.recent_id = 1
@@ -79,11 +77,12 @@ class BuoyHoughEntity(VisionEntity):
                         )
 
         if self.raw_buoys is not None and len(self.raw_buoys[0]) > 0:
+            print len(self.raw_buoys)
+            print len(self.raw_buoys[0])
             for buoy in self.raw_buoys[0]:
                 (x, y, radius) = buoy
                 cv2.circle(self.debug_frame, (int(x), int(y)),
                            int(radius) + 10, (255, 255, 255), 5)
-
 
 
         self.debug_to_cv = libvision.cv2_to_cv(self.debug_frame)
@@ -99,7 +98,7 @@ class BuoyHoughEntity(VisionEntity):
         # Convert to output format
         self.output.buoys = []
         if self.raw_buoys is not None and len(self.raw_buoys[0]) > 0:
-	    for buoy in self.raw_buoys[0]:
+            for buoy in self.raw_buoys[0]:
                 (x, y, radius) = buoy
                 buoy = Container()
                 buoy.theta = x
