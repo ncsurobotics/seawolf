@@ -36,12 +36,12 @@ class GateEntity(VisionEntity):
     def init(self):
 
         # Thresholds
-        self.vertical_threshold = 15*math.pi/180  # How close to vertical lines must be
+        self.vertical_threshold = .26  # How close to vertical lines must be
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 45
-        self.adaptive_thresh_blocksize = 25 #19 somewhat sunny
-        self.adaptive_thresh = 5 #7 somewhat sunny
-        self.max_range = 120
+        self.hough_threshold = 35
+        self.adaptive_thresh_blocksize = 15
+        self.adaptive_thresh = 1
+        self.max_range = 135
 
         self.left_pole = None
         self.right_pole = None
@@ -110,6 +110,7 @@ class GateEntity(VisionEntity):
             if line[1] < self.vertical_threshold or \
                line[1] > math.pi-self.vertical_threshold:
 
+                #absolute value does better grouping currently
                 vertical_lines.append((abs(line[0]), line[1]))
 
         # Group vertical lines
