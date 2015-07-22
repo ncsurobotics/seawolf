@@ -78,13 +78,13 @@ from mission_controller import MissionController
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
     missions.GateMission,
-    #sw3.Forward(.5, 5),
+<<<<<<< HEAD
     missions.PathMission,
     missions.SimpleBuoyMission,
     missions.PathMission,
-    #sw3.SetDepth(8.0, timeout=5),
     missions.HedgeMission,
-    missions.PathMission,
+    missions.PathMission, 
+    missions.AcousticsMission,
     #missions.HedgeMission,
     #(missions.PathMission, True, 1),
     #sw3.Forward(.5, 1),

@@ -45,7 +45,7 @@ class BuoyMission(MissionBase):
     def init(self):
         '''runs at start of mission '''
         self.set_timer("mission_timeout", MISSION_TIMEOUT, self.mission_timeout)
-        self.process_manager.start_process(entities.BuoyTestEntity, "buoy", "forward", debug=True)
+        self.process_manager.start_process(entities.BuoyHoughEntity, "buoy", "forward", debug=True)
         sw3.nav.do(sw3.Forward(FORWARD_SPEED, 5))
 
         #self.reference_angle = sw3.data.imu.yaw()*(pi/180) % (2*pi)
