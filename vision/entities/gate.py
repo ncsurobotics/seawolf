@@ -39,7 +39,7 @@ class GateEntity(VisionEntity):
         self.vertical_threshold = .26  # How close to vertical lines must be
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
         self.hough_threshold = 35
-        self.adaptive_thresh_blocksize = 11
+        self.adaptive_thresh_blocksize = 15
         self.adaptive_thresh = 1
         self.max_range = 135
 
