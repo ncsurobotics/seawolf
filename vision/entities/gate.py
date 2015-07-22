@@ -39,8 +39,8 @@ class GateEntity(VisionEntity):
         self.vertical_threshold = 15*math.pi/180  # How close to vertical lines must be
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
         self.hough_threshold = 45
-        self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 7
+        self.adaptive_thresh_blocksize = 25 #19 somewhat sunny
+        self.adaptive_thresh = 5 #7 somewhat sunny
         self.max_range = 120
 
         self.left_pole = None
@@ -72,7 +72,7 @@ class GateEntity(VisionEntity):
         hsv = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binary = cv.CreateImage(cv.GetSize(frame), 8, 1)
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
-        cv.SetImageCOI(hsv, 1)
+        cv.SetImageCOI(hsv, 2)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
 
@@ -191,6 +191,8 @@ class GateEntity(VisionEntity):
         self.output.seen_crossbar = self.seen_crossbar
         self.output.left_pole = self.left_pole
         self.output.right_pole = self.right_pole
+
+	print "Returning ", 0.1 * (self.left_pole + self.right_pole)/2
 
         self.return_output()
         print self

@@ -43,7 +43,7 @@ class BuoyHoughEntity(VisionEntity):
 
     def init(self):
         self.adaptive_thresh_blocksize = 29
-        self.adaptive_thresh = 33
+        self.adaptive_thresh = 15
         self.min_area = 500
         self.max_area = 5000
         self.mid_sep = 50
@@ -88,7 +88,9 @@ class BuoyHoughEntity(VisionEntity):
 
         self.numpy_frame = cv2.Canny(self.adaptive_frame, 100, 250, apertureSize=3)
 
-        self.raw_buoys = cv2.HoughCircles(self.numpy_frame, cv2.cv.CV_HOUGH_GRADIENT, 2, 50, np.array([]), 40, 80, 25, 100)
+        self.raw_buoys = cv2.HoughCircles(self.numpy_frame, cv2.cv.CV_HOUGH_GRADIENT, 2, 50, np.array([]), 40, 80, 1, 1000)
+	if self.raw_buoys:
+  	    print len(self.raw_buoys)
 
         if self.raw_buoys is not None and len(self.raw_buoys[0]) > 0:
             for buoy in self.raw_buoys[0]:
