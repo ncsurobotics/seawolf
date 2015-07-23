@@ -201,7 +201,7 @@ class GateEntity(VisionEntity):
                 self.seen_count = 1
             elif math.fabs(self.last_center - self.returning) < self.center_trans_thresh:
                 self.seen_count += 1
-                self.last_seen += 1
+                self.last_seen += 2
             else:
                 self.last_seen -= 1
 
@@ -234,6 +234,9 @@ class GateEntity(VisionEntity):
             if self.found:
                 cv.Circle(frame, (int(frame.width/2 + self.returning), int(frame.height/2)),
                        15, (0, 255,0), 2, 8, 0)
+                font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1, 1, 1, 3)
+                cv.PutText(frame, "Gate Sent to Mission Control", (100, 400) , font, (255, 255, 0))
+                print frame.width
 
             #cv.ShowImage("Gate", cv.CloneImage(frame))
             svr.debug("Gate", cv.CloneImage(frame))
