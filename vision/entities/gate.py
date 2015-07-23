@@ -30,6 +30,9 @@ def line_group_accept_test(line_group, line, max_range):
             min_rho = l[0]
     return max_rho - min_rho < max_range
 
+
+
+
 class GateEntity(VisionEntity):
     name = "Gate"
 
@@ -38,10 +41,10 @@ class GateEntity(VisionEntity):
         # Thresholds
         self.vertical_threshold = .26  # How close to vertical lines must be
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 35
-        self.adaptive_thresh_blocksize = 15
+        self.hough_threshold = 30
+        self.adaptive_thresh_blocksize = 19
         self.adaptive_thresh = 1
-        self.max_range = 135
+        self.max_range = 300
 
         self.left_pole = None
         self.right_pole = None
