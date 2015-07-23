@@ -53,7 +53,7 @@ class GateEntity(VisionEntity):
         self.seen_count = 0
         self.last_seen = 0
         self.center_trans_thresh = 20 # How far the returning center can be to still count as same result
-        self.seen_count_thresh = 6
+        self.seen_count_thresh = 4
         self.last_center = None
 
         self.found = False
