@@ -47,6 +47,14 @@ class GateEntity(VisionEntity):
         self.right_pole = None
         self.seen_crossbar = False
 
+        self.seen_count = 0
+        self.last_seen = 0
+        self.center_trans_thresh = 20 # How far the returning center can be to still count as same result
+        self.seen_count_thresh = 6
+        self.last_center = None
+
+        self.found = False
+
         if self.debug:
             pass
             #cv.NamedWindow("Gate")
@@ -170,18 +178,59 @@ class GateEntity(VisionEntity):
         self.left_pole = None
         self.right_pole = None
         print vertical_lines
+        self.returning = 0
+        self.found = False
         if len(vertical_lines) is 2:
             roi = cv.GetImageROI(frame)
             width = roi[2]
             height = roi[3]
             self.left_pole = round(min(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
             self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
+
+            self.returning = (self.left_pole + self.right_pole)/2
+	    print "Returning ", self.returning
+
+            if self.last_seen < 0:
+                self.last_center = None
+                self.last_seen = 0
+            if self.last_center is None:
+                self.last_center = self.returning
+                self.seen_count = 1
+            elif math.fabs(self.last_center - self.returning) < self.center_trans_thresh:
+                self.seen_count += 1
+                self.last_seen += 1
+            else:
+                self.last_seen -= 1
+
+            if self.seen_count < self.seen_count_thresh:
+                self.left_pole = None
+                self.right_pole = None
+            else: 
+                print "FOUND CENTER AND RETURNED IT"
+                self.found = True
+        else:
+            self.returning = 0
+            if self.last_seen < 0:
+                self.last_center = None
+                self.last_seen = 0
+            self.last_seen -= 1
+            self.left_pole = None
+            self.right_pole = None
+
+            
+            
+            
+
         #TODO: If one pole is seen, is it left or right pole?
     
         if self.debug:
             cv.CvtColor(color_filtered, frame, cv.CV_GRAY2RGB)
             libvision.misc.draw_lines(frame, vertical_lines)
             libvision.misc.draw_lines(frame, horizontal_lines)
+
+            if self.found:
+                cv.Circle(frame, (int(frame.width/2 + self.returning), int(frame.height/2)),
+                       15, (0, 255,0), 2, 8, 0)
 
             #cv.ShowImage("Gate", cv.CloneImage(frame))
             svr.debug("Gate", cv.CloneImage(frame))
@@ -193,7 +242,7 @@ class GateEntity(VisionEntity):
         self.output.left_pole = self.left_pole
         self.output.right_pole = self.right_pole
 
-	#print "Returning ", 0.1 * (self.left_pole + self.right_pole)/2
+
 
         self.return_output()
         print self
