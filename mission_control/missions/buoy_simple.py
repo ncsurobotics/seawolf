@@ -11,15 +11,16 @@ import seawolf as sw
 FORWARD_SPEED = 0.6
 BUOY_CENTER_THRESHOLD = 5
 DEPTH_BUMP = 6
-
+DELAY = 2
 
 class SimpleBuoyMission(MissionBase):
 
     def init(self):
+        sw3.nav.do(sw3.SetDepth(DEPTH_BUMP))
+        time.sleep(DELAY)
         self.process_manager.start_process(entities.BuoyHoughEntity, "buoy", "forward", debug=True)
         sw3.nav.do(sw3.CompoundRoutine(
             sw3.Forward(FORWARD_SPEED),
-            sw3.SetDepth(DEPTH_BUMP),
             sw3.HoldYaw(),
         ))
         self.start_angle = sw.var.get("YawPID.Heading")
@@ -67,7 +68,7 @@ class SimpleBuoyMission(MissionBase):
             self.delete_timer("mission_timeout")
 
             # Get tracking buoy from its id
-            tracking_buoy = None
+            tracking_buoy = 0
             for buoy in buoys:
                 if buoy.id == self.tracking_buoy_id:
                     tracking_buoy = tracking_buoy + 1
