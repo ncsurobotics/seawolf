@@ -1,15 +1,15 @@
 
 from __future__ import division
-from time import time
 
 from vision import entities
 from missions.base import MissionBase
-import sw3
+import sw3, time
 import seawolf as sw
 
 
 FORWARD_SPEED = 0.6
 BUOY_CENTER_THRESHOLD = 5
+DEGREE_PER_PIXEL = 0.10
 DEPTH_BUMP = 6
 DELAY = 2
 
@@ -68,29 +68,31 @@ class SimpleBuoyMission(MissionBase):
             self.delete_timer("mission_timeout")
 
             # Get tracking buoy from its id
-            tracking_buoy = 0
+            tracking_buoy = None
             for buoy in buoys:
                 if buoy.id == self.tracking_buoy_id:
-                    tracking_buoy = tracking_buoy + 1
+                    tracking_buoy = buoy
 
             # Correct if we saw it
-            if tracking_buoy:
+            if tracking_buoy is not None:
                 print tracking_buoy
-                self.last_seen = time()
+                self.last_seen = time.time()
                 if depth:
                     depth_routine = sw3.SetDepth(depth)
                 else:
                     depth_routine = sw3.RelativeDepth(-(tracking_buoy.phi) / 5)
                     print "Adjusting depth:", -tracking_buoy.phi / 5
-                print "Adjusting Yaw:", tracking_buoy.theta
+                print "id: ", tracking_buoy.id
+                print "Theta:", tracking_buoy.theta
+                print "Adjusting Yaw:", DEGREE_PER_PIXEL * tracking_buoy.theta
                 sw3.nav.do(sw3.CompoundRoutine(
                     depth_routine,
                     sw3.Forward(FORWARD_SPEED),
-                    sw3.RelativeYaw(tracking_buoy.theta),
+                    sw3.RelativeYaw(DEGREE_PER_PIXEL * tracking_buoy.theta),
                 ))
 
             # Consider ending the mission if we didn't see it
-            elif time() - self.last_seen > 10:
+            elif time.time() - self.last_seen > 10:
                 self.tracking_buoy_id = None
                 print "Lost buoy, finishing"
                 return True
