@@ -3,13 +3,14 @@ from __future__ import division
 
 from vision import entities
 from missions.base import MissionBase
-import sw3
+import sw3, time
 
 MISSION_TIMEOUT = 5
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
-FORWARD_SPEED = 0.5
+FORWARD_SPEED = 0.3
 DEPTH = 2
+DELAY = 2
 
 class GateMission(MissionBase):
 
@@ -18,9 +19,12 @@ class GateMission(MissionBase):
         self.gate_lost = 0
 
     def init(self):
+        sw3.nav.do(sw3.CompoundRoutine(
+            sw3.setDepth(DEPTH),
+        )
+        time.sleep(DELAY)
         self.process_manager.start_process(entities.GateEntity, "gate", "forward", debug=True)
         sw3.nav.do(sw3.CompoundRoutine(
-            sw3.SetDepth(DEPTH),
             sw3.HoldYaw(),
             sw3.Forward(FORWARD_SPEED),
         ))
