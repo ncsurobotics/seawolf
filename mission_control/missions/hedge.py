@@ -10,17 +10,18 @@ MISSION_TIMEOUT = 3
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.3
 DEPTH_OVERBAR = 3
-
+DELAY = 2
 
 class HedgeMission(MissionBase):
 
   #  def __init__(self):
 
     def init(self):
+        sw3.nav.do(sw3.SetDepth(3))
+        time.sleep(DELAY)
         self.process_manager.start_process(entities.HedgeEntity, "hedge", "forward", debug=True)
         sw3.nav.do(sw3.CompoundRoutine(
             sw3.Forward(FORWARD_SPEED),
-            # sw3.SetDepth(5.0),
             sw3.HoldYaw(),
         ))
         self.set_timer("hedge_timeout", 45, self.finish_mission)
