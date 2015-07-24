@@ -19,8 +19,8 @@ class GateMission(MissionBase):
         self.gate_lost = 0
 
     def init(self):
-        sw3.nav.do(sw3.CompoundRoutine(
-            sw3.setDepth(DEPTH),
+        sw3.nav.do(
+            sw3.SetDepth(DEPTH),
         )
         time.sleep(DELAY)
         self.process_manager.start_process(entities.GateEntity, "gate", "forward", debug=True)
