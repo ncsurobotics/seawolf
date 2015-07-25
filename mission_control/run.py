@@ -56,8 +56,8 @@ parent_directory = os.path.realpath(os.path.join(
 ))
 vision_directory = os.path.join(parent_directory, "vision/")
 sys.path.append(vision_directory)
-acoustics_directory = os.path.join(parent_directory, "acoustics/")
-sys.path.append(acoustics_directory)
+#acoustics_directory = os.path.join(parent_directory, "acoustics/")
+#sys.path.append(acoustics_directory)
 if simulator:
     print "Using Simulator..."
     simulator_directory = os.path.join(parent_directory, "utils/simulator/")
@@ -67,7 +67,7 @@ else:
 
 import vision
 import missions
-import acoustics
+#import acoustics
 from mission_controller import MissionController
 
 # Ordered list of tasks.  Can be one of the following types:
@@ -79,7 +79,7 @@ from mission_controller import MissionController
 MISSION_ORDER = [
     missions.GateMission,
     missions.PathMission,
-    missions.SimpleBuoyMission,
+    missions.NewBuoyMission,
     missions.PathMission,
     missions.HedgeMission,
     missions.PathMission, 

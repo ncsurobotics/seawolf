@@ -4,8 +4,9 @@ from base import MissionBase, SearchMission
 from test import TestMission
 from gate import GateMission
 from path import PathMission
-from buoy import BuoyMission
-from buoy_simple import SimpleBuoyMission
+#from buoy import BuoyMission
+#from buoy_simple import SimpleBuoyMission
+from new_buoy import NewBuoyMission
 from hedge import HedgeMission
 from bins import BinsMission
 #from acoustics import AcousticsMission
@@ -21,8 +22,9 @@ mission_classes = {
     'search': SearchMission,
     'gate': GateMission,
     'path': PathMission,
-    'buoy': BuoyMission,
-    'buoysimple': SimpleBuoyMission,
+#    'buoy': BuoyMission,
+#    'buoysimple': SimpleBuoyMission,
+    'new_buoy': NewBuoyMission,
     'hedge': HedgeMission,
     'bins': BinsMission,
     'new_bins': NewBinsMission,
