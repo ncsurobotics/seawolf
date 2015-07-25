@@ -159,8 +159,8 @@ class BuoyHoughEntity(VisionEntity):
 
         # Convert to output format
         self.output.buoys = []
-        if self.raw_buoys is not None and len(self.raw_buoys) > 0:
-            for buoy in self.raw_buoys:
+        if self.confirmed is not None and len(self.confirmed) > 0:
+            for buoy in self.confirmed:
                 buoy.theta = buoy.centerx
                 buoy.phi = buoy.centery
                 buoy.id = buoy.id
