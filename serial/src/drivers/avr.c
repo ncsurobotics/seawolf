@@ -142,6 +142,8 @@ static void* receive_thread(void* _sp) {
 
     while(true) {
         Serial_get(sp, frame, 3);
+        Logging_log(DEBUG, Util_format("Checking packet from AVR! (0x%02x, 0x%02x, 0x%02x)",
+                                              frame[0], frame[1], frame[2]));
 
         switch(frame[0]) {
         case SW_DEPTH:
