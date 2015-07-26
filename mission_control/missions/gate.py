@@ -5,7 +5,7 @@ from vision import entities
 from missions.base import MissionBase
 import sw3, time
 
-MISSION_TIMEOUT = 5
+MISSION_TIMEOUT = 15
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.3
@@ -17,6 +17,7 @@ class GateMission(MissionBase):
     def __init__(self):
         self.gate_seen = 0
         self.gate_lost = 0
+        self.mission_timeout = MISSION_TIMEOUT
 
     def init(self):
         sw3.nav.do(
@@ -30,6 +31,7 @@ class GateMission(MissionBase):
         ))
 
     def step(self, vision_data):
+        self.mission_timeout -= 1
         if not vision_data:
             return
         gate_data = vision_data['gate']
@@ -38,6 +40,7 @@ class GateMission(MissionBase):
         print gate_data
 
         if gate_data and gate_data.left_pole and gate_data.right_pole:
+            self.mission_timeout = MISSION_TIMEOUT
             gate_center = DEGREE_PER_PIXEL * (gate_data.left_pole + gate_data.right_pole) / 2  # degrees
 
             # If both poles are seen, point toward it then go forward.
@@ -59,7 +62,7 @@ class GateMission(MissionBase):
         elif self.gate_seen >= 15:
             self.gate_lost += 1
 
-        if self.gate_lost > 1:
+        if self.gate_lost > 1 || self.mission_timeout <= 0:
             print "Heading Locked"
             self.finish_mission()
             return
