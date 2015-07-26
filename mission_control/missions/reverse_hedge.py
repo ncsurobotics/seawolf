@@ -6,7 +6,7 @@ from vision import entities
 from missions.base import MissionBase
 import sw3
 
-MISSION_TIMEOUT = 50
+MISSION_TIMEOUT = 500
 DEGREE_PER_PIXEL = 0.10
 FORWARD_SPEED = 0.3
 DELAY = 2

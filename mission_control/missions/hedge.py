@@ -6,7 +6,7 @@ from vision import entities
 from missions.base import MissionBase
 import sw3
 
-MISSION_TIMEOUT = 35
+MISSION_TIMEOUT = 400
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.3
@@ -40,7 +40,6 @@ class HedgeMission(MissionBase):
         print hedge_data
 
         if hedge_data:
-            self.mission_timeout = MISSION_TIMEOUT
             hedge_center = None
             if hedge_data.right_pole and hedge_data.left_pole:
                 hedge_center = DEGREE_PER_PIXEL * (hedge_data.left_pole + hedge_data.right_pole) / 2  # degrees
