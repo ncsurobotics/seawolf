@@ -310,19 +310,18 @@ class HedgeTestEntity(VisionEntity):
 
             if lefts:
                 cv2.circle(debug_frame, lefts, 5, (0, 0, 0), -1)
+                left_pole_center = (lefts[0], lefts[1] - 80)
 
             if rights:
                 cv2.circle(debug_frame, rights, 5, (0, 0, 0), -1)
-
-            left_pole_center = None
-            right_pole_center = None
+                right_pole_center = (rights[0], rights[1] - 80)
 
         if left_pole_center:
-            self.left_pole = None
+            self.left_pole = left_pole_center[0]
             cv2.circle(debug_frame, left_pole_center, 5, (0, 0, 0), -1)
 
         if right_pole_center:
-            self.right_pole = None
+            self.right_pole = right_pole_center[0]
             cv2.circle(debug_frame, right_pole_center, 5, (0, 0, 0), -1)
 
         # median_slope_h = np.median(list(slope(line) for line in h_lines))
