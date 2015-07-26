@@ -8,6 +8,7 @@ from path import PathMission
 #from buoy_simple import SimpleBuoyMission
 from new_buoy import NewBuoyMission
 from hedge import HedgeMission
+from reverse_hedge import ReverseHedgeMission
 from bins import BinsMission
 #from acoustics import AcousticsMission
 from new_bins import NewBinsMission
@@ -26,6 +27,7 @@ mission_classes = {
 #    'buoysimple': SimpleBuoyMission,
     'new_buoy': NewBuoyMission,
     'hedge': HedgeMission,
+    'reverse_hedge': ReverseHedgeMission,
     'bins': BinsMission,
     'new_bins': NewBinsMission,
     'fakepizza': FakePizzaMission,

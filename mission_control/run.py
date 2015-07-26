@@ -81,6 +81,7 @@ MISSION_ORDER = [
     missions.PathMission,
     missions.NewBuoyMission,
     missions.PathMission,
+    missions.ReverseHedgeMission,
     missions.HedgeMission,
     missions.PathMission, 
     #missions.AcousticsMission,
