@@ -53,13 +53,13 @@ class HedgeEntity(VisionEntity):
         # Thresholds
         self.vertical_threshold = 0.2  # How close to verticle lines must be
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
-        self.hough_threshold = 200
+        self.hough_threshold = 150
         self.adaptive_thresh_blocksize = 19
         self.adaptive_thresh = 15
         self.max_range = 135
 
         self.min_length = 50
-        self.max_gap = 10
+        self.max_gap = 40
 
         self.hor_threshold = 2
 
