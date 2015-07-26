@@ -10,7 +10,6 @@ MISSION_TIMEOUT = 500
 DEGREE_PER_PIXEL = 0.10
 FORWARD_SPEED = 0.3
 DELAY = 2
-BACKWARDS_DELAY = 15
 DEPTH = 4
 
 class ReverseHedgeMission(MissionBase):
@@ -40,7 +39,6 @@ class ReverseHedgeMission(MissionBase):
         print hedge_data
 
         if hedge_data:
-            self.mission_timeout = MISSION_TIMEOUT
             hedge_center = None
             if hedge_data.right_pole and hedge_data.left_pole:
                 hedge_center = DEGREE_PER_PIXEL * (hedge_data.left_pole + hedge_data.right_pole) / 2  # degrees
@@ -71,5 +69,5 @@ class ReverseHedgeMission(MissionBase):
                 sw3.RelativeYaw(180),
                 sw3.Forward(-1*FORWARD_SPEED, 5)
             ))
-            time.sleep(BACKWARDS_DELAY)
+            time.sleep(self.mission_timeout)
             self.finish_mission()
