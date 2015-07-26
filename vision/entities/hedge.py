@@ -68,6 +68,17 @@ class HedgeEntity(VisionEntity):
         self.seen_crossbar = False
         self.crossbar_depth = None
 
+
+        self.seen_count = 0
+        self.last_seen = 0
+        self.center_trans_thresh = 8 # How far the returning center can be to still count as same result
+        self.seen_count_thresh = 5
+        self.last_center = None
+
+        self.found = False
+
+        self.frame_boundary_thresh = 32
+
         if self.debug:
             pass
             # cv.NamedWindow("Hedge")
@@ -107,11 +118,11 @@ class HedgeEntity(VisionEntity):
                              )
 
         # Morphology
-        '''
+        
         kernel = cv.CreateStructuringElementEx(3, 3, 1, 1, cv.CV_SHAPE_ELLIPSE)
-        cv.Erode(binary, binary, kernel, 1)
-        cv.Dilate(binary, binary, kernel, 1)
-        '''
+        #cv.Erode(binary, binary, kernel, 1)
+        cv.Dilate(binary, binary, kernel, 4)
+        
         if self.debug:
             color_filtered = cv.CloneImage(binary)
 
@@ -142,12 +153,16 @@ class HedgeEntity(VisionEntity):
         self.hor_lines = []
 
         for line in raw_lines:
+            slope = line_slope(line[0], line[1])
+            if slope is None:
+                continue
             if math.fabs(line_slope(line[0], line[1])) < self.hor_threshold:
                 self.hor_lines.append(line)
 
         max_length = 0
 
         for line in self.hor_lines:
+            print line
             if math.fabs(line_distance(line[0], line[1])) > max_length:
                 max_length = math.fabs(line_distance(line[0], line[1]))
                 crossbar_seg = line
@@ -260,15 +275,52 @@ class HedgeEntity(VisionEntity):
                 self.left_pole = round((crossbar_seg[1][0] - frame.width / 2) * 37 / (frame.width / 2))
                 self.right_pole = round((crossbar_seg[0][0] - frame.width / 2) * 37 / (frame.width / 2))
             self.crossbar_depth = round(-1 * (crossbar_seg[1][1] - frame.height / 2) * 36 / (frame.height / 2))
-            if self.left_pole == -37:
+
+            if math.fabs(self.left_pole) <= 37 and math.fabs(self.left_pole) >= self.frame_boundary_thresh:
                 self.left_pole = None
-            if self.right_pole == -37:
+            if math.fabs(self.right_pole) <= 37 and math.fabs(self.right_pole) >= self.frame_boundary_thresh:
                 self.right_pole = None
 
             self.seen_crossbar = True
 
+
+            if self.left_pole and self.right_pole:
+
+                self.returning = (self.left_pole + self.right_pole)/2
+   	        print "Returning ", self.returning
+
+                if self.last_seen < 0:
+                    self.last_center = None
+                    self.last_seen = 0
+                if self.last_center is None:
+                    self.last_center = self.returning
+                    self.seen_count = 1
+                elif math.fabs(self.last_center - self.returning) < self.center_trans_thresh:
+                    self.seen_count += 1
+                    self.last_seen += 2
+                else:
+                    self.last_seen -= 1
+
+                if self.seen_count < self.seen_count_thresh:
+                    self.left_pole = None
+                    self.right_pole = None
+                else: 
+                    print "FOUND CENTER AND RETURNED IT"
+                    self.found = True
+            else:
+                self.returning = 0
+                if self.last_seen < 0:
+                    self.last_center = None
+                    self.last_seen = 0
+                self.last_seen -= 1
+                self.left_pole = None
+                self.right_pole = None
+
+
+
+
             cv.Line(frame, crossbar_seg[0], crossbar_seg[1], (255, 255, 0), 10, cv.CV_AA, 0)
-            if self.left_pole and crossbar_seg[0][0] < crossbar_seg[1][0]:
+            if self.left_pole and crossbar_seg[0][0] < crossbar_seg[1][0] :
 
                 cv.Line(frame, crossbar_seg[0], (crossbar_seg[0][0], crossbar_seg[0][0] - 500), (255, 0, 0), 10, cv.CV_AA, 0)
             elif self.left_pole:
