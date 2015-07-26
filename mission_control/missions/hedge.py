@@ -23,7 +23,7 @@ class HedgeMission(MissionBase):
     def init(self):
         sw3.nav.do(sw3.SetDepth(DEPTH))
         time.sleep(DELAY)
-        self.process_manager.start_process(entities.HedgeYEntity, "hedge", "forward", debug=True)
+        self.process_manager.start_process(entities.HedgeEntity, "hedge", "forward", debug=True)
         sw3.nav.do(sw3.CompoundRoutine(
             sw3.Forward(FORWARD_SPEED),
             sw3.HoldYaw(),
