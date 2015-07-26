@@ -65,7 +65,7 @@ class HedgeMission(MissionBase):
         elif self.hedge_seen >= 5:
             self.hedge_lost += 1
 
-        if self.hedge_lost > 1 || self.mission_timeout <= 0:
+        if self.hedge_lost > 1 or self.mission_timeout <= 0:
             print "Heading Locked"
             self.finish_mission()
             return
