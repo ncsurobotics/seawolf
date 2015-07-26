@@ -39,4 +39,4 @@ class NewBuoyMission(MissionBase):
 
             if self.bumped == 2: 
                 self.finish_mission()
-        
+
