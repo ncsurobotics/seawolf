@@ -31,6 +31,7 @@ def main():
     pid = seawolf.PID( seawolf.var.get("PitchPID.Heading"), seawolf.var.get("PitchPID.p"), seawolf.var.get("PitchPID.i"), seawolf.var.get("PitchPID.d"))
 
     dataOut(0.0)
+    mv = 0.0
 
     while(True):
         seawolf.var.sync()
