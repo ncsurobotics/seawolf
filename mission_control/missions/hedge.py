@@ -6,51 +6,67 @@ from vision import entities
 from missions.base import MissionBase
 import sw3
 
-MISSION_TIMEOUT = 3
+MISSION_TIMEOUT = 35
+DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.3
-DEPTH_OVERBAR = 3
+DEPTH = 4
 DELAY = 2
 
 class HedgeMission(MissionBase):
 
-  #  def __init__(self):
+    def __init__(self):
+        self.hedge_seen = 0
+        self.hedge_lost = 0
+        self.mission_timeout = MISSION_TIMEOUT
 
     def init(self):
-        sw3.nav.do(sw3.SetDepth(3))
+        sw3.nav.do(sw3.SetDepth(DEPTH))
         time.sleep(DELAY)
-        self.process_manager.start_process(entities.HedgeEntity, "hedge", "forward", debug=True)
+        self.process_manager.start_process(entities.HedgeYEntity, "hedge", "forward", debug=True)
         sw3.nav.do(sw3.CompoundRoutine(
             sw3.Forward(FORWARD_SPEED),
             sw3.HoldYaw(),
         ))
-        self.set_timer("hedge_timeout", 45, self.finish_mission)
 
     def step(self, vision_data):
+        self.mission_timeout -= 1
         if not vision_data:
             return
         hedge_data = vision_data['hedge']
+        if not hedge_data:
+            return
 
         print hedge_data
-        current_depth = sw3.data.depth()
 
-        #desired_depth = current_depth + hedge_data.crossbar_depth - DEPTH_OVERBAR
-
-        if hedge_data and hedge_data.crossbar_depth is not None:
-
-            if hedge_data.right_pole is not None and hedge_data.left_pole is not None:
-                hedge_center = (hedge_data.left_pole + hedge_data.right_pole) / 2  # degrees
+        if hedge_data:
+            self.mission_timeout = MISSION_TIMEOUT
+            hedge_center = None
+            if hedge_data.right_pole and hedge_data.left_pole:
+                hedge_center = DEGREE_PER_PIXEL * (hedge_data.left_pole + hedge_data.right_pole) / 2  # degrees
 
             elif hedge_data.center_pole is not None:
                 hedge_center = hedge_data.center_pole
 
-            desired_depth = current_depth + hedge_data.crossbar_depth - DEPTH_OVERBAR
-            # If both poles are seen, point toward it then go forward.
-            self.set_timer("mission_timeout", 3, self.finish_mission)
+            self.hedge_seen += 1
+            self.hedge_lost = 0
 
-            print "Correcting Yaw", hedge_center
-            sw3.nav.do(sw3.CompoundRoutine([
-                sw3.RelativeYaw(hedge_center + 2),
-                sw3.Forward(FORWARD_SPEED),
-                sw3.SetDepth(desired_depth)
-            ]))
+            if hedge_center is not None:
+                if abs(gate_center) < STRAIGHT_TOLERANCE:
+                    sw3.nav.do(sw3.CompoundRoutine([
+                        sw3.Forward(FORWARD_SPEED),
+                        sw3.HoldYaw()
+                    ]))
+                else:
+                    print "Correcting Yaw", hedge_center
+                    sw3.nav.do(sw3.CompoundRoutine([
+                        sw3.RelativeYaw(hedge_center + 2),
+                        sw3.Forward(FORWARD_SPEED),
+                    ]))
+        elif self.hedge_seen >= 5:
+            self.hedge_lost += 1
+
+        if self.hedge_lost > 1 || self.mission_timeout <= 0:
+            print "Heading Locked"
+            self.finish_mission()
+            return
