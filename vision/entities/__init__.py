@@ -33,6 +33,7 @@ from .paths import PathsEntity
 from .hedgeR import HedgeREntity
 from .hedgeY import HedgeYEntity
 from .hedgetesting import HedgeTestingEntity
+from .hedgetest import HedgeTestEntity
 # from .oldhedge import OldHedgeEntity
 from .buoycontour import BuoyContourEntity
 from .buoycontours2 import BuoyContour2Entity
@@ -68,6 +69,7 @@ entity_classes = {
     "blobtesting": BlobTesting,
     "hedgeR": HedgeREntity,
     "hedgeY": HedgeYEntity,
+    "hedgetest": HedgeTestEntity,
     # "oldhedge": OldHedgeEntityi
-    "greatscott":GreatScottEntity
+    "greatscott": GreatScottEntity
 }
