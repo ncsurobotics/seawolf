@@ -35,6 +35,9 @@ class ???Entity(VisionEntity):
     def display(self):
         #Draws objects on frames
 
+        svr.debug("Unchanged",self.default_frame)
+        #Other displays...
+
 
     def process_frame(self, frame): 
 
