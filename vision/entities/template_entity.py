@@ -11,7 +11,8 @@ class ???Entity(VisionEntity):
     def init(self):
         #Define thresholds
         #Define objects lists (examples: this.candidates, this.confirmed, etc)
-
+        self.candidates = []
+        self.confirmed = []
 
     def groupTarget(self, target):
         #Use this function to group the target into the appropriate group
@@ -31,26 +32,23 @@ class ???Entity(VisionEntity):
     def returnToMissionControl(self):
         #Goes through confirmed list and returns necessary info to mission control
 
-    def display(self,frame):
-        #Draws objects on frame
+    def display(self):
+        #Draws objects on frames
 
 
     def process_frame(self, frame): 
 
         #Image treatment here (frame is input picture in cv format)
 
-        #Identify Objects
+        targets = cv.???(frame) #Find objects using an opencv function
 
-        
-        #Group objects
+        for target in targets: #Look at each target
+            groupTarget(self, target) #Group each target
 
+        track() #Track objects using confirmed and candidate lists
 
-        #Track Objects
+        returnToMissionControl() #Return information to mission control
 
-
-        #Return objects to mission control
-
-
-        #Display output
+        display() #Draw objects and display frames
 
 
