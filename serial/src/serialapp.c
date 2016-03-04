@@ -154,7 +154,7 @@ int main(void) {
         sp = Serial_open(port_path);
 
         if(sp == -1) {
-            Logging_log(ERROR, Util_format("Error opening %s", port_path));
+            Logging_log(ERROR, Util_format("Error opening %s: %s.", port_path, strerror(errno)));
             continue;
         }
 
@@ -179,6 +179,7 @@ int main(void) {
     Notify_send("COMPLETED", "Serial identification");
 
     while(true) {
+	printf("sleeping...\n");
         Util_usleep(5.0);
     }
 
