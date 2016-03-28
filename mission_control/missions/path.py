@@ -26,7 +26,7 @@ class PathMission(MissionBase):
 
     def __init__(self, double=False, which_path=0):
         self.which_path = which_path
-        self.double = double
+        self.double = False
         self.path_seen = 0
 
     def init(self):

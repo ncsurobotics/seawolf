@@ -11,7 +11,7 @@ from time import sleep
 import sw3
 
 simulator = False
-
+import pdb; pdb.set_trace();
 if __name__ == "__main__":
 
     # Parse Arguments
@@ -78,8 +78,8 @@ from mission_controller import MissionController
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
     missions.GateMission,
-    missions.PathMission,
-    sw3.nav.do(sw3.RelativeYaw(-5)),
+    (missions.PathMission, True, 1),
+    sw3.RelativeYaw(-5),
     missions.PathMission,
     missions.ReverseHedgeMission,
     missions.HedgeMission,

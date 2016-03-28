@@ -49,6 +49,7 @@ def main():
 
     paused = seawolf.var.get("YawPID.Paused")
     heading = seawolf.var.get("YawPID.Heading")
+    yaw = seawolf.var.get("SEA.Yaw")
 
     pid = seawolf.PID(
         0.0,
@@ -58,6 +59,7 @@ def main():
     )
 
     dataOut(0.0)
+    mv = 0.0
 
     while(True):
 
