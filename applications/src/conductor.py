@@ -73,10 +73,11 @@ def main():
             seawolf.var.set("StatusLight", STATUS_LIGHT_OFF)
             seawolf.logging.log(seawolf.DEBUG, "Killing...")
             seawolf.var.set("MissionReset", 1)
+            zero_thrusters()
 
             # Wait for mission control to acknowledge reset
             while seawolf.var.get("MissionReset"):
-                zero_thrusters()
+                print "Thruster's zero'd. Waiting for mission reset"
                 sleep(0.1)
             zero_thrusters()
             running = False

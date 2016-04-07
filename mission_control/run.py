@@ -11,7 +11,6 @@ from time import sleep
 import sw3
 
 simulator = False
-import pdb; pdb.set_trace();
 if __name__ == "__main__":
 
     # Parse Arguments
@@ -78,13 +77,13 @@ from mission_controller import MissionController
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
     missions.GateMission,
-    (missions.PathMission, True, 1),
-    sw3.RelativeYaw(-5),
-    missions.PathMission,
-    missions.ReverseHedgeMission,
-    missions.HedgeMission,
-    missions.NewBuoyMission,
-    missions.PathMission, 
+    #(missions.PathMission, True, 1),
+    #sw3.RelativeYaw(-5),
+    #missions.PathMission,
+    #missions.ReverseHedgeMission,
+    #missions.HedgeMission,
+    #missions.NewBuoyMission,
+    #missions.PathMission, 
     #missions.PathMission, 
     #missions.PathMission, 
     #missions.AcousticsMission,
@@ -139,11 +138,14 @@ if __name__ == "__main__":
                     mission_controller.append_mission(mission_cls(*args))
 
             try:
+                import pdb; pdb.set_trace();
                 mission_controller.execute_all()
             except missions.MissionControlReset:
                 mission_controller.kill()
                 sleep(2)
                 continue
+            except KeyboardInterrupt:
+                break
             else:
                 break
 
