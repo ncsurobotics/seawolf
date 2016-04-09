@@ -138,7 +138,6 @@ if __name__ == "__main__":
                     mission_controller.append_mission(mission_cls(*args))
 
             try:
-                import pdb; pdb.set_trace();
                 mission_controller.execute_all()
             except missions.MissionControlReset:
                 mission_controller.kill()
