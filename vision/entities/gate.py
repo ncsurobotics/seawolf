@@ -10,8 +10,10 @@ from base import VisionEntity
 import libvision
 from sw3.util import circular_average
 
+
 GATE_BLACK = 0
 GATE_WHITE = 1
+
 
 def line_group_accept_test(line_group, line, max_range):
     '''
@@ -65,6 +67,15 @@ class GateEntity(VisionEntity):
             #self.create_trackbar("hough_threshold", 100)
 
     def process_frame(self, frame):
+        frametest = cv.CreateImage(cv.GetSize(frame), 8, 3)
+        binarytest = cv.CreateImage(cv.GetSize(frame), 8, 1)
+
+        cv.Copy(frame, frametest)
+        cv.SetImageCOI(frametest, 3)
+        cv.Copy(frametest, binarytest)
+        cv.SetImageCOI(frametest, 0)
+        svr.debug("R?",binarytest)
+
 
         # Resize image to 320x240
         #copy = cv.CreateImage(cv.GetSize(frame), 8, 3)
