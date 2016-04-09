@@ -24,10 +24,10 @@
 
 /* Simple summing mixing algorithm */
 static void mix(float req_pitch, float req_depth, float req_forward, float req_yaw, float req_strafe, float req_roll, float out[6]) {
-    out[BOW] = req_pitch + req_depth;
-    out[STERN] = -req_pitch - req_depth;
-    out[PORT] = -req_forward - req_yaw;
-    out[STAR] = -req_forward + req_yaw;
+    out[BOW] = -req_pitch - req_depth;
+    out[STERN] = req_pitch - req_depth;
+    out[PORT] = req_forward + req_yaw;
+    out[STAR] = req_forward - req_yaw;
     out[STRAFET] = req_strafe + req_roll;
     out[STRAFEB] = -req_strafe + req_roll;
 
