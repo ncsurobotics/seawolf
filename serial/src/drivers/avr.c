@@ -255,45 +255,45 @@ int main(int argc, char** argv) {
         Var_sync();
 
         if(Var_poked("Bow")) {
-            send_message(sp, SW_MOTOR, BOW, (int) (MOTOR_RANGE * Var_get("Bow")));
+            send_message(sp, SW_MOTOR, BOW, (int) (MOTOR_RANGE * -Var_get("Bow")));
         }
 
         if(Var_poked("Stern")) {
-            send_message(sp, SW_MOTOR, STERN, (int) (MOTOR_RANGE * Var_get("Stern")));
+            send_message(sp, SW_MOTOR, STERN, (int) (MOTOR_RANGE * -Var_get("Stern")));
         }
 
         if(Var_poked("StrafeT")) {
-            send_message(sp, SW_MOTOR, STRAFET, (int) (MOTOR_RANGE * Var_get("StrafeT")));
+            send_message(sp, SW_MOTOR, STRAFET, (int) (MOTOR_RANGE * -Var_get("StrafeT")));
         }
 
         if(Var_poked("StrafeB")) {
-            send_message(sp, SW_MOTOR, STRAFEB, (int) (MOTOR_RANGE * Var_get("StrafeB")));
+            send_message(sp, SW_MOTOR, STRAFEB, (int) (MOTOR_RANGE * -Var_get("StrafeB")));
         }
 
         if(Var_poked("Port")) {
-            send_message(sp, SW_MOTOR, PORT, (int) (MOTOR_RANGE * Var_get("Port")));
+            send_message(sp, SW_MOTOR, PORT, (int) (MOTOR_RANGE * -Var_get("Port")));
         }
 
         if(Var_poked("Star")) {
-            send_message(sp, SW_MOTOR, STAR, (int) (MOTOR_RANGE * Var_get("Star")));
+            send_message(sp, SW_MOTOR, STAR, (int) (MOTOR_RANGE * -Var_get("Star")));
         }
 
         if(Var_stale("StatusLight")) {
             switch((int)Var_get("StatusLight")) {
             case 0:
-                send_message(sp, SW_STATUS, 0, 200);
+                //send_message(sp, SW_STATUS, 0, 200);
                 break;
 
             case 1:
-                send_message(sp, SW_STATUS, 0, 100);
+                //send_message(sp, SW_STATUS, 0, 100);
                 break;
 
             case 2:
-                send_message(sp, SW_STATUS, 0, 0);
+                //send_message(sp, SW_STATUS, 0, 0);
                 break;
 
             case 3:
-                send_message(sp, SW_STATUS, 0, 180);
+                //send_message(sp, SW_STATUS, 0, 180);
                 break;
 
             default:
