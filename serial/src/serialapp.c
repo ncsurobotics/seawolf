@@ -26,7 +26,7 @@ static void cycleDTR(SerialPort sp) {
 }
 
 static int getPeripheralType(SerialPort sp) {
-    char id[32];
+    //char id[32];
     int n;
     int bytes_received;
     int good_count;
@@ -53,12 +53,14 @@ static int getPeripheralType(SerialPort sp) {
             return PT_IMU;
         }
     }
-
+    
     /* IMU fingerprint failed, attempt Arduino */
+    
     Serial_setBaud(sp, 9600);
     Serial_flush(sp);
     cycleDTR(sp);
 
+    /*
     for(int i = 0; i < 4; i++) {
         if(ArdComm_getId(sp, id) != -1) {
             if(strcmp(id, "Depth") == 0) {
@@ -73,6 +75,7 @@ static int getPeripheralType(SerialPort sp) {
             Util_usleep(0.5);
         }
     }
+    */
 
     /* IMU fingerprint failed, attempt AVR */
 
