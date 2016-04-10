@@ -281,7 +281,7 @@ int main(int argc, char** argv) {
         if(Var_stale("StatusLight")) {
             switch((int)Var_get("StatusLight")) {
             case 0:
-                //send_message(sp, SW_STATUS, 0, 200);
+                ///send_message(sp, SW_STATUS, 0, 200);
                 break;
 
             case 1:
