@@ -173,10 +173,12 @@ static void* receive_thread(void* _sp) {
 
         case SW_KILL:
             /* Send appropirate notification */
-            if(frame[2] == 0) {
+            if(frame[2] == 1) {
                 Notify_send("EVENT", "PowerKill");
-            } else {
+            } else if (frame[2] == 0) {
                 Notify_send("EVENT", "SystemReset");
+            } else {
+                printf("killswitch detection fault (%d).\n", frame[2]);
             }
             break;
 
