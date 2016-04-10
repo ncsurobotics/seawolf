@@ -281,19 +281,19 @@ int main(int argc, char** argv) {
         if(Var_stale("StatusLight")) {
             switch((int)Var_get("StatusLight")) {
             case 0:
-                send_message(sp, SW_STATUS, 0, 200);
+                //send_message(sp, SW_STATUS, 0, 200);
                 break;
 
             case 1:
-                send_message(sp, SW_STATUS, 0, 100);
+                //send_message(sp, SW_STATUS, 0, 100);
                 break;
 
             case 2:
-                send_message(sp, SW_STATUS, 0, 0);
+                //send_message(sp, SW_STATUS, 0, 0);
                 break;
 
             case 3:
-                send_message(sp, SW_STATUS, 0, 180);
+                //send_message(sp, SW_STATUS, 0, 180);
                 break;
 
             default:
