@@ -6,9 +6,10 @@
 /* PSI per foot of fresh water (calculate) */
 #define PSI_PER_FOOT 0.433527504
 
-/* Approximate air pressure in Raleigh. This number is from a weather forecast
-   for Raleigh */
-#define AIR_PRESSURE 14.782
+/* Approximate air pressure in Raleigh. This number is the median air pressure
+   recorded in the span from Saturday 04/23 to Monday 05/02 (year 2016).
+   MAX/MIN pressures recorded in this time span were 14.84/14.63 PSI.*/
+#define AIR_PRESSURE 15.58 //pounds per square inch
 
 /* XXX: Make this 128 when the avr works right */
 #define MOTOR_RANGE 127
@@ -113,6 +114,9 @@ static void set_depth(int16_t raw_adc_value) {
     /* The pressure sensor produces output between 0.5 and 4.5 volts. This range
        maps linearly to the 0-100psi range */
     psi = ((voltage - 0.5) / 4.0) * 100;
+
+    //Logging_log(DEBUG, Util_format("Current Air Pressure: %f lb/in^2\n",psi));
+    //Logging_log(DEBUG, Util_format("Pressure Sensor Voltage: %f V\n",voltage));
 
     /* Compute depth based on surface pressure and PSI per foot */
     depth = (psi - AIR_PRESSURE) / PSI_PER_FOOT;
