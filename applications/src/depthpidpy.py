@@ -15,7 +15,15 @@ def initial_e_dt(integral):
         return init_downward_force / integral
 
 def dataOut(mv):
-    out = in_range(-1.0, mv, 1.0)
+    out = -in_range(-1.0, mv, 1.0) #negation is a temporary bug fix.
+                                   #not sure why commands to 
+                                   #sw3.nav.do(sw3.SetDepth(6)) are
+                                   #totally reversed. Possibly due
+                                   #to the origin pid author intending
+                                   #for the depth (if it was a 3D vector)
+                                   #to point upwards... like in the
+                                   #positive z direction.
+
     seawolf.notify.send("THRUSTER_REQUEST", "Depth {}".format(out))
 
 def in_range(a,x,b):

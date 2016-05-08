@@ -24,8 +24,14 @@
 
 /* Simple summing mixing algorithm */
 static void mix(float req_pitch, float req_depth, float req_forward, float req_yaw, float req_strafe, float req_roll, float out[6]) {
-    out[BOW] = -req_pitch - req_depth;
-    out[STERN] = req_pitch - req_depth;
+    /* 
+    direction and       vectorized commands that typically come from
+    magnitude of        sw3.routines.py. See high-level navigation
+    thruster at         section of manual in order to understand which
+    location [x].       direction each vector is pointing.
+    -------------       --------------------------------------------- */
+    out[BOW] = -req_pitch + req_depth;
+    out[STERN] = req_pitch + req_depth;
     out[PORT] = req_forward + req_yaw;
     out[STAR] = req_forward - req_yaw;
     out[STRAFET] = req_strafe + req_roll;
@@ -135,6 +141,7 @@ int main(void) {
         } else if(strcmp(requester, "Pitch") == 0) {
             req_pitch = atof(value);
         } else if(strcmp(requester, "Depth") == 0) {
+            printf("depth = %f\n", atof(value));
             req_depth = atof(value);
         } else if(strcmp(requester, "Strafe") == 0) {
             req_strafe = atof(value);
