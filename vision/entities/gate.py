@@ -1,6 +1,7 @@
 # pylint: disable=E1101
 from __future__ import division
 import math
+import numpy as np
 
 import cv
 
@@ -16,6 +17,8 @@ logging.basicConfig(level=logging.INFO)
 
 GATE_BLACK = 0
 GATE_WHITE = 1
+
+HUE = {'red':180}
 
 
 def line_group_accept_test(line_group, line, max_range):
@@ -51,6 +54,8 @@ class GateEntity(VisionEntity):
         self.adaptive_thresh = 4
         self.max_range = 300
 
+        self.target_hue = HUE['red']
+
         self.left_pole = None
         self.right_pole = None
         self.seen_crossbar = False
@@ -70,6 +75,15 @@ class GateEntity(VisionEntity):
             #self.create_trackbar("hough_threshold", 100)
 
     def process_frame(self, frame):
+        (w,h) = cv.GetSize(frame)
+
+        #generate hue selection frames
+        ones = np.ones((h,w,1), dtype='uint8')
+        a = ones*(180 - self.target_hue)
+        b = ones*(180 - self.target_hue + 20)
+        a_array = cv.fromarray(a)
+        b_array = cv.fromarray(b)
+
         #create locations for the a pair of test frames
         frametest = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binarytest = cv.CreateImage(cv.GetSize(frame), 8, 1)
@@ -103,6 +117,11 @@ class GateEntity(VisionEntity):
         cv.SetImageCOI(hsv, 1)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)  #reset COI
+
+        #correct for wraparound on red spectrum
+        cv.InRange(binary,a_array,b_array,binarytest) #generate mask
+        cv.Add(binary,cv.fromarray(ones*180),binary,mask=binarytest) #use mask to selectively add values
+
 
         #run adaptive threshold for edge detection and more noise filtering
         cv.AdaptiveThreshold(binary, binary,
