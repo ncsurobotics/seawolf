@@ -10,6 +10,9 @@ from base import VisionEntity
 import libvision
 from sw3.util import circular_average
 
+import logging
+logging.basicConfig(level=logging.INFO)
+
 
 GATE_BLACK = 0
 GATE_WHITE = 1
@@ -45,7 +48,7 @@ class GateEntity(VisionEntity):
         self.horizontal_threshold = 0.2  # How close to horizontal lines must be
         self.hough_threshold = 30
         self.adaptive_thresh_blocksize = 19
-        self.adaptive_thresh = 1
+        self.adaptive_thresh = 4
         self.max_range = 300
 
         self.left_pole = None
@@ -67,15 +70,16 @@ class GateEntity(VisionEntity):
             #self.create_trackbar("hough_threshold", 100)
 
     def process_frame(self, frame):
+        #create locations for the a pair of test frames
         frametest = cv.CreateImage(cv.GetSize(frame), 8, 3)
         binarytest = cv.CreateImage(cv.GetSize(frame), 8, 1)
-
+        
+        #use the red channel for the binary frame (just for debugging purposes)
         cv.Copy(frame, frametest)
         cv.SetImageCOI(frametest, 3)
         cv.Copy(frametest, binarytest)
-        cv.SetImageCOI(frametest, 0)
-        svr.debug("R?",binarytest)
-
+        cv.SetImageCOI(frametest, 0)    #reset COI
+        #svr.debug("R?",binarytest)
 
         # Resize image to 320x240
         #copy = cv.CreateImage(cv.GetSize(frame), 8, 3)
@@ -85,9 +89,11 @@ class GateEntity(VisionEntity):
 
         found_gate = False
 
+        #create a new frame just for comparison purposes
         unchanged_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
         cv.Copy(frame,unchanged_frame)
 
+        #apply a course noise filter
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         # Set binary image to have saturation channel
@@ -96,8 +102,9 @@ class GateEntity(VisionEntity):
         cv.CvtColor(frame, hsv, cv.CV_BGR2HSV)
         cv.SetImageCOI(hsv, 1)
         cv.Copy(hsv, binary)
-        cv.SetImageCOI(hsv, 0)
+        cv.SetImageCOI(hsv, 0)  #reset COI
 
+        #run adaptive threshold for edge detection and more noise filtering
         cv.AdaptiveThreshold(binary, binary,
             255,
             cv.CV_ADAPTIVE_THRESH_MEAN_C,
@@ -135,18 +142,26 @@ class GateEntity(VisionEntity):
                 #absolute value does better grouping currently
                 vertical_lines.append((abs(line[0]), line[1]))
 
+        #print message to user for performance purposes
+        logging.debug("{} possibilities reduced to {} lines".format(
+                        len(raw_lines), len(vertical_lines) ))
+
         # Group vertical lines
         vertical_line_groups = []  # A list of line groups which are each a line list
+        i = 0
         for line in vertical_lines:
             group_found = False
             for line_group in vertical_line_groups:
-
+                i += 1
                 if line_group_accept_test(line_group, line, self.max_range):
                     line_group.append(line)
                     group_found = True
 
             if not group_found:
                 vertical_line_groups.append([line])
+
+        #quick debugging statement
+        logging.debug("{} internal iterations for {} groups".format(i, len(vertical_line_groups)))
 
         # Average line groups into lines
         vertical_lines = []
@@ -155,6 +170,9 @@ class GateEntity(VisionEntity):
             angles = map(lambda line: line[1], line_group)
             line = (sum(rhos)/len(rhos), circular_average(angles, math.pi))
             vertical_lines.append(line)
+
+        ####################################################
+        #vvvv Horizontal line code isn't used for anything
 
         # Get horizontal lines
         horizontal_lines = []
@@ -189,11 +207,15 @@ class GateEntity(VisionEntity):
             self.seen_crossbar = False
             horizontal_lines = []
 
+        #^^^ Horizontal line code isn't used for anything
+        ###################################################
+
         self.left_pole = None
         self.right_pole = None
-        print vertical_lines
+        #print vertical_lines
         self.returning = 0
         self.found = False
+
         if len(vertical_lines) is 2:
             roi = cv.GetImageROI(frame)
             width = roi[2]
@@ -202,11 +224,14 @@ class GateEntity(VisionEntity):
             self.right_pole = round(max(vertical_lines[0][0], vertical_lines[1][0]), 2) - width/2
 
             self.returning = (self.left_pole + self.right_pole)/2
-	    print "Returning ", self.returning
+            logging.info("Returning {} as gate center delta.".format(self.returning))
 
+            #initialize first iteration with 2 known poles
             if self.last_seen < 0:
                 self.last_center = None
                 self.last_seen = 0
+
+            #increment a counter if result is good.
             if self.last_center is None:
                 self.last_center = self.returning
                 self.seen_count = 1
@@ -216,6 +241,7 @@ class GateEntity(VisionEntity):
             else:
                 self.last_seen -= 1
 
+            #if not conviced, forget left/right pole. Else proclaim success.
             if self.seen_count < self.seen_count_thresh:
                 self.left_pole = None
                 self.right_pole = None
@@ -247,7 +273,7 @@ class GateEntity(VisionEntity):
                        15, (0, 255,0), 2, 8, 0)
                 font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 1, 1, 1, 3)
                 cv.PutText(frame, "Gate Sent to Mission Control", (100, 400) , font, (255, 255, 0))
-                print frame.width
+                #print frame.width
 
             #cv.ShowImage("Gate", cv.CloneImage(frame))
             svr.debug("Gate", cv.CloneImage(frame))
@@ -262,7 +288,7 @@ class GateEntity(VisionEntity):
 
 
         self.return_output()
-        print self
+        #print self
 
     def __repr__(self):
         return "<GateEntity left_pole=%s right_pole=%s seen_crossbar=%s>" % \
