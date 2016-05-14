@@ -78,7 +78,7 @@ from mission_controller import MissionController
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
     missions.GateMission,
-    #missions.PathMission,
+    missions.PathMission,
     #sw3.nav.do(sw3.RelativeYaw(-5)),
     #missions.PathMission,
     #missions.ReverseHedgeMission,

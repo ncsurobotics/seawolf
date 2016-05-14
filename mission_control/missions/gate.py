@@ -6,6 +6,7 @@ from missions.base import MissionBase
 import sw3, time
 
 MISSION_TIMEOUT = 400
+TIMEOUT_ENABLED = False
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.3
@@ -31,7 +32,9 @@ class GateMission(MissionBase):
         ))
 
     def step(self, vision_data):
-        self.mission_timeout -= 1
+        if TIMEOUT_ENABLED:
+            self.mission_timeout -= 1
+
         if not vision_data:
             return
         gate_data = vision_data['gate']
@@ -61,6 +64,9 @@ class GateMission(MissionBase):
             self.gate_lost += 1
 
         if self.gate_lost > 1 or self.mission_timeout <= 0:
+            if self.mission_timeout <= 0:
+                print "Gate Mission Timeout!"
+
             print "Heading Locked"
             self.finish_mission()
             return
