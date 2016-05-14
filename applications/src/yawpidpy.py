@@ -47,6 +47,7 @@ def main():
     seawolf.var.subscribe("YawPID.Paused")
     seawolf.var.subscribe("SEA.Yaw")
 
+    yaw = seawolf.var.get("SEA.Yaw")
     paused = seawolf.var.get("YawPID.Paused")
     heading = seawolf.var.get("YawPID.Heading")
 
