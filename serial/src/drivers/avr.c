@@ -177,12 +177,24 @@ static void* receive_thread(void* _sp) {
 
         case SW_KILL:
             /* Send appropirate notification */
-            if(frame[2] == 1) {
-                Notify_send("EVENT", "PowerKill");
-            } else if (frame[2] == 0) {
+            /* is diver commands the robot to be unkilled
+            (kill switch disengaged) command a system reset,
+            which can act as a signal to seawolf that it is
+            ready to begin a mission. */
+            if(frame[2] == 0) {
                 Notify_send("EVENT", "SystemReset");
+                
+            /* if error, report kill switch detection fault */
+            /* April 3rd: Currently suspecting the Powerboard is going rouge and
+            responding to with 0xFF ocassionally. */
+            } else if (frame[2] == 0xFF) {
+            	Logging_log(ERROR, "AVR error: Killswitch detection fault.");
+            
+            /* else, seawolf has been killed (kill switch
+            engaged), thus send out a notification indicating
+            so. */
             } else {
-                printf("killswitch detection fault (%d).\n", frame[2]);
+                Notify_send("EVENT", "PowerKill");
             }
             break;
 
@@ -261,33 +273,41 @@ int main(int argc, char** argv) {
         Var_sync();
 
         if(Var_poked("Bow")) {
+        	//printf("Bow\n");
             send_message(sp, SW_MOTOR, BOW, (int) (MOTOR_RANGE * -Var_get("Bow")));
         }
 
         if(Var_poked("Stern")) {
+        	//printf("Stern\n");
             send_message(sp, SW_MOTOR, STERN, (int) (MOTOR_RANGE * -Var_get("Stern")));
         }
 
         if(Var_poked("StrafeT")) {
+        	//printf("StrafeT\n");
             send_message(sp, SW_MOTOR, STRAFET, (int) (MOTOR_RANGE * -Var_get("StrafeT")));
         }
 
         if(Var_poked("StrafeB")) {
+        	//printf("StrafeB\n");
             send_message(sp, SW_MOTOR, STRAFEB, (int) (MOTOR_RANGE * -Var_get("StrafeB")));
         }
 
         if(Var_poked("Port")) {
+        	//printf("Port\n");
             send_message(sp, SW_MOTOR, PORT, (int) (MOTOR_RANGE * -Var_get("Port")));
         }
 
         if(Var_poked("Star")) {
+        	//printf("Star\n");
             send_message(sp, SW_MOTOR, STAR, (int) (MOTOR_RANGE * -Var_get("Star")));
         }
 
         if(Var_stale("StatusLight")) {
             switch((int)Var_get("StatusLight")) {
+            /* legacy code. Not supported in new electronics system  */
             case 0:
-                ///send_message(sp, SW_STATUS, 0, 200);
+
+                //send_message(sp, SW_STATUS, 0, 200);
                 break;
 
             case 1:
