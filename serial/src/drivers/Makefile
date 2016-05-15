@@ -14,7 +14,7 @@ all: $(BINS) $(OUTPUT_PY)
 ../../$(BIN_DIR)/%: %.py
 	@echo "Copying" $< "to build dir"
 	@echo "#!$(PYTHON_BIN)" > $@
-	@cat $< >> $@
+	@cat $< > $@
 	@chmod +x $@
 
 clean:
