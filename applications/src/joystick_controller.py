@@ -37,7 +37,7 @@ def update_axis(event):
 
     mag = max(min(event.magnitude, 1.0), -1.0)
 
-    forward = -(mag * sin(angle))
+    forward = (mag * sin(angle))
     rate = (mag * cos(angle))
 
     total = abs(forward) + abs(rate)

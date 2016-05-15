@@ -26,6 +26,17 @@ screen -dr seawolf -p suite -X stuff "cd applications
 screen -dr seawolf -p suite -X stuff "./bin/conductor
 "
 
+#watch variable
+screen -dr seawolf -X screen -t watchvars
+sleep 0.2
+screen -dr seawolf -p watchvars -X stuff "cd applications
+"
+screen -dr seawolf -p watchvars -X stuff "./bin/watchvariables Port Star Stern Bow StrafeT StrafeB Depth DepthPID.Heading
+"
+screen -dr seawolf -p watchvars -X stuff "
+"
+
+
 screen -dr seawolf -X screen -t bash
 sleep 1.5
 screen -dr seawolf -p bash -X stuff "cd applications

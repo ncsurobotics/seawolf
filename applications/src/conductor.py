@@ -76,6 +76,7 @@ def main():
             zero_thrusters()
 
             # Wait for mission control to acknowledge reset
+            i = 0
             while seawolf.var.get("MissionReset"):
                 print "Thruster's zero'd. Waiting for mission reset"
                 sleep(0.1)
