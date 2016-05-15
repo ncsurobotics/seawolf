@@ -30,6 +30,48 @@ Controls:
     Quit:             Button10
 """
 
+class Peripherals(object):
+    def __init__(self):
+        self.arsenal = [
+            self._createDevice('Grabber2','PN',1),
+            self._createDevice('Grabber1','PN',2),
+            self._createDevice('Torpedo2','PN',3),
+            self._createDevice('Torpedo1','PN',4),
+            self._createDevice('Dropper2','PN',5),
+            self._createDevice('Dropper1','PN',6),
+        ]
+
+        self.sel = 0
+
+    def _createDevice(self, name, subsystem, ID):
+        device = {'name':name, 'subsystem':subsystem, 'id':ID}
+        return device
+
+    def next(self):
+        self.sel = (self.sel +1) % len(self.arsenal)
+
+    def prev(self):
+        self.sel = (self.sel -1) % len(self.arsenal)
+
+    def printActive(self):
+        name =  self.arsenal[self.sel]['name']
+        print("currently active device: %s" % name)
+
+    def fire(self):
+        name =  self.arsenal[self.sel]['name']
+        ID = self.arsenal[self.sel]['id']
+        subsystem = self.arsenal[self.sel]['subsystem']
+
+        if (subsystem=='PN'):
+            cmd = ("PNEUMATICS_REQUEST", "fire %d" % ID)
+            sw.notify.send(*cmd) #send notification to seawolf
+
+            #print what just happend
+            print("%s %s" % cmd)
+            
+
+    
+        
 
 def update_axis(event):
     global yaw_heading
@@ -83,6 +125,7 @@ def main():
     yaw_heading = sw3.data.imu.yaw()
 
     devices = joystick.get_devices()
+    peripheral = Peripherals()
     if len(devices) == 0:
         sys.stderr.write("No joysticks found\n")
         sys.exit(1)
@@ -93,6 +136,7 @@ def main():
     js = joystick.Joystick(devices[0], joystick.LOGITECH)
 
     print_help()
+    peripheral.printActive()
 
     while True:
         event = js.poll()
@@ -158,6 +202,17 @@ def main():
                 print "Quitting"
                 sw3.nav.do(sw3.ZeroThrusters())
                 break
+
+            elif event.name == "button5":
+                peripheral.next()
+                peripheral.printActive()
+
+            elif event.name == "button7":
+                peripheral.prev()
+                peripheral.printActive()         
+
+            elif event.name == "button2":
+                peripheral.fire()
 
     sw.close()
 
