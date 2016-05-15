@@ -182,7 +182,6 @@ int main(void) {
     Notify_send("COMPLETED", "Serial identification");
 
     while(true) {
-	printf("sleeping...\n");
         Util_usleep(5.0);
     }
 

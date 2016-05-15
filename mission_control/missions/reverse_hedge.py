@@ -4,7 +4,8 @@ from __future__ import division
 
 from vision import entities
 from missions.base import MissionBase
-import sw3
+import sw3, time
+
 
 MISSION_TIMEOUT = 500
 DEGREE_PER_PIXEL = 0.10

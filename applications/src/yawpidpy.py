@@ -40,6 +40,7 @@ def main():
     seawolf.loadConfig("../conf/seawolf.conf")
     seawolf.init("Yaw PID")
 
+    # initialize system variables for yaw PID system
     seawolf.var.subscribe("YawPID.p")
     seawolf.var.subscribe("YawPID.i")
     seawolf.var.subscribe("YawPID.d")
@@ -50,6 +51,7 @@ def main():
     yaw = seawolf.var.get("SEA.Yaw")
     paused = seawolf.var.get("YawPID.Paused")
     heading = seawolf.var.get("YawPID.Heading")
+    yaw = seawolf.var.get("SEA.Yaw")
 
     pid = seawolf.PID(
         0.0,
@@ -59,14 +61,18 @@ def main():
     )
 
     dataOut(0.0)
+    mv = 0.0
 
     while(True):
 
+        # wait for all variables to update
         seawolf.var.sync()
 
+        # if seawolf's yaw has changed, save it to the local yaw variable.
         if seawolf.var.stale("SEA.Yaw"):
             yaw = seawolf.var.get("SEA.Yaw")
 
+        # if PID controller's parameters have changed, update pid settings and reset controller
         if (seawolf.var.stale("YawPID.p") or seawolf.var.stale("YawPID.i") or seawolf.var.stale("YawPID.d")):
 
             pid.setCoefficients(
@@ -76,20 +82,30 @@ def main():
             )
             pid.resetIntegral()
 
+        # if user has (possibly) modified seawolf's target heading, store the value
+        # and unpause the yaw PID. The unpausing may have been done in order to accomodate
+        # functionality whereby a user-level change to yaw PID heading will automatically,
+        # take the robot out of pause mode. This is a means of saving the user from having
+        # to manually unpause the robot to make changes, which would be somewhat un-intuitive
+        # and bound cause confusion.
         if (seawolf.var.poked("YawPID.Heading")):
             heading = seawolf.var.get("YawPID.Heading")
 
+            # if yawPID has been paused, unpause it.
             if paused:
                 seawolf.var.set("YawPID.Paused", 0.0)
 
+        # if Yaw PID pause state has changed, store it's value
         if (seawolf.var.stale("YawPID.Paused")):
             paused = seawolf.var.get("YawPID.Paused")
 
+            # if paused, zero yaw thrusters and notify user
             if paused:
                 dataOut(0.0)
                 seawolf.notify.send("PIDPAUSED", "Yaw")
                 pid.pause()
 
+        # go ahead and run PID and output new thruster value if unpaused.
         if not paused:
             mv = pid.update(angleError(heading, yaw))
             dataOut(mv)
