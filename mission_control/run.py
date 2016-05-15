@@ -11,7 +11,6 @@ from time import sleep
 import sw3
 
 simulator = False
-
 if __name__ == "__main__":
 
     # Parse Arguments
@@ -144,6 +143,8 @@ if __name__ == "__main__":
                 mission_controller.kill()
                 sleep(2)
                 continue
+            except KeyboardInterrupt:
+                break
             else:
                 break
 
