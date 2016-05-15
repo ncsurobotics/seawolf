@@ -17,7 +17,7 @@ DepthPID.Heading     = 0.0,  0,  0
 DepthPID.Paused      = 1.0,  0,  0
 DepthPID.d           = 0.01,  1,  0
 DepthPID.i           = 0.0,  1,  0
-DepthPID.p           = -0.5,  1,  0
+DepthPID.p           = 0.5,  1,  0
 
 PitchPID.Heading     = 0.0,  0,  0
 PitchPID.Paused      = 1.0,  0,  0

@@ -141,7 +141,7 @@ int main(void) {
         } else if(strcmp(requester, "Pitch") == 0) {
             req_pitch = atof(value);
         } else if(strcmp(requester, "Depth") == 0) {
-            printf("depth = %f\n", atof(value));
+            //printf("depth = %f\n", atof(value));
             req_depth = atof(value);
         } else if(strcmp(requester, "Strafe") == 0) {
             req_strafe = atof(value);
