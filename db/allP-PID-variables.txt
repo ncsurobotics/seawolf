@@ -1,0 +1,53 @@
+#
+# Varible definitions file.
+# Each line of this file defines a variable, comments begin with a '#'
+#
+# NAME               = DEAFULT, PERSIST, READONLY
+Bow                  = 0.0,  0,  0
+Stern                = 0.0,  0,  0
+Port                 = 0.0,  0,  0
+Star                 = 0.0,  0,  0
+StrafeT              = 0.0,  0,  0
+StrafeB              = 0.0,  0,  0
+
+
+Depth                = 0.0,  0,  0
+
+DepthPID.Heading     = 0.0,  0,  0
+DepthPID.Paused      = 1.0,  0,  0
+DepthPID.d           = 0.0,  1,  0
+DepthPID.i           = 0.0,  1,  0
+DepthPID.p           = 0.5,  1,  0
+
+PitchPID.Heading     = 0.0,  0,  0
+PitchPID.Paused      = 1.0,  0,  0
+PitchPID.d           = 0.0,  1,  0
+PitchPID.i           = 0.0,  1,  0
+PitchPID.p           = 0.5,  1,  0
+
+RollPID.Heading      = 0.0,  0,  0
+RollPID.Paused       = 1.0,  0,  0
+RollPID.d            = 0.0,  1,  0
+RollPID.i            = 0.0,  1,  0
+RollPID.p            = 0.5,  1,  0
+
+YawPID.Heading       = 0.0,  0,  0
+YawPID.Paused        = 1.0,  0,  0
+YawPID.d             = 0.0,  1,  0
+YawPID.i             = 0.0,  1,  0
+YawPID.p             = 0.5,  1,  0
+
+MissionReset         = 0.0,  0,  0
+StatusLight          = 0.0,  0,  0
+
+SEA.Pitch            = 0.0,  0,  0
+SEA.Roll             = 0.0,  0,  0
+SEA.Yaw              = 0.0,  0,  0
+
+Temperature          = 0.0,  0,  0
+
+Solenoid.0           = 0.0,  0,  0
+Solenoid.1           = 0.0,  0,  0
+Solenoid.2           = 0.0,  0,  0
+Servo.0              = 0.0,  0,  0
+Servo.1              = 0.0,  0,  0
