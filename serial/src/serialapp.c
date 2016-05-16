@@ -14,23 +14,28 @@ typedef enum{
     PT_IMU = 1,
     PT_AVR = 2,
     PT_DEPTH = 3,
-    PT_PERIPHERAL = 4
+    PT_PERIPHERAL = 4,
+    PT_PNEUMATICS = 5
 } PeripheralType;
 
 /* Cycle the DTR line on the given serial port */
+/*
 static void cycleDTR(SerialPort sp) {
     Serial_setDTR(sp, 0);
     Util_usleep(0.1);
     Serial_setDTR(sp, 1);
     Util_usleep(0.1);
 }
+*/
 
 static int getPeripheralType(SerialPort sp) {
+    printf("going\n");
     //char id[32];
     int n;
     int bytes_received;
     int good_count;
     int error_count;
+    char ret_string[128];
 
     /* Set to IMU's baud rate */
     Serial_setBaud(sp, 38400);
@@ -54,30 +59,37 @@ static int getPeripheralType(SerialPort sp) {
         }
     }
     
-    /* IMU fingerprint failed, attempt Arduino */
-    
+    /* IMU fingerprint failed, attempt Pneumatics */
     Serial_setBaud(sp, 9600);
+    n = Serial_sendByte(sp, 'r');//reset pneumatics
     Serial_flush(sp);
-    cycleDTR(sp);
+    //cycleDTR(sp);
 
-    /*
-    for(int i = 0; i < 4; i++) {
-        if(ArdComm_getId(sp, id) != -1) {
-            if(strcmp(id, "Depth") == 0) {
-                return PT_DEPTH;
-            } else if(strcmp(id, "Peripheral") == 0) {
-                return PT_PERIPHERAL;
-            } else {
-                Logging_log(ERROR, Util_format("Received unknown ID '%s'", id));
-            }
-            break;
-        } else {
-            Util_usleep(0.5);
+    /* Poke Pneumatics with predefined command */
+    n = Serial_sendByte(sp, 0xFE);
+    if(n == -1) {
+        Logging_log(ERROR, "Unable to send data");
+        return -1;
+    }
+
+    //give a little time for arduino to respond
+    Util_usleep(.1);
+
+    //if any response has been obtained, check if {ID|PNEUMATICS}\r\n
+    n = Serial_available(sp);
+    if ((n > 0) && (n < 128)) {
+        Serial_get(sp,ret_string,n);
+        if (strncmp(ret_string, "{ID|Pneumatics}\r\n",n)==0) {
+            /* Received PNEUMATICS response */
+            Logging_log(DEBUG, "PNEUMATICS Found");
+            Serial_flush(sp);
+            return PT_PNEUMATICS;
         }
     }
-    */
+    
 
-    /* IMU fingerprint failed, attempt AVR */
+
+    /* PNEUMATICS fingerprint failed, attempt AVR */
 
     /* Set to AVR baud rate */
     Serial_setBaud(sp, 57600);
@@ -146,6 +158,7 @@ int main(void) {
         [PT_AVR] = "./bin/avr",
         [PT_DEPTH] = "./bin/depth",
         [PT_PERIPHERAL] = "./bin/peripheral",
+        [PT_PNEUMATICS] = "./bin/pneumatics"
     };
 
     /* Find serial ports */
