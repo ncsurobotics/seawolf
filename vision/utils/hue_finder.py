@@ -16,16 +16,17 @@ from sys import argv
 
 path = ''
 draw_contours = False
+ABS_DIFF = False
 
 # Constants for the names of the trackbars, since they're specified by name
 tbar_play_video_name = 'Play Video'
-tbar_hue_select_name = 'Hue'
+tbar_hue_select_name = 'Hue (8-bit)'
 tbar_span_name = 'Span'
 tbar_thresh_name = 'Threshold'
 
 # Contants for the names of the windows, since they're specified by name
 win_default_name = 'original'
-win_debug_name = 'debug'
+win_debug_name = 'debug (ABS_DIFF=%s)' % ABS_DIFF
 
 
 def main():
@@ -88,8 +89,7 @@ def process_frame(frame):
     
     
     #get mirror point from values
-    offset_val = 90 - center_val
-    mirror_val = 180 - center_val
+    offset_val = 255/2 - center_val
     
     #get bounds
 
@@ -108,49 +108,26 @@ def process_frame(frame):
     output_frame = np.zeros(temp.shape+(3,), np.uint8)
     
     #print input frame (#1)
-    output_frame[0:h,0:x2] = cv2.cvtColor(cv2.multiply(1.42,frame), cv2.COLOR_GRAY2BGR) ####################
+    output_frame[0:h,0:x2] = cv2.cvtColor(cv2.multiply(2,frame), cv2.COLOR_GRAY2BGR) ####################
     
     #print rough threshold frame (#2)
     output_frame[0:h,x2:x3] = cv2.cvtColor(
-        cv2.inRange(frame,center_val-span_val/2.0,center_val+span_val/2.0),
+        cv2.inRange(frame,center_val-span_val/2,center_val+span_val/2),
         cv2.COLOR_GRAY2BGR
         ) #############################
     
-    #generate a blank canvas
-    (height,width) = frame.shape
-    normalized_hue_frame = np.zeros((height,width,1), np.uint8)
-    
-    if (offset_val < 0):
-        #mask for values above cutoff and shift down
-        msk = cv2.inRange(frame, -offset_val, 180) #generate mask
-        #print("cv2.inRange(frame, {}, {})".format(-offset_val,180))
-
-    else:
-        #mask for values below cutoff and shift up
-        msk = cv2.inRange(frame, 0, 180-offset_val) #generate mask
-        #print("cv2.inRange(frame, {}, {})".format(0, 180-offset_val))
-        
-    #selectively shift values down
-    normalized_hue_frame = cv2.add(frame,offset_val, mask=msk) #temp = raw frame shift up where it counts
-    
-    #generate mask and wrap/flip values
-    msk = cv2.bitwise_not(msk) #work
-    inverted_frame = cv2.subtract(180,frame) #works
-    
-    
-    
-    #fill flipped regions with wrapped values
-    temp = cv2.add(normalized_hue_frame, inverted_frame, mask=msk) #
-    normalized_hue_frame = cv2.add(temp,normalized_hue_frame)
     
     
     #normalize
-    distance_frame = cv2.absdiff(normalized_hue_frame,90)
-    normalized_hue_frame = cv2.subtract(180,distance_frame)
+    normalized_hue_frame = frame 
+    normalized_hue_frame += offset_val
+    if ABS_DIFF:
+        distance_frame = cv2.absdiff(normalized_hue_frame,127)
+        normalized_hue_frame = cv2.subtract(127,distance_frame)
     
     #print final frame (#3)
     output_frame[0:h,x3:w] = cv2.cvtColor(
-        cv2.multiply(1.42,normalized_hue_frame),
+        cv2.multiply(2,normalized_hue_frame),
         cv2.COLOR_GRAY2BGR) ################
     #frame_hsv[:,:,0] = normalized_hue_frame
     #output_frame[0:h,x3:w] = cv2.cvtColor(frame_hsv,cv2.COLOR_HSV2BGR) ################
@@ -158,7 +135,7 @@ def process_frame(frame):
     
     
     
-    
+    print("Hue Shift: frame += %d" % offset_val)
     return output_frame
    
     #get inputs
@@ -192,7 +169,8 @@ def create_interface():
 
     #trackbars on the debug window
     #cv2.createTrackbar(tbar_play_video_name, win_debug_name, 0, 1, nothing)
-    cv2.createTrackbar(tbar_hue_select_name, win_debug_name,0,180,nothing)
+    cv2.createTrackbar(tbar_hue_select_name, win_debug_name,0,256,nothing)
+    cv2.setTrackbarPos(tbar_hue_select_name, win_debug_name,127)
     cv2.createTrackbar(tbar_span_name,win_debug_name,0,180,nothing)
     cv2.setTrackbarPos(tbar_span_name, win_debug_name,30)
 
