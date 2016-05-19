@@ -41,13 +41,21 @@ def main():
 
     filename = os.path.join(base_dir, path)
 
+    #if not a file, it might be an index indicating a camera
     if not os.path.isfile(filename):
-        print("Invalid Path - File does not exist")
-        exit()
+        try:
+            vc = cv2.VideoCapture(eval(path))
+        except SyntaxError:
+            print("Specified video file does not exist!")
+            exit()
+        
+    #else, may be a file
+    else:
+        vc = cv2.VideoCapture(filename)
 
     create_interface()
 
-    vc = cv2.VideoCapture(filename)
+    
     run(vc)
     vc.release()
     cv2.destroyAllWindows()
