@@ -1,6 +1,8 @@
 import math
 
 import cv
+import cv2
+import numpy as np
 
 
 def draw_lines(src, lines, limit=None):
@@ -138,3 +140,42 @@ def scale_32f_image(image):
     cv.SetImageCOI(image, 0)
     cv.SetImageCOI(result, 0)
     return result
+
+def shift_hueCV2(frame, shift, mode="normal"):
+    #shift hue by desired amount
+    frame += shift
+    
+    if mode=="normal":
+        pass
+        
+    elif mode=="absolute":
+        frame = cv2.subtract(127 , cv2.absdiff(frame,127))
+        frame = cv2.multiply(2,frame)
+        
+    elif mode=="inverted":
+        frame = cv2.subtract(255-frame)
+        
+    return frame
+    
+
+def cv_to_cv2(frame):
+    '''Convert a cv image into cv2 format.
+    
+    Keyword Arguments:
+    frame -- a cv image
+    Returns a numpy array that can be used by cv2.
+    '''
+    cv2_image = np.asarray(frame[:,:])
+    return cv2_image
+    
+    
+def cv2_to_cv(frame):
+    '''Convert a cv2 image into cv format.
+    
+    Keyword Arguments:
+    frame -- a cv2 numpy array representing an image.
+    Returns a cv image.
+    '''
+    container = cv.fromarray(frame)
+    cv_image = cv.GetImage(container)
+    return cv_image

@@ -18,7 +18,8 @@ logging.basicConfig(level=logging.INFO)
 GATE_BLACK = 0
 GATE_WHITE = 1
 
-HUE = {'red':180}
+HUE_SHIFT = {'red':-67,
+             'red->orange':-78}
 
 
 def line_group_accept_test(line_group, line, max_range):
@@ -54,7 +55,8 @@ class GateEntity(VisionEntity):
         self.adaptive_thresh = 4
         self.max_range = 300
 
-        self.target_hue = HUE['red']
+        self.target_shift = HUE_SHIFT['red->orange'] #shift required to see gate
+                                                     #color for thresholding
 
         self.left_pole = None
         self.right_pole = None
@@ -78,11 +80,7 @@ class GateEntity(VisionEntity):
         (w,h) = cv.GetSize(frame)
 
         #generate hue selection frames
-        ones = np.ones((h,w,1), dtype='uint8')
-        a = ones*(180 - self.target_hue)
-        b = ones*(180 - self.target_hue + 20)
-        a_array = cv.fromarray(a)
-        b_array = cv.fromarray(b)
+
 
         #create locations for the a pair of test frames
         frametest = cv.CreateImage(cv.GetSize(frame), 8, 3)
@@ -117,11 +115,17 @@ class GateEntity(VisionEntity):
         cv.SetImageCOI(hsv, 1)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)  #reset COI
+        
+        #shift hue of image such that orange->red are at top of spectrum
+        binary = libvision.misc.cv_to_cv2(binary)
+        binary = libvision.misc.shift_hueCV2(binary, self.target_shift)
+        binary = libvision.misc.cv2_to_cv(binary)
 
         #correct for wraparound on red spectrum
-        cv.InRange(binary,a_array,b_array,binarytest) #generate mask
-        cv.Add(binary,cv.fromarray(ones*180),binary,mask=binarytest) #use mask to selectively add values
-
+        #cv.InRange(binary,a_array,b_array,binarytest) #generate mask
+        #cv.Add(binary,cv.fromarray(ones*180),binary,mask=binarytest) #use mask to selectively add values
+        #svr.debug("R2?",binary)
+        svr.debug("R2?",binary)
 
         #run adaptive threshold for edge detection and more noise filtering
         cv.AdaptiveThreshold(binary, binary,
