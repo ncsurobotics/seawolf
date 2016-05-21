@@ -14,6 +14,9 @@ import sw3.ratelimit as ratelimit
 
 # Speed for the hat forward and backward
 FORWARD_SPEED = 0.4
+MAX_PITCH = 10 #degrees
+MAX_STRAFE = 0.4
+PITCH_ENABLED = True
 
 yaw_heading = 0
 
@@ -73,10 +76,9 @@ class Peripherals(object):
     
         
 
-def update_axis(event):
+def update_Laxis(event):
     global yaw_heading
     angle = event.angle_radians
-
     mag = max(min(event.magnitude, 1.0), -1.0)
 
     forward = (mag * sin(angle))
@@ -96,6 +98,25 @@ def update_axis(event):
         rate = rate_p * total
 
         sw3.nav.do(sw3.CompoundRoutine((sw3.SetRotate(rate), sw3.Forward(forward))))
+
+        
+def update_Raxis(event):
+    global yaw_heading
+    angle = event.angle_radians
+    mag = max(min(event.magnitude, 1.0), -1.0)
+
+    #determine control vectors
+    pitch_stk = (mag * sin(angle))
+    strafe_stk = (mag * cos(angle))
+    
+    pitch = (-1) * pitch_stk * MAX_PITCH
+    strafe = strafe_stk * MAX_STRAFE
+    
+    #Send commands to Seawolf
+    sw.var.set("PitchPID.Heading",pitch)
+    sw3.nav.do(sw3.Strafe(strafe))
+    print("pitch %2.f, strafe %.2f" % (pitch,strafe))
+
 
 
 def print_table(headings, *values):
@@ -132,7 +153,8 @@ def main():
 
     depth_heading = 0
     forward_heading = 0
-    rate_limiter = ratelimit.RateLimiter(10, update_axis)
+    Lrate_limiter = ratelimit.RateLimiter(10, update_Laxis)
+    Rrate_limiter = ratelimit.RateLimiter(10, update_Raxis)
     js = joystick.Joystick(devices[0], joystick.LOGITECH)
 
     print_help()
@@ -142,8 +164,12 @@ def main():
         event = js.poll()
 
         if isinstance(event, joystick.Axis):
-            if event.name == "leftStick":
-                rate_limiter.provide(event)
+            if (event.name == "leftStick") :
+                Lrate_limiter.provide(event)
+                
+            elif (event.name=="rightStick"):
+                Rrate_limiter.provide(event)
+                
             elif event.name == "hat":
                 if event.x < 0:
                     yaw_heading = sw3.util.add_angle(yaw_heading, -2.5)

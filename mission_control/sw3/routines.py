@@ -367,6 +367,17 @@ class Forward(NavRoutine):
         mixer.forward = self.rate
 
 
+class Strafe(NavRoutine):
+    interaction = ("Strafe",)
+
+    def __init__(self, rate, timeout=-1):
+        super(Strafe, self).__init__(timeout)
+        self.rate = rate
+
+    def _start(self):
+        mixer.strafe = self.rate
+
+
 class StrafeT(NavRoutine):
     interactions = ("StrafeT",)
 
