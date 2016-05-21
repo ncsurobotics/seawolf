@@ -13,7 +13,7 @@
 #define STRAFEB 5
 
 /* Trim port/star values to compensate for rotation from strafing */
-#define STRAFE_TRIM 0.3
+#define STRAFE_TRIM 0 
 
 /* Trim bow/stern values to compensate for pitch from diving/surfacing.
    Higher values make bow go faster.
@@ -39,8 +39,8 @@ static void mix(float req_pitch, float req_depth, float req_forward, float req_y
 
     /* Trim port/starboad thrusters */
     if(req_strafe != 0) {
-        out[PORT] -= req_strafe * STRAFE_TRIM;
-        out[STAR] += req_strafe * STRAFE_TRIM;
+        out[STRAFET] -= req_strafe * STRAFE_TRIM;
+        out[STRAFEB] += req_strafe * STRAFE_TRIM;
     }
 
     /* Trim bow/stern thrusters */
