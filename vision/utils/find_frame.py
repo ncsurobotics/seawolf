@@ -31,12 +31,15 @@ def main():
     img_dirs = [
         image for image in os.listdir(directory) if os.path.splitext(image)[1][1:] in ['png', 'jpg', 'bmp']
     ]
+    getNamefromIMG = lambda x: eval(x[0:-4])
+    img_dirs.sort(key=getNamefromIMG)
 
     cv2.namedWindow('original')
     cv2.createTrackbar('Playback Speed:', 'original', 100, 200, nothing)
 
     counter = 0
-    for img in sorted(img_dirs):
+    
+    for img in img_dirs:
         frame = cv2.imread(os.path.join(directory, img))
         counter += 1
         cv2.putText(frame, "frame #: " + str(counter), (50, 50),
