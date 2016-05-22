@@ -76,8 +76,8 @@ from mission_controller import MissionController
 #  * Tuple - First item must be a mission class.  The rest of the tuple is
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
-    missions.GateMission,
-    missions.PathMission,
+    #missions.GateMission,
+    #missions.PathMission,
     #sw3.nav.do(sw3.RelativeYaw(-5)),
     #missions.PathMission,
     #missions.ReverseHedgeMission,
@@ -90,7 +90,7 @@ MISSION_ORDER = [
     #missions.HedgeMission,
     #(missions.PathMission, True, 1),
     #sw3.Forward(.5, 1),
-    #missions.NewBinsMission,
+    missions.NewBinsMission,
     #(missions.PathMission, True, 1),
     #missions.HedgeMission,
     #missions.FakePizzaMission

@@ -22,6 +22,7 @@ class NewBinsMission(MissionBase):
         pass
 
     def init(self):
+        import pdb; pdb.set_trace()
         self.process_manager.start_process(entities.BinsCornerEntity, "bins", "down", debug=True)
         self.reference_angle = sw3.data.imu.yaw()
         self.highest_id = None

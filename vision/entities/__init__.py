@@ -22,7 +22,7 @@ from .doublepath import DoublePathEntity
 from .doublepath2 import DoublePath2Entity
 from .hedge import HedgeEntity
 # from .bins import BinsEntity
-# from .binscorner import BinsCornerEntity
+from .binscorner import BinsCornerEntity
 from .binscontour import BinsContourEntity
 # from .binshough import BinsHoughEntity
 #from .binshough2 import BinsHough2Entity
