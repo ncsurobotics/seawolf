@@ -3,6 +3,8 @@ import seawolf
 import math
 import time
 
+ACTIVE_REGION_SIZE = 10 #degrees
+
 
 def dataOut(mv):
     out = in_range(-.4, mv, .4)
@@ -37,6 +39,13 @@ def main():
         seawolf.var.get("RollPID.i"),
         seawolf.var.get("RollPID.d")
     )
+    
+    # set active region (region where response of the robot
+    # is practically linear). Outside this region, thrusters
+    # would be maxed out, and the ITerm would get staturated.
+    # Outside this region, the we use PD control. Inside this
+    # region, we use PID control.
+    pid.setActiveRegion(ACTIVE_REGION_SIZE)
 
     dataOut(0.0)
     mv = 0.0

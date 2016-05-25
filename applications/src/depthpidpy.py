@@ -7,6 +7,7 @@ thruster_cap = 1.0
 panic_depth = 12.0
 panic_time = 8.0
 init_downward_force = .1
+ACTIVE_REGION_SIZE = 2 #ft
 
 def initial_e_dt(integral):
     if(math.fabs(integral) < .00001):
@@ -44,6 +45,14 @@ def main():
     pid = seawolf.PID( seawolf.var.get("DepthPID.Heading"), seawolf.var.get("DepthPID.p"), seawolf.var.get("DepthPID.i"), seawolf.var.get("DepthPID.d"))
 
     e_dt = initial_e_dt( seawolf.var.get("DepthPID.i") )
+    
+    # set active region (region where response of the robot
+    # is practically linear). Outside this region, thrusters
+    # would be maxed out, and the ITerm would get staturated.
+    # Outside this region, the we use PD control. Inside this
+    # region, we use PID control.
+    pid.setActiveRegion(ACTIVE_REGION_SIZE)
+    
     dataOut(0.0)
 
     while(True):
