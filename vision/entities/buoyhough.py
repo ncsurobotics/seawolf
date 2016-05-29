@@ -70,8 +70,10 @@ class BuoyHoughEntity(VisionEntity):
 
     def process_frame(self, frame):
 
-        # Debug numpy is CV2
+        # Debug numpy in CV2
         self.debug_frame = libvision.cv_to_cv2(frame)
+        test = libvision.cv_to_cv2(frame).copy()[:,:]
+        
 
         # CV2 Transforms
         self.numpy_frame = self.debug_frame.copy()
@@ -129,33 +131,36 @@ class BuoyHoughEntity(VisionEntity):
 
         if self.confirmed is not None and len(self.confirmed) > 0:
             for buoy in self.confirmed:
+                # draw a cirle around the confirmed bouy
                 cv2.circle(self.debug_frame, (int(buoy.centerx), int(buoy.centery)),
                            int(buoy.radius) + 10, (255, 255, 255), 5)
-                colorHue = self.hsv_frame[buoy.centery + buoy.radius/2,buoy.centerx][0]
+                           
+                # attain hue from a pixel on the buoy
+                color_pick_point = ( int(buoy.centerx), int(buoy.centery - buoy.radius/2) )
+                # ^^offset a couple pixels downward for some reason
+                colorHue = self.hsv_frame[color_pick_point[1] , color_pick_point[0]][0]
+                
                 if (colorHue >= 0 and colorHue < 45) or colorHue >= 300:
-                    cv2.putText(self.debug_frame,str(buoy.id)+"RED", (int(buoy.centerx), int(buoy.centery)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255))
+                    cv2.putText(self.debug_frame,str(buoy.id)+"RED", (int(buoy.centerx), int(buoy.centery)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                     buoy.color = "red"
                 elif (colorHue >= 70 and colorHue < 180):
-                    cv2.putText(self.debug_frame,str(buoy.id)+"GRE", (int(buoy.centerx), int(buoy.centery)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255))
+                    cv2.putText(self.debug_frame,str(buoy.id)+"GRE", (int(buoy.centerx), int(buoy.centery)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                     if buoy.color != "red" and buoy.color != "yellow":
                         print "switched from ", buoy.color
                         buoy.color = "green"
                 else:
-                    cv2.putText(self.debug_frame,str(buoy.id)+"YEL", (int(buoy.centerx), int(buoy.centery)), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255))
+                    cv2.putText(self.debug_frame,str(buoy.id)+"YEL", (int(buoy.centerx), int(buoy.centery)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                     buoy.color = "yellow"
 
 
-
-
+        self.debug_stream("help", self.hsv_frame[:,:,1])
+        # debug frames
         self.debug_to_cv = libvision.cv2_to_cv(self.debug_frame)
         self.numpy_to_cv = libvision.cv2_to_cv(self.numpy_frame)
         self.adaptive_to_cv = libvision.cv2_to_cv(self.adaptive_frame)
-
         svr.debug("processed", self.numpy_to_cv)
         svr.debug("adaptive", self.adaptive_to_cv)
         svr.debug("debug", self.debug_to_cv)
-
-
 
         # Convert to output format
         self.output.buoys = []
