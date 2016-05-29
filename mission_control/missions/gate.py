@@ -63,7 +63,8 @@ class GateMission(MissionBase):
         elif self.gate_seen >= 15:
             self.gate_lost += 1
 
-        if self.gate_lost > 1 or self.mission_timeout <= 0:
+        if self.gate_lost > 15 or self.mission_timeout <= 0:
+            print("Gate lost: %s , timeout: %s" % (self.gate_lost>5, self.mission_timeout <= 0))
             if self.mission_timeout <= 0:
                 print "Gate Mission Timeout!"
 
