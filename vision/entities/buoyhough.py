@@ -140,15 +140,17 @@ class BuoyHoughEntity(VisionEntity):
                 # ^^offset a couple pixels downward for some reason
                 colorHue = self.hsv_frame[color_pick_point[1] , color_pick_point[0]][0]
                 
-                if (colorHue >= 0 and colorHue < 45) or colorHue >= 300:
+                # note: color wraps around at 180. Range is 0->180
+                if (colorHue >= 0 and colorHue < 45) or colorHue >= 105: # 105->180->45
                     cv2.putText(self.debug_frame,str(buoy.id)+"RED", (int(buoy.centerx), int(buoy.centery)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                     buoy.color = "red"
-                elif (colorHue >= 70 and colorHue < 180):
+                
+                elif (colorHue >= 80 and colorHue < 105): # green is hardest to detect
                     cv2.putText(self.debug_frame,str(buoy.id)+"GRE", (int(buoy.centerx), int(buoy.centery)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                     if buoy.color != "red" and buoy.color != "yellow":
                         print "switched from ", buoy.color
                         buoy.color = "green"
-                else:
+                else: #yellow is about 50->80
                     cv2.putText(self.debug_frame,str(buoy.id)+"YEL", (int(buoy.centerx), int(buoy.centery)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                     buoy.color = "yellow"
 
