@@ -16,23 +16,40 @@ DELAY = 2
 class SimpleBuoyMission(MissionBase):
 
     def init(self):
+        # set depth to bouy level
         sw3.nav.do(sw3.SetDepth(DEPTH_BUMP))
         time.sleep(DELAY)
+        
+        # startup buoy vision code
         self.process_manager.start_process(entities.BuoyHoughEntity, "buoy", "forward", debug=True)
+        
+        # Go forward
         sw3.nav.do(sw3.CompoundRoutine(
             sw3.Forward(FORWARD_SPEED),
             sw3.HoldYaw(),
         ))
+        
+        # Captures yaw heading for ???
         self.start_angle = sw.var.get("YawPID.Heading")
+        
+        # starts a watchdog timer for the entire mission. After 15 seconds,
+        # the mission will terminate, regardless of what is happening.
         self.set_timer("mission_timeout", 15, self.finish_mission)
+
 
         self.tracking_buoy_id = None  # State variable for bump_buoy()
 
     def step(self, vision_data):
+        # if vision entity didn't output anything on this iteration, then
+        # there is nothing to be done on this iteration. Do nothing.
         if not vision_data:
             return
+            
+        # capture all identified buoys
         buoys = vision_data['buoy'].buoys
         print buoys
+        
+        # ???
         if self.bump_buoy(buoys):
             self.finish_mission()
 
@@ -42,13 +59,16 @@ class SimpleBuoyMission(MissionBase):
         # found_buoys = filter(lambda x: x.found, buoys)
         found_buoys = buoys
 
+        # 
         if found_buoys:
             found_buoys.sort(key=lambda x: x.theta)
 
         if len(found_buoys) == 3:
             print "found 3 buoys"
+            
             # Assign tracking_buoy_id to middle buoy
             self.tracking_buoy_id = found_buoys[1].id
+            
         if len(found_buoys) == 1:
             print "found 1 buoy"
             self.tracking_buoy_id = found_buoys[0].id
@@ -62,9 +82,10 @@ class SimpleBuoyMission(MissionBase):
                 self.tracking_buoy_id = found_buoys[0].id
         """
 
-# what does this conditional do?
+        # if robot is tracking at least one buoy, move try to bump it
         if self.tracking_buoy_id is not None:
 
+            # Degree of confidence acheived. disable mission timer.
             self.delete_timer("mission_timeout")
 
             # Get tracking buoy from its id
@@ -75,7 +96,7 @@ class SimpleBuoyMission(MissionBase):
 
             # Correct if we saw it
             if tracking_buoy is not None:
-                print tracking_buoy
+                print("tracking buoy: {}".format(tracking_buoy))
                 self.last_seen = time.time()
                 if depth:
                     depth_routine = sw3.SetDepth(depth)
