@@ -82,7 +82,7 @@ def main():
                 return None
 
             def send(self, data):
-                print data
+                pass #print data
 
         process_manager.run_entity(
             FakePipe(),

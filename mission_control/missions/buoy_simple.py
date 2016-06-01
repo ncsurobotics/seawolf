@@ -113,7 +113,7 @@ class SimpleBuoyMission(MissionBase):
                 ))
 
             # Consider ending the mission if we didn't see it
-            elif time.time() - self.last_seen > 10:
+            elif time.time() - self.last_seen > 3:
                 self.tracking_buoy_id = None
                 print "Lost buoy, finishing"
                 return True

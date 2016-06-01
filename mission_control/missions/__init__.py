@@ -4,8 +4,8 @@ from base import MissionBase, SearchMission
 from test import TestMission
 from gate import GateMission
 from path import PathMission
-#from buoy import BuoyMission
-#from buoy_simple import SimpleBuoyMission
+from buoy import BuoyMission
+from buoy_simple import SimpleBuoyMission
 from new_buoy import NewBuoyMission
 from hedge import HedgeMission
 from reverse_hedge import ReverseHedgeMission
@@ -24,7 +24,7 @@ mission_classes = {
     'gate': GateMission,
     'path': PathMission,
 #    'buoy': BuoyMission,
-#    'buoysimple': SimpleBuoyMission,
+    'buoysimple': SimpleBuoyMission,
     'new_buoy': NewBuoyMission,
     'hedge': HedgeMission,
     'reverse_hedge': ReverseHedgeMission,
