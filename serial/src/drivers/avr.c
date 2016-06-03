@@ -35,9 +35,9 @@
 #define DEPTH_OFFSET -2    //correction factor for putting sensor noise margin
                            //above the surface rather than at the surface
 
-#define MOTOR_RANGE 127
+#define DEPTH_OVRSAMPLE 4
 
-#define 
+#define MOTOR_RANGE 127
 
 enum Commands {
     SW_RESET    = 0x72,  /* 'r' full reset */
@@ -135,11 +135,13 @@ static void avr_synchronize(SerialPort sp) {
     while(Serial_getByte(sp) != 0xf0);
 }
 
+
 static void set_depth(int16_t raw_adc_value) {
     float voltage;
     float psi;
     float depth;
     static int16_t buf[DEPTH_OVRSAMPLE];
+    
     static LPF_t depth_filter = {
         .value = 0,
         .buf = buf,
@@ -159,7 +161,7 @@ static void set_depth(int16_t raw_adc_value) {
 
     /* Compute depth based on surface pressure and PSI per foot */
     depth = (psi - AIR_PRESSURE) / PSI_PER_FOOT;
-    depth -= DEPTH_OFFSET
+    depth -= DEPTH_OFFSET;
 
     /* run lowpass filter on depth sensor */
     /* note: we only sample depth sensor at a rate of 10Hz. we may want
