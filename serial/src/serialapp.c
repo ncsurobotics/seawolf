@@ -15,7 +15,8 @@ typedef enum{
     PT_AVR = 2,
     PT_DEPTH = 3,
     PT_PERIPHERAL = 4,
-    PT_PNEUMATICS = 5
+    PT_PNEUMATICS = 5,
+    PT_IMUSPARK = 6,
 } PeripheralType;
 
 /* Cycle the DTR line on the given serial port */
@@ -28,8 +29,47 @@ static void cycleDTR(SerialPort sp) {
 }
 */
 
+static int handshake_imu_spark(SerialPort sp) {
+    // set baud
+    Serial_setBaud(sp, 57600);
+    
+    // send synchro message
+    char* sync_req = "#s12";
+    char* sync_match_string = "#SYNCH12\r\n";
+    int   match_length = strlen(sync_match_string);
+    Serial_flush(sp);
+    Serial_send(sp, sync_req, strlen(sync_req));
+
+    // listen for synchro message
+    uint8_t i = 0;
+    uint8_t nomatch=0;
+    while ( (nomatch < 255) && (i < match_length) ) {
+        // read data
+        char b = (char) Serial_getByte(sp);
+
+        if (b != sync_match_string[i]) {
+            // no match
+            i = 0;
+            nomatch++;
+        }
+
+        if (b == sync_match_string[i]) {
+            // matching char discovered
+            i++;
+        }
+        
+    }
+
+    if (i==match_length) {
+        //(sparkfun) IMU found!
+        return true;
+    } else {
+        return false;
+    }
+}
+
 static int getPeripheralType(SerialPort sp) {
-    printf("going\n");
+    //printf("going\n");
     //char id[32];
     int n;
     int bytes_received;
@@ -59,7 +99,13 @@ static int getPeripheralType(SerialPort sp) {
         }
     }
     
-    /* IMU fingerprint failed, attempt Pneumatics */
+    /* IMU fingerprint failed, attempt (SPARKFUN) IMU */
+    Util_usleep(2); //<--removed once DTR pin is disconnected.
+    if (handshake_imu_spark(sp)==true){
+        return PT_IMUSPARK;
+    }
+    
+    /* No (SPARKFUN) IMU, attempt Pneumatics */
     Serial_setBaud(sp, 9600);
     n = Serial_sendByte(sp, 'r');//reset pneumatics
     Serial_flush(sp);
@@ -158,7 +204,8 @@ int main(void) {
         [PT_AVR] = "./bin/avr",
         [PT_DEPTH] = "./bin/depth",
         [PT_PERIPHERAL] = "./bin/peripheral",
-        [PT_PNEUMATICS] = "./bin/pneumatics"
+        [PT_PNEUMATICS] = "./bin/pneumatics",
+        [PT_IMUSPARK] = "./bin/imuspark",
     };
 
     /* Find serial ports */

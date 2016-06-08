@@ -247,8 +247,8 @@ def drawLevelGauge():
 
     glBegin(GL_QUADS)
     glColor3f(0,0,.5)
-    glVertex3f(-2,-0.02*CUR_ROLL-0.04*CUR_PITCH,0)
-    glVertex3f(2,0.02*CUR_ROLL-0.04*CUR_PITCH,0)
+    glVertex3f(-2,0.02*CUR_ROLL-0.04*CUR_PITCH,0)
+    glVertex3f(2,-0.02*CUR_ROLL-0.04*CUR_PITCH,0)
     glVertex3f(2,-2,0)
     glVertex3f(-2,-2,0)
     glEnd()
