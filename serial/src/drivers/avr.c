@@ -95,7 +95,7 @@ typedef enum {
 
 typedef struct LPF_STRUCT16 {
         float value;
-        int16_t* buf;
+        float* buf;
         uint8_t head;
         uint8_t n_samples;
 } LPF_t;
@@ -140,7 +140,7 @@ static void set_depth(int16_t raw_adc_value) {
     float voltage;
     float psi;
     float depth;
-    static int16_t buf[DEPTH_OVRSAMPLE];
+    static float buf[DEPTH_OVRSAMPLE];
     
     static LPF_t depth_filter = {
         .value = 0,
@@ -161,7 +161,7 @@ static void set_depth(int16_t raw_adc_value) {
 
     /* Compute depth based on surface pressure and PSI per foot */
     depth = (psi - AIR_PRESSURE) / PSI_PER_FOOT;
-    depth -= DEPTH_OFFSET;
+    depth += DEPTH_OFFSET;
 
     /* run lowpass filter on depth sensor */
     /* note: we only sample depth sensor at a rate of 10Hz. we may want
@@ -173,7 +173,8 @@ static void set_depth(int16_t raw_adc_value) {
     for(int i=0; i<depth_filter.n_samples; i++) {
         depth_filter.value += depth_filter.buf[i]; //sum
     }
-    depth = (int16_t) (depth_filter.value/depth_filter.n_samples); //output
+    depth = (depth_filter.value/ depth_filter.n_samples); //output
+    printf("depth of %0.2f\n" , depth);
 
     /* submit depth measurement to robot */
     Var_set("Depth", depth);
