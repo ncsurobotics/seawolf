@@ -174,7 +174,7 @@ static void set_depth(int16_t raw_adc_value) {
         depth_filter.value += depth_filter.buf[i]; //sum
     }
     depth = (depth_filter.value/ depth_filter.n_samples); //output
-    printf("depth of %0.2f\n" , depth);
+    //printf("depth of %0.2f\n" , depth);
 
     /* submit depth measurement to robot */
     Var_set("Depth", depth);

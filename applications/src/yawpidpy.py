@@ -67,7 +67,7 @@ def main():
     # Outside this region, the we use PD control. Inside this
     # region, we use PID control.
     pid.setActiveRegion(ACTIVE_REGION_SIZE)
-    pid.setDerivativeBufferSize(4)
+    pid.setDerivativeBufferSize(2)
 
     dataOut(0.0)
     mv = 0.0
