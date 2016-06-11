@@ -4,10 +4,11 @@ import math
 import time
 
 ACTIVE_REGION_SIZE = 10 #degrees
+MAX_RANGE = 0.8
 
 
 def dataOut(mv):
-    out = in_range(-.4, mv, .4)
+    out = in_range(-MAX_RANGE, mv, MAX_RANGE)
     seawolf.notify.send("THRUSTER_REQUEST", "Roll {}".format(out))
 
 

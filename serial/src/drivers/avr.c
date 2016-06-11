@@ -38,6 +38,7 @@
 #define DEPTH_OVRSAMPLE 4
 
 #define MOTOR_RANGE 127
+#define RANGE_CORRECTION 0.500
 
 enum Commands {
     SW_RESET    = 0x72,  /* 'r' full reset */
@@ -191,6 +192,10 @@ static void send_message(SerialPort sp, unsigned char cmd, unsigned char arg1, u
     command[1] = arg1;
     command[2] = arg2;
 
+    if (cmd== SW_MOTOR) {
+        printf("arg2=%d\n", arg2);
+    }
+
     pthread_mutex_lock(&send_lock);
     Serial_send(sp, command, 3);
     pthread_mutex_unlock(&send_lock);
@@ -329,33 +334,33 @@ int main(int argc, char** argv) {
         Var_sync();
 
         if(Var_poked("Bow")) {
-        	//printf("Bow\n");
-            send_message(sp, SW_MOTOR, BOW, (int) (MOTOR_RANGE * -Var_get("Bow")));
+        	//printf("Bow = %.2f\n", -Var_get("Bow"));
+            send_message(sp, SW_MOTOR, BOW, (int) (MOTOR_RANGE * -Var_get("Bow") * RANGE_CORRECTION));
         }
 
         if(Var_poked("Stern")) {
         	//printf("Stern\n");
-            send_message(sp, SW_MOTOR, STERN, (int) (MOTOR_RANGE * -Var_get("Stern")));
+            send_message(sp, SW_MOTOR, STERN, (int) (MOTOR_RANGE * -Var_get("Stern") * RANGE_CORRECTION));
         }
 
         if(Var_poked("StrafeT")) {
         	//printf("StrafeT\n");
-            send_message(sp, SW_MOTOR, STRAFET, (int) (MOTOR_RANGE * -Var_get("StrafeT")));
+            send_message(sp, SW_MOTOR, STRAFET, (int) (MOTOR_RANGE * -Var_get("StrafeT") * RANGE_CORRECTION));
         }
 
         if(Var_poked("StrafeB")) {
         	//printf("StrafeB\n");
-            send_message(sp, SW_MOTOR, STRAFEB, (int) (MOTOR_RANGE * -Var_get("StrafeB")));
+            send_message(sp, SW_MOTOR, STRAFEB, (int) (MOTOR_RANGE * -Var_get("StrafeB") * RANGE_CORRECTION));
         }
 
         if(Var_poked("Port")) {
         	//printf("Port\n");
-            send_message(sp, SW_MOTOR, PORT, (int) (MOTOR_RANGE * -Var_get("Port")));
+            send_message(sp, SW_MOTOR, PORT, (int) (MOTOR_RANGE * -Var_get("Port") * RANGE_CORRECTION));
         }
 
         if(Var_poked("Star")) {
         	//printf("Star\n");
-            send_message(sp, SW_MOTOR, STAR, (int) (MOTOR_RANGE * -Var_get("Star")));
+            send_message(sp, SW_MOTOR, STAR, (int) (MOTOR_RANGE * -Var_get("Star") * RANGE_CORRECTION));
         }
 
         if(Var_stale("StatusLight")) {

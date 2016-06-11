@@ -2,7 +2,7 @@ from __future__ import division
 import seawolf
 import math
 
-thruster_cap = .4
+thruster_cap = .8
 ACTIVE_REGION_SIZE = 10 #degrees
 
 

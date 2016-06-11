@@ -203,7 +203,7 @@ class IMU:
                     print("IMU operating at %.1fHz." % loop_freq)
                     
                     if loop_freq < self.MINIMUM_IMU_SAMPLE_RATE:
-                        seawolf.logging.log(seawolf.WARNING, "Significant IMU delay detected!")
+                        sw.logging.log(sw.WARNING, "Significant IMU delay detected! (%.0fHz)" % loop_freq)
                     
                     i = 0
                     timea = time.time()
@@ -213,7 +213,7 @@ class IMU:
                     (yaw,pitch,roll) = self.readHeading()
                     
                 except serial.SerialException:
-                    seawolf.logging.log(seawolf.WARNING, "IMU disconnection detected. Killing rx thread.")
+                    sw.logging.log(sw.WARNING, "IMU disconnection detected. Killing rx thread.")
                     
                     # raise error flag
                     self.serial_disconnect_error_flag.set()
