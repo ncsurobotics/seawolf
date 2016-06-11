@@ -39,23 +39,25 @@ static int handshake_imu_spark(SerialPort sp) {
     char* sync_match_string = "#SYNCH12\r\n";
     int   match_length = strlen(sync_match_string);
     Serial_flush(sp);
-    Util_usleep(.1);
+    Util_usleep(.05);
 
     // is it streaming?
+    //printf("[IMU-test] %d bytes available.\n", Serial_available(sp));
     if (Serial_available(sp) <= 0) {
         return false;
     }
 
-    Serial_flush(sp);
+    //Serial_flush(sp); commented out because it slows down the code when avr runs. why?
     Serial_send(sp, sync_req, strlen(sync_req));
 
     // listen for synchro message
     uint8_t i = 0;
     uint8_t nomatch=0;
-    while ( (nomatch < 30) && (i < match_length) ) {
+    while ( (nomatch < 255) && (i < match_length) ) {
         // read data
         char b = (char) Serial_getByte(sp);
         //printf("(%d,%c) : ",nomatch,b);
+        //printf("%s\n",strerror(errno));
 
         if (b != sync_match_string[i]) {
             // no match
@@ -67,6 +69,9 @@ static int handshake_imu_spark(SerialPort sp) {
             // matching char discovered
             i++;
         }
+
+        // not sure why this is needed, but code doesn't work without it.
+        Util_usleep(.001);
         
     }
 
@@ -202,9 +207,19 @@ static int getPeripheralType(SerialPort sp) {
     //char id[32];
     int results = 0;
 
+
     /* attempt AVR */
     if (handshake_avr(sp)==true){
         return PT_AVR;
+    }
+
+    /* attempt (SPARKFUN) IMU */
+    //Util_usleep(2); // uncomment if IMU DTR pin is connected.
+    /* WARNING: do not do this check before the AVR test. The check against
+     * AVR vs. this handshake is VERY SLOW when AVR is already active, because
+     * the AVR also streams data, but at a very casual rate. */
+    if (handshake_imu_spark(sp)==true){
+        return PT_IMUSPARK;
     }
 
     /* attempt (LORD) IMU */
@@ -215,11 +230,7 @@ static int getPeripheralType(SerialPort sp) {
         return -1;
     }
 
-    /* attempt (SPARKFUN) IMU */
-    Util_usleep(2); //<--removed once DTR pin is disconnected.
-    if (handshake_imu_spark(sp)==true){
-        return PT_IMUSPARK;
-    }
+    
     
     /* attempt Pneumatics */
     if (handshake_pneumatics(sp)==true){
