@@ -9,6 +9,8 @@ import itertools
 from sets import Set
 import libvision
 
+BUOY_COLOR_PRINTS = False
+
 
 class Buoy(object):
     buoy_id = 0
@@ -173,7 +175,8 @@ class BuoyHoughEntity(VisionEntity):
                                                   _c[0]-buoy.radius/2 : _c[0]+buoy.radius/2, 
                                                   0])
                 
-                print("buoy%d has a hue of %d" %(buoy.id,int(colorHue)))
+                if BUOY_COLOR_PRINTS:
+                    print("buoy%d has a hue of %d" %(buoy.id,int(colorHue)))
                 
                 # note: color wraps around at 180. Range is 0->180
                 if (colorHue >= 0 and colorHue < 45) or colorHue >= 95: # 105->180->45

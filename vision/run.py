@@ -23,6 +23,7 @@ import entities
 import process_manager
 import argparse
 
+ENTITY_OUTPUT_PRINTS = False
 
 def setup_parser():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -114,7 +115,7 @@ def main():
             while True:
                 output = pm.get_data()
                 # for debugging, print out entity output
-                if output:
+                if output and ENTITY_OUTPUT_PRINTS:
                     print output
         except process_manager.KillSignal:  # Exit if the subprocess tells us to
             pass

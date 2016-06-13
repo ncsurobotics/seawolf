@@ -7,7 +7,9 @@ import svr
 
 import cv2
 import cv
+import time
 
+PRINT_FRAMERATE = True
 
 class Container(object):
     """ a blank container object """
@@ -65,7 +67,8 @@ class VisionEntity(object):
         record_path = get_record_path()
 
         try:
-
+            i = 1
+            timea = time.time()
             while(True):
 
                 #if sync required, do not continue until we receive a message
@@ -95,6 +98,18 @@ class VisionEntity(object):
 
                 #process any new frame
                 self.process_frame(frame)
+                
+                # track time
+                if PRINT_FRAMERATE:
+                    if i == 15:
+                        timeb = time.time()
+                        frame_rate = i/(timeb - timea)
+                        print("[PRINT_FRAMERATE] Current Frame rate: %.1fHz" % (frame_rate))
+                        timea = time.time()
+                        i = 1
+                    else:
+                        i += 1
+                
 
                 #wait for gui process
                 if self.delay != 0 and cv.WaitKey(self.delay) == ord('q'):

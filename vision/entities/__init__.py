@@ -24,7 +24,7 @@ from .hedge import HedgeEntity
 # from .bins import BinsEntity
 from .binscorner import BinsCornerEntity
 from .binscontour import BinsContourEntity
-from .binshough import BinsHoughEntity
+#from .binshough import BinsHoughEntity
 #from .binshough2 import BinsHough2Entity
 #from .pizza import PizzaEntity
 #from .pizzacorner import PizzaCornerEntity
