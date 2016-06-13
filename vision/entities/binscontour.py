@@ -14,8 +14,8 @@ import random
 class BinsContourEntity(VisionEntity):
 
     def init(self):
-        self.adaptive_thresh_blocksize = 15  # without canny, 15
-        self.adaptive_thresh = 8  # without canny, 8
+        self.adaptive_thresh_blocksize = 25  # without canny, 15
+        self.adaptive_thresh = 12  # without canny, 8
         self.mid_sep = 50
         self.min_area = 4500
         self.max_area = 14000
@@ -37,12 +37,14 @@ class BinsContourEntity(VisionEntity):
         # Debug numpy is CV2
         self.debug_frame = libvision.cv_to_cv2(frame)
 
-        # CV2 Transforms
+        # CV2 Transforms: denoise and convert to hsv
         self.numpy_frame = self.debug_frame.copy()
         self.numpy_frame = cv2.medianBlur(self.numpy_frame, 5)
         self.numpy_frame = cv2.cvtColor(self.numpy_frame, cv2.COLOR_BGR2HSV)
 
+        # Separate the channels convenience later
         (self.frame1, self.frame2, self.frame3) = cv2.split(self.numpy_frame)
+
         # Change the frame number to determine what channel to focus on
         self.numpy_frame = self.frame3
 
@@ -60,17 +62,18 @@ class BinsContourEntity(VisionEntity):
         self.numpy_frame = cv2.erode(self.numpy_frame, kernel)
         self.numpy_frame = cv2.dilate(self.numpy_frame, kernel)
 
+        # capture frames representing the effect of the adaptive threshold
         self.adaptive_frame = self.numpy_frame.copy()
 
-        # Find contours
+        # Find contours of every shape present after threshold
         contours, hierarchy = cv2.findContours(self.numpy_frame,
                                                cv2.RETR_EXTERNAL,
                                                cv2.CHAIN_APPROX_SIMPLE)
 
         self.raw_bins = []
-
+        
+        # if there are enough contours for at least one bin
         if len(contours) > 1:
-            cnt = contours[0]
             cv2.drawContours(self.numpy_frame, contours, -1, (255, 255, 255), 3)
 
             for h, cnt in enumerate(contours):
@@ -84,6 +87,7 @@ class BinsContourEntity(VisionEntity):
                 if w > 0 and h > 0:
                     area = h * w
                     if self.min_area < area < self.max_area:
+                        #approximate raw contour points to a simpler polygon with less points
                         approx = cv2.approxPolyDP(
                             cnt, 0.01 * cv2.arcLength(cnt, True), True)
 
@@ -125,7 +129,8 @@ class BinsContourEntity(VisionEntity):
         for bin in self.confirmed:
 
             print type(bin.patch)
-            self.debug_stream("Patch" + str(bin.id), bin.patch)
+            if (bin.patch.shape[1] != 0) and (bin.patch.shape[0] != 0):
+                self.debug_stream("Patch" + str(bin.id), bin.patch)
             # svr.debug("Patch"+str(bin.id),libvision.cv2_to_cv(bin.patch))
             print bin.id
 

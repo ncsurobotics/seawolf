@@ -80,6 +80,8 @@ opt_parser.add_option("-s", "--svr-source", action="store_true",
                       "seeing."
                       )
 options, args = opt_parser.parse_args()
+
+
 if len(args) < 2:
     parameters = PARAMETER_SETS['gate']
     parameter_set_name = 'gate'

@@ -4,6 +4,7 @@
 #include <math.h>
 
 #define THRUSTER_CAP 0.4
+#define ACTIVE_REGION 30
 
 static double thruster_log(double mv) {
     if (fabs(mv) < 0.01) return 0.0;
@@ -49,6 +50,14 @@ int main(void) {
     pid = PID_new(0.0, Var_get("YawPID.p"),
                        Var_get("YawPID.i"),
                        Var_get("YawPID.d"));
+
+    // set active region (region where response of the robot
+    // is practically linear). Outside this region, thrusters
+    // would be maxed out, and the ITerm would get staturated.
+    // Outside this region, the we use PD control. Inside this
+    // region, we use PID control.
+    PID_setActiveRegion(pid, ACTIVE_REGION);
+
     dataOut(0.0);
 
     while(true) {

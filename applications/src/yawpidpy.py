@@ -2,7 +2,8 @@ from __future__ import division
 import seawolf
 import math
 
-thruster_cap = .4
+thruster_cap = .8
+ACTIVE_REGION_SIZE = 10 #degrees
 
 
 def thruster_log(mv):
@@ -59,6 +60,14 @@ def main():
         seawolf.var.get("YawPID.i"),
         seawolf.var.get("YawPID.d")
     )
+
+    # set active region (region where response of the robot
+    # is practically linear). Outside this region, thrusters
+    # would be maxed out, and the ITerm would get staturated.
+    # Outside this region, the we use PD control. Inside this
+    # region, we use PID control.
+    pid.setActiveRegion(ACTIVE_REGION_SIZE)
+    pid.setDerivativeBufferSize(2)
 
     dataOut(0.0)
     mv = 0.0
