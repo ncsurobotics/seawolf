@@ -3,6 +3,8 @@ import seawolf
 import math
 import time
 
+ACTIVE_REGION_SIZE = 10 #degrees
+
 def dataOut(mv):
     out = in_range(-1.0, mv, 1.0)
     seawolf.notify.send("THRUSTER_REQUEST", "Pitch {}".format(out))
@@ -30,6 +32,13 @@ def main():
     paused = seawolf.var.get("PitchPID.Paused")
     pid = seawolf.PID( seawolf.var.get("PitchPID.Heading"), seawolf.var.get("PitchPID.p"), seawolf.var.get("PitchPID.i"), seawolf.var.get("PitchPID.d"))
 
+    # set active region (region where response of the robot
+    # is practically linear). Outside this region, thrusters
+    # would be maxed out, and the ITerm would get staturated.
+    # Outside this region, the we use PD control. Inside this
+    # region, we use PID control.
+    pid.setActiveRegion(ACTIVE_REGION_SIZE)
+    
     dataOut(0.0)
     mv = 0.0
 

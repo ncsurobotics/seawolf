@@ -1,4 +1,26 @@
 
+/*     __
+      |  |\
+     ---------------------\
+    |                     |\
+    |   Seawolf VI        ||
+    |                     ||
+    \---------------------\|
+     \---------------------\
+
+   forward
+   <----------O
+              |\
+              | \ Strafe
+              |  \
+              |   *
+              |
+              v Depth
+ 
+ * as shown, depth points down. depth = -z for those of you who are 
+ * used to the traditional xyz coordinate system. Positive depth means x 
+ * ft "below" the surface.*/
+
 #include "seawolf.h"
 
 #include <pthread.h>
@@ -7,12 +29,16 @@
 #define PSI_PER_FOOT 0.433527504
 
 /* Approximate air pressure in Raleigh. This number is the median air pressure
-   recorded in the span from Saturday 04/23 to Monday 05/02 (year 2016).
-   MAX/MIN pressures recorded in this time span were 14.84/14.63 PSI.*/
-#define AIR_PRESSURE 15.58 //pounds per square inch
+*  recorded in the span from Saturday 04/23 to Monday 05/02 (year 2016).
+*  MAX/MIN pressures recorded in this time span were 14.84/14.63 PSI.*/
+#define AIR_PRESSURE 14.74 //pounds per square inch, 
+#define DEPTH_OFFSET -2    //correction factor for putting sensor noise margin
+                           //above the surface rather than at the surface
 
-/* XXX: Make this 128 when the avr works right */
+#define DEPTH_OVRSAMPLE 4
+
 #define MOTOR_RANGE 127
+#define RANGE_CORRECTION 0.500
 
 enum Commands {
     SW_RESET    = 0x72,  /* 'r' full reset */
@@ -68,6 +94,13 @@ typedef enum {
     SYNC_ERROR = 3
 } Error;
 
+typedef struct LPF_STRUCT16 {
+        float value;
+        float* buf;
+        uint8_t head;
+        uint8_t n_samples;
+} LPF_t;
+
 static const char* error_messages[] = {
     [INVALID_REQUEST] = "Invalid request",
     [SERIAL_ERROR] = "Serial error",
@@ -103,10 +136,19 @@ static void avr_synchronize(SerialPort sp) {
     while(Serial_getByte(sp) != 0xf0);
 }
 
+
 static void set_depth(int16_t raw_adc_value) {
     float voltage;
     float psi;
     float depth;
+    static float buf[DEPTH_OVRSAMPLE];
+    
+    static LPF_t depth_filter = {
+        .value = 0,
+        .buf = buf,
+        .head = 0,
+        .n_samples = DEPTH_OVRSAMPLE,
+    };
 
     /* Convert 12 bit unsigned ADC reading to a voltage */
     voltage = 5.004 * (raw_adc_value / 4095.0);
@@ -120,7 +162,22 @@ static void set_depth(int16_t raw_adc_value) {
 
     /* Compute depth based on surface pressure and PSI per foot */
     depth = (psi - AIR_PRESSURE) / PSI_PER_FOOT;
+    depth += DEPTH_OFFSET;
 
+    /* run lowpass filter on depth sensor */
+    /* note: we only sample depth sensor at a rate of 10Hz. we may want
+    *  to increase the sample rate on this since we have a low pass filter
+    *  here now */
+    depth_filter.buf[depth_filter.head] = depth; //sample
+    depth_filter.head = (depth_filter.head + 1) % depth_filter.n_samples; //incr
+    depth_filter.value = 0;
+    for(int i=0; i<depth_filter.n_samples; i++) {
+        depth_filter.value += depth_filter.buf[i]; //sum
+    }
+    depth = (depth_filter.value/ depth_filter.n_samples); //output
+    //printf("depth of %0.2f\n" , depth);
+
+    /* submit depth measurement to robot */
     Var_set("Depth", depth);
 }
 
@@ -134,6 +191,10 @@ static void send_message(SerialPort sp, unsigned char cmd, unsigned char arg1, u
     command[0] = cmd;
     command[1] = arg1;
     command[2] = arg2;
+
+    if (cmd== SW_MOTOR) {
+        printf("arg2=%d\n", arg2);
+    }
 
     pthread_mutex_lock(&send_lock);
     Serial_send(sp, command, 3);
@@ -273,33 +334,33 @@ int main(int argc, char** argv) {
         Var_sync();
 
         if(Var_poked("Bow")) {
-        	//printf("Bow\n");
-            send_message(sp, SW_MOTOR, BOW, (int) (MOTOR_RANGE * -Var_get("Bow")));
+        	//printf("Bow = %.2f\n", -Var_get("Bow"));
+            send_message(sp, SW_MOTOR, BOW, (int) (MOTOR_RANGE * -Var_get("Bow") * RANGE_CORRECTION));
         }
 
         if(Var_poked("Stern")) {
         	//printf("Stern\n");
-            send_message(sp, SW_MOTOR, STERN, (int) (MOTOR_RANGE * -Var_get("Stern")));
+            send_message(sp, SW_MOTOR, STERN, (int) (MOTOR_RANGE * -Var_get("Stern") * RANGE_CORRECTION));
         }
 
         if(Var_poked("StrafeT")) {
         	//printf("StrafeT\n");
-            send_message(sp, SW_MOTOR, STRAFET, (int) (MOTOR_RANGE * -Var_get("StrafeT")));
+            send_message(sp, SW_MOTOR, STRAFET, (int) (MOTOR_RANGE * -Var_get("StrafeT") * RANGE_CORRECTION));
         }
 
         if(Var_poked("StrafeB")) {
         	//printf("StrafeB\n");
-            send_message(sp, SW_MOTOR, STRAFEB, (int) (MOTOR_RANGE * -Var_get("StrafeB")));
+            send_message(sp, SW_MOTOR, STRAFEB, (int) (MOTOR_RANGE * -Var_get("StrafeB") * RANGE_CORRECTION));
         }
 
         if(Var_poked("Port")) {
         	//printf("Port\n");
-            send_message(sp, SW_MOTOR, PORT, (int) (MOTOR_RANGE * -Var_get("Port")));
+            send_message(sp, SW_MOTOR, PORT, (int) (MOTOR_RANGE * -Var_get("Port") * RANGE_CORRECTION));
         }
 
         if(Var_poked("Star")) {
         	//printf("Star\n");
-            send_message(sp, SW_MOTOR, STAR, (int) (MOTOR_RANGE * -Var_get("Star")));
+            send_message(sp, SW_MOTOR, STAR, (int) (MOTOR_RANGE * -Var_get("Star") * RANGE_CORRECTION));
         }
 
         if(Var_stale("StatusLight")) {

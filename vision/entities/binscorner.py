@@ -110,8 +110,8 @@ class BinsCornerEntity(VisionEntity):
     def init(self):
 
         # Adaptive threshold parameters
-        self.adaptive_thresh_blocksize = 35
-        self.adaptive_thresh = 6  # 12
+        self.adaptive_thresh_blocksize = 11
+        self.adaptive_thresh = 2  # 12
 
         # Good features parameters
 
@@ -157,12 +157,13 @@ class BinsCornerEntity(VisionEntity):
         self.angles = []
 
     def process_frame(self, frame):
+        # generate debug and test frames
         self.debug_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
         self.test_frame = cv.CreateImage(cv.GetSize(frame), 8, 3)
-
         cv.Copy(frame, self.debug_frame)
         cv.Copy(frame, self.test_frame)
 
+        # remove noise filter #1
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         # Set binary image to have saturation channel
@@ -172,6 +173,14 @@ class BinsCornerEntity(VisionEntity):
         cv.SetImageCOI(hsv, 1)
         cv.Copy(hsv, binary)
         cv.SetImageCOI(hsv, 0)
+        
+        #shift hue of image such that bluish yellow is at top of spectrum
+        binary = libvision.misc.cv_to_cv2(binary)
+        binary = libvision.misc.shift_hueCV2(binary, -83)
+        self.debug_stream('help',binary)
+        binary = libvision.misc.cv2_to_cv(binary)
+        #svr.debug("help", binary)
+        
 
         # Adaptive Threshold
         cv.AdaptiveThreshold(binary, binary,
@@ -196,7 +205,7 @@ class BinsCornerEntity(VisionEntity):
 
         # Display Corners
         for corner in self.corners:
-            corner_color = (0, 0, 255)
+            corner_color = (0, 0, 255) #red
             text_color = (0, 255, 0)
             font = cv.InitFont(cv.CV_FONT_HERSHEY_SIMPLEX, .6, .6, 0, 1, 1)
             cv.Circle(self.debug_frame, (int(corner[0]), int(corner[1])), 15, corner_color, 2, 8, 0)
@@ -334,12 +343,15 @@ class BinsCornerEntity(VisionEntity):
         #END SHAPE PROCESSING
         '''
 
-        svr.debug("Bins", self.debug_frame)
-        svr.debug("Bins2", self.test_frame)
+        #svr.debug("Bins", self.debug_frame)
+        #svr.debug("Bins2", self.test_frame)
+        self.debug_stream('Bins', libvision.cv_to_cv2(self.debug_frame))
+        self.debug_stream('Bins2', libvision.cv_to_cv2(self.test_frame))
 
         # Output bins
         self.output.bins = self.confirmed
         anglesum = 0
+        print(self.output)
         for bins in self.output.bins:
             bins.theta = (bins.midx - frame.width / 2) * 37 / (frame.width / 2)
             bins.phi = -1 * (bins.midy - frame.height / 2) * 36 / (frame.height / 2)

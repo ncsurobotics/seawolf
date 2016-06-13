@@ -58,7 +58,7 @@ entity_classes = {
     "weapons": WeaponsEntity,
     "doublepath": DoublePathEntity,
     # "bins": BinsEntity,
-    # "binscorner": BinsCornerEntity,
+    "binscorner": BinsCornerEntity,
     "binscontour": BinsContourEntity,
     # "binshough": BinsHoughEntity,
     #"binshough2": BinsHough2Entity,

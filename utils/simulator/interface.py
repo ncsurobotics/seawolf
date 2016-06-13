@@ -1,4 +1,3 @@
-
 from __future__ import division
 import sys
 from math import sin, cos, radians, degrees
@@ -131,7 +130,7 @@ class Interface(object):
         glDisable(GL_BLEND)
 
         # Draw Floor
-        glColor(0.05, 0.05, 0.05)
+        glColor(0.15, 0.15, 0.15)
         glBegin(GL_QUADS)
         glVertex(-1000, -1000, -16)
         glVertex(-1000, 1000, -16)

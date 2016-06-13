@@ -35,6 +35,8 @@ class RobotEntity(Entity):
         seawolf.var.subscribe("Star")
         seawolf.var.subscribe("Bow")
         seawolf.var.subscribe("Stern")
+        seawolf.var.subscribe("StrafeT")
+        seawolf.var.subscribe("StrafeB")
 
     def get_var(self, name):
         if seawolf.var.stale(name) or name not in self.tracked_vars:
@@ -51,27 +53,42 @@ class RobotEntity(Entity):
         star = self.get_var("Star")
         bow = self.get_var("Bow")
         stern = self.get_var("Stern")
+        strafeT = self.get_var("StrafeT")
+        strafeB = self.get_var("StrafeB")
+        
+        # Velocity
+        velocity_fw     = (port + star) * self.VELOCITY_CONSTANT
+        velocity_stf    = (strafeT - strafeB) * self.VELOCITY_CONSTANT
+        velocity_dph    = (bow + stern) * self.DEPTH_CONSTANT
+        
+        # IMU
+        pitch = -self.pitch #IMU convention: pitch --- Simulator convention: self.pitch
 
         # Depth
-        self.depth = -self.pos[2]
-        self.depth = self.depth + (bow + stern) * self.DEPTH_CONSTANT * dt
+        self.depth      = -self.pos[2]
+        self.depth      += dt * velocity_dph
         if self.depth < 0:
-            self.depth = self.depth + 1.0 * dt
-        self.pos[2] = -1 * self.depth
+            self.depth  += 1.0 * dt
+        self.pos[2]     = -1 * self.depth
         seawolf.var.set("Depth", self.depth)
 
-        # Velocity
-        velocity = (port + star) * self.VELOCITY_CONSTANT
-
         # Position
-        self.pos[0] += cos(radians(-self.yaw)) * velocity * dt
-        self.pos[1] += sin(radians(-self.yaw)) * velocity * dt
+        self.pos[0] += dt * (cos(radians(-self.yaw)) * sin(radians(pitch + 90)) * velocity_fw 
+                           + sin(radians(-self.yaw)) * sin(radians(self.roll  + 90)) * velocity_stf
+                           + cos(radians(-self.yaw)) * sin(radians(pitch))      * velocity_dph)
+                           
+        self.pos[1] += dt * (sin(radians(-self.yaw)) * sin(radians(pitch + 90)) * velocity_fw
+                           + -cos(radians(-self.yaw)) * sin(radians(self.roll  + 90)) * velocity_stf
+                           + sin(radians(-self.yaw)) * sin(radians(pitch))      * velocity_dph)
+
 
         # Yaw
         self.yaw = self.yaw + (port - star) * self.YAW_CONSTANT * dt
         self.yaw = (self.yaw + 180) % 360 - 180  # Range -180 to 180
         seawolf.var.set("SEA.Yaw", self.yaw)
         seawolf.notify.send("UPDATED", "IMU")
+        
+        # Pitch
 
     def draw(self):
         self.pre_draw()
