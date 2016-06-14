@@ -32,6 +32,26 @@ class VisionEntity(object):
     # A human readable name for this entity
     name = "VisionEntity"
 
+    """instantiates an entity
+    args:
+        camera_name -- string indicating which camera/stream the entity,
+        is going to use for CV/CV2 processing. The way this method differentiates
+        between a camera and a stream is that cameras are contained in the 
+    "cameras" keyword-argument, but streams are ubiquitous and won't be listed in "cameras".
+    Also, note that cameras have precedence over streams. So if a stream has
+    the same name as a camera, the camera will be selected instead of the stream.
+    
+      cameras -- dict of {<camera_name>:<path/index>} format, where <path/index>
+    is the CV2 compatible argument for opening a camera source, which will be
+    associated (for readability purposes) with the string <camera_name>. An
+    example of an index is 0, which will typically open the primary camera on 
+    your system. An example of the path argument is "../../footage/someVideo.avi",
+    which is a relative filepath to a video file. See libvision/camera.py for 
+    more details.
+      
+      debug: simple.
+      
+    """
     def __init__(self, child_conn, camera_name, *args, **kwargs):
 
         self.cameras = kwargs.pop('cameras', {})
@@ -43,7 +63,7 @@ class VisionEntity(object):
         # Line of communication to mission control
         self.child_conn = child_conn
 
-        # Open camera
+        # Open camera/stream
         self.camera_name = camera_name
         if self.camera_name in self.cameras:
             self.capture = libvision.Camera(self.cameras[self.camera_name], display=self.debug)

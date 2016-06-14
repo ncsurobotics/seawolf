@@ -83,11 +83,6 @@ class BuoyHoughEntity(VisionEntity):
         self.debug_frame = None
 
     def adaptive_threshold(self, in_frame, channel, blk_size, thresh, blur=0):
-        if channel >= 3:
-            in_frame = cv2.cvtColor(in_frame, cv2.COLOR_BGR2HSV) 
-            channel -= 3
-
-        # isolate channel
         frame = in_frame[:,:,channel]
 
         # Thresholding
@@ -119,21 +114,7 @@ class BuoyHoughEntity(VisionEntity):
 
 
     
-    def ROI_edge_detection(self, source_img, threshold_img, channel, debug_img=None):
-        # aquire edge detection target image.
-        if channel > 5:
-            raise IOError("channel %d unavailable" % channel)
-
-        elif channel >= 3:
-            channel      -= 3
-            target_img = cv2.cvtColor(source_img, cv2.COLOR_BGR2HSV)
-            target_img = target_img[:,:,channel]
-        else:
-            target_img = target_img[:,:,channel]
-
-             
-       
-
+    def ROI_edge_detection(self, source_img, threshold_img, debug_img=None):
         BB_SIZE = 40
         (buoy_contours,_) = cv2.findContours(threshold_img, 
                                 cv2.RETR_LIST, 
@@ -146,14 +127,14 @@ class BuoyHoughEntity(VisionEntity):
             rect_list.append(rect)
 
         #
-        edge_frame = target_img[:,:]*0
-        blur_frame = cv2.medianBlur(target_img, 7)
+        edge_frame = source_img[:,:,0]*0
+        blur_frame = cv2.medianBlur(source_img, 7)
         #edge_frame = cv2.Canny(edge_frame, 5, 100, apertureSize=3)
         #self.debug_stream("edgles", edge_frame)
 
         for rect in rect_list:
             # blank frame
-            drawing_frame = target_img[:,:]*0
+            drawing_frame = source_img[:,:,0]*0
 
             # get ROI
             (x,y,w,h) = rect
@@ -162,7 +143,7 @@ class BuoyHoughEntity(VisionEntity):
             y1 = y-bloom
             x2 = x+w+bloom
             y2 = y+h+bloom
-            ROI = blur_frame[y1:y2,x1:x2]
+            ROI = blur_frame[y1:y2,x1:x2,:]
 
             # run canny edge detection on ROI
             ROI = cv2.Canny(ROI, 20, 40)
@@ -202,9 +183,11 @@ class BuoyHoughEntity(VisionEntity):
 
         # CV2 blur
         blur_frame = cv2.medianBlur(self.debug_frame, 5)
+        hsv_blur_frame = 
+
 
         # collect brightly colored areas
-        frame1 = self.adaptive_threshold(blur_frame, 4,
+        frame1 = self.adaptive_threshold(blur_frame, 0,
                                 self.adaptive_thresh_blocksize,
                                 self.adaptive_thresh)
 
@@ -232,8 +215,8 @@ class BuoyHoughEntity(VisionEntity):
 
         # collect edges
         #a = 800
-        # ROI_edge detection
-        edge_frame = self.ROI_edge_detection(raw_frame, frame, 5, True)
+        # TODO: ROI_edge detection
+        edge_frame = self.ROI_edge_detection(raw_frame, frame, True)
    
 
         #edge_frame = cv2.Canny(frame, 150, 250, apertureSize=3)
@@ -269,7 +252,6 @@ class BuoyHoughEntity(VisionEntity):
         
         # self.debug_frame= cv2.add(<HUD_FRAME>,cv2.cvtColor(<annotated_frame>, cv2.COLOR_GRAY2BGR) )
         # perform color detection
-        self.hsv_frame = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2HSV)[:,:,:]
         if self.confirmed is not None and len(self.confirmed) > 0:
         
             # vvv start color detection 
