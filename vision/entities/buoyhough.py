@@ -11,6 +11,8 @@ import libvision
 
 BUOY_COLOR_PRINTS = False
 
+def in_range(n, minn, maxn):
+    return max(min(maxn, n), minn)
 
 class Buoy(object):
     buoy_id = 0
@@ -47,20 +49,22 @@ class BuoyHoughEntity(VisionEntity):
 
         # Adaptive threshold variables
         self.adaptive_thresh_blocksize = 49 # 55: yellow, orange, 55: green
-        self.adaptive_thresh = 10   # 25: orange 15: yellow, 10-7: green
+        self.adaptive_thresh = 8   # 25: orange 15: yellow, 10-7: green
         
         self.shadow_thresh_blocksize =3 # 45: orange/yellow 55: green
         self.shadow_thresh = 20e6 # 20: orange/yellow, 15: green
         
-        #
+        # Morphology variables
         self.erode_factor = 10 # 5: orange/yellow 3or7: green
         self.bloom_factor = 3
+
+        # edge detection variables
 
         # Hough buoy variables
         self.inv_res_ratio = 2
         self.center_sep = 100
         self.upper_canny_thresh = 40 # 40
-        self.acc_thresh = 50 # 20, 50 with green settings
+        self.acc_thresh = 75 # 20, 50 with green settings
         self.min_radius = 5
         self.max_radius = 50
 
@@ -76,6 +80,7 @@ class BuoyHoughEntity(VisionEntity):
 
         self.lastseen_thresh = 0
         self.seencount_thresh = 9
+        self.MAX_SEEN = 100
 
         self.next_id = 0
 
@@ -129,12 +134,11 @@ class BuoyHoughEntity(VisionEntity):
             target_img = cv2.cvtColor(source_img, cv2.COLOR_BGR2HSV)
             target_img = target_img[:,:,channel]
         else:
-            target_img = target_img[:,:,channel]
-
-             
-       
+            target_img = source_img[:,:,channel]
 
         BB_SIZE = 40
+        drop = 5
+
         (buoy_contours,_) = cv2.findContours(threshold_img, 
                                 cv2.RETR_LIST, 
                                 cv2.CHAIN_APPROX_NONE)
@@ -145,12 +149,14 @@ class BuoyHoughEntity(VisionEntity):
             rect = cv2.boundingRect(cnt)
             rect_list.append(rect)
 
-        #
+        # 
         edge_frame = target_img[:,:]*0
-        blur_frame = cv2.medianBlur(target_img, 7)
+        blur_frame = cv2.medianBlur(target_img, 5)
         #edge_frame = cv2.Canny(edge_frame, 5, 100, apertureSize=3)
         #self.debug_stream("edgles", edge_frame)
 
+        # get width and height
+        (total_height, total_width, _) = source_img.shape
         for rect in rect_list:
             # blank frame
             drawing_frame = target_img[:,:]*0
@@ -158,14 +164,14 @@ class BuoyHoughEntity(VisionEntity):
             # get ROI
             (x,y,w,h) = rect
             bloom = int(BB_SIZE/2)
-            x1 = x-bloom
-            y1 = y-bloom
-            x2 = x+w+bloom
-            y2 = y+h+bloom
+            x1 = in_range(x-bloom, 0, total_width)
+            y1 = in_range(y-bloom, 0, total_height)
+            x2 = in_range(x+w+bloom, 0, total_width)
+            y2 = in_range(y+h+bloom+drop, 0, total_height)
             ROI = blur_frame[y1:y2,x1:x2]
 
             # run canny edge detection on ROI
-            ROI = cv2.Canny(ROI, 20, 40)
+            ROI = cv2.Canny(ROI, 0, 40)
 
             # add resuls on to composit image
             drawing_frame[y1:y2,x1:x2] = ROI
@@ -175,25 +181,28 @@ class BuoyHoughEntity(VisionEntity):
 
 
             if debug_img:
-                #import pdb; pdb.set_trace()
                 (x,y,w,h) = rect
                 bloom = int(BB_SIZE/2)
                 pt1 = (x-bloom,y-bloom)
-                pt2 = (x+w+bloom,y+h+bloom)
+                pt2 = (x+w+bloom,y+h+bloom+drop)
                 cv2.rectangle(source_img, pt1,pt2, (255,255,255))
                 
         
+        
+
+        # final processing of the edge frame
+        #edge_frame = self.morphology(edge_frame, [1,-1])
+
         if debug_img:
             #svr.debug("rects", source_img)
             self.debug_stream("help", source_img)
-            self.debug_stream("edgles", edge_frame)
-            
-            pass
+            self.debug_stream("edges", edge_frame)
+
 
         return edge_frame
 
     def process_frame(self, frame):
-        # frame directors
+        # frame types:
         #self.debug_frame -- Frame containing helpful debug information
 
         # Debug numpy in CV2
@@ -217,10 +226,6 @@ class BuoyHoughEntity(VisionEntity):
         adaptive_frame = cv2.add(frame1, frame2*0)
         frame          = adaptive_frame
         
-        #self.debug_stream("help", <frame>)
-        
-
-        
         # morphology
         sequence = ([-self.erode_factor, self.erode_factor]*1 
                    +[self.bloom_factor, -self.bloom_factor]*1)
@@ -231,38 +236,39 @@ class BuoyHoughEntity(VisionEntity):
         self.debug_stream("despeckled", despeckled_frame)
 
         # collect edges
-        #a = 800
         # ROI_edge detection
-        edge_frame = self.ROI_edge_detection(raw_frame, frame, 5, True)
-   
-
-        #edge_frame = cv2.Canny(frame, 150, 250, apertureSize=3)
-        
+        edge_frame = self.ROI_edge_detection(raw_frame, frame, 4, True)
         
         # collect buoy candidates using hough circles
         self.raw_circles = []
         self.raw_buoys = []
         self.raw_circles = cv2.HoughCircles(
-                                edge_frame, 
-                                cv2.cv.CV_HOUGH_GRADIENT,
-                                self.inv_res_ratio, 
-                                self.center_sep,
-                                np.array([]),
-                                self.upper_canny_thresh,
-                                self.acc_thresh,
-                                self.min_radius,
-                                self.max_radius,
+                                image   =edge_frame, 
+                                method  =cv2.cv.CV_HOUGH_GRADIENT,
+                                dp      =self.inv_res_ratio, 
+                                minDist =self.center_sep,
+                                param1  =self.upper_canny_thresh,
+                                param2  =self.acc_thresh,
+                                minRadius=self.min_radius,
+                                maxRadius=self.max_radius,
                         )
-  
+        if self.raw_circles is not None:
+            self.raw_circles = np.round(self.raw_circles[:,0]).astype(int)
+
+
         # create a new buoy object for every circle that is detected
-        if self.raw_circles is not None and len(self.raw_circles[0] > 0):
+        #print(self.raw_circles)
+        if self.raw_circles is not None:
             #print self.confirmed
-            for circle in self.raw_circles[0]:
+            for circle in self.raw_circles:
                 (x, y, radius) = circle
                 new_buoy = Buoy(x, y, radius, "unknown", self.next_id)
                 self.next_id += 1
                 self.raw_buoys.append(new_buoy) 
                 self.match_buoys(new_buoy)
+
+                cv2.circle(self.debug_frame, (x, y),
+                            int(radius), (0, 255, 0), 5)
 
         # sort buoys among confirmed/canditates
         self.sort_buoys()
@@ -285,6 +291,7 @@ class BuoyHoughEntity(VisionEntity):
                 colorHue = np.mean(self.hsv_frame[_c[1]-buoy.radius/2 : _c[1]+buoy.radius/2, 
                                                   _c[0]-buoy.radius/2 : _c[0]+buoy.radius/2, 
                                                   0])
+
                 
                 if BUOY_COLOR_PRINTS:
                     print("buoy%d has a hue of %d" %(buoy.id,int(colorHue)))
@@ -304,7 +311,10 @@ class BuoyHoughEntity(VisionEntity):
                     cv2.putText(self.debug_frame,str(buoy.id)+"YEL", (int(buoy.centerx), int(buoy.centery)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                     buoy.color = "yellow"
                 
+                #print(buoy.centerx)
                 cv2.putText(self.debug_frame,"HUE="+str(int(colorHue)), (int(buoy.centerx), int(buoy.centery-20)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+                cv2.putText(self.debug_frame,"last_seen="+str(int(buoy.lastseen)), (int(buoy.centerx), int(buoy.centery-40)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+                cv2.putText(self.debug_frame,"candidate="+str(int(buoy in self.candidates)), (int(buoy.centerx), int(buoy.centery-60)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
            
             # ^^^ end color detection
 
@@ -344,15 +354,15 @@ class BuoyHoughEntity(VisionEntity):
                 #print "still ", buoy.seencount
                 buoy.seencount += 1
                 #print "new seencount ", buoy.seencount
-                buoy.lastseen += 10
+                buoy.lastseen = in_range(buoy.lastseen+10, -1, self.MAX_SEEN)
                 found = 1
                 
         for buoy in self.confirmed:
             if math.fabs(buoy.centerx - target.centerx) < self.conf_trans_thresh and \
                math.fabs(buoy.centery - target.centery) < self.conf_trans_thresh:
-                target.id = buoy.id
-                buoy = target
-                buoy.lastseen += 10
+                buoy.centerx = target.centerx
+                buoy.centery = target.centery
+                buoy.lastseen = in_range(buoy.lastseen+10, -1, self.MAX_SEEN) #+ self.conf_trans_thresh
                 found = 1
                 
         if found == 0:
@@ -380,7 +390,7 @@ class BuoyHoughEntity(VisionEntity):
         for buoy in self.confirmed[:]:
             buoy.lastseen -= 1
             
-            if buoy.lastseen < self.lastseen_thresh:
+            if buoy.lastseen < (self.lastseen_thresh):
                 self.confirmed.remove(buoy)
                 #self.candidates.append(buoy)
                 #print "confirmed removed"
