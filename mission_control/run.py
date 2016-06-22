@@ -76,17 +76,18 @@ from mission_controller import MissionController
 #  * Tuple - First item must be a mission class.  The rest of the tuple is
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
-    missions.GateMission,   # 01: gate
-    sw3.Forward(1,6),       # 02: transition- hurry to next mission
-    
-    missions.PathMission,   # 03: find path under gate
-    sw3.RelativeYaw(0,2),  # 
+    #missions.GateMission,   # 01: gate
+    #sw3.SetDepth(0,4),
+    missions.PathMission,   
+    #sw3.Forward(.2,1),       
+    #sw3.Forward(0,1),
+    #sw3.RelativeYaw(0,2),  # 
 
-    #sw3.Forward(-1,3),      # 04: Setup Viewing angle
-    sw3.Forward(0,.1),      #
-    sw3.SetDepth(4,2,),      #
+    #sw3.Forward(-1,3),     
+    #sw3.Forward(0,.1),      #
+    #sw3.SetDepth(4,2,),      #
     
-    missions.BuoyMission,    # 05: run basic buoy mission
+    missions.BuoyMission,   
     
     #sw3.ZeroThrusters(0.1),
     #(sw3.nav.do, sw3.RelativeYaw(10,5)),

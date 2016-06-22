@@ -41,15 +41,12 @@ class NavRoutine(object):
         """ Perform any cleanup needed after the routine has finished """
         pass
 
-    def _poll(self):
-        pass
-
     def start(self):
         with self.routine_lock:
             self.done_event.clear()
             self.state = NavRoutine.RUNNING
             if self.timeout_length > 0:
-                print "Starting Timer:", self.timeout_length
+                #print "[routines.py] Starting Timer:", self.timeout_length
                 threading.Timer(self.timeout_length, self.timeout).start()
             self._start()
             if hasattr(self, "_poll"):
@@ -92,7 +89,7 @@ class NavRoutine(object):
         self.__finished(NavRoutine.COMPLETED)
 
     def timeout(self):
-        print
+        print("TIMEOUT on %s" % self)
         self.__finished(NavRoutine.TIMEDOUT)
 
     def reset(self):
@@ -273,6 +270,9 @@ class SetRotate(NavRoutine):
         pid.yaw.pause()
         sw.notify.send("THRUSTER_REQUEST", "Yaw %.2f" % (self.rate,))
 
+    def _cleanup(self):
+        sw.notify.send("THRUSTER_REQUEST", "Yaw %.2f" % (0))
+
 
 class SetYaw(NavRoutine):
     interactions = ("Yaw",)
@@ -366,9 +366,6 @@ class Forward(NavRoutine):
     def _start(self):
         mixer.forward = self.rate
 
-    def _cleanup(self):
-        mixer.forward = 0
-
 
 class Strafe(NavRoutine):
     interaction = ("Strafe",)
@@ -458,7 +455,7 @@ class LoopRoutine(NavRoutine):
     def __init__(self, *args, **kwargs):
         timeout = kwargs.pop("timeout", -1)
         if kwargs != {}:
-            raise ValueError("Unexpected keyward arguments: %s" % kwargs)
+            raise ValueError("Unexpected keyword arguments: %s" % kwargs)
         super(LoopRoutine, self).__init__(timeout)
 
         self.routine_counter = 0

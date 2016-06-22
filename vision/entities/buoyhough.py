@@ -55,10 +55,11 @@ class BuoyHoughEntity(VisionEntity):
         self.shadow_thresh = 20e6 # 20: orange/yellow, 15: green
         
         # Morphology variables
-        self.erode_factor = 10 # 5: orange/yellow 3or7: green
+        self.erode_factor = 8 # 5: orange/yellow 3or7: green
         self.bloom_factor = 3
 
         # edge detection variables
+        self.edge_threshold = 60    
 
         # Hough buoy variables
         self.inv_res_ratio = 2
@@ -124,7 +125,7 @@ class BuoyHoughEntity(VisionEntity):
 
 
     
-    def ROI_edge_detection(self, source_img, threshold_img, channel, debug_img=None):
+    def ROI_edge_detection(self, source_img, threshold_img, edge_threshold, channel, debug_img=None):
         # aquire edge detection target image.
         if channel > 5:
             raise IOError("channel %d unavailable" % channel)
@@ -151,7 +152,7 @@ class BuoyHoughEntity(VisionEntity):
 
         # 
         edge_frame = target_img[:,:]*0
-        blur_frame = cv2.medianBlur(target_img, 5)
+        blur_frame = cv2.medianBlur(target_img, 3)
         #edge_frame = cv2.Canny(edge_frame, 5, 100, apertureSize=3)
         #self.debug_stream("edgles", edge_frame)
 
@@ -171,7 +172,7 @@ class BuoyHoughEntity(VisionEntity):
             ROI = blur_frame[y1:y2,x1:x2]
 
             # run canny edge detection on ROI
-            ROI = cv2.Canny(ROI, 0, 40)
+            ROI = cv2.Canny(ROI, 0, edge_threshold)
 
             # add resuls on to composit image
             drawing_frame[y1:y2,x1:x2] = ROI
@@ -200,6 +201,85 @@ class BuoyHoughEntity(VisionEntity):
 
 
         return edge_frame
+
+    def detect_buoy(self,buoy,raw_frame,detection_frame):
+        # generate some important variables
+        buoy_centerx = int(buoy.centerx)
+        buoy_centery = int(buoy.centery)
+        buoy_radius = int(buoy.radius)
+        buoy_id = str(buoy.id)
+
+        white = (255,255,255)
+        red = (0,0,255)
+        green = (0,255,0)
+        yellow = (0,255,255)
+        
+        standard_thickness = 5
+
+        (frame_height, frame_width,_) = raw_frame.shape
+
+        # draw a white cirle around the buoy, (assuming it's confirmed)
+        (x,y) = (buoy_centerx,buoy_centery)
+        cv2.circle(raw_frame, (x,y), buoy_radius+10, 
+            color=white,
+            thickness=5)
+        
+        # generate some other important variables
+        sample_span = 1
+        colorHue = None
+
+        # generate the color pick point
+        x = (in_range(buoy_centerx              , 0, frame_width))
+        y = (in_range(buoy_centery-int(buoy_radius/2), 0, frame_height))
+
+        # Generate ROI for average color detection
+        x1 = in_range(x-sample_span, 0 , frame_width)
+        x2 = in_range(x+sample_span, 0 , frame_width)
+        y1 = in_range(y-sample_span, 0 , frame_height)
+        y2 = in_range(y+sample_span, 0 , frame_height)
+        color_ROI = detection_frame[y1:y2,x1:x2]
+        cv2.rectangle( raw_frame, (x1,y1), (x2,y2), ( 0, 255, 255 ), -1,  8 );
+
+        # detect color of buoy
+        colorHue = np.mean(color_ROI)
+
+        # print color if requested
+        if BUOY_COLOR_PRINTS:
+            print("buoy%d has a hue of %d" %(buoy.id,int(colorHue)))
+
+        # generate some more variables
+        (x,y) = (buoy_centerx,buoy_centery)
+        if ((colorHue >= 0) and (colorHue < 45)) or (colorHue >= 95):
+            buoy.color = "red"
+            cv2.putText(raw_frame,
+                text=buoy_id+'RED',
+                org=(x,y),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=0.5,
+                color=red)
+        elif (colorHue >= 80 and colorHue < 95):
+            buoy.color = "green"
+            cv2.putText(raw_frame,
+                text=buoy_id+'GREEN',
+                org=(x,y),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=0.5,
+                color=green)
+        else:
+            buoy.color = "yellow"
+            cv2.putText(raw_frame,
+                text=buoy_id+'YELLOW',
+                org=(x,y),
+                fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                fontScale=0.5,
+                color=yellow)
+            
+        # print general information
+        cv2.putText(raw_frame,"HUE="+str(int(colorHue)), (x,y-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
+        
+        # return
+        return raw_frame
+
 
     def process_frame(self, frame):
         # frame types:
@@ -237,7 +317,7 @@ class BuoyHoughEntity(VisionEntity):
 
         # collect edges
         # ROI_edge detection
-        edge_frame = self.ROI_edge_detection(raw_frame, frame, 4, True)
+        edge_frame = self.ROI_edge_detection(raw_frame, frame, self.edge_threshold, 0, True)
         
         # collect buoy candidates using hough circles
         self.raw_circles = []
@@ -280,6 +360,8 @@ class BuoyHoughEntity(VisionEntity):
         
             # vvv start color detection 
             for buoy in self.confirmed:
+                self.debug_frame = self.detect_buoy(buoy,self.debug_frame,self.hsv_frame)
+                """
                 # draw a cirle around the confirmed bouy
                 cv2.circle(self.debug_frame, (int(buoy.centerx), int(buoy.centery)),
                             int(buoy.radius) + 10, (255, 255, 255), 5)
@@ -288,10 +370,15 @@ class BuoyHoughEntity(VisionEntity):
                 color_pick_point = ( int(buoy.centerx), int(buoy.centery - buoy.radius/2) )
                 _c  = color_pick_point
                 # ^^offset a couple pixels upward for some reason
-                colorHue = np.mean(self.hsv_frame[_c[1]-buoy.radius/2 : _c[1]+buoy.radius/2, 
-                                                  _c[0]-buoy.radius/2 : _c[0]+buoy.radius/2, 
+                (total_height, total_width, _) = self.hsv_frame.shape
+                colorHue = np.mean(self.hsv_frame[in_range(_c[1]-buoy.radius/2,0,total_width) 
+                                                    : in_range(_c[1]+buoy.radius/2, 0, total_width),
+                                                  in_range(_c[0]-buoy.radius/2, 0, total_height) 
+                                                    : in_range(_c[0]+buoy.radius/2, 0, total_height),
+                                                     
                                                   0])
-
+                print(_c[0],_c[1], buoy.radius/2)
+                print(buoy.centery-20, buoy.centerx)
                 
                 if BUOY_COLOR_PRINTS:
                     print("buoy%d has a hue of %d" %(buoy.id,int(colorHue)))
@@ -311,12 +398,15 @@ class BuoyHoughEntity(VisionEntity):
                     cv2.putText(self.debug_frame,str(buoy.id)+"YEL", (int(buoy.centerx), int(buoy.centery)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                     buoy.color = "yellow"
                 
+                
                 #print(buoy.centerx)
+                
                 cv2.putText(self.debug_frame,"HUE="+str(int(colorHue)), (int(buoy.centerx), int(buoy.centery-20)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                 cv2.putText(self.debug_frame,"last_seen="+str(int(buoy.lastseen)), (int(buoy.centerx), int(buoy.centery-40)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
                 cv2.putText(self.debug_frame,"candidate="+str(int(buoy in self.candidates)), (int(buoy.centerx), int(buoy.centery-60)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255))
            
             # ^^^ end color detection
+                """
 
         # debug frames
         self.debug_to_cv = libvision.cv2_to_cv(self.debug_frame)
