@@ -32,7 +32,7 @@
 *  recorded in the span from Saturday 04/23 to Monday 05/02 (year 2016).
 *  MAX/MIN pressures recorded in this time span were 14.84/14.63 PSI.*/
 #define AIR_PRESSURE 14.74 //pounds per square inch, 
-#define DEPTH_OFFSET -2    //correction factor for putting sensor noise margin
+#define DEPTH_OFFSET 0    //correction factor for putting sensor noise margin
                            //above the surface rather than at the surface
 
 #define DEPTH_OVRSAMPLE 4
@@ -192,10 +192,7 @@ static void send_message(SerialPort sp, unsigned char cmd, unsigned char arg1, u
     command[1] = arg1;
     command[2] = arg2;
 
-    if (cmd== SW_MOTOR) {
-        printf("arg2=%d\n", arg2);
-    }
-
+    
     pthread_mutex_lock(&send_lock);
     Serial_send(sp, command, 3);
     pthread_mutex_unlock(&send_lock);
@@ -243,6 +240,7 @@ static void* receive_thread(void* _sp) {
             which can act as a signal to seawolf that it is
             ready to begin a mission. */
             if(frame[2] == 0) {
+                printf("[-AVR] Thrusters Online!\n");
                 Notify_send("EVENT", "SystemReset");
                 
             /* if error, report kill switch detection fault */
@@ -255,6 +253,7 @@ static void* receive_thread(void* _sp) {
             engaged), thus send out a notification indicating
             so. */
             } else {
+                printf("[-AVR] Robot has been killed!\n");
                 Notify_send("EVENT", "PowerKill");
             }
             break;

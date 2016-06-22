@@ -13,14 +13,37 @@
 #define STRAFEB 5
 
 /* Trim port/star values to compensate for rotation from strafing */
-#define STRAFE_TRIM 0 
+#define STRAFE_TRIM 0.3
 
 /* Trim bow/stern values to compensate for pitch from diving/surfacing.
    Higher values make bow go faster.
  */
 #define PITCH_TRIM 0
 
+#define FORWARD_TRIM -0.2
+
 #define UPDATE_TOLERANCE 0.01
+
+/* Normalized linear trimming algorithm */
+static void trim(float* outa, float* outb, float process_variable, float trim_value) {
+    // check if anything bad is going to happen
+    if ((trim_value > 1.0) || (trim_value < -1.0)) {
+        printf("invalid trim value of %0.1f! Ignoring trim.\n", trim_value);
+        return;
+    }
+
+    // update components
+    if (trim_value > 0) {
+        *outb -= process_variable * trim_value;
+    }
+
+    else if (trim_value < 0) {
+        trim_value = -trim_value;
+        *outa -= process_variable * trim_value;
+    }
+
+    return;
+}
 
 /* Simple summing mixing algorithm */
 static void mix(float req_pitch, float req_depth, float req_forward, float req_yaw, float req_strafe, float req_roll, float out[6]) {
@@ -38,16 +61,25 @@ static void mix(float req_pitch, float req_depth, float req_forward, float req_y
     out[STRAFEB] = -req_strafe + req_roll;
 
     /* Trim port/starboad thrusters */
-    if(req_strafe != 0) {
-        out[STRAFET] -= req_strafe * STRAFE_TRIM;
-        out[STRAFEB] += req_strafe * STRAFE_TRIM;
-    }
+    //if(req_forward != 0) {
+    //    out[PORT] += req_forward * FORWARD_TRIM;
+    //    out[STAR] -= req_forward * FORWARD_TRIM;
+    //}
+    trim(&out[PORT], &out[STAR], req_forward, FORWARD_TRIM);
+
+    /* Trim port/starboad thrusters */
+    //if(req_strafe != 0) {
+    //    out[STRAFET] += req_strafe * STRAFE_TRIM;
+    //    out[STRAFEB] -= req_strafe * STRAFE_TRIM;
+    //}
+    trim(&out[STRAFET], &out[STRAFEB], req_strafe, STRAFE_TRIM);
 
     /* Trim bow/stern thrusters */
-    if(req_depth != 0) {
-        out[STERN] -= req_depth * PITCH_TRIM;
-        out[BOW] += req_depth * PITCH_TRIM;
-    }
+    //if(req_depth != 0) {
+    //    out[STERN] -= req_depth * PITCH_TRIM;
+    //    out[BOW] += req_depth * PITCH_TRIM;
+    //}
+    trim(&out[STERN], &out[BOW], req_depth, PITCH_TRIM);
 }
 
 static void setThrusters(float out[6]) {
