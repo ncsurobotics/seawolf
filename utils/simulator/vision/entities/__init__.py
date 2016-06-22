@@ -10,3 +10,4 @@ from doublepath import DoublePathEntity
 from buoy import BuoyEntity
 BuoyTestEntity = BuoyEntity
 BuoyNewEntity = BuoyEntity
+BuoyHoughEntity = BuoyEntity

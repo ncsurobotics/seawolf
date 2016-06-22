@@ -34,7 +34,7 @@ class RateLimiter(object):
             my_item = None
             with self.item_available:
                 while self.item is None:
-                    self.item_available.wait()
+                    self.item_available.wait() # awaits notify() in self.provide()
                 my_item = self.item
                 self.item = None
             self.callback(my_item)

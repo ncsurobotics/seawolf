@@ -143,7 +143,7 @@ def process_frame(frame):
     
     
     
-    print("Hue Shift: frame += %d" % offset_val)
+    print("Hue Shift: frame += %d. Hue Sel = %d +/- %d" % (offset_val,center_val,span_val/2))
     return output_frame
    
     #get inputs
@@ -180,7 +180,7 @@ def create_interface():
     cv2.createTrackbar(tbar_hue_select_name, win_debug_name,0,256,nothing)
     cv2.setTrackbarPos(tbar_hue_select_name, win_debug_name,127)
     cv2.createTrackbar(tbar_span_name,win_debug_name,0,180,nothing)
-    cv2.setTrackbarPos(tbar_span_name, win_debug_name,30)
+    cv2.setTrackbarPos(tbar_span_name, win_debug_name,4)
 
 if __name__ == '__main__':
     main()

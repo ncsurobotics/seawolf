@@ -98,6 +98,8 @@ class Camera(object):
             #      specified as a video file, or when the user doesn't have
             #      permissions for the file.
 
+
+        #TODO: doesn't work. svr.debug doesn't accept debug request?
         if self.display:
             #cv.ShowImage(self.get_window_name(), frame)
             svr.debug(self.get_window_name(), frame)
