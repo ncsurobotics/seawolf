@@ -214,7 +214,7 @@ static int getPeripheralType(SerialPort sp) {
     }
 
     /* attempt (SPARKFUN) IMU */
-    //Util_usleep(2); // uncomment if IMU DTR pin is connected.
+    Util_usleep(2); // uncomment if IMU DTR pin is connected.
     /* WARNING: do not do this check before the AVR test. The check against
      * AVR vs. this handshake is VERY SLOW when AVR is already active, because
      * the AVR also streams data, but at a very casual rate. */
