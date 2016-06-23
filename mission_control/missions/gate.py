@@ -21,11 +21,19 @@ class GateMission(MissionBase):
         self.mission_timeout = MISSION_TIMEOUT
 
     def init(self):
-        sw3.nav.do(
-            sw3.SetDepth(DEPTH),
-        )
+        # dive, but keep heading at same time
+        sw3.nav.do(sw3.CompoundRoutine(
+            sw3.HoldYaw(),
+            sw3.SetDepth(DEPTH)
+        ))
+
+        # give some time for the dive to complete
         time.sleep(DELAY)
+
+        # start vision
         self.process_manager.start_process(entities.GateEntity, "gate", "forward", debug=True)
+
+        # go forward
         sw3.nav.do(sw3.CompoundRoutine(
             sw3.HoldYaw(),
             sw3.Forward(FORWARD_SPEED),

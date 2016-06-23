@@ -55,7 +55,7 @@ def main():
 
             # Delay
             seawolf.var.set("StatusLight", STATUS_LIGHT_BLINK)
-            for i in [3, 2, 1]:
+            for i in [5, 4, 3, 2, 1]:
                 seawolf.logging.log(seawolf.DEBUG, "Preparing to start - %d" % i)
                 sleep(1)
 
