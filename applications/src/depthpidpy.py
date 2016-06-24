@@ -9,6 +9,8 @@ panic_time = 8.0
 init_downward_force = .1
 ACTIVE_REGION_SIZE = 2 #ft
 
+# TODO: code thruster shutdown if robot ever goes upside down.
+
 def initial_e_dt(integral):
     if(math.fabs(integral) < .00001):
         return 0

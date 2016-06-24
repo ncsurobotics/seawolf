@@ -14,15 +14,29 @@ import sw3.ratelimit as ratelimit
 
 # Speed for the hat forward and backward
 FORWARD_SPEED = 0.4
-MAX_DEPTH_RATE = 0.5 #degrees
-MAX_STRAFE_RATE = 0.4
-MAX_PITCH_RATE = 0.2
+MAX_STRAFE_RATE = 0.8
+DEG_RATE = 10
+
+MAX_YAW_UPDATE = 10
+
+DEPTH_HOLD = None  # gets defined later
+MAX_DEPTH_UPDATE = 2
+MAX_DEPTH_RATE = 0.8  #
+
 PITCH_ENABLED = True
-ROLL_ENABLED = False
-DEPTH_HOLD = None # gets defined later
+MAX_PITCH_RATE = 1.0
+MAX_PITCH_UPDATE = 10
+MAX_PITCH_PEEK = 30  # degrees
+
+# TODO: make option to set strafe for shoulder buttons and roll control on sticks
+ROLL_ENABLED = True
+MAX_ROLL_RATE = 1.0
+MAX_ROLL_UPDATE = 10
+MAX_ROLL_PEEK = 30  # degrees
 
 
 yaw_heading = 0
+AUTO_LEVEL = True
 
 CONTROL_DOC = """\
 Controls:
@@ -36,6 +50,37 @@ Controls:
     Help:             Button9
     Quit:             Button10
 """
+
+
+def thruster_request(mixer_var_name, value, hold_orientation=False, auto_level=False, use_mission=False):
+    """function meant to handle the various kinds of thruster requests that are possible"""
+    if use_mission is False:
+        if hold_orientation and auto_level:
+            # map PID setpoint to joystick value
+            pidvarnameH = mixer_var_name + "PID.Heading"
+            sw.var.set(pidvarnameH, value)
+
+        elif hold_orientation and (auto_level is False):
+            # get current orientation
+            if mixer_var_name != "Depth":
+                imuvarname = "SEA." + mixer_var_name
+            else:
+                imuvarname = "Depth"
+
+            current_value = sw.var.get(imuvarname)
+
+            # change PID's setpoint relative the the robot's current heading
+            pidvarnameH = mixer_var_name + "PID.Heading"
+            sw.var.set(pidvarnameH, current_value + value)
+
+        else: # non-PID
+            # just change the thruster value
+            request = mixer_var_name + " " + ("%.2f" % value)
+            sw.notify.send("THRUSTER_REQUEST", request)
+
+
+    else: # this is going to be long and specific
+        pass
 
 class Peripherals(object):
     def __init__(self):
@@ -73,72 +118,83 @@ class Peripherals(object):
             cmd = ("PNEUMATICS_REQUEST", "fire %d" % ID)
             sw.notify.send(*cmd) #send notification to seawolf
 
-            #print what just happend
+            # print what just happend
             print("%s %s" % cmd)
             
 
-    
-        
-
 def update_Laxis(event):
+    global ORIENTATION_HOLD
+
     # get joystick values
     angle = event.angle_radians
     mag = max(min(event.magnitude, 1.0), -1.0) #normalization ensures values are complementary
-    #print(mag,angle)
+    # print(mag,angle)
 
     # translate joystick cmds to control variables.
     forward_rate = (mag * sin(angle))
     yaw_rate = (mag * cos(angle))
 
-    use_mission = False
-    if use_mission:
-        sw3.nav.do(sw3.CompoundRoutine((sw3.SetRotate(yaw_rate), sw3.Forward(forward_rate))))
+    # update forward thrust value
+    thruster_request('Forward', forward_rate*1.0)
+
+    # update yaw thrust value
+    if ORIENTATION_HOLD:
+        # update PID heading
+        thruster_request('Yaw', yaw_rate*MAX_YAW_UPDATE, hold_orientation=True) # 
     else:
-        sw.notify.send("THRUSTER_REQUEST", "Forward %.2f" % forward_rate)
-        sw.notify.send("THRUSTER_REQUEST", "Yaw %.2f" % yaw_rate)
+        # change raw thruster value
+        thruster_request('Yaw', yaw_rate*1.0)
 
         
 def update_Raxis(event):
     global DEPTH_HOLD
-    global ROLL_ENABLED
-    #global DEPTH_STEP
+    global ORIENTATION_HOLD
+    global AUTO_LEVEL
+
     global PITCH_ENABLED
+    
     
     if DEPTH_HOLD==False:
         angle = event.angle_radians
         mag = max(min(event.magnitude, 1.0), -1.0)
 
-        #determine control vectors
-        strafe_rate = (mag * cos(angle)) * MAX_STRAFE_RATE
-        depth_rate = -(mag * sin(angle)) * MAX_DEPTH_RATE
-        #print("depth_rate %2.f, strafe %.2f" % (depth_rate,strafe_rate))
-    
-        #Send commands to Seawolf
-        use_mission = False
-        if use_mission:
-            sw.notify.send("THRUSTER_REQUEST", "Depth %.2f" % depth_rate)
-            sw3.nav.do(sw3.Strafe(strafe))
+        # determine control vectors
+        strafe_rate = (mag * cos(angle))
+        depth_rate = -(mag * sin(angle))
+
+        # Update strafe thrust value
+        thruster_request('Strafe', strafe_rate)
+
+        # Update depth thrust value
+        if ORIENTATION_HOLD:
+            # change depth
+            thruster_request('Depth', depth_rate*MAX_DEPTH_UPDATE, hold_orientation=True)    
         else:
-            sw.notify.send("THRUSTER_REQUEST", "Strafe %.2f" % strafe_rate)
-            sw.notify.send("THRUSTER_REQUEST", "Depth %.2f" % depth_rate)
+            # change raw thruster value
+            thruster_request('Depth', depth_rate)
+
 
     elif DEPTH_HOLD==True:
         angle = event.angle_radians
         mag = max(min(event.magnitude, 1.0), -1.0)
 
-        #determine control vectors
-        strafe_rate = (mag * cos(angle)) * MAX_STRAFE_RATE
-        if PITCH_ENABLED: pitch_rate = (mag * sin(angle)) * MAX_PITCH_RATE
-    
-        #Send commands to Seawolf
-        use_mission = False
-        if use_mission:
-            sw3.nav.do(sw3.Strafe(strafe))
-            if PITCH_ENABLED: sw.notify.send("THRUSTER_REQUEST", "Pitch %.2f" % pitch_rate)
+        # determine control vectors
+        strafe_rate = (mag * cos(angle))
+        pitch_rate = -(mag * sin(angle)) * PITCH_ENABLED
+
+        # Update strafe thrust value
+        thruster_request('Strafe', strafe_rate)
+
+        # Update pitch thrust value
+        if ORIENTATION_HOLD and (AUTO_LEVEL is False):
+            # change pitch
+            thruster_request('Pitch', pitch_rate*MAX_PITCH_UPDATE, hold_orientation=True)    
+        elif ORIENTATION_HOLD and AUTO_LEVEL:
+            # "Peek" into the new pitch value
+            thruster_request('Pitch', pitch_rate*MAX_PITCH_PEEK, hold_orientation=True, auto_level=True)
         else:
-            sw.notify.send("THRUSTER_REQUEST", "Strafe %.2f" % strafe_rate)
-            if PITCH_ENABLED: sw.notify.send("THRUSTER_REQUEST", "Pitch %.2f" % pitch_rate)
-        
+            # change raw thruster value
+            thruster_request('Pitch', pitch_rate*MAX_PITCH_RATE)
 
 
 
@@ -169,7 +225,11 @@ def setup_parser():
                         choices=['logitech-F310', 'logitech-F310S'],
                         help='Specify what kind of controller to configure this program for')
 
-    parser.add_argument('--depth_hold', action='store_true', default=False)
+    parser.add_argument('--depth_hold', action='store_true', default=False,
+        help='enables depth PID control, which is mapped to the right-side bumper buttons. The right stick vertical axis gets rerouted to pitch control')
+
+    parser.add_argument('--orientation_hold', action='store_true', default=False,
+        help='route joystick commands to pid controllers, which should allow the user the ability to let go of the sticks and the robot will automatically lock its orientation in the water')
 
     return parser
 
@@ -180,10 +240,12 @@ def main():
 
     # parse arguments
     global DEPTH_HOLD
+    global ORIENTATION_HOLD
     parser  = setup_parser()
     args    = parser.parse_args()
     joystick_name   = args.selected_controller
     DEPTH_HOLD      = args.depth_hold
+    ORIENTATION_HOLD= args.orientation_hold
     
     # get heading initial heading values
     yaw_heading = sw3.data.imu.yaw()
@@ -222,29 +284,29 @@ def main():
                 
             elif event.name == "hat":
                 if event.x < 0:
-                    #yaw_heading = sw3.util.add_angle(yaw_heading, -2.5)
-                    #sw3.pid.yaw.heading = yaw_heading
+                    # yaw_heading = sw3.util.add_angle(yaw_heading, -2.5)
+                    # sw3.pid.yaw.heading = yaw_heading
                     pass
                 elif event.x > 0:
-                    #yaw_heading = sw3.util.add_angle(yaw_heading, 2.5)
-                    #sw3.pid.yaw.heading = yaw_heading
+                    # yaw_heading = sw3.util.add_angle(yaw_heading, 2.5)
+                    # sw3.pid.yaw.heading = yaw_heading
                     pass
                 elif event.y < 0:
-                    #forward_heading = FORWARD_SPEED
-                    #sw3.nav.do(sw3.Forward(forward_heading))
+                    # forward_heading = FORWARD_SPEED
+                    # sw3.nav.do(sw3.Forward(forward_heading))
                     pass
                 elif event.y > 0:
-                    #forward_heading = -FORWARD_SPEED
-                    #sw3.nav.do(sw3.Forward(forward_heading))
+                    # forward_heading = -FORWARD_SPEED
+                    # sw3.nav.do(sw3.Forward(forward_heading))
                     pass
                 else:
-                    #forward_heading = 0
-                    #sw3.nav.do(sw3.Forward(forward_heading))
+                    # forward_heading = 0
+                    # sw3.nav.do(sw3.Forward(forward_heading))
                     pass
 
         elif event.value == 1:
             if event.name == "button1":
-                print "Zeroing thrusters"
+                print "Zeroing thrusters (and depth heading)"
                 sw3.nav.do(sw3.ZeroThrusters())
                 depth_heading = 0
 
@@ -300,6 +362,13 @@ def main():
                 print "Quitting"
                 sw3.nav.do(sw3.ZeroThrusters())
                 break
+
+            elif event.name == "leftStickButton":
+                if ORIENTATION_HOLD:
+                    print "Reseting Orientation"
+                    thruster_request('Yaw', 0, hold_orientation=True)
+                    thruster_request('Pitch', 0, hold_orientation=True, auto_level=True)
+                    thruster_request('Roll', 0, hold_orientation=True, auto_level=True)
 
 
     sw.close()
