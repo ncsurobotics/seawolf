@@ -9,7 +9,8 @@ MISSION_TIMEOUT = 400
 TIMEOUT_ENABLED = False
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
-FORWARD_SPEED = 0.3
+FORWARD_SPEED = 0.8
+SLOW_FORWARD_SPEED = 0.4
 DEPTH = 2
 DELAY = 2
 
@@ -66,7 +67,7 @@ class GateMission(MissionBase):
                 print "Correcting Yaw", gate_center
                 sw3.nav.do(sw3.CompoundRoutine([
                     sw3.RelativeYaw(gate_center),
-                    sw3.Forward(0.4)
+                    sw3.Forward(SLOW_FORWARD_SPEED)
                 ]))
         elif self.gate_seen >= 15:
             self.gate_lost += 1
