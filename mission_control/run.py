@@ -87,7 +87,7 @@ MISSION_ORDER = [
     #sw3.Forward(0,.1),      #
     #sw3.SetDepth(4,2,),      #
     
-    missions.BuoyMission,   
+    #missions.BuoyMission,   
     
     #sw3.ZeroThrusters(0.1),
     #(sw3.nav.do, sw3.RelativeYaw(10,5)),

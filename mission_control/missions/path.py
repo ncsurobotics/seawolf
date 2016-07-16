@@ -35,7 +35,9 @@ class PathMission(MissionBase):
             self.process_manager.start_process(entities.DoublePathEntity, "path", "down", debug=True)
         else:
             self.process_manager.start_process(entities.PathEntity, "path", "down", debug=True)
-        sw3.nav.do(sw3.CompoundRoutine([sw3.Forward(FORWARD_SPEED)]))
+        sw3.nav.do(sw3.CompoundRoutine([sw3.Forward(FORWARD_SPEED),
+                                        sw3.RelativeYaw(0),
+                                        sw3.SetDepth(2)]))
 
         self.reference_angle = sw.var.get("YawPID.Heading") * (pi / 180) % (2 * pi)
         self.state = "centering"
