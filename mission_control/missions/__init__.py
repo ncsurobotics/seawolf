@@ -8,6 +8,7 @@ from buoy2 import BuoyMission
 from buoy_simple import SimpleBuoyMission
 from new_buoy import NewBuoyMission
 from hedge import HedgeMission
+from hedge180 import HedgeMission180
 from reverse_hedge import ReverseHedgeMission
 from bins import BinsMission
 #from acoustics import AcousticsMission
@@ -27,6 +28,7 @@ mission_classes = {
     'buoysimple': SimpleBuoyMission,
     'new_buoy': NewBuoyMission,
     'hedge': HedgeMission,
+    'hedge180': HedgeMission180,
     'reverse_hedge': ReverseHedgeMission,
     'bins': BinsMission,
     'new_bins': NewBinsMission,

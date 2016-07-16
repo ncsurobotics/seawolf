@@ -5,18 +5,20 @@ from vision import entities
 from missions.base import MissionBase
 import sw3, time
 
-#MISSION_TIMEOUT = 400
+MISSION_TIMEOUT = 400
 TIMEOUT_ENABLED = False
-#DEGREE_PER_PIXEL = 0.10
+DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
-FORWARD_SPEED = 0.8
+FORWARD_SPEED = 0.5
+BACKUP_SPEED = -1.0
+BACKUP_TIME = 8
 
 #SLOW_FORWARD_SPEED = 0.4
 #DEPTH = 2
-#DELAY = 2
+DELAY = 2
 HEDGE_DEPTH = 2
 
-class GateMission(MissionBase):
+class HedgeMission180(MissionBase):
 
     def __init__(self):
         # gate tracking variables
@@ -85,7 +87,7 @@ class GateMission(MissionBase):
             self.gate_lost += 1
 
         # if gate_lost counter has gotten too high, it's definately gone. Move on.
-        if self.gate_lost > 15 or self.mission_timeout <= 0:
+        if self.gate_lost > 2 or self.mission_timeout <= 0:
             # tell the user whether the gate was lost or the mission timed out
             print("Gate lost: %s , timeout: %s" % (self.gate_lost>5, self.mission_timeout <= 0))
 
@@ -101,29 +103,34 @@ class GateMission(MissionBase):
             self.pass_with_style()
 
             # terminate the mission. move on.
+            print "hi"
             self.finish_mission()
             return
 
             
     
-    def pass_with_style():
+    def pass_with_style(self):
         """the code for turning the robot, and passing through the hedge
         with style."""
         turn_routine = sw3.RelativeYaw(180)
         stop_routine = sw3.Forward(0)
-        backup_routine = sw3.Forward(-0.8, BACKUP_TIME)
+        backup_routine = sw3.Forward(BACKUP_SPEED)
 
         # stop
         sw3.nav.do(stop_routine)
+        
 
         # 180
-        sw3.nav.do(
-            sw3.nav.SequentialRoutine(
-                turn_routine,               # do a 180
-                backup_routine,             # backup
-                stop_routine,               # stop
-                turn_routine                # do another 180
-            )
-        )
+        sw3.nav.do(turn_routine)              # do a 180
+        time.sleep(5)
+
+        sw3.nav.do(backup_routine)             # backup
+        time.sleep(BACKUP_TIME)
+
+        sw3.nav.do(stop_routine)               # stop
+
+        sw3.nav.do(turn_routine)                # do another 180
+        time.sleep(5)
+    
         
         

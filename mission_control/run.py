@@ -78,7 +78,7 @@ from mission_controller import MissionController
 MISSION_ORDER = [
     #missions.GateMission,   # 01: gate
     #sw3.Forward(0.8),
-    missions.PathMission,   
+    #missions.PathMission,   
     #sw3.Forward(.2,1),       
     #sw3.Forward(0,1),
     #sw3.RelativeYaw(0,2),  # 
@@ -88,6 +88,8 @@ MISSION_ORDER = [
     #sw3.SetDepth(4,2,),      #
     
     #missions.BuoyMission,   
+
+    missions.HedgeMission180,
     
     #sw3.ZeroThrusters(0.1),
     #(sw3.nav.do, sw3.RelativeYaw(10,5)),
