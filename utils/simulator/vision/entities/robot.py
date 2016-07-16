@@ -245,9 +245,9 @@ class RobotEntity(Entity):
     def get_camera_fov(self, camera, vertical=False):
         # All cameras are currently the same
         if vertical:
-            return 38  # TODO: We've never measured this, so this is a guess
+            return 52  # TODO: We've never measured this, so this is a guess
         else:
-            return 42
+            return 68
 
     def get_camera_matrix(self, camera):
         '''Gets the modelview matrix for the given camera.'''

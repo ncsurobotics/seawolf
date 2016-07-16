@@ -29,6 +29,12 @@ class PathEntity(VisionEntity):
         self.hough_threshold = 55
         self.lines_to_consider = 4  # Only consider the strongest so many lines
         self.seen_in_a_row_threshold = 2  # Must see path this many times in a row before reporting it
+        self.R = 250
+        self.G = 125
+        self.B = 0
+        self.min_blob_size = 1900
+        self.dev_thresh = 500
+        self.precision = 300
 
         # Position/orientation
         self.theta = None
@@ -37,28 +43,37 @@ class PathEntity(VisionEntity):
         self.seen_in_a_row = 0
 
         if self.debug:
-            '''
             cv.NamedWindow("Path")
+            self.create_trackbar("R", 255) #250
+            self.create_trackbar("G", 255) #125
+            self.create_trackbar("B", 255) #0
+            self.create_trackbar("min_blob_size", 4000) #2000
+            self.create_trackbar("dev_thresh", 1000) #500
+            self.create_trackbar("precision", 10000) #300/1000.0
             self.create_trackbar("lower_hue", 360)
             self.create_trackbar("upper_hue", 360)
-            self.create_trackbar("hue_bandstop", 1)
-            self.create_trackbar("min_saturation")
-            self.create_trackbar("max_saturation")
-            self.create_trackbar("min_value")
-            self.create_trackbar("max_value")
+            #self.create_trackbar("hue_bandstop", 1)
+            #self.create_trackbar("min_saturation")
+            #self.create_trackbar("max_saturation")
+            #self.create_trackbar("min_value")
+            #self.create_trackbar("max_value")
             self.create_trackbar("hough_threshold", 100)
             self.create_trackbar("lines_to_consider", 10)
-            '''
 
     def process_frame(self, frame):
         found_path = False
         cv.Smooth(frame, frame, cv.CV_MEDIAN, 7, 7)
 
         # use RGB color finder
-        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame, 250, 125, 0, 1500, 500, .3)
+        binary = libvision.cmodules.target_color_rgb.find_target_color_rgb(frame, self.R, self.G, self.B, 
+            self.min_blob_size, 
+            self.dev_thresh, 
+            self.precision/1000.0)
+        
 
         if self.debug:
             color_filtered = cv.CloneImage(binary)
+            svr.debug("color_filtered", color_filtered)
 
         # Get Edges
         cv.Canny(binary, binary, 30, 40)
@@ -76,6 +91,7 @@ class PathEntity(VisionEntity):
 
         # If there are at least 2 lines and they are close to parallel...
         # There's a path!
+        #print lines
         if len(lines) >= 2:
 
             # Find: min, max, average
@@ -103,6 +119,7 @@ class PathEntity(VisionEntity):
                 angles = map(lambda line: line[1], lines)
                 self.theta = circular_average(angles, math.pi)
 
+        print found_path
         if found_path:
             self.seen_in_a_row += 1
         else:
@@ -110,6 +127,7 @@ class PathEntity(VisionEntity):
 
         # stores whether or not we are confident about the path's presence
         object_present = False
+        print self.seen_in_a_row ###
 
         if self.seen_in_a_row >= self.seen_in_a_row_threshold:
             object_present = True
@@ -158,7 +176,7 @@ class PathEntity(VisionEntity):
             self.output.x = self.center[0] / (frame.width / 2)
             self.output.y = self.center[1] / (frame.height / 2)
             libvision.misc.draw_linesC(frame, [(frame.width / 2, self.output.theta)],[255,0,255])
-	    print "Output Returned!!! ", self.output.theta 
+	    print "Output Returned!!! ", self.output.theta
         else:
             self.output.x = None
             self.output.y = None

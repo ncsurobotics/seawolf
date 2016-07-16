@@ -13,22 +13,49 @@ from base import Entity, Container
 class BuoyEntity(Entity):
 
     def __init__(self, *args, **kwargs):
-        self.positions = [
-            numpy.array(kwargs.pop("pos_red", (0, 0, 0))),
-            numpy.array(kwargs.pop("pos_green", (0, 0, 0))),
-            numpy.array(kwargs.pop("pos_yellow", (0, 0, 0))),
-        ]
+        """
+         pos, color=(0.5, 0.5, 0.5), yaw=0, pitch=0, roll=0):
+        ARGS:
+            * pos: list of format [x,y,z] specifying the location of the buoy
+            group/array/entity. 
+            * color: ???
+            * yaw: z-axis rotation of the buoys entity
+            * pitch: y-axis rotation of the buoys entity
+            * roll: x-axis rotation of the buoys entity
+
+        KWARGS:
+            * pos_<color>: the XYZ position of a buoy entity.
+            <color> can be red, green, or yellow.
+        """
+        # pop off class specific keyword arguments first
+        pos_red = numpy.array(kwargs.pop("pos_red", (0, 0, 0)))
+        pos_green = numpy.array(kwargs.pop("pos_green", (0, 0, 0)))
+        pos_yellow = numpy.array(kwargs.pop("pos_yellow", (0, 0, 0)))
+
+        # inherit base class
         super(BuoyEntity, self).__init__(*args, **kwargs)
+
+        # visual parameters
+        self.positions = [
+            pos_red,
+            pos_green,
+            pos_yellow,
+        ]
         self.colors = [
             (1, 0, 0),
             (0, 1, 0),
             (1, 1, 0),
         ]
         self.color_names = ("red", "green", "yellow")
-        self.output = Container()
+
+        # internal buoy tracking variables
         self.buoys = []
-        self.output.buoys = []
         self.id_counter = 0
+        
+        # generate output container
+        self.output = Container()
+        self.output.buoys = []
+
 
     def draw(self):
         self.pre_draw()

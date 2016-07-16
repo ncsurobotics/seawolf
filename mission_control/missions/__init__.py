@@ -4,13 +4,13 @@ from base import MissionBase, SearchMission
 from test import TestMission
 from gate import GateMission
 from path import PathMission
-from buoy import BuoyMission
+from buoy2 import BuoyMission
 from buoy_simple import SimpleBuoyMission
 from new_buoy import NewBuoyMission
 from hedge import HedgeMission
 from reverse_hedge import ReverseHedgeMission
 from bins import BinsMission
-from acoustics import AcousticsMission
+#from acoustics import AcousticsMission
 from new_bins import NewBinsMission
 from fakepizza import FakePizzaMission
 from strafetest import StrafeMission
@@ -32,5 +32,5 @@ mission_classes = {
     'new_bins': NewBinsMission,
     'fakepizza': FakePizzaMission,
     'strafetest': StrafeMission,
-    'acoustics': AcousticsMission
+#    'acoustics': AcousticsMission
 }

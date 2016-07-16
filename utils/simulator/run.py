@@ -48,7 +48,7 @@ PARAMETER_SETS = {
         "cam_yaw": 45,
         "cam_pitch": -20,
         "robot_pos": (35, 0, -2),
-        "robot_yaw": -45,
+        "robot_yaw": 10,
     },
     "path2": {
         "cam_pos": (30, 0, 25),
@@ -120,8 +120,8 @@ simulator = Simulator(interface, robot, entities=[
     entities.AxisEntity(),
 
     entities.GateEntity((25, 0, 0)),
-    entities.PathEntity((35, 0, -12), yaw=-45),
-    entities.BuoyEntity((35, 2, -4), yaw=-15,
+    entities.PathEntity((35, 0, -12), yaw=10),
+    entities.BuoyEntity((50, -2, -4), yaw=-15,
                         pos_red=(0, 0, 1.5),
                         pos_yellow=(0, 4, 0),
                         pos_green=(0, -4, -1.5)),

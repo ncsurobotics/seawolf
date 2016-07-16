@@ -1,4 +1,7 @@
 
+"""
+Note:"""
+
 from __future__ import division
 
 from vision import entities
@@ -11,14 +14,14 @@ INITIAL_RECON_SPEED = -0.7
 INIT_BACKUP_TIME = 10
 
 
-MISSION_TIMEOUT = 10
-FORWARD_SPEED = 0.3
+MISSION_TIMEOUT = 120
+FORWARD_SPEED = 0.8
 BACKWARD_SPEED = -0.3
 CENTER_TIME = 5
 
 
 
-DEPTH_THRESHOLD = .05
+DEPTH_THRESHOLD = .05*5
 DEPTH_UNIT = 0.2
 
 CAM_FRAME_X_MIN = 0
@@ -84,29 +87,21 @@ class BuoyMission(MissionBase):
         self.state = self.states[self.state_num]
         self.set_timer("buoy_timeout", 120, self.fail_mission)
 
-    #TODO: add an exit state, and update everything.
-    def next_state(self):
-        self.state_num += 1
-        if self.state_num >= len(self.states):
-            self.finish_mission()
-        self.state = self.states[self.state_num]
-        print "State:", self.state
+        # debug parameters
+        self.i = 0
 
-    def sweep_routine(self, approach_angle):
-        return sw3.LoopRoutine(
-            sw3.Forward(BACKWARD_SPEED, BACKUP_TIME),
-            sw3.Forward(0, 2),
-            sw3.SetYaw(self.reference_angle),
-            #sw3.SetYaw(approach_angle),
-        )
-
-    def mission_timeout(self):
-        ''' mission has timed out, progress to next task'''
-        # TODO fill this in with delicious cream
-        print "BUOY TIMEOUT REACHED"
-
+    #TODO: code a class for buoy entities inside the mission itself
+ 
     def step(self, vision_data):
-
+        """
+        Buoy vision data will contain a list of buoy objects. Each buoy will have the
+        following attributes:
+          * color: determined color of the buoy.
+          * id: numerical ID uniqely assigned to every discovered buoy
+          * found: ???
+          * phi: ???
+          * theta: ???
+        """
         if vision_data is None:
             buoys = []
         else:
@@ -114,43 +109,91 @@ class BuoyMission(MissionBase):
             #print buoys
 
         # TODO: What if only 2 buoys are visible? how do we proceed?
-
         if self.state == "first_approach":
             self.state_approach(BUOY_FIRST, buoys)
         if self.state == "second_approach":
             self.state_approach(BUOY_SECOND, buoys)
-        if self.state == "center_approach":
-            self.state_approach(1, buoys)
         if self.state == "bump":
             self.state_bump(buoys)
+        if self.state == "center_approach":
+            self.state_approach(1, buoys)
         if self.state == "findpath":
             self.state_findpath()
 
+    #TODO: add an exit state, and update everything.
+    def next_state(self):
+        """method for incrementing through the buoy mission sequence"""
+
+        # increment state counter
+        self.state_num += 1
+
+        # if we're about to do the last state, end the mission!
+        if self.state_num >= len(self.states):
+            self.finish_mission()
+
+        # set new state
+        self.state = self.states[self.state_num]
+        print "State:", self.state
+
+    def sweep_routine(self, approach_angle):
+        return sw3.LoopRoutine(
+            sw3.Forward(BACKWARD_SPEED, BACKUP_TIME),
+            sw3.Forward(0, 1),
+            #sw3.SetYaw(self.reference_angle),
+            sw3.SetRotate(0.3, 1),
+            sw3.SetRotate(-0.3,2),
+            sw3.SetYaw(approach_angle),
+        )
+
+    def mission_timeout(self):
+        ''' mission has timed out, progress to next task'''
+        # TODO fill this in with delicious cream
+        print "BUOY TIMEOUT REACHED"
+
     def state_approach(self, buoy_to_bump, buoys):
+        # self.tracking_id
+        # if vision doesn't return any buoy objects, there's nothing to process.
+        if not buoys:
+            return
+        # 
+        print "buoy to bump: {}".format(buoy_to_bump)
         
         # TODO: include depth routine
         if len(buoys) == 3:
+            # Note: this is meant to create a pocket of code that only runs at 
+            # the begginning of the approach phase. The assumption is that every
+            # approach begins with 3 buoys in view. Once the sub moves forward, the
+            # assumption is that this setup code ran enough times such that the
+            # correct buoy is being tracked, and the optimal depth for seeing all
+            # buoys simultaneously has been captured.
             
+            # sort buoys from left to right
             buoys.sort(key=lambda x: x.theta)
+
+            # store buoy-to-bump's ID under self.tracking_id for later recall
             self.tracking_id = buoys[buoy_to_bump].id
 
+            # update depth parameter
             if self.depth_seen is None:
                 self.depth_seen = sw3.data.depth()
 
 
-        # any available buoys represent the one we want to hit, track it 
+        # assert that the tracked/target buoy is still in our field of view
         track_buoy = None
         for buoy in buoys:
             if buoy.id == self.tracking_id:
                 track_buoy = buoy
 
-        # if no hits on finding the target buoy, go back and try again.
+        # if target buoy is not in our FOV, terminate processing and try again.
         # mission will time out if this happens too much.
         if not track_buoy:
             return
             
-        print("approach state: {} buoys detected".format(len(buoys)))
+        # start/reset the approach timer
+        self.set_timer("Approach_Timeout", APPROACH_TIMEOUT, self.approach_timeout, sw3.data.imu.yaw())
         
+        # print debug text
+        print("approach state: {} buoys detected".format(len(buoys)))
         # print "State: BuoyBump  dist: ",track_buoy.r, " x angle from current: ",track_buoy.theta, " y angle from current: ", track_buoy.phi
         
         # various buoy related routines
@@ -160,12 +203,13 @@ class BuoyMission(MissionBase):
         backup_routine = sw3.Forward(BACKWARD_SPEED)
         reset_routine = sw3.SetYaw(self.reference_angle)
 
-        #change Depth
+        # generate Depth changing parameters
         track_depth_angle = (track_buoy.phi)
         centered = False
-        print (track_depth_angle)
+        #print (track_depth_angle)
+
+        # dynamically assign depth_routine to trim depth by DEPTH_UNITs
         if abs(track_depth_angle) > DEPTH_THRESHOLD:
-        
             if (track_depth_angle > 0):
                 depth_routine = sw3.RelativeDepth(-DEPTH_UNIT)
                 
@@ -178,33 +222,28 @@ class BuoyMission(MissionBase):
 
         
         # check if yaw is centered
-        print (track_buoy.theta)
+        #print (track_buoy.theta)
         if abs(track_buoy.theta) <= CENTER_THRESHOLD:
             centered = True*centered
 
-        # if yaw and depth are centered, advance to the next state!
-        if centered:
             
-            sw3.nav.do(sw3.CompoundRoutine(
-                forward_routine,
-                yaw_routine,
-                depth_routine
-            ))
-            '''
-            if abs(track_buoy.r) <= DIST_THRESHOLD:
-                self.delete_timer("Approach_Timeout")
-                self.next_state()
-            '''
-            self.next_state()
-            
-        # otherwise, stop and adjust yaw
-        else:
-            
+        # if yaw and depth are not centered, stop and adjust yaw/depth
+        if not centered:
             sw3.nav.do(sw3.CompoundRoutine(
                 stop_routine,
                 yaw_routine,
                 depth_routine
             ))
+            
+        # else yaw and depth are centered, advance to the next state!
+        else:
+            sw3.nav.do(sw3.CompoundRoutine(
+                forward_routine,
+                yaw_routine,
+                depth_routine
+            ))
+            self.delete_timer("Approach_Timeout")
+            self.next_state()
 
     def approach_timeout(self, approach_angle):
         self.next_state()
@@ -216,17 +255,34 @@ class BuoyMission(MissionBase):
         '''
 
     def state_bump(self, buoys):
-        track_buoy = None
-        for buoy in buoys:
-            if buoy.id == self.tracking_id:
-                track_buoy = buoy
+        """assumes forward movement from the previous state."""
 
+        track_buoy = self.get_live_target_buoy(self.tracking_id, buoys)
+
+        # if tracked buoy was not found, terminate processing and try again
         if not track_buoy:
             return
 
         # TODO add smarter timeout
+        # if tracked buoy was found, reset the Bump_Timeout routine.
+        # timeout routine is meant to ensure that vehicle reverses while bumping the buoy,
+        # but keeps yaw orientation constant the entire time.
         self.set_timer("Bump_Timeout", BUMP_TIMEOUT, self.bump_timeout, sw3.data.imu.yaw())
 
+    def get_live_target_buoy(self, target_id, buoys):
+        tracked_buoy = None
+
+        # search live buoys for the target one
+        for buoy in buoys:
+            if buoy.id == target_id:
+                tracked_buoy = buoy
+
+        # return (live) tracked buoy if found, or return None
+        if tracked_buoy:
+            return tracked_buoy
+        else: 
+            return None
+    
     def bump_timeout(self, approach_angle):
         sw3.nav.do(sw3.SequentialRoutine(
             sw3.Forward(BACKWARD_SPEED, 10),
