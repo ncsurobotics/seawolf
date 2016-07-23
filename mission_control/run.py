@@ -117,7 +117,12 @@ MISSION_ORDER = [
     #missions.FakePizzaMission
 ]
 
+def trace(frame, event, arg):
+    print "%s, %s:%d" % (event, frame.f_code.co_filename, frame.f_lineno)
+    return trace
+
 if __name__ == "__main__":
+    #sys.settrace(trace)
 
     # Put camera option into dictionary format
     cameras_dict = {}

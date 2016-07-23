@@ -80,7 +80,9 @@ class SimpleYellowBuoyMission(MissionBase):
             #"second_approach", #ommited. we only want to bump the first buoy we see.
             #"bump",
             #"center_approach",
-            "findpath"
+            "findpath",
+            "wait",
+
         ]
         
         self.state_num = 0
@@ -89,6 +91,10 @@ class SimpleYellowBuoyMission(MissionBase):
 
         # debug parameters
         self.i = 0
+
+        # waiting variables
+        self.wait_stop_mark = -1
+        
 
     #TODO: code a class for buoy entities inside the mission itself
  
@@ -119,6 +125,8 @@ class SimpleYellowBuoyMission(MissionBase):
             self.state_approach(1, buoys)
         if self.state == "findpath":
             self.state_findpath()
+        if self.state == "wait":
+            self.state_wait_for_finish()
 
     #TODO: add an exit state, and update everything.
     def next_state(self):
@@ -130,6 +138,7 @@ class SimpleYellowBuoyMission(MissionBase):
         # if we're about to do the last state, end the mission!
         if self.state_num >= len(self.states):
             self.finish_mission()
+            return
 
         # set new state
         self.state = self.states[self.state_num]
@@ -303,18 +312,25 @@ class SimpleYellowBuoyMission(MissionBase):
         depth_goto = sw3.SetDepth(self.depth_seen)
         print "findpath"
         sw3.nav.do(sw3.SequentialRoutine(
-            sw3.Forward(    -0.8,2),
+            sw3.Forward(-0.8,0.1),
             depth_goto,
             riseup_routine,
             sw3.SetYaw(self.reference_angle),
             runover_routine
         ))
-    
-        while True :
-            current_routine = sw3.nav.current_routine.routine_counter
-            print current_routine
-            print 'waiting'
-            if current_routine == 4:
-                break
+        self.wait_stop_mark = 4
 
-        self.finish_mission()
+        self.next_state()
+
+    def state_wait_for_finish(self):
+        """eat vision messages while waiting for buoy mission to
+        finish up"""
+
+        current_routine = sw3.nav.current_routine.routine_counter
+        #print "hey I'm{}".format(current_routine)
+        #print 'waiting'
+        
+        if current_routine >= self.wait_stop_mark:
+            self.next_state()
+
+        
