@@ -39,6 +39,7 @@ from .buoycontour import BuoyContourEntity
 from .buoycontours2 import BuoyContour2Entity
 from .buoyhough import BuoyHoughEntity
 from .greatscott import GreatScottEntity
+from .torpedos import TorpedosEntity
 
 entity_classes = {
     "test": TestEntity,
@@ -70,6 +71,7 @@ entity_classes = {
     "hedgeR": HedgeREntity,
     "hedgeY": HedgeYEntity,
     "hedgetest": HedgeTestEntity,
-    # "oldhedge": OldHedgeEntityi
-    "greatscott": GreatScottEntity
+    # "oldhedge": OldHedgeEntityi,
+    "greatscott": GreatScottEntity,
+    "torpedos": TorpedosEntity,
 }

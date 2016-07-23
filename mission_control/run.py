@@ -88,8 +88,12 @@ MISSION_ORDER = [
     #sw3.SetDepth(4,2,),      #
     
     #missions.BuoyMission,   
+    missions.SimpleYellowBuoyMission,
+    missions.PathMission, 
+    #missions.ReverseHedgeMission,
 
-    missions.HedgeMission180,
+
+    #missions.HedgeMission180,
     
     #sw3.ZeroThrusters(0.1),
     #(sw3.nav.do, sw3.RelativeYaw(10,5)),
@@ -101,7 +105,6 @@ MISSION_ORDER = [
     #missions.SimpleBuoyMission,
     #sw3.Forward(-1,3),
     #sw3.ZeroThrusters(0.1),
-    #missions.PathMission, 
     #missions.PathMission, 
     #missions.PathMission, 
     #missions.AcousticsMission,
