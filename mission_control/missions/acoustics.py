@@ -45,7 +45,7 @@ class AcousticsMission(MissionBase):
             if abs(rel_yaw) > YAW_TOLERANCE:
                 sw3.nav.do(
                     sw3.CompoundRoutine(
-                        sw3.RelativeYaw(rel_yaw), sw3.Forward(.3)
+                        sw3.RelativeYaw(-rel_yaw), sw3.Forward(.3)
                         )
                     )
 

@@ -9,8 +9,11 @@ MISSION_TIMEOUT = 400
 TIMEOUT_ENABLED = False
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
-FORWARD_SPEED = 0.8
+FORWARD_SPEED = .9
 SLOW_FORWARD_SPEED = 0.4
+
+RECKON_TIME = 10
+GATE_LOST_THRESHOLD = 30
 DEPTH = 2
 DELAY = 2
 
@@ -72,10 +75,15 @@ class GateMission(MissionBase):
         elif self.gate_seen >= 15:
             self.gate_lost += 1
 
-        if self.gate_lost > 15 or self.mission_timeout <= 0:
+        if self.gate_lost > GATE_LOST_THRESHOLD or self.mission_timeout <= 0:
             print("Gate lost: %s , timeout: %s" % (self.gate_lost>5, self.mission_timeout <= 0))
             if self.mission_timeout <= 0:
                 print "Gate Mission Timeout!"
+
+            # we're done with gate. move forward for a bit, and move on
+            print "going forward (dead reckoning)"
+            sw3.nav.do(sw3.Forward(FORWARD_SPEED, RECKON_TIME))
+            time.sleep(RECKON_TIME)
 
             print "Heading Locked"
             self.finish_mission()

@@ -10,10 +10,10 @@ TIMEOUT_ENABLED = False
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.5
-BACKUP_SPEED = -1.0
-BACKUP_TIME = 8
+BACKUP_SPEED = -0.9
+BACKUP_TIME = 13
 
-#SLOW_FORWARD_SPEED = 0.4
+SLOW_FORWARD_SPEED = 0.4
 #DEPTH = 2
 DELAY = 2
 HEDGE_DEPTH = 2
@@ -87,7 +87,7 @@ class HedgeMission180(MissionBase):
             self.gate_lost += 1
 
         # if gate_lost counter has gotten too high, it's definately gone. Move on.
-        if self.gate_lost > 2 or self.mission_timeout <= 0:
+        if self.gate_lost > 30 or self.mission_timeout <= 0:
             # tell the user whether the gate was lost or the mission timed out
             print("Gate lost: %s , timeout: %s" % (self.gate_lost>5, self.mission_timeout <= 0))
 
@@ -122,15 +122,20 @@ class HedgeMission180(MissionBase):
 
         # 180
         sw3.nav.do(turn_routine)              # do a 180
-        time.sleep(5)
+        time.sleep(10)
 
         sw3.nav.do(backup_routine)             # backup
         time.sleep(BACKUP_TIME)
+        time.sleep(1)
 
         sw3.nav.do(stop_routine)               # stop
+        time.sleep(1)
 
-        sw3.nav.do(turn_routine)                # do another 180
-        time.sleep(5)
+        print "doing the 2nd 180"
+        sw3.nav.do(sw3.RelativeYaw(180))                # do another 180
+        time.sleep(10)
+
+        print "done"
     
         
         
