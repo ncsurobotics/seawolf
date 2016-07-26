@@ -125,7 +125,7 @@ simulator = Simulator(interface, robot, entities=[
                         pos_red=(0, 0, 1.5),
                         pos_yellow=(0, 4, 0),
                         pos_green=(0, -4, -1.5)),
-    entities.PathEntity((45, 4, -12), yaw=-20),
+    entities.PathEntity((60, -2, -12), yaw=-20),
     entities.HedgeEntity((58, 8, -5), yaw=-45),
     entities.PathEntity((60, 10, -12), yaw=-20),
     entities.BinsEntity((65, 15, -12), yaw=45),

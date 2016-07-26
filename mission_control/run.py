@@ -86,8 +86,12 @@ MISSION_ORDER = [
 
     #sw3.Forward(-1,3),     
     #sw3.Forward(0,.1),      #
-    ##sw3.SetDepth(BUOY_DEPTH,2),      #
-    ##missions.BuoyMission,   
+    #sw3.SetDepth(4,2,),      #
+    
+    #missions.BuoyMission,   
+    missions.SimpleYellowBuoyMission,
+    missions.PathMission, 
+    #missions.ReverseHedgeMission,
 
     #missions.HedgeMission180,
     
@@ -114,7 +118,12 @@ MISSION_ORDER = [
     #missions.FakePizzaMission
 ]
 
+def trace(frame, event, arg):
+    print "%s, %s:%d" % (event, frame.f_code.co_filename, frame.f_lineno)
+    return trace
+
 if __name__ == "__main__":
+    #sys.settrace(trace)
 
     # Put camera option into dictionary format
     cameras_dict = {}

@@ -54,8 +54,13 @@ def setup_parser():
 
     return parser
 
+def trace(frame, event, arg):
+    print "%s, %s:%d" % (event, frame.f_code.co_filename, frame.f_lineno)
+    return trace
 
 def main():
+    #sys.settrace(trace)
+
     parser = setup_parser()
     args = parser.parse_args()
 
