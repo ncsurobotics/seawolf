@@ -55,6 +55,9 @@ def main():
 
             # Delay
             seawolf.var.set("StatusLight", STATUS_LIGHT_BLINK)
+            current_imu = seawolf.var.get("SEA.Yaw")
+            seawolf.var.set("YawPID.Heading", current_imu)
+
             for i in [5, 4, 3, 2, 1]:
                 seawolf.logging.log(seawolf.DEBUG, "Preparing to start - %d" % i)
                 sleep(1)
