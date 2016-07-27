@@ -12,7 +12,7 @@ APPS_TO_START = [
     "./bin/depthpidpy",
     "./bin/yawpidpy",
     "./bin/pitchpidpy",
-    #"./bin/rollpidpy",
+    "./bin/rollpidpy",
     "./bin/mixer",
 ]
 
