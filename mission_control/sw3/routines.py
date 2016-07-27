@@ -366,6 +366,23 @@ class Forward(NavRoutine):
     def _start(self):
         mixer.forward = self.rate
 
+class DepthRate(NavRoutine):
+    interactions = ("DepthRate",)
+
+    #TODO add maximum depth limit as an argument
+    def __init__(self, rate, timeout=-1):
+        super(DepthRate, self).__init__(timeout)
+        self.rate = rate
+        #self.max_depth = max_depth
+
+    def _start(self):
+        pid.depth.pause()
+        mixer.depth = self.rate
+
+    def _cleanup(self):
+        mixer.depth = 0.0
+
+
 
 class Strafe(NavRoutine):
     interaction = ("Strafe",)
@@ -526,6 +543,31 @@ class SequentialRoutine(NavRoutine):
         # Calculate interactions
         interactions = [r.get_interactions() for r in self.routines]
         self.interactions = set().union(*interactions)
+
+    def get_current_routine(self):
+        return self.routine_counter
+
+    def is_done(self, n_stop=None):
+        """Returns true if sequential routine is done (or has at least
+        surpassed the designated stopping point)."""
+        n_routines = len(self.routines)
+
+        # Get the stopping point
+        if n_stop is not None:
+            # Prevent user from setting the stopping point greater than the # of avail routines.
+            if n_stop <= n_routines:
+                stop_mark = n_stop
+            else:
+                stop_mark = n_routines
+        else:
+            stop_mark = n_routines
+
+        # if stopping point has been exceeded, return True
+        if self.routine_counter >= stop_mark:
+            return True
+        else:
+            return False
+
 
     def _poll(self):
 

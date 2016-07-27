@@ -7,12 +7,13 @@ from path import PathMission
 from buoy2 import BuoyMission
 from buoy_simple import SimpleBuoyMission
 from buoy_simpleYellow import SimpleYellowBuoyMission
+from buoy_simpleYellowPull import SimpleYellowPullBuoyMission
 from new_buoy import NewBuoyMission
 from hedge import HedgeMission
 from hedge180 import HedgeMission180
 from reverse_hedge import ReverseHedgeMission
 from bins import BinsMission
-from acoustics import AcousticsMission
+#from acoustics import AcousticsMission
 from new_bins import NewBinsMission
 from fakepizza import FakePizzaMission
 from strafetest import StrafeMission
@@ -28,6 +29,7 @@ mission_classes = {
 #    'buoy': BuoyMission,
     'buoysimple': SimpleBuoyMission,
     'buoyyellow': SimpleYellowBuoyMission,
+    'buoyyellowpull': SimpleYellowPullBuoyMission,
     'new_buoy': NewBuoyMission,
     'hedge': HedgeMission,
     'hedge180': HedgeMission180,
@@ -36,5 +38,5 @@ mission_classes = {
     'new_bins': NewBinsMission,
     'fakepizza': FakePizzaMission,
     'strafetest': StrafeMission,
-    'acoustics': AcousticsMission
+#    'acoustics': AcousticsMission
 }

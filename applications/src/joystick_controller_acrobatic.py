@@ -17,7 +17,7 @@ FORWARD_SPEED = 0.4
 MAX_STRAFE_RATE = 0.8
 DEG_RATE = 10
 
-MAX_YAW_UPDATE = 10
+MAX_YAW_UPDATE = 30
 
 DEPTH_HOLD = None  # gets defined later
 MAX_DEPTH_UPDATE = 2
@@ -350,7 +350,7 @@ def main():
 
             elif event.name == "button8":
                 if DEPTH_HOLD:
-                    depth_heading = min(8, depth_heading + 0.50)
+                    depth_heading = min(16, depth_heading + 0.50)
                     sw3.pid.depth.heading = depth_heading
                 else:
                     print("Depth holding disabled!!! ignoring depth-change command.")

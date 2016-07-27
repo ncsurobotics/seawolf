@@ -89,7 +89,8 @@ MISSION_ORDER = [
     #sw3.SetDepth(4,2,),      #
     
     #missions.BuoyMission,   
-    missions.SimpleYellowBuoyMission,
+    #missions.SimpleYellowBuoyMission,
+    missions.SimpleYellowPullBuoyMission,
     missions.PathMission, 
     #missions.ReverseHedgeMission,
 
