@@ -59,7 +59,7 @@ class BuoyHoughEntity(VisionEntity):
         self.bloom_factor = 3
 
         # edge detection variables
-        self.edge_threshold = 60    
+        self.edge_threshold = 15    
 
         # Hough buoy variables
         self.inv_res_ratio = 2
@@ -152,7 +152,7 @@ class BuoyHoughEntity(VisionEntity):
 
         # 
         edge_frame = target_img[:,:]*0
-        blur_frame = cv2.medianBlur(target_img, 3)
+        blur_frame = cv2.medianBlur(target_img, 5)
         #edge_frame = cv2.Canny(edge_frame, 5, 100, apertureSize=3)
         #self.debug_stream("edgles", edge_frame)
 
