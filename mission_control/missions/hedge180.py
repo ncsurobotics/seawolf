@@ -16,7 +16,7 @@ BACKUP_TIME = 13
 SLOW_FORWARD_SPEED = 0.4
 #DEPTH = 2
 DELAY = 2
-HEDGE_DEPTH = 2
+HEDGE_DEPTH = 10
 
 class HedgeMission180(MissionBase):
 
@@ -34,7 +34,10 @@ class HedgeMission180(MissionBase):
         ))
 
         # give some time for the dive to complete
-        time.sleep(DELAY)
+        current_depth = sw3.data.depth()
+        while current_depth >= HEDGE_DEPTH - 3:
+            current_depth = sw3.data.depth()
+
 
         # start vision
         self.process_manager.start_process(entities.GateEntity, "gate", "forward", debug=True)
