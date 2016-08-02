@@ -10,7 +10,7 @@ import time
 
 import sw3
 
-INITIAL_RECON_SPEED = -0.7
+INITIAL_RECON_SPEED = 0.3
 INIT_BACKUP_TIME = 10
 
 
@@ -34,8 +34,9 @@ CAM_FRAME_Y_MAX = 0
 BUOY_FIRST = 0  # first buoy to bump(0 is left, 1 is center, 2 is right)
 BUOY_SECOND = 2  # second buoy to bump
 
+START_DEPTH = 10
 BUMP_TIME = 5  # time to move forward in bump routine
-OVER_DEPTH = -4  # depth to pass over the center buoy
+REL_OVER_DEPTH = -4  # depth to pass over the center buoy
 RUNOVER_TIME = 8
 DIST_THRESHOLD = 7
 CENTER_THRESHOLD = 2
@@ -61,13 +62,29 @@ class SimpleYellowPullBuoyMission(MissionBase):
     def init(self):
         '''runs at start of mission '''
         self.set_timer("mission_timeout", MISSION_TIMEOUT, self.mission_timeout)
-        
+
+        # stop, and go down
+        sw3.nav.do(sw3.CompoundRoutine(
+            sw3.Forward(0),
+            sw3.SetDepth(START_DEPTH),
+        ))
+
+
+
+        # adjust depth before starting mission   
+        """ 
+        current_depth = sw3.data.depth()
+        while current_depth <= START_DEPTH - 3:
+            print "Adjusting depth ({}) to go to {}.".format(current_depth, START_DEPTH)
+            current_depth = sw3.data.depth()
+        """
+        #
+
         # start vision process
         self.process_manager.start_process(entities.BuoyHoughEntity, "buoy", "forward", debug=True)
         
-        # ease backwards in order get a better view
-        #sw3.nav.do(sw3.Forward(INITIAL_RECON_SPEED, INIT_BACKUP_TIME))
-        #time.sleep(INIT_BACKUP_TIME)
+        # ease forwards in order get a better view
+        sw3.nav.do(sw3.Forward(INITIAL_RECON_SPEED))
         
         # capture orientation at this point
         self.reference_angle = sw3.data.imu.yaw()
@@ -229,6 +246,9 @@ class SimpleYellowPullBuoyMission(MissionBase):
         # print "State: BuoyBump  dist: ",track_buoy.r, " x angle from current: ",track_buoy.theta, " y angle from current: ", track_buoy.phi
         
         # various buoy related routines
+        print "theta = {}".format(track_buoy.theta)
+        print "phi = {}".format(track_buoy.phi)
+        print "buoy = {}".format(track_buoy)
         yaw_routine = sw3.RelativeYaw(track_buoy.theta)
         forward_routine = sw3.Forward(FORWARD_SPEED)
         stop_routine = sw3.Forward(0,0)
@@ -327,7 +347,7 @@ class SimpleYellowPullBuoyMission(MissionBase):
         sw3.nav.do(sw3.Forward(0))
 
         # TODO: check if the second buoy was center, if so, dont do another approach
-        riseup_routine = sw3.RelativeDepth(OVER_DEPTH)
+        riseup_routine = sw3.RelativeDepth(REL_OVER_DEPTH)
         runover_routine = sw3.Forward(FORWARD_SPEED)
         stop_routine = sw3.Forward(0)
         depth_goto = sw3.SetDepth(self.depth_seen)

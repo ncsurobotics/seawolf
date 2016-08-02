@@ -6,7 +6,7 @@ from missions.base import MissionBase
 import sw3, time
 
 MISSION_TIMEOUT = 400
-TIMEOUT_ENABLED = False
+TIMEOUT_ENABLED = True
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = .9
@@ -44,6 +44,7 @@ class GateMission(MissionBase):
         ))
 
     def step(self, vision_data):
+        print "timeout = {}".format(self.mission_timeout)
         if TIMEOUT_ENABLED:
             self.mission_timeout -= 1
 

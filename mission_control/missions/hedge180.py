@@ -5,8 +5,8 @@ from vision import entities
 from missions.base import MissionBase
 import sw3, time
 
-MISSION_TIMEOUT = 400
-TIMEOUT_ENABLED = False
+MISSION_TIMEOUT = 1200
+TIMEOUT_ENABLED = True
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.5
@@ -29,14 +29,19 @@ class HedgeMission180(MissionBase):
     def init(self):
         # Set depth to hedge hight, but keep heading at same time
         sw3.nav.do(sw3.CompoundRoutine(
+            sw3.Forward(0),
             sw3.HoldYaw(),
-            sw3.SetDepth(HEDGE_DEPTH)
+            sw3.SetDepth(HEDGE_DEPTH),
         ))
 
         # give some time for the dive to complete
+        time.sleep(4)
+        """
         current_depth = sw3.data.depth()
-        while current_depth >= HEDGE_DEPTH - 3:
+        while current_depth <= HEDGE_DEPTH - 3:
+            print "changing depth ({}) to {}".format(current_depth, HEDGE_DEPTH)
             current_depth = sw3.data.depth()
+        """
 
 
         # start vision
@@ -49,6 +54,8 @@ class HedgeMission180(MissionBase):
         ))
 
     def step(self, vision_data):
+        print "timeout = {}".format(self.mission_timeout)
+        
         # enable timeouts if necessary
         if TIMEOUT_ENABLED:
             self.mission_timeout -= 1
@@ -116,15 +123,18 @@ class HedgeMission180(MissionBase):
         """the code for turning the robot, and passing through the hedge
         with style."""
         turn_routine = sw3.RelativeYaw(180)
-        stop_routine = sw3.Forward(0)
-        backup_routine = sw3.Forward(BACKUP_SPEED)
+        stop_routine = sw3.Forward(0, 0.1)
+        backup_routine = sw3.Forward(BACKUP_SPEED, BACKUP_TIME)
 
         # stop
         sw3.nav.do(stop_routine)
+        time.sleep(1)
         
 
         # 180
-        sw3.nav.do(turn_routine)              # do a 180
+        sw3.nav.do(
+            stop_routine,
+            turn_routine,)              # do a 180
         time.sleep(10)
 
         sw3.nav.do(backup_routine)             # backup

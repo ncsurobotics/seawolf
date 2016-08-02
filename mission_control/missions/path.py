@@ -9,7 +9,7 @@ from sw3 import util
 
 import seawolf as sw
 
-MISSION_TIMEOUT = 5
+MISSION_TIMEOUT = 45
 DEGREE_PER_PIXEL = 0.10
 STRAIGHT_TOLERANCE = 3  # In degrees
 FORWARD_SPEED = 0.3
@@ -37,11 +37,11 @@ class PathMission(MissionBase):
             self.process_manager.start_process(entities.PathEntity, "path", "down", debug=True)
         sw3.nav.do(sw3.CompoundRoutine([sw3.Forward(FORWARD_SPEED),
                                         sw3.RelativeYaw(0),
-                                        sw3.SetDepth(2)]))
+                                        sw3.SetDepth(4)]))
 
         self.reference_angle = sw.var.get("YawPID.Heading") * (pi / 180) % (2 * pi)
         self.state = "centering"
-        self.set_timer("path_timeout", 45, self.fail_mission)
+        self.set_timer("path_timeout", MISSION_TIMEOUT, self.fail_mission)
 
     def step(self, vision_data):
 

@@ -34,6 +34,7 @@ from .hedgeR import HedgeREntity
 from .hedgeY import HedgeYEntity
 from .hedgetesting import HedgeTestingEntity
 from .hedgetest import HedgeTestEntity
+from .hedge180 import Hedge180Entity
 # from .oldhedge import OldHedgeEntity
 from .buoycontour import BuoyContourEntity
 from .buoycontours2 import BuoyContour2Entity
@@ -55,7 +56,7 @@ entity_classes = {
     "buoycontour": BuoyContourEntity,
     "buoycontour2": BuoyContour2Entity,
     "buoyhough": BuoyHoughEntity,
-    "hedge": HedgeEntity,
+    "hedge": Hedge180Entity, #HedgeEntity,
     "weapons": WeaponsEntity,
     "doublepath": DoublePathEntity,
     # "bins": BinsEntity,

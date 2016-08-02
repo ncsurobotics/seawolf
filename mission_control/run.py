@@ -70,7 +70,7 @@ import missions
 from mission_controller import MissionController
 
 BUOY_DEPTH = 4
-
+#
 # Ordered list of tasks.  Can be one of the following types:
 #  * Mission Class - Found in ``missions.<name>Mission``.  Instantiated with no
 #                    arguments.
@@ -79,22 +79,33 @@ BUOY_DEPTH = 4
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
     #missions.GateMission,   # 01: gate
-    #missions.PathMission,   
-    #sw3.Forward(.2,1),       
+    #missions.PathMission, 
+    #sw3.SetDepth(4,2),
+    #sw3.Forward(0.9,30),
+    #sw3.RelativeYaw(-30,10),
+    #sw3.SetDepth(9,5),
+    #sw3.Forward(0.9,90),
+    #sw3.Forward(0.9,15),
+    #sw3.RelativeYaw(30,1),
+    #sw3.Forward(0.9,10),
+
     #sw3.Forward(0,1),
     #sw3.RelativeYaw(0,2),  # 
+
+    #missions.BuoyMission,   
+    #missions.SimpleYellowBuoyMission,
+    #missions.SimpleYellowPullBuoyMission,
+    #missions.PathMission, 
+    #missions.ReverseHedgeMission,
+    #missions.HedgeMission180,
 
     #sw3.Forward(-1,3),     
     #sw3.Forward(0,.1),      #
     #sw3.SetDepth(4,2,),      #
+    #missions.AcousticsMission,
+    missions.AcousticsMission1,
     
-    #missions.BuoyMission,   
-    #missions.SimpleYellowBuoyMission,
-    missions.SimpleYellowPullBuoyMission,
-    missions.PathMission, 
-    #missions.ReverseHedgeMission,
 
-    missions.HedgeMission180,
     
     #sw3.ZeroThrusters(0.1),
     #(sw3.nav.do, sw3.RelativeYaw(10,5)),
@@ -104,7 +115,11 @@ MISSION_ORDER = [
     #missions.HedgeMission,
     #missions.NewBuoyMission,
     #missions.SimpleBuoyMission,
-    #sw3.Forward(-1,3),
+    #sw3.Forward(0.9,10),
+    #sw3.Forward(0,10),
+    #sw3.SetDepth(0),
+    #sw3.Forward(0,10),
+    #sw3.SetDepth(4),
     #sw3.ZeroThrusters(0.1),
     #missions.PathMission, 
     #missions.PathMission, 

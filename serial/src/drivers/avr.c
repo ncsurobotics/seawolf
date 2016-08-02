@@ -333,7 +333,7 @@ int main(int argc, char** argv) {
         Var_sync();
 
         if(Var_poked("Bow")) {
-        	//printf("Bow = %.2f\n", -Var_get("Bow"));
+        //printf("Bow = %.2f\n", -Var_get("Bow"));
             send_message(sp, SW_MOTOR, BOW, (int) (MOTOR_RANGE * -Var_get("Bow") * RANGE_CORRECTION));
         }
 

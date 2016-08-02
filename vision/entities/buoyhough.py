@@ -417,11 +417,18 @@ class BuoyHoughEntity(VisionEntity):
         svr.debug("debug", self.debug_to_cv)
 
         # generate vision output
+        FOV_x = 71.0
+        FOV_y = 40.0
+        x_resolution = frame.shape[1]
+        y_resolution = frame.shape[0]
+
+
         self.output.buoys = []
         if self.confirmed is not None and len(self.confirmed) > 0:
             for buoy in self.confirmed:
-                buoy.theta = buoy.centerx #<- a rough approximation
-                buoy.phi = buoy.centery   #<- a rough approximation
+
+                buoy.theta = (buoy.centerx - x_resolution/2.0) / (x_resolution/2.0) * (FOV_x/2.0) #<- a rough approximation
+                buoy.phi = -(buoy.centery - y_resolution/2.0) / (y_resolution/2.0) * (FOV_y/2.0)  #<- a rough approximation
                 buoy.id = buoy.id
                 self.output.buoys.append(buoy)
 

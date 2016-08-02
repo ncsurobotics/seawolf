@@ -13,11 +13,13 @@ from sw3 import util
 
 import seawolf as sw
 
+"""Robot will try to track pinger untill pitch array reads heading in behind of robot.
+Prone to stopping when the robot is turned 90 degrees from the pinger.
+"""
+
 PORT_NAME = '/dev/ttyUSB3'
 YAW_TOLERANCE = 10
 ACOUSTICS_SAMPLING_INTERVAL = 5
-
-"""FOREVER FOLLOW"""
 
 # always try to record data from this test
 
@@ -38,7 +40,7 @@ ACOUSTICS_SAMPLING_INTERVAL = 5
 
 
 
-class AcousticsMission(MissionBase):
+class AcousticsMission1(MissionBase):
 
     def init(self):
         '''runs at start of mission '''
@@ -47,7 +49,7 @@ class AcousticsMission(MissionBase):
         self.acoustics.connect(PORT_NAME)
 
         # enable logger
-        self.acoustics.start_logger('acoustics_{}'.format(time.time()))
+        self.acoustics.start_logger('acoustics1_{}'.format(time.time()))
 
         # pinger object variable
         self.ac_data = None
@@ -136,27 +138,12 @@ class AcousticsMission(MissionBase):
 
         elif self.action == 'drive_to_pinger':
             if self.ping_stale or self.ping_used:
-                self.action = 'no_ping'
-
-                # slow down
-                sw3.nav.do(sw3.Forward(0.25))
-
                 return
             else:
                 self.change_heading( 0.5, self.last_yaw_reading)
                 self.ping_used = True
                 
-        elif self.action == 'no_ping':
-            if self.ping_stale or self.ping_used:
-                return
-            else:
-                self.action = 'drive_to_pinger'
-                self.change_heading(0.5, self.last_yaw_reading)
-                return
-
-
-
-
-        
+                #if self.last_pitch_reading < 10:
+                #    self.stop()
 
     
