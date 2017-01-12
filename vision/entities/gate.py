@@ -117,14 +117,16 @@ class GateEntity(VisionEntity):
         cv.SetImageCOI(hsv, 0)  #reset COI
         
         #shift hue of image such that orange->red are at top of spectrum
+        '''
         binary = libvision.misc.cv_to_cv2(binary)
         binary = libvision.misc.shift_hueCV2(binary, self.target_shift)
         binary = libvision.misc.cv2_to_cv(binary)
+	'''
 
         #correct for wraparound on red spectrum
         #cv.InRange(binary,a_array,b_array,binarytest) #generate mask
         #cv.Add(binary,cv.fromarray(ones*180),binary,mask=binarytest) #use mask to selectively add values
-        #svr.debug("R2?",binary)
+        svr.debug("R2?",binary)
         svr.debug("R2?",binary)
 
         #run adaptive threshold for edge detection and more noise filtering
