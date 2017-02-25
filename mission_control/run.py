@@ -6,9 +6,10 @@ The main Seawolf mission control script.
 
 import sys
 import os
-from optparse import OptionParser
-from time import sleep
 import sw3
+from optparse import OptionParser
+from time import sleep 
+
 
 simulator = False
 if __name__ == "__main__":
@@ -81,9 +82,9 @@ BUOY_DEPTH = 4
 #  * Tuple - First item must be a mission class.  The rest of the tuple is
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
-    #missions.GateMission,   # 01: gate
-    #sw3.Forward(.5, 3),
-    #sw3.SetDepth(.5,3),
+    missions.GateMission,   # 01: gate
+    sw3.Forward(.5, 3),
+    sw3.SetDepth(.5,3),
 
     #missions.PathMission, 
     #sw3.SetDepth(1),
@@ -137,7 +138,7 @@ MISSION_ORDER = [
     #missions.HedgeMission,
     #missions.FakePizzaMission
 
-    missions.AcousticsMission1
+    #missions.AcousticsMission1
 ]
 
 def trace(frame, event, arg):
