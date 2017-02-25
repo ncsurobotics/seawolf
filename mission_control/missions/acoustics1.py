@@ -1,10 +1,11 @@
+
 from __future__ import division
 import sys
-sys.path.append("/home/seawolf/software/acoustics/host_communication/seawolf/")
+sys.path.append("/home/seawolf/acoustics/host_communication/seawolf")
 import time
 
 from vision import entities
-import acoustics_client
+from acoustics import Acoustics
 from missions.base import MissionBase
 import sw3
 import math
@@ -45,7 +46,7 @@ class AcousticsMission1(MissionBase):
     def init(self):
         '''runs at start of mission '''
         #self.process_manager.start_process(entities.PathEntity, "path", "forward", debug=True)
-        self.acoustics = acoustics_client.Acoustics()
+        self.acoustics = Acoustics()
         self.acoustics.connect(PORT_NAME)
 
         # enable logger
