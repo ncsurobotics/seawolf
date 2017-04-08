@@ -41,7 +41,7 @@ screen -dr seawolf -X screen -t HUD
 sleep 0.2
 screen -dr seawolf -p HUD -X stuff "cd applications
 "
-screen -dr seawolf -p HUD -X stuff "./bin/depthmonitor
+screen -dr seawolf -p HUD -X stuff "./bin/depthmonitor2
 "
 screen -dr seawolf -p HUD -X stuff "
 "

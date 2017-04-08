@@ -1,1 +1,0 @@
---std=c99 -Wall `python-config --includes --libs` -D__SW_LIBVISION

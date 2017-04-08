@@ -82,7 +82,7 @@ BUOY_DEPTH = 4
 #  * Tuple - First item must be a mission class.  The rest of the tuple is
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
-    #missions.GateMission,   # 01: gate
+    missions.GateMission325,   # 01: gate
     #sw3.Forward(0.5, 3),
     #sw3.Forward(0.0,2),
     sw3.SetDepth(3, 2),
