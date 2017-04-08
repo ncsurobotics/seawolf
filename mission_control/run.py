@@ -82,12 +82,15 @@ BUOY_DEPTH = 4
 #  * Tuple - First item must be a mission class.  The rest of the tuple is
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
-    missions.GateMission,   # 01: gate
-    sw3.Forward(.5, 3),
-    sw3.SetDepth(.5,3),
+    #missions.GateMission,   # 01: gate
+    #sw3.Forward(0.5, 3),
+    #sw3.Forward(0.0,2),
+    sw3.SetDepth(3, 2),
+    #sw3.Forward(0.0, 1),
 
-    #missions.PathMission, 
+    missions.PathMission, 
     #sw3.SetDepth(1),
+    #sw3.Forward(0),
     #sw3.Forward(0.9,30),
     #sw3.RelativeYaw(0),
     #sw3.SetDepth(2),
@@ -108,7 +111,7 @@ MISSION_ORDER = [
 
     #sw3.Forward(-1,3),     
     #sw3.Forward(0,.1),      #
-    #sw3.SetDepth(4,2,),      #
+    sw3.SetDepth(4,2,),
     #missions.AcousticsMission,
     #missions.AcousticsMission,
     
@@ -137,7 +140,6 @@ MISSION_ORDER = [
     #(missions.PathMission, True, 1),
     #missions.HedgeMission,
     #missions.FakePizzaMission
-
     #missions.AcousticsMission1
 ]
 

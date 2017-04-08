@@ -89,7 +89,7 @@ class AcousticsMission1(MissionBase):
             # check if ping received was pretty old
             self.ping_age = self.ac_data['data']['epoch']
             self.epoch = time.time() - self.ping_age
-            print "ping_age is {} (epoch = {})".format(self.ping_age, self.epoch)
+            #print "ping_age is {} (epoch = {})".format(self.ping_age, self.epoch)
             
             if self.ping_age > ACOUSTICS_SAMPLING_INTERVAL:
                 print "hi"
@@ -106,8 +106,8 @@ class AcousticsMission1(MissionBase):
             self.last_yaw_reading = self.ac_data['data']['heading']['ab']
             self.last_pitch_reading =   -self.ac_data['data']['heading']['cd']
 
-           
-            print "PING!!! yaw={}, pitch={}".format(self.last_yaw_reading,
+            if self.ping_age < 2: 
+                print "PING!!! yaw={}, pitch={}".format(self.last_yaw_reading,
                 self.last_pitch_reading)
 
             
@@ -131,7 +131,7 @@ class AcousticsMission1(MissionBase):
             if self.ping_stale:
                 return
             else:
-                self.change_heading( 0.5, self.last_yaw_reading)
+                self.change_heading( 0.0, self.last_yaw_reading)
                 self.action = 'drive_to_pinger'
 
                 # mark ping as used
@@ -141,7 +141,7 @@ class AcousticsMission1(MissionBase):
             if self.ping_stale or self.ping_used:
                 return
             else:
-                self.change_heading( 0.5, self.last_yaw_reading)
+                self.change_heading( 0.0, self.last_yaw_reading)
                 self.ping_used = True
                 
                 #if self.last_pitch_reading < 10:

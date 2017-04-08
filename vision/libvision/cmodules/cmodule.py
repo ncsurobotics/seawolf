@@ -7,7 +7,7 @@ c_module package.
 from collections import namedtuple
 from os import path
 import ctypes
-
+from ctypes.util import find_library
 import cv
 
 from cvtypes import IplImage, IplImage_p
@@ -129,8 +129,11 @@ class CModule(object):
         '''Open the ctypes object for the underlying shared object.'''
 
         object_file_name = path.join(SOURCE_DIRECTORY, self.file_name)
+        print SOURCE_DIRECTORY
+        print object_file_name
+        
         try:
-            self.ctypes_object = ctypes.cdll.LoadLibrary(object_file_name)
+            self.ctypes_object = ctypes.util.find_library(object_file_name)
         except OSError as e:
             raise OSError('Could open "%s". Did you forget to compile libvision?  Error: %s' % (object_file_name, e))
 
