@@ -10,9 +10,9 @@ STATUS_LIGHT_ON = 2
 
 APPS_TO_START = [
     "./bin/depthpidpy",
-    "./bin/yawpidpy",
     "./bin/pitchpidpy",
     "./bin/rollpidpy",
+    "./bin/yawpidpy",
     "./bin/mixer",
 ]
 

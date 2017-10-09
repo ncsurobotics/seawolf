@@ -9,7 +9,7 @@ sys.path.append(mission_control_directory)
 
 # Entities
 from .test import TestEntity
-from .gate import GateEntity, GATE_BLACK, GATE_WHITE
+from .gate import GateEntity
 #from .binoculartest import BinocularTest
 from .path import PathEntity
 #from .buoy import BuoyEntity

@@ -1,6 +1,7 @@
 
 CC = gcc
 
+
 OPENCV_FLAGS = $(shell pkg-config opencv --cflags)
 OPENCV_LDFLAGS = $(shell pkg-config opencv --libs)
 
@@ -9,6 +10,7 @@ LDFLAGS = --shared $(OPENCV_LDFLAGS)
 
 # For Debugging
 CFLAGS += -g
+CFLAGS += -std=c99
 
 SOURCES = $(wildcard src/*.c)
 SHARED_OBJECTS = $(SOURCES:%.c=%.so)

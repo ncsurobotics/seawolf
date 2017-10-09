@@ -8,12 +8,15 @@ from buoy2 import BuoyMission
 from buoy_simple import SimpleBuoyMission
 from buoy_simpleYellow import SimpleYellowBuoyMission
 from buoy_simpleYellowPull import SimpleYellowPullBuoyMission
+from gate325 import GateMission325
+
+
 from new_buoy import NewBuoyMission
 from hedge import HedgeMission
 from hedge180 import HedgeMission180
 from reverse_hedge import ReverseHedgeMission
 from bins import BinsMission
-from acoustics import AcousticsMission
+#from acoustics import AcousticsMission
 from acoustics1 import AcousticsMission1
 from new_bins import NewBinsMission
 from fakepizza import FakePizzaMission
@@ -39,6 +42,6 @@ mission_classes = {
     'new_bins': NewBinsMission,
     'fakepizza': FakePizzaMission,
     'strafetest': StrafeMission,
-    'acoustics': AcousticsMission,
+#    'acoustics': AcousticsMission,
     'acoustics1': AcousticsMission1,
 }

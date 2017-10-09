@@ -143,7 +143,7 @@ def scale_32f_image(image):
 
 def shift_hueCV2(frame, shift, mode="normal"):
     #shift hue by desired amount
-    frame += shift
+    frame = frame + shift
     
     if mode=="normal":
         pass

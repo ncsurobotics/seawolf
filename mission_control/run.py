@@ -6,9 +6,10 @@ The main Seawolf mission control script.
 
 import sys
 import os
-from optparse import OptionParser
-from time import sleep
 import sw3
+from optparse import OptionParser
+from time import sleep 
+
 
 simulator = False
 if __name__ == "__main__":
@@ -53,6 +54,9 @@ parent_directory = os.path.realpath(os.path.join(
     os.path.abspath(__file__),
     "../.."
 ))
+print parent_directory
+#parent_directory = "/home/seawolf/"
+print parent_directory + "vision/"
 vision_directory = os.path.join(parent_directory, "vision/")
 sys.path.append(vision_directory)
 #acoustics_directory = os.path.join(parent_directory, "acoustics/")
@@ -78,19 +82,25 @@ BUOY_DEPTH = 4
 #  * Tuple - First item must be a mission class.  The rest of the tuple is
 #            passed in as arguments to the ``mission.__init__``.
 MISSION_ORDER = [
-    #missions.GateMission,   # 01: gate
-    #missions.PathMission, 
-    #sw3.SetDepth(4,2),
+    missions.GateMission325,   # 01: gate
+    #sw3.Forward(0.5, 3),
+    #sw3.Forward(0.0,2),
+    sw3.SetDepth(3, 2),
+    #sw3.Forward(0.0, 1),
+
+    missions.PathMission, 
+    #sw3.SetDepth(1),
+    #sw3.Forward(0),
     #sw3.Forward(0.9,30),
-    #sw3.RelativeYaw(-30,10),
-    #sw3.SetDepth(9,5),
+    #sw3.RelativeYaw(0),
+    #sw3.SetDepth(2),
     #sw3.Forward(0.9,90),
     #sw3.Forward(0.9,15),
     #sw3.RelativeYaw(30,1),
     #sw3.Forward(0.9,10),
 
-    #sw3.Forward(0,1),
-    #sw3.RelativeYaw(0,2),  # 
+    #sw3.Forward(q,1),
+    #sw3.RelativeYaw(0),  
 
     #missions.BuoyMission,   
     #missions.SimpleYellowBuoyMission,
@@ -101,11 +111,9 @@ MISSION_ORDER = [
 
     #sw3.Forward(-1,3),     
     #sw3.Forward(0,.1),      #
-    #sw3.SetDepth(4,2,),      #
+    sw3.SetDepth(4,2,),
     #missions.AcousticsMission,
-    missions.AcousticsMission1,
-    
-
+    #missions.AcousticsMission,
     
     #sw3.ZeroThrusters(0.1),
     #(sw3.nav.do, sw3.RelativeYaw(10,5)),
@@ -132,6 +140,7 @@ MISSION_ORDER = [
     #(missions.PathMission, True, 1),
     #missions.HedgeMission,
     #missions.FakePizzaMission
+    #missions.AcousticsMission1
 ]
 
 def trace(frame, event, arg):
