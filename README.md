@@ -75,8 +75,14 @@ Go into the svr directory and run:
     $ make
     $ sudo make install
     $ sudo ldconfig
+To test type:
+    $svrd &
+    $svrctl -o forward,v4l:dev=/dev/video0
+    $svrwatch -a
 
-To test:
+A window should pop up that shows your camera stream. Press ctrl c in the teriminal to stop the stream and "pkill svrd" to stop svr.
+
+To test python import:
 
     $ python
     >>> import svr
