@@ -35,10 +35,10 @@ You will use the git version control system to get these repositories. To clone 
 
 Do this for each of the following URLs
 
-* `git@github.com:ncsurobotics/libseawolf.git`
-* `git@github.com:ncsurobotics/swpycv.git`
-* `git@github.com:ncsurobotics/svr.git`
-* `git@github.com:ncsurobotics/seawolf.git`
+* `https://github.com/ncsurobotics/libseawolf.git`
+* `https://github.com/ncsurobotics/swpycv.git`
+* `https://github.com/ncsurobotics/svr.git`
+* `https://github.com/ncsurobotics/seawolf.git`
 
 In order push changes to our code back to ncsurobotics repositories, you will need to create a github account and have it added to our organization. You will also need to set up an SSH key on your computer by following [these instructions](https://help.github.com/articles/generating-ssh-keys/).
 
