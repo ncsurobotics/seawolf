@@ -75,9 +75,7 @@ Go into the svr directory and run:
     $ make
     $ sudo make install
     $ sudo ldconfig
-
-To test svr:
-
+To test type:
     $svrd &
     $svrctl -o forward,v4l:dev=/dev/video0
     $svrwatch -a
