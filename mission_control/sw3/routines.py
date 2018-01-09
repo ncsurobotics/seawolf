@@ -10,6 +10,7 @@ import pid
 import util
 from mixer import mixer
 from data import data
+from pneumatics import missiles
 
 
 class NavRoutine(object):
@@ -133,7 +134,38 @@ class NavRoutine(object):
 class CompoundInterferenceException(Exception):
     pass
 
+'''
+@author Rafael Esteller 2/8/17
+routine is for the sole purpose of interacting with the pneumatics system.
+it interacs with pneumatics class
+it accepts the name of the location or the pin number -1 as the input into location.
+the location is the pin to fire.
+'''
+class Fire(NavRoutine):
+    def __init__(self, location, timeout= -1):
+        super(Fire, self).__init__(timeout)
+        self.locations = ({'Grabber2': 1,'Grabber1': 2, 'Torpedo2': 3,
+                          'Torpedo1': 4, 'Dropper2': 5, 'Dropper1':6,
+                           'G2':1, 'G1':2, 'T2':3, 'T1':4, 'D2':5, 'D1':6})
+        if isinstance(location, str) and location in self.locations.keys():
+           self.location = self.locations[location]
+        elif isinstance(location, int) and location >= 1 and location <= 6:
+           self.location = location
+        else:
+           print "incorrect input, input location of projectile or pin number (1-6)"
+           
+    def _start(self):
+      if isinstance(self.location, int) and self.location >= 1 and self.location <= 6:
+         missiles.fire((self.location - 1))
+         print "launching projectile: ", self.location
+      else:
+         print "Incorrect projectile name/number"
+       
+      print "done with Firing attempt"
+      self.completed()
 
+
+        
 class CompoundRoutine(NavRoutine):
 
     """ Run multiple routines simultaneously """
@@ -393,6 +425,9 @@ class Strafe(NavRoutine):
 
     def _start(self):
         mixer.strafe = self.rate
+
+    def _cleanup(self):
+        mixer.strafe = 0.0
 
 
 class StrafeT(NavRoutine):
