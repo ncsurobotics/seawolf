@@ -2,7 +2,7 @@
 
 Notes on installing Seawolf stuff.
 
-URC's software was written with Fedora, Debian, Mint, and Ubuntu in mind. All the software _should_ work on Mac as well.
+URC's software was written with Fedora, Debian, Mint, and Ubuntu in mind. All the software _should_ work on Mac as well. It _should_ work on archlinux, see [instructions for archlinux](instructions-archlinux.md)
 
 We assume some basic command line knowledge in order to complete this.
 
