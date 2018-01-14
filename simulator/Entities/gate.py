@@ -1,10 +1,10 @@
 
 #length of gate in meters
-gateLength = 1
+gateLength = 1.2
 #widht of gate in meters
-gateWidth = 2
+gateWidth = 2.4
 #poleDiameter
-poleDiameter = .1
+poleDiameter = .052
 
 #DB if true, shows graph of where Entity is relative to robot
 DB = False
