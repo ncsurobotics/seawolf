@@ -1,8 +1,8 @@
 
 #length of path in meters
-pathLength = 1.0
+pathLength = 1.2
 #widht of paht in meters
-pathWidth = .5
+pathWidth = .15
 
 #DB if true, shows graph of where Entity is relative to robot
 DB = False
