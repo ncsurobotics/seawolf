@@ -25,6 +25,23 @@
 
 #include <pthread.h>
 
+
+/** for usb con */
+#include<stdlib.h>
+#include<stdio.h>
+//this library is used for opening of usb device
+#include <fcntl.h>
+//this libary is used for configuring the serial port
+#include <termios.h>
+//termios.h uses this library, does variety of random things
+#include <unistd.h>
+//file included in fcntl
+#include <sys/types.h>
+
+
+
+
+
 /* PSI per foot of fresh water (calculate) */
 #define PSI_PER_FOOT 0.433527504
 
@@ -110,30 +127,35 @@ static const char* error_messages[] = {
 
 static pthread_mutex_t send_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static void avr_synchronize(SerialPort sp) {
+static void avr_synchronize(int sp) {
     int i;
-    int n;
+    char buf[] = {SW_RESET};
+    int bytesRead = 0;
 
     for(i = 0; i < 5; i++) {
-        Serial_sendByte(sp, SW_RESET);
+        write(sp, buf, 1);
     }
 
     Logging_log(DEBUG, "Sent reset sequence");
 
+    printf("sync\n");
     i = 0;
     while(i < 10) {
-        n = Serial_getByte(sp);
-
-        if(n == 0xff) {
-            i++;
-        } else{
-            i = 0;
-        }
+      bytesRead = read(sp, buf, 1);
+      if (bytesRead == 1 && (buf[0] & 0xff) == 0xff) {
+        i++;
+      } else {
+        i = 0;
+      }
+      
     }
 
-    Serial_sendByte(sp, 0x00);
-
-    while(Serial_getByte(sp) != 0xf0);
+    buf[0] = 0x00;
+    
+    write(sp, (char *) buf, 1);
+    
+    while((buf[0] & 0xff)!= 0xf0) { read(sp, buf, 1); }
+    printf("done sync \n");
 }
 
 
@@ -194,18 +216,35 @@ static void send_message(SerialPort sp, unsigned char cmd, unsigned char arg1, u
 
     
     pthread_mutex_lock(&send_lock);
-    Serial_send(sp, command, 3);
+    write(sp, command, 3);
+    printf("AVR: SENT:  (0x%02x, 0x%02x, 0x%02x)\n", 0xff & command[0], 0xff & command[1], 0xff & command[2]);
     pthread_mutex_unlock(&send_lock);
 }
 
 static void* receive_thread(void* _sp) {
-    SerialPort sp = *((SerialPort*)_sp);
-    uint8_t frame[3];
+    SerialPort sp = *((int *)_sp);
+    
+    FILE *f = fopen("log.txt", "w");
+    
+    int bufSize = 3;
+    int bytesRead = 0;
+    int temp = 0;
+    uint8_t frame[bufSize];
 
     while(true) {
-        Serial_get(sp, frame, 3);
-        //Logging_log(DEBUG, Util_format("Checking packet from AVR! (0x%02x, 0x%02x, 0x%02x)",
-        //                                      frame[0], frame[1], frame[2]));
+        while(bytesRead < bufSize && bytesRead >= 0) {
+          temp = read(sp, frame + bytesRead, bufSize - bytesRead);
+          if (temp > 0) {
+            bytesRead += temp;
+          }
+        }
+        
+        bytesRead = 0;
+        
+        
+        fprintf(f, "Checking packet from AVR! (0x%02x, 0x%02x, 0x%02x)\n", frame[0], frame[1], frame[2]);
+        
+        printf("Checking packet from AVR! (0x%02x, 0x%02x, 0x%02x)\n", frame[0], frame[1], frame[2]);
 
         switch(frame[0]) {
         case SW_DEPTH:
@@ -284,25 +323,66 @@ int main(int argc, char** argv) {
     /* Device path */
     char* device_real = argv[1];
 
-    /* Serial port device */
-    SerialPort sp;
 
     /* Receive thread */
     pthread_t thread;
 
     /* Open and initialize the serial port */
-    sp = Serial_open(device_real);
+    int sp = open(device_real, O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if(sp == -1) {
+        /* Error opening port */
+        return -1;
+    }
+    
+    
+    struct termios term_conf;
+
+    /* Load attributes */
+    tcgetattr(sp, &term_conf);
+
+    /* Set options */
+    term_conf.c_cflag &= ~PARENB;
+    term_conf.c_cflag &= ~CSTOPB;
+    term_conf.c_cflag &= ~CSIZE;
+    term_conf.c_cflag |= CS8 | CLOCAL | CREAD;
+
+    term_conf.c_iflag = IGNPAR;
+    term_conf.c_oflag = 0;
+    term_conf.c_lflag = 0;
+    
+    
+    
+    if (tcgetattr(sp, &term_conf) != 0) return 1;
+  
+  //setting the input speed, the first input is the pointer to termios struct and the seccond is the speed which are from def macros in termios.h, usual B<rate>
+  if (cfsetispeed(&term_conf, B57600) != 0) return 1;
+  //setting the ouput speed, similar to input speed
+  if (cfsetospeed(&term_conf, B57600) != 0) return 1;
+  
+  //cfmakeraw(&termS);
+  
+  //setting the changes, TCSANOW means change happens immediatly
+  if (tcsetattr(sp, TCSANOW, &term_conf) != 0) return 1;
+  
+  sleep(2);
+  //flushing the stream
+  //TCIFLUSH flushes input data
+  //TCOFLUSH flushes output data
+  //TCIOFLUSH flushes both
+  tcflush(sp, TCIOFLUSH);
+    
+    
+    
+    
+    
+    
 
     if(sp == -1) {
         Logging_log(ERROR, "Could not open serial port for AVR! Exiting.");
         Seawolf_exitError();
     }
 
-    /* Set options */
-    Serial_setBaud(sp, 57600);
-    Serial_setBlocking(sp);
-    Serial_flush(sp);
-
+    
     avr_synchronize(sp);
     Logging_log(DEBUG, "Synchronized");
 
