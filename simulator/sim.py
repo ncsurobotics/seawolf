@@ -63,8 +63,8 @@ def setup():
 
 def main():
   #connecting to hub
-  sw.loadConfig("../conf/seawolf.conf");
-  sw.init("Simulator : Main");
+  sw.loadConfig("../conf/seawolf.conf")
+  sw.init("Simulator : Main")
   objects = setup()
   pid = pidSim()
   robo = posSim(location = [0, 0, 0], axis = [-20, 20], objects= objects)

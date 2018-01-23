@@ -14,7 +14,7 @@ SLOW_FORWARD_SPEED = 0.2
 
 RECKON_TIME = 16
 GATE_LOST_THRESHOLD = 30
-DEPTH = 4
+DEPTH = -1
 DELAY = 1
 
 class GateMission(MissionBase):
