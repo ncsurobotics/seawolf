@@ -1,5 +1,5 @@
-Entities are the things seawofl is looking for in the water.
-All enites must have the follwing things
+Entities are the things seawolf is looking for in the water.
+All entities must have the following things
 
 
 DB = True/False
