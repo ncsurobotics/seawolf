@@ -136,7 +136,7 @@ static void avr_synchronize(int sp) {
         write(sp, buf, 1);
     }
 
-    Logging_log(DEBUG, "Sent reset sequence");
+    printf( "Sent reset sequence\n");
 
     printf("sync\n");
     i = 0;
@@ -147,6 +147,7 @@ static void avr_synchronize(int sp) {
       } else {
         i = 0;
       }
+      printf("need 10 current: %3d\n", i);
       
     }
 
@@ -154,7 +155,10 @@ static void avr_synchronize(int sp) {
     
     write(sp, (char *) buf, 1);
     
-    while((buf[0] & 0xff)!= 0xf0) { read(sp, buf, 1); }
+    while((buf[0] & 0xff)!= 0xf0) { 
+      read(sp, buf, 1);
+      printf("waiting for f0\n");
+    }
     printf("done sync \n");
 }
 
@@ -224,7 +228,7 @@ static void send_message(SerialPort sp, unsigned char cmd, unsigned char arg1, u
 static void* receive_thread(void* _sp) {
     SerialPort sp = *((int *)_sp);
     
-    FILE *f = fopen("log.txt", "w");
+    FILE *f = fopen("/home/rafael/LocalRobotics/seawolf/serial/log.txt", "w");
     
     int bufSize = 3;
     int bytesRead = 0;
@@ -258,15 +262,15 @@ static void* receive_thread(void* _sp) {
         case SW_BATTERY:
             switch(frame[1]) {
             case SLA1:
-                Logging_log(WARNING, "SLA battery 1 low!");
+                //Logging_log(WARNING, "SLA battery 1 low!");
                 break;
 
             case SLA2:
-                Logging_log(WARNING, "SLA battery 2 low!");
+                //Logging_log(WARNING, "SLA battery 2 low!");
                 break;
 
             case LIPO:
-                Logging_log(WARNING, "LiPo batteries low!");
+                //Logging_log(WARNING, "LiPo batteries low!");
                 //Var_set("StatusLight", 3);
                 break;
             }
@@ -286,7 +290,7 @@ static void* receive_thread(void* _sp) {
             /* April 3rd: Currently suspecting the Powerboard is going rouge and
             responding to with 0xFF ocassionally. */
             } else if (frame[2] == 0xFF) {
-            	Logging_log(ERROR, "AVR error: Killswitch detection fault.");
+            	printf( "AVR error: Killswitch detection fault.\n");
             
             /* else, seawolf has been killed (kill switch
             engaged), thus send out a notification indicating
@@ -298,17 +302,17 @@ static void* receive_thread(void* _sp) {
             break;
 
         case SW_ERROR:
-            Logging_log(ERROR, Util_format("AVR error: %s (0x%02x)", error_messages[frame[1]], frame[2]));
+            printf("AVR error: %s (0x%02x)\n", error_messages[frame[1]], frame[2]);
             break;
 
         case SW_REALIGN:
-            Logging_log(ERROR, "Realigning");
+            printf("Realigning\n");
             send_message(sp, SW_MARKER, SW_MARKER, SW_MARKER);
             break;
 
         default:
-            Logging_log(CRITICAL, Util_format("Invalid packet from AVR! (0x%02x, 0x%02x, 0x%02x)",
-                                              frame[0], frame[1], frame[2]));
+            printf("Invalid packet from AVR! (0x%02x, 0x%02x, 0x%02x)",
+                                              frame[0], frame[1], frame[2]);
             break;
         }
     }
@@ -323,6 +327,7 @@ int main(int argc, char** argv) {
     /* Device path */
     char* device_real = argv[1];
 
+    printf("hello\n");
 
     /* Receive thread */
     pthread_t thread;
@@ -378,13 +383,13 @@ int main(int argc, char** argv) {
     
 
     if(sp == -1) {
-        Logging_log(ERROR, "Could not open serial port for AVR! Exiting.");
+        printf("Could not open serial port for AVR! Exiting.\n");
         Seawolf_exitError();
     }
 
     
     avr_synchronize(sp);
-    Logging_log(DEBUG, "Synchronized");
+    printf("Synchronized\n");
 
     /* Spawn receive thread */
     pthread_create(&thread, NULL, receive_thread, &sp);
@@ -463,7 +468,8 @@ int main(int argc, char** argv) {
                 break;
 
             default:
-                Logging_log(ERROR, "Invalid StatusLight value!");
+                break;
+                //Logging_log(ERROR, "Invalid StatusLight value!");
             }
         }
 
