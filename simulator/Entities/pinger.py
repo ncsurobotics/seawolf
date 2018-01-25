@@ -8,19 +8,23 @@ NAME = "Pinger"
 # speed of sound in ft/sec
 SPEED_OF_SOUND = 1484;
 
+pingerLength = 1
+pingerWidth = .5
+pingerDiameter = .5
 
 # Location of each hydrophone in 3d space
 
 cd = np.array([[0,       -0.1,   0],
                [0,       -0.119, 0],
                [0.0095,   0,     0],
+               [-0.0095,  0,     0]])
                   
 class Pinger(object):
     def __init__(self, location = [0, 0, 0]):
         self.location = np.float32(location)
         self.name = NAME
         length = np.float32([0, 0, 1]) * pingerLength
-        width = np.float(1, 0, 0) * pingerWidth
+        width = np.float32([1, 0, 0]) * pingerWidth
         
         self.poles = []
         p1 = self.location - width/2
@@ -66,9 +70,11 @@ class Pinger(object):
         return (np.rad2deg(yaw), np.rad2deg(pitch))
 
     def draw(self, roboPos, COBM, camera):
+        (yaw, pitch) = self.getAngle(np.dot(COBM, self.location - roboPos))
+        
         if DB:
             self.db.draw(roboPos, COBM, camera)
-            (yaw, pitch) = getAngle(np.dot(COBM, pt - roboPos))
+            
             print("Yaw: " + str(yaw))
             print("Pitch: " + str(pitch))
             
@@ -76,7 +82,7 @@ class Pinger(object):
           pts  = []
           for pt in pole:
             pts.append(np.dot(COBM, pt - roboPos))
-          camera.drawLine(pts[0], pts[1], color = self.color, thickness = poleDiameter)
+          camera.drawLine(pts[0], pts[1], color = self.color, thickness = pingerDiameter)
         return
      
      

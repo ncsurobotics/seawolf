@@ -58,13 +58,13 @@ def setup():
           entities["Bouy"]([1, 10, -1], color = (0, 255, 0)),
           entities["Hedge"]([0, 19,-1]),
           entities["Path"]([0, 15, -5]),
-          entities["Pinger"](10, 5, -1)
+          entities["Pinger"]([10, 5, -1])
          ]
 
 def main():
   #connecting to hub
-  sw.loadConfig("../conf/seawolf.conf")
-  sw.init("Simulator : Main")
+  sw.loadConfig("../conf/seawolf.conf");
+  sw.init("Simulator : Main");
   objects = setup()
   pid = pidSim()
   robo = posSim(location = [0, 0, 0], axis = [-20, 20], objects= objects)
