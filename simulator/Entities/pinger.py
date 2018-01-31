@@ -1,6 +1,10 @@
 import numpy as np
 import math
+import seawolf as sw
 from dbEntity import dbEntity
+
+sw.loadConfig("../conf/seawolf.conf")
+sw.init("Acoustics simulator")
 
 DB = True
 NAME = "Pinger"
@@ -71,6 +75,10 @@ class Pinger(object):
 
     def draw(self, roboPos, COBM, camera):
         (yaw, pitch) = self.getAngle(np.dot(COBM, self.location - roboPos))
+        
+        # Update the values in hub. Should this be moved to another function?
+        sw.var.set("Acoustics.Pitch", pitch)
+        sw.var.set("Acoustics.Yaw", yaw)
         
         if DB:
             self.db.draw(roboPos, COBM, camera)

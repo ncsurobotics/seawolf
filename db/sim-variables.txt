@@ -51,3 +51,6 @@ Solenoid.1           = 0.0,  0,  0
 Solenoid.2           = 0.0,  0,  0
 Servo.0              = 0.0,  0,  0
 Servo.1              = 0.0,  0,  0
+
+Acoustics.Pitch      = 0.0,  0,  0
+Acoustics.Yaw        = 0.0,  0,  0
