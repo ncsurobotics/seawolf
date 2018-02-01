@@ -1,10 +1,13 @@
+#GUI for testing seawolf
+#to kill program, hit k
+
 import cv2
 import numpy as np
 import math
 import seawolf as sw
 import gui_functions
 import sys
-sys.path.append('../../../mission_control')
+sys.path.append('../../mission_control')
 import sw3
 def initializeValues():
         d.desiredBearing[0] = realToDisplayRadians(math.radians(sw.var.get("RollPID.Heading")))
@@ -344,9 +347,9 @@ class Controller:
             #clear text
             cv2.rectangle(img, (self.X[i]+textDx-50, self.Y[i]-self.radius[i]+textDy-30), (self.X[i]+150-50, self.Y[i]-self.radius[i]+textDy+10), self.BACKGROUND_COLOR, thickness=-1, lineType=8, shift=0)        
             #text write
-            cv2.putText(img, str(toRealDegrees(int(round(math.degrees(self.desiredBearing[i]),0)))), (self.X[i]+textDx-50, self.Y[i]-self.radius[i]+textDy), font, 0.8, (255, 255, 255), 1, cv2.LINE_AA)
+            cv2.putText(img, str(toRealDegrees(int(round(math.degrees(self.desiredBearing[i]),0)))), (self.X[i]+textDx-50, self.Y[i]-self.radius[i]+textDy), font, 0.8, (255, 255, 255), 1, 8)
             #text read
-            cv2.putText(img, str(toRealDegrees(int(round(math.degrees(self.actualBearing[i]),0)))), (self.X[i]+textDx+100-50, self.Y[i]-self.radius[i]+textDy), font, 0.8, (0, 0, 255), 1, cv2.LINE_AA)
+            cv2.putText(img, str(toRealDegrees(int(round(math.degrees(self.actualBearing[i]),0)))), (self.X[i]+textDx+100-50, self.Y[i]-self.radius[i]+textDy), font, 0.8, (0, 0, 255), 1, 8)
             #clear text paused
             cv2.rectangle(img, (self.X[i]+8*len(self.title[i]), self.Y[i]-125), (self.X[i]+8*len(self.title[i])+50, self.Y[i]-100), self.BACKGROUND_COLOR, thickness=-1, lineType=8, shift=0)  
             #text paused
@@ -385,10 +388,10 @@ class Controller:
             #text
             if self.enabled[i]:
                     if self.barType[i] == 1:
-                            cv2.putText(img, ("%.2f" % (self.slideValue(i))), (self.X[i] - 70, self.Y[i]-10), font, 0.8, (255, 255, 255), 1, cv2.LINE_AA)
+                            cv2.putText(img, ("%.2f" % (self.slideValue(i))), (self.X[i] - 70, self.Y[i]-10), font, 0.8, (255, 255, 255), 1, 8)
                     if self.barType[i] == 0:
-                            cv2.putText(img, ("%.2f" % (self.slideValue(i))), (self.X[i], self.Y[i]-20), font, 0.8, (255, 255, 255), 1, cv2.LINE_AA)
-            #cv2.rectangle(img, (self.X[i], self.Y[i]), (self.X[i]+self.width[i], self.Y[i]+self.length[i]), (0,255,0), thickness=-1, lineType=8, shift=0)
+                            cv2.putText(img, ("%.2f" % (self.slideValue(i))), (self.X[i], self.Y[i]-20), font, 0.8, (255, 255, 255), 1, 8)
+            
     def rect(self, x, y, w, h, col):
             cv2.rectangle(img, (x, y), (x+w, y+h), col, thickness=-1, lineType=8, shift=0)
     def writeHub(self, hubVar, guiVar, i):
@@ -403,51 +406,43 @@ class Controller:
             return False
             
     def textAtC(self,x,y,text, col):
-        cv2.putText(img, text, (x, y), font, 0.8, col, 1, cv2.LINE_AA)
+        cv2.putText(img, text, (x, y), font, 0.8, col, 1, 8)
     def textAt(self,x,y,text):
-        cv2.putText(img, text, (x, y), font, 0.8, (255, 255, 255), 1, cv2.LINE_AA)
+        cv2.putText(img, text, (x, y), font, 0.8, (255, 255, 255), 1, 8)
     def setSlideValue(self, i, val):
-            if self.barType[i] == 1:
-                    self.slide[i] = int(round(((self.length[i]/(self.mapDown[i] - self.mapUp[i])) * (-1*val - self.mapUp[i])),0))
-            if self.barType[i] == 0:
-                    self.slide[i] = int(round(((self.width[i]/(self.mapDown[i] - self.mapUp[i])) * (val - self.mapUp[i])),0))
+            if self.mapDown[i] - self.mapDown[i]*.1 >= val and val >= self.mapUp[i] * 1.1:
+                    if self.barType[i] == 1:
+                            self.slide[i] = int(round(((self.length[i]/(self.mapDown[i] - self.mapUp[i])) * (-1*val - self.mapUp[i])),0))
+                    if self.barType[i] == 0:
+                            self.slide[i] = int(round(((self.width[i]/(self.mapDown[i] - self.mapUp[i])) * (val - self.mapUp[i])),0))
             
-            #self.slide[i] = 0
-            #print self.slide[i]
     def slideValue(self,i):
-        #return (slope)*(self.slide[i]-
-        #return self.slide[i]
-        #return ((self.slide[i]-self.X[i])/self.width[i])+self.min[i]#add max line formula
         if self.barType[i] == 0: #horiz
                 return mapValTo(self.slide[i], 0, self.width[i], self.mapUp[i], self.mapDown[i])
         if self.barType[i] == 1: #vertical
                 return mapValTo(self.slide[i], self.length[i], 0, self.mapUp[i], self.mapDown[i])
-
+################################################################################################################################################################start of main
 seawolfIsRunning = True
 delay = 5
              
 if(seawolfIsRunning):
-        sw.loadConfig("../../../conf/seawolf.conf")
+        sw.loadConfig("../../conf/seawolf.conf")
         sw.init("GUI") 
 WIDTH = 500
 HEIGHT = 1000
 img = np.zeros((HEIGHT,WIDTH,3), np.uint8)
 cv2.namedWindow('image')
 
-
-# addSlider(self, w, l, s, ma, mi, x, y, bt)
-#addDial(self, r, d, c, x, y):
-#def addPlayButton(self, w, l, x, y, ti, tog):
 d = Controller()
 cv2.rectangle(img, (0, 0), (WIDTH, HEIGHT), d.BACKGROUND_COLOR, thickness=-1, lineType=8, shift=0)
-up = .95
-down = -.95
+up = 1.0
+down = -1.0
 d.addDial(50,30,(0,0,255), 100, 460, "Roll")
 d.addDial(50,30,(0,0,255), 300, 460, "Pitch")
 d.addDial(50,30,(0,0,255), 100, 650, "Yaw")
 
-d.addSlider(20, 150, 50, 100, 50, 290, 590, 1, "Depth", down, up, True)
-d.addSlider(20, 150, 50, 100, 50, 290, 590, 1, "", down, up, False) #actual depth
+d.addSlider(20, 150, 50, 100, 50, 290, 590, 1, "Depth", -3, .5, True)
+d.addSlider(20, 150, 50, 100, 50, 290, 590, 1, "", -3, .5, False) #actual depth
 d.addSlider(150, 20, 50, 100, 50, 40, 800, 0, "Forward", down, up, True)
 
 
@@ -475,23 +470,6 @@ while(1):
     count += 1
     if count >= delay:
             count = 0
-    #set values here
-    
-    #sw.var.set(RollPID.Heading, float(d.desiredBearing[0]))
-   # sw.var.set(PitchPID.Heading,  float(d.desiredBearing[1]))
-    #sw.var.set(YawPID.Heading,  float(d.desiredBearing[2]))
-    
-    #d.actualBearing[0] = sw.var.get(SEA.Roll)
-    #d.actualBearing[1] = sw.var.get(SEA.Pitch)
-    #d.actualBearing[2] = sw.var.get(SEA.Yaw)
-
-    #sw.var.set(DepthPID.Heading, d.slideValue(3))
-    #sw.var.set(DepthPID.Heading, d.slideValue(4))
-    #sw.var.set(DepthPID.Heading, d.slideValue(5))
-    #print inverseDegreesToRadians(d.desiredBearing[0])
-    #,"D:",displayToRealRadians(d.desiredBearing[0]),
-    #print (d.desiredBearing[0], realToDisplayRadians(displayToRealRadians(d.desiredBearing[0]))) #print this
-    #print d.desiredBearing[0]
     
 
     if(seawolfIsRunning and count == 0):
@@ -504,15 +482,14 @@ while(1):
             d.writeHub("StrafeT", "slideValue", 10)
             d.writeHub("StrafeB", "slideValue", 11)
             d.writeHub("DepthPID.Heading", "slideValue", 3)
-            #sw.var.set("Bow",  float(d.slideValue(6)))
-            #sw.var.set("Stern",  float(d.slideValue(7)))
-            #sw.var.set("Port",  float(d.slideValue(8)))
-            #sw.var.set("Star",  float(d.slideValue(9)))
-            #sw.var.set("StrafeT",  float(d.slideValue(10)))
-            #sw.var.set("StrafeB",  float(d.slideValue(11)))
-            #need to add forward
-                    #dials
             
+                    #dials
+            if d.change[5]:
+                    a = sw3.Forward(d.slideValue(5))
+                    a.start()
+                    if abs(d.slideValue(5)) < 0.01:
+                            a.cancel()
+                    d.change[5] = 0
             if(d.writeHub("RollPID.Heading", "realRadDesBear", 0)):
                     d.setSlideValue(6, sw.var.get("Bow"))
                     d.setSlideValue(7, sw.var.get("Stern"))
@@ -530,7 +507,7 @@ while(1):
                     d.setSlideValue(10, sw.var.get("StrafeT"))
                     d.setSlideValue(11, sw.var.get("StrafeB"))
                     
-            #d.moveSlider(read)
+            
             #do this move sliders for bow [6] and stern [7]. self.slide[6,7] = mapval to inverse of typical. map value to x value . need inverse function. value to global x,y given mapping vals and global coordinates
             if(d.writeHub("YawPID.Heading", "realRadDesBear", 2)):
                     d.setSlideValue(6, sw.var.get("Bow"))
@@ -539,10 +516,7 @@ while(1):
                     d.setSlideValue(9, sw.var.get("Star"))
                     d.setSlideValue(10, sw.var.get("StrafeT"))
                     d.setSlideValue(11, sw.var.get("StrafeB"))
-            
-            #sw.var.set("RollPID.Heading", float(displayToRealRadians(d.desiredBearing[0])))
-            #sw.var.set("PitchPID.Heading", float(displayToRealRadians(d.desiredBearing[1])))
-            #sw.var.set("YawPID.Heading", float(displayToRealRadians(d.desiredBearing[2])))
+
             #changing values in gui read from seawolf
             
             d.actualBearing[0] = realToDisplayRadians(math.radians(sw.var.get("SEA.Roll")))#change these to better degree converter where math.radians() is
@@ -552,7 +526,6 @@ while(1):
             d.paused[1] = sw.var.get("PitchPID.Paused")
             d.paused[2] = sw.var.get("YawPID.Paused")
             d.paused[3] = sw.var.get("DepthPID.Paused")
-            
             
             setVars()
             d.rect(330,555,80,30,d.BACKGROUND_COLOR)
@@ -567,16 +540,6 @@ while(1):
                             d.setSlideValue(9, sw.var.get("Star"))
                             d.setSlideValue(10, sw.var.get("StrafeT"))
                             d.setSlideValue(11, sw.var.get("StrafeB"))
-                            
-                            
-           
-            #play and pause button
-    
-    #d.actualBearing[0] += 1/3.14
-    #if d.actualBearing[0] >= 2*3.14:
-        #d.actualBearing[0] = 0
-
-
  
     if k == 107: #hit k for kill
         sw.close()
