@@ -25,14 +25,12 @@ STRAFET = 10
 STRAFEB = 11
 PLAY_BUTTON = 12
 
-
 def initializeValues():
         d.desiredBearing[ROLL] = realToDisplayRadians(math.radians(sw.var.get("RollPID.Heading")))
         d.desiredBearing[PITCH] = realToDisplayRadians(math.radians(sw.var.get("PitchPID.Heading")))
         d.desiredBearing[YAW] = realToDisplayRadians(math.radians(sw.var.get("YawPID.Heading")))
-        d.setSlideValue(DEPTH_READER, sw.var.get("DepthPID.Heading"))
+        d.setSlideValueForDepthReadOnlySlider(DEPTH_READER, sw.var.get("Depth"))
         d.setSlideValue(FORWARD, 0)
-        #depth
 def setVars():
             d.setSlideValue(BOW, sw.var.get("Bow"))
             d.setSlideValue(STERN, sw.var.get("Stern"))
@@ -40,7 +38,7 @@ def setVars():
             d.setSlideValue(STAR, sw.var.get("Star"))
             d.setSlideValue(STRAFET, sw.var.get("StrafeT"))
             d.setSlideValue(STRAFEB, sw.var.get("StrafeB"))
-            d.setSlideValue(DEPTH_READER, sw.var.get("Depth"))
+            d.setSlideValueForDepthReadOnlySlider(DEPTH_READER, sw.var.get("Depth"))
             #d.setSlideValue(4, d.slideValue(3))#sw.var.get("DepthPID.Heading"))
             #print(d.slide[3])
             #d.slide[4] = d.slide[3]
@@ -383,6 +381,12 @@ class Controller:
                             self.slide[i] = int(round((-(self.length[i]/(self.mapDown[i] - self.mapUp[i])) * (val - self.mapUp[i])) + self.length[i],0))
                     if self.barType[i] == 0:#horiz
                             self.slide[i] = int(round(((self.width[i]/(self.mapDown[i] - self.mapUp[i])) * (val - self.mapUp[i])),0))
+    def setSlideValueForDepthReadOnlySlider(self, i, val):
+            #bad value
+            if (-3.0 <= val and val <= 0.5) == False:
+                    return 
+            #real value
+            self.slide[i] = int(round(-42.9 * (val + 3) + 150, 0))
     #Given the cartesian position along the slider, return the scaled value from max and min
     def slideValue(self,i):
         if self.barType[i] == 0: #horiz
@@ -431,7 +435,7 @@ cv2.setMouseCallback('image',d.move)
 count = 0
 
 initializeValues()
-
+THING = -3
 while(1):
     cv2.imshow('image',img)
     d.drawAll()
@@ -498,7 +502,6 @@ while(1):
             d.paused[PITCH] = sw.var.get("PitchPID.Paused")
             d.paused[YAW] = sw.var.get("YawPID.Paused")
             d.paused[DEPTH] = sw.var.get("DepthPID.Paused")
-            
             setVars()
             #print actual depth in red
             d.rect(330,555,80,30,d.BACKGROUND_COLOR)
