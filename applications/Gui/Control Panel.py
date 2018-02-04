@@ -521,9 +521,10 @@ while(1):
                             d.setSlideValue(STRAFET, sw.var.get("StrafeT"))
                             d.setSlideValue(STRAFEB, sw.var.get("StrafeB"))
  
-    if k == 107: #hit k for kill
-        sw.close()
-        cv2.destroyWindow('Control Panel')
-        break
+    if k == 107 or k == 27 or cv2.getWindowProperty('Control Panel',1) < 1:     	
+				sw.close()
+				cv2.destroyWindow('Control Panel')
+				break
+
     elif k == ord('a'):
         print mouseX,mouseY
