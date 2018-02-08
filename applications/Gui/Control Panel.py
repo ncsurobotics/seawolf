@@ -219,7 +219,7 @@ class Controller:
                     
             
                 if self.follow[i] == True:
-                    self.desiredBearing[i] = heading(self.X[i],self.Y[i],x,y)
+                    self.desiredBearing[i] = heading(self.X[i],self.Y[i],self.X[i] + (self.X[i] - x) / 2, self.Y[i] - (self.Y[i] - y) / 2)
                     self.change[i] = 1
                 #self.draw(self.X[i],self.Y[i],flags,param,i)
             
@@ -302,14 +302,14 @@ class Controller:
             cv2.circle(img,(x,y),self.radius[i],white,-1)
 
             #line read
-            cv2.line(img,(x,y), ((int(x+self.radius[i]*math.cos(self.actualBearing[i]))),int((y+self.radius[i]*math.sin(self.actualBearing[i])))), (0,0,255), thickness = 4, lineType = 8, shift = 0)   
+            cv2.line(img,(x,y), ((int(x-self.radius[i]*math.cos(self.actualBearing[i]))),int((y+self.radius[i]*math.sin(self.actualBearing[i])))), (0,0,255), thickness = 4, lineType = 8, shift = 0)   
             
             #line write
-            cv2.line(img,(x,y), ((int(x+self.radius[i]*math.cos(self.desiredBearing[i]))),int((y+self.radius[i]*math.sin(self.desiredBearing[i])))), dark, thickness = 4, lineType = 8, shift = 0)        
+            cv2.line(img,(x,y), ((int(x-self.radius[i]*math.cos(self.desiredBearing[i]))),int((y+self.radius[i]*math.sin(self.desiredBearing[i])))), dark, thickness = 4, lineType = 8, shift = 0)        
             #outer circle small
-            cv2.circle(img,((int(x+self.radius[i]*math.cos(self.desiredBearing[i]))),int((y+self.radius[i]*math.sin(self.desiredBearing[i])))),self.radius[i]/4,dark,-1)
+            cv2.circle(img,((int(x-self.radius[i]*math.cos(self.desiredBearing[i]))),int((y+self.radius[i]*math.sin(self.desiredBearing[i])))),self.radius[i]/4,dark,-1)
             #inner circle small
-            cv2.circle(img,((int(x+self.radius[i]*math.cos(self.desiredBearing[i]))),int((y+self.radius[i]*math.sin(self.desiredBearing[i])))),self.radius[i]/6,white,-1)
+            cv2.circle(img,((int(x-self.radius[i]*math.cos(self.desiredBearing[i]))),int((y+self.radius[i]*math.sin(self.desiredBearing[i])))),self.radius[i]/6,white,-1)
             #clear text
             cv2.rectangle(img, (self.X[i]+textDx-50, self.Y[i]-self.radius[i]+textDy-30), (self.X[i]+150-50, self.Y[i]-self.radius[i]+textDy+10), self.BACKGROUND_COLOR, thickness=-1, lineType=8, shift=0)        
             #text write
@@ -435,7 +435,6 @@ cv2.setMouseCallback('image',d.move)
 count = 0
 
 initializeValues()
-THING = -3
 while(1):
     cv2.imshow('image',img)
     d.drawAll()
@@ -502,6 +501,7 @@ while(1):
             d.paused[PITCH] = sw.var.get("PitchPID.Paused")
             d.paused[YAW] = sw.var.get("YawPID.Paused")
             d.paused[DEPTH] = sw.var.get("DepthPID.Paused")
+            
             setVars()
             #print actual depth in red
             d.rect(330,555,80,30,d.BACKGROUND_COLOR)
