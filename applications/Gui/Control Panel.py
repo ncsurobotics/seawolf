@@ -403,7 +403,7 @@ if(seawolfIsRunning):
 WIDTH = 500
 HEIGHT = 1000
 img = np.zeros((HEIGHT,WIDTH,3), np.uint8)
-cv2.namedWindow('image')
+cv2.namedWindow('Control Panel')
 
 d = Controller()
 cv2.rectangle(img, (0, 0), (WIDTH, HEIGHT), d.BACKGROUND_COLOR, thickness=-1, lineType=8, shift=0)
@@ -430,13 +430,13 @@ d.addSlider(150, 20, 50, 100, 50, 240, 300, 0, "Strafeb", down, up, True)
 
 d.addPlayButton(100, 100, 250, 800, "Play Button", False)
 
-cv2.setMouseCallback('image',d.move)
+cv2.setMouseCallback('Control Panel',d.move)
 
 count = 0
 
 initializeValues()
 while(1):
-    cv2.imshow('image',img)
+    cv2.imshow('Control Panel',img)
     d.drawAll()
     k = cv2.waitKey(20) & 0xFF
     count += 1
@@ -521,9 +521,10 @@ while(1):
                             d.setSlideValue(STRAFET, sw.var.get("StrafeT"))
                             d.setSlideValue(STRAFEB, sw.var.get("StrafeB"))
  
-    if k == 107: #hit k for kill
-        sw.close()
-        cv2.destroyWindow('image')
-        break
+    if k == 107 or k == 27 or cv2.getWindowProperty('Control Panel',1) < 1:     	
+				sw.close()
+				cv2.destroyWindow('Control Panel')
+				break
+
     elif k == ord('a'):
         print mouseX,mouseY
