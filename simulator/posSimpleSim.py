@@ -42,7 +42,7 @@ class seawolfPos(object):
     self.Xlocs = [0]
     self.Ylocs = [0]
 
-    self.li, = self.ax.plot(self.Xlocs, self.Ylocs, 'ro')
+    self.li, = self.ax.plot(self.Xlocs, self.Ylocs, 'bo')
     
     #setting label
     self.ax.set_ylabel("Y axis in Meters")

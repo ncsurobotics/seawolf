@@ -22,7 +22,7 @@ class ViewSimpleSim(object):
   def __init__(self, entities = None):
     self.entities = entities
     #setting the scale factor, this means each pixel is one cm when obj is 1m away
-    sf = .0017
+    sf = .0012
     svr.connect()
     
     #making the down camera
@@ -59,9 +59,9 @@ class ViewSimpleSim(object):
     and the axis match the heading of the robot. aka y is straight ahead of the robot
     """
     # getting robot direction and turning it to radians
-    heading = sw.var.get("SEA.Yaw") * math.pi / 180.0 
+    heading = -1 * sw.var.get("SEA.Yaw") * math.pi / 180.0 
     #creating the Rotation Matrix
-    R = np.array([[math.cos(heading), -1 * math.sin(heading), 0],
+    R = np.array([[-1* math.cos(heading),  math.sin(heading), 0],
                   [math.sin(heading),      math.cos(heading), 0],
                   [                0,                 0     , 1]], np.float32)
     for cam in self.cams:

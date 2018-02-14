@@ -11,6 +11,7 @@ obj = visObjects[visObj]
 keys = (obj([False, 0, 0])).keys
 
 def ProcessFrame(frame):
+  print("called")
   out = obj([False, 0, 0])
   frameOut = frame.copy()
   frame = norm(frame)
@@ -27,7 +28,7 @@ def ProcessFrame(frame):
 
   lines = cv2.HoughLinesP(edges, 4, math.pi/180, 145, minLineLength = 200, maxLineGap = 80)
   poles = []
-  if lines != None:
+  if isinstance(lines, np.ndarray):
     print "numLines: %d" % len(lines[0])
     for line in lines[0]:
       p1 = (line[0], line[1])
@@ -35,7 +36,7 @@ def ProcessFrame(frame):
       dx = p1[0] - p2[0]
       dy = abs(p1[1] - p2[1])
       theta = math.atan2(dy, dx)
-      cv2.line(frameOut, p1, p2, (255, 0, 0), 5)
+      #cv2.line(frameOut, p1, p2, (255, 0, 0), 5)
       if abs(theta - math.pi/2) <  10 *math.pi/180:
         cv2.line(frameOut, p1, p2, (255, 0, 255), 5)
         poles.append((p1, p2))

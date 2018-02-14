@@ -33,7 +33,7 @@ def main():
     for key in Entities.VisEntities:
       errMsg+= "\t" + key + "\n"
     error(errMsg)
-    
+  print("hell")
   vision = Entities.VisEntities[sys.argv[1]]
   inputFile = sys.argv[2]
   outputFile = open(sys.argv[3], 'w')

@@ -3,7 +3,7 @@
 import seawolf as sw
 import svr
 import numpy as np
-
+import sw3
 
 import missions as ms
 
@@ -55,12 +55,15 @@ def main():
       running = True
       print "Begining to run: " + mission.getName()
       while checkError() and running:
+        print("+++++++++++++++++++++++++++++++++++++++++++++++")
         try:
           frame = getFrame(camera)
           running = mission.processFrame(frame)
+          
         except Exception as e:
+          print "hello"
+          print "ERROR running " + mission.getName() + " moving to next"
           print e
-          print "ERROR running " + mission.getName() + "moving to next"
           running = False
     
       print "Done with: " + mission.getName()  
@@ -69,6 +72,7 @@ def main():
     print "ERROR occurred when checking errors, stopping running"
   
   finally:
+    sw3.Forward(0).start()
     print "done with missions"
     
 
@@ -80,7 +84,9 @@ some to look for:
 """
 def checkError():
   #checking for killswitch
+  print("checkErr")
   killSw = sw.var.get(killName)
+  print("kill switch %.2f"% killSw)
   if abs(killSw - 1.0)  < .05:
     #if the kissSw value is equal to 1 then the robot has been killed
     raise BaseException(killName)
