@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import math
+from Utilities import GatePole as Pole
 from Utilities import norm
 from Utilities import dist
 from VisObj import visObjects
@@ -39,7 +40,7 @@ def ProcessFrame(frame):
       #cv2.line(frameOut, p1, p2, (255, 0, 0), 5)
       if abs(theta - math.pi/2) <  10 *math.pi/180:
         cv2.line(frameOut, p1, p2, (255, 0, 255), 5)
-        poles.append((p1, p2))
+        poles.append(Pole(p1, p2))
 
   #filtering out the matching poles
   poles = sorted(poles, key = sortPoles)
@@ -64,7 +65,7 @@ def ProcessFrame(frame):
   return out 
   
 def sortPoles(pole):
-  return pole[0][0]
+  return pole.getX()
 
 def debugFrame(name, frame):
   cv2.imshow(name, frame) 

@@ -12,14 +12,14 @@ from Entities import gateHoughProb as vision
 
 
 #factor for linearly converting pixels to degrees to turn
-PIXTODEG = 3
+PIXTODEG = 30
 
 class GateSimp(object):
 
   def __init__(self):
     self.camera = "forward"
     self.name = "GateSimp"
-    self.runtime = 120
+    self.runtime = 90
     return
   
   def getCamera(self):
