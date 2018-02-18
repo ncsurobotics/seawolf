@@ -140,7 +140,7 @@ def update_Laxis(event):
     # update yaw thrust value
     if ORIENTATION_HOLD:
         # update PID heading
-        thruster_request('Yaw', yaw_rate*MAX_YAW_UPDATE, hold_orientation=True) # 
+        thruster_request('Yaw', -1 * yaw_rate*MAX_YAW_UPDATE, hold_orientation=True) # 
     else:
         # change raw thruster value
         thruster_request('Yaw', yaw_rate*1.0)
