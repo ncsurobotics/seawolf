@@ -4,6 +4,7 @@ import seawolf as sw
 import svr
 import numpy as np
 import sw3
+import cv2
 
 import missions as ms
 
@@ -17,10 +18,12 @@ svr.connect()
 forward = svr.Stream("forward")
 forward.unpause()
 
-#down = svr.Stream("down")
+down = svr.Stream("down")
+down.unpause()
+
 cameras = {
            "forward" : forward,
-           #"down"    : down
+           "down"    : down
           }
 
 
@@ -44,7 +47,8 @@ def main():
   missions will run int the order that they are in the array
   """
   missions = [
-              ms.GateSimp()
+              ms.GateSimp(),
+              ms.PathSimp()
              ]
   
   
@@ -59,6 +63,7 @@ def main():
         try:
           frame = getFrame(camera)
           running = mission.processFrame(frame)
+          cv2.waitKey(1)
           
         except Exception as e:
           print "hello"

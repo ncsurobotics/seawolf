@@ -47,12 +47,18 @@ def ProcessFrame(frame):
   if len(poles) > 0:
     gatePoles = [poles[0]]
     for pole in poles:
-      if abs(pole[0][0]  - gatePoles[-1][0][0]) > 80:
+      if abs(pole.getX() - gatePoles[-1].getX()) < 80:
+        #this is the same pole, by inputting it to current pole, the current pole becomes an average of the locations
+        gatePoles[-1].add(pole)
+        
+      else:
+        #this is a different pole
         gatePoles.append(pole)
+     
     for pole in gatePoles:
-      cv2.line(frameOut, pole[0], pole[1], (0, 0, 255), 10)
+      cv2.line(frameOut, pole.p1, pole.p2, (0, 0, 255), 10)
     if len(gatePoles) == 2:
-      out = obj([True, gatePoles[0][0][0], gatePoles[1][0][0]])
+      out = obj([True, gatePoles[0].getX(), gatePoles[1].getX()])
      
     
     print "len Poles: %d, len gatePoles: %d" % (len(poles), len(gatePoles))

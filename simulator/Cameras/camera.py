@@ -32,7 +32,7 @@ class Camera(object):
     offset = np.float32(self.frameSize)[:2]/2
     self.offset = np.float32([offset[1], offset[0]])
     self.name = name
-    
+    self.count = 0
     
     #the effect of distance on the size of things, in example at a sf of .01 and distance of 1 meter, 1 meter takes up 100 pixels.
     self.far = 10 * sf
@@ -47,9 +47,14 @@ class Camera(object):
   def newFrame(self):
     self.frame = np.zeros(self.frameSize, np.uint8)
   
+  
+ 
   #displays frame on svr
   def show(self):
     #cv2.imshow(self.name, self.frame)
+    
+    cv2.imwrite("./PICS/" + self.name + str(self.count) + ".png", self.frame)
+    self.count+= 1
     #converting image to type desired by svr
     container = cv2.cv.fromarray(np.copy(self.frame))
     cv_image = cv2.cv.GetImage(container)

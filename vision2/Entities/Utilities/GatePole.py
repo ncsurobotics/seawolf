@@ -10,6 +10,8 @@ class GatePole(object):
     """
     self.p1 = p1
     self.p2 = p2
+    self.added = 1
+    
     
   
   def getX(self):
@@ -17,4 +19,15 @@ class GatePole(object):
     poles are assumed to go up and down
     therefore the x value should tell us where they are on the page
     """
-    return (p1[0] + p2[0])/2
+    return (self.p1[0] + self.p2[0])/2
+  
+  def add(self, pole):
+    """
+    this function averages this pole with another line on the same pole
+    done the way it is because cannot reassign tupple so have to remake it 
+    """
+    self.p1 = ((self.p1[0] * self.added + pole.p1[0])/(self.added + 1), self.p1[1])
+    self.p2 = ((self.p2[0] * self.added + pole.p2[0]) /(self.added + 1), self.p2[1])
+    self.added += 1
+    return 
+  
