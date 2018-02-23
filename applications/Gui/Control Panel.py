@@ -39,6 +39,10 @@ def setVars():
             d.setSlideValue(STRAFET, sw.var.get("StrafeT"))
             d.setSlideValue(STRAFEB, sw.var.get("StrafeB"))
             d.setSlideValueForDepthReadOnlySlider(DEPTH_READER, sw.var.get("Depth"))
+            d.desiredBearing[ROLL] = realToDisplayRadians(math.radians(sw.var.get("RollPID.Heading")))
+            d.desiredBearing[PITCH] = realToDisplayRadians(math.radians(sw.var.get("PitchPID.Heading")))
+            d.desiredBearing[YAW] = realToDisplayRadians(math.radians(sw.var.get("YawPID.Heading")))
+            d.setSlideValue(DEPTH, sw.var.get("DepthPID.Heading"))
             #d.setSlideValue(4, d.slideValue(3))#sw.var.get("DepthPID.Heading"))
             #print(d.slide[3])
             #d.slide[4] = d.slide[3]
