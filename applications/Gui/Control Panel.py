@@ -25,12 +25,19 @@ STRAFET = 10
 STRAFEB = 11
 PLAY_BUTTON = 12
 
+"""
+Initializes the desired roll, pitch, yaw, depth values by reading the PID variable values. Sets forward to 0.
+"""
 def initializeValues():
         d.desiredBearing[ROLL] = realToDisplayRadians(math.radians(sw.var.get("RollPID.Heading")))
         d.desiredBearing[PITCH] = realToDisplayRadians(math.radians(sw.var.get("PitchPID.Heading")))
         d.desiredBearing[YAW] = realToDisplayRadians(math.radians(sw.var.get("YawPID.Heading")))
         d.setSlideValueForDepthReadOnlySlider(DEPTH_READER, sw.var.get("Depth"))
         d.setSlideValue(FORWARD, 0)
+"""
+Called in each loop of main, this function sets GUI variables to their HUD counterparts by reading them using sw.var.get(var).
+Sets the desired and actual bow, stern, and port values by reading from HUD. Also uses HUD to set depth and thruster values.
+"""
 def setVars():
             d.setSlideValue(BOW, sw.var.get("Bow"))
             d.setSlideValue(STERN, sw.var.get("Stern"))
@@ -43,29 +50,61 @@ def setVars():
             d.desiredBearing[PITCH] = realToDisplayRadians(math.radians(sw.var.get("PitchPID.Heading")))
             d.desiredBearing[YAW] = realToDisplayRadians(math.radians(sw.var.get("YawPID.Heading")))
             d.setSlideValue(DEPTH, sw.var.get("DepthPID.Heading"))
-            #d.setSlideValue(4, d.slideValue(3))#sw.var.get("DepthPID.Heading"))
-            #print(d.slide[3])
-            #d.slide[4] = d.slide[3]
-            #print(str(d.slideValue(4) + 0) + " " + str(d.slideValue(3)))
+"""
+Maps the value given on an input range to a scaled value on an output range. For instance, given the point 1 on the input scale 0 to 5,
+you would want to set this to 2 on the output scale 0 to 10. This function takes parameters for the input point, input scale start, input
+scale end, output scale start, and output scale end, and returns the matching point to the input point, but on the output scale.
+
+p1 - point on input scale to be mapped
+a - start of the input range
+b - end of the input range
+c - start of the output range
+d - end of the output range
+return input point scaled to output range
+"""
 def mapValTo(p1,a,b,c,d):
         return (p1-a)*(d-c)/(b-a)+c
 
+"""
+Determines if a point (xr, yr) is on the rectange starting at (ox, oy) with a witdh of w and length of l.
+
+xr - x coordinate of point potentially on the rectangle
+yr - y coordinate of point potentially on the rectangle
+ox - x coordinate of the origin of the rectangle
+oy - y coordinate of the origin of the rectangle
+w - width of the rectangle
+l - length (or height) of the rectangle
+return true if (xr, yr) is on the rectangle, false if not
+"""
 #is xr and yr on rect from ox,oy with width w and length l
 def isOnSlider(xr,yr,ox,oy,w,l):
         if(ox <= xr and xr <= ox+w and oy <= yr and yr <= oy+l):
             return True
         return False
 
+"""
+Calculates the distance between (x1, y1) and (x2, y2) with the pythagorean theorem.
+
+x1 - x coordinate of point 1
+y1 - y coordinate of point 1
+x2 - x coordinate of point 2
+y2 - y coordinate of point 2
+return distance between the 2 points
+"""
 def dist(x1,y1,x2,y2):
     return math.sqrt((x2-x1)*(x2-x1)+(y2-y1)*(y2-y1))
 
+"""
+"""
 def displayToRealRadians(r):
         if(r < math.pi/2):
                 return math.degrees(r + math.pi/2)
         if(r > math.pi/2):
                 return math.degrees(r - 3*math.pi/2)
         return math.degrees(math.pi)
-
+"""
+Takes in a normal radian (0 through 2*PI ) and returns a radian that can be used to display a bearing in a 
+"""
 def realToDisplayRadians(r):
         if(r < 0):
                 return r + 3*math.pi/2
