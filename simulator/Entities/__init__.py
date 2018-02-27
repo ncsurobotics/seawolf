@@ -3,11 +3,13 @@ from path import Path
 from bouy import Bouy
 from gate import Gate
 from hedge import Hedge
+from pinger import Pinger
 
 entities = {
               "dbEntity"  :   dbEntity,
               "Path"      :   Path,
               "Bouy"      :   Bouy,
               "Gate"      :   Gate,
-              "Hedge"     :   Hedge
+              "Hedge"     :   Hedge,
+              "Pinger"    :   Pinger
            }

@@ -52,18 +52,19 @@ elements must be an Entity, look at entities folder __init__ for available
 def setup():
   return [
           entities["Gate"]([0, 7, -1]),
-          entities["Path"]([0, 14, -5]),
-          entities["Bouy"]([-1, 21, -1], color = (255, 0, 0)),
-          entities["Bouy"]([0, 21, -1], color = (0, 0, 255)), 
-          entities["Bouy"]([1, 21, -1], color = (0, 255, 0)),
-          entities["Hedge"]([0, 35,-1]),
-          entities["Path"]([0, 28, -5])
+          entities["Path"]([0, 0, -5]),
+          entities["Bouy"]([-1, 10, -1], color = (255, 0, 0)),
+          entities["Bouy"]([0, 10, -1], color = (0, 0, 255)), 
+          entities["Bouy"]([1, 10, -1], color = (0, 255, 0)),
+          entities["Hedge"]([0, 19,-1]),
+          entities["Path"]([0, 15, -5]),
+          entities["Pinger"]([10, 5, -1])
          ]
 
 def main():
   #connecting to hub
-  sw.loadConfig("../conf/seawolf.conf")
-  sw.init("Simulator : Main")
+  sw.loadConfig("../conf/seawolf.conf");
+  sw.init("Simulator : Main");
   objects = setup()
   pid = pidSim()
   robo = posSim(location = [0, 0, 0], axis = [-50, 50], objects= objects)
