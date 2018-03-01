@@ -54,8 +54,8 @@ screen -dr seawolf -p HUD -X stuff "
 
 # svrwatch
 screen -dr seawolf -X screen -t svrwatch
-sleep 0.2
-screen -dr seawolf -p svrwatch -X "svrwatch -a
+sleep 0.5
+screen -dr seawolf -p svrwatch -X stuff "svrwatch -a
 "
 
 
@@ -74,6 +74,7 @@ screen -dr seawolf -p bash -X stuff "cd mission_control
 screen -dr seawolf -p bash -X stuff "
 "
 
+screen -x
 
 
 
