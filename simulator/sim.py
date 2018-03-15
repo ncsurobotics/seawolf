@@ -51,12 +51,13 @@ elements must be an Entity, look at entities folder __init__ for available
 """
 def setup():
   return [
-          #entities["Gate"]([0, 7, -1]),
+          entities["Gate"]([0, 7, -1]),
           #entities["Path"]([0, 0, -5]),
           #entities["Bouy"]([-1, 10, -1], color = (255, 0, 0)),
           entities["Bouy"]([0, 10, -1], color = (0, 0, 255)), 
           #entities["Bouy"]([1, 10, -1], color = (0, 255, 0)),
-          #entities["Hedge"]([0, 19,-1]),
+          entities["Hedge"]([0, 19,-1]),
+          entities["Gate"]([0, 30, -1])
           #entities["Path"]([0, 15, -5]),
           #entities["Pinger"]([10, 5, -1])
          ]
