@@ -22,6 +22,7 @@ class Dummy(object):
   
   def processFrame(self, frame):
     cv2.imshow(self.name, frame)
+    
     cv2.waitKey(1)
     return self.runtime > (time.time() - self.time)
     

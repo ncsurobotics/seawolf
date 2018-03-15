@@ -3,10 +3,9 @@ import math
 import seawolf as sw
 from dbEntity import dbEntity
 
-sw.loadConfig("../conf/seawolf.conf")
-sw.init("Acoustics simulator")
 
-DB = True
+
+DB = False
 NAME = "Pinger"
 
 # speed of sound in ft/sec

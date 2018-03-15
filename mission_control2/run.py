@@ -47,8 +47,7 @@ def main():
   missions will run int the order that they are in the array
   """
   missions = [
-              ms.GateSimp(),
-              ms.PathSimp()
+              ms.BuoysPID()
              ]
   
   

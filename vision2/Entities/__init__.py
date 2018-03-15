@@ -6,9 +6,10 @@ import gateHoughProb
 import gateNorm
 import pathBase
 import pathDist
-
+import buoysHough
 
 VisEntities = { #moduleName       : module
+                  "buoysHough"    : buoysHough,
                   "gateBase"      : gateBase,
                   "gateDist"      : gateDist,
                   "gateHoughProb" : gateHoughProb,
