@@ -51,9 +51,20 @@ class Camera(object):
  
   #displays frame on svr
   def show(self):
+  
+    #adding background to frame
+    background = np.array([160, 130, 32]) * np.ones(self.frame.shape)
+    
+    #adding noise to the frame
+    noise = np.random.normal(loc = 0, scale = 3, size = self.frame.shape)
+    
+    background = np.array(noise + background, self.frame.dtype)
+    self.frame = cv2.add(self.frame, background)
+    
+  
     #cv2.imshow(self.name, self.frame)
     
-    cv2.imwrite("./PICS/" + self.name + str(self.count) + ".png", self.frame)
+    #cv2.imwrite("./PICS/" + self.name + str(self.count) + ".png", self.frame)
     self.count+= 1
     #converting image to type desired by svr
     container = cv2.cv.fromarray(np.copy(self.frame))

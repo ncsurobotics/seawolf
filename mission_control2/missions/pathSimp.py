@@ -8,7 +8,7 @@ import sys
 sys.path.append("./../vision2/")
 
 
-from Entities import pathBase as vision
+from Entities import pathDist as vision
 
 
 
@@ -30,7 +30,7 @@ class PathSimp(object):
   def setup(self):
     self.time = time.time()
     sw3.SetDepth(-1).start()
-    sw3.Forward(.3).start()
+    sw3.Forward(0).start()
     self.centers = []
     return
     
