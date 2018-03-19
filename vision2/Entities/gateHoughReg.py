@@ -15,12 +15,12 @@ def ProcessFrame(frame):
   frameOut = frame.copy()
   frame = norm(frame)
   mean, std = cv2.meanStdDev(frame)
-  r = dist(frame, (mean[0], mean[1], 255))
+  print mean
   r =  cv2.cvtColor(frameOut, cv2.COLOR_BGR2GRAY)
   mean, std = cv2.meanStdDev(r)
   print "m: %d, std %d" % (mean, std)
-  r = frame[:, :, 2]
-  debugFrame("red", r)
+  #r = frame[:, :, 2]
+  debugFrame("COI", r)
   r = cv2.GaussianBlur(r, (7, 7), 0)
   edges = cv2.Canny(r, std * 2.0 , 1.3 * std)
   debugFrame("edges", edges)
@@ -28,7 +28,7 @@ def ProcessFrame(frame):
 
   lines = cv2.HoughLines(edges, 3, math.pi/180, 110)
   poles = []
-  if lines != None:
+  if lines is list:
     print "numLines: %d" % len(lines[0])
     for line in lines[0]:
       r = line[0]
