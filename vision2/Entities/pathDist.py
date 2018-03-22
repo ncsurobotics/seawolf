@@ -60,7 +60,7 @@ def ProcessFrame(frame):
       angp = abs(angp - round((angp/180.0)) * 180)
       
       cv2.drawContours(frameOut, [cont], -1, (0,0, 0), 3)
-      out = obj([True, angp, center[0], center[1]])
+      out = obj([True, -1 * angp, center[0], center[1]])
       frameOut = out.draw(frameOut)
       
       
