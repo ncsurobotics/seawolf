@@ -48,8 +48,7 @@ def main():
   """
   missions = [
               
-              ms.PathSimp()
-              
+              ms.BuoysPID()
              ]
   
   
