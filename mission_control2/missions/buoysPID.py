@@ -11,8 +11,8 @@ sys.path.append("./../vision2/")
 from Entities import buoysHough as vision
 
 
-#factor for linearly converting pixels to degrees to turn
-PIXTODEG = 70
+#factor for linearly converting pixels to depth in meters, aka Meters / Pixel
+PIXTODEPTH = 400.0
 
 class BuoysPID(object):
 
@@ -31,7 +31,7 @@ class BuoysPID(object):
   def setup(self):
     self.time = time.time()
     sw3.SetDepth(-1).start()
-    sw3.Forward(.3).start()
+    sw3.Forward(0).start()
     self.centers = []
     return
     
@@ -40,7 +40,16 @@ class BuoysPID(object):
   def processFrame(self, frame):
     buoys = vision.ProcessFrame(frame)
     
-    print buoys.found
+    if buoys.found:
+      (x, y) = buoys.loc()
+      h,w,_  = frame.shape
+      
+      heightError = h/2 - y
+      print('modifying depth by: %.3f' % (heightError / PIXTODEPTH))
+      sw3.RelativeDepth(heightError / PIXTODEPTH).start()
+      
+      
+      
     
     
     
