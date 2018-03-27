@@ -21,7 +21,7 @@ pidSim must implement the following methods:
   __init__()    creates object that has .update() method
   object.update()   the update method must update the pidaxis in HUB
 """
-from pidSimpleSim import pid as pidSim
+from pidMult import pid as pidSim
 
 
 """

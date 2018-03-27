@@ -29,7 +29,7 @@ RollPID.Heading      = 0.0,  0,  0
 RollPID.Paused       = 1.0,  0,  0
 RollPID.d            = 0.0,  1,  0
 RollPID.i            = 0.0,  1,  0
-RollPID.p            = 0.0,  1,  0
+RollPID.p            = 3.0,  1,  0
 
 YawPID.Heading       = 0.0,  0,  0
 YawPID.Paused        = 1.0,  0,  0

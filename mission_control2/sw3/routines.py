@@ -278,7 +278,7 @@ class RelativeDepth(NavRoutine):
         return NavRoutine.RUNNING
 
     def _start(self):
-        self.target_depth = max(data.depth() + self.amount, 0)
+        self.target_depth = data.depth() + self.amount
         pid.depth.heading = self.target_depth
 
 
