@@ -71,17 +71,28 @@ class seawolfPos(object):
   def updatePosition(self):
     tDiff = time.time() - self.prevTime
     self.prevTime = time.time()
+    
+    #calculating distance forward
     portPower = sw.var.get("Port")
     starPower = sw.var.get("Star")
     power = (portPower + starPower)/2.0
-    dist = power * self.maxSpeed * tDiff
+    distf = power * self.maxSpeed * tDiff
+    
+    #calculating distance side to side, assume seawolf moves at same rate side to side as forward
+    #also assume that positive StrafeT is to the right
+    strafeBPower = sw.var.get("StrafeB")
+    strafeTPower = sw.var.get("StrafeT")
+    power = (strafeTPower - strafeBPower)/2.0
+    dists = power * self.maxSpeed * tDiff
+    
+    #getting the direction for robot
     direction = sw.var.get("SEA.Yaw")
     
     #y val is cos bc angle is relative to y axis because y axis is forward
-    self.position[0] += -1 * dist * math.sin(math.pi/180 * direction)
-    self.position[1] += dist * math.cos(math.pi/180 * direction)
+    self.position[0] += -1 * distf * math.sin(math.pi/180 * direction) + dists * math.cos(math.pi/180 * direction)
+    self.position[1] += distf * math.cos(math.pi/180 * direction) + dists * math.sin(math.pi/180 * direction)
     self.position[2] = sw.var.get("Depth")
-    dbPrint("roboPos: %d %d %d\t tdiff = %4.3f dist= %4.3f" % (self.position[0], self.position[1], self.position[2], tDiff, dist))
+    dbPrint("roboPos: %d %d %d\t tdiff = %4.3f dist= %4.3f" % (self.position[0], self.position[1], self.position[2], tDiff, dists))
     
     #graphing the location
     roboPos = self.pos()

@@ -1,5 +1,5 @@
 """
-for now on seawolf wil have the following axis, and move the following ways:
+from now on seawolf wil have the following axis, and move the following ways:
     x axis is left to right where right is positive X
     y axis is forward and back where forward is positive Y
     z axis is up and down where up is positive
@@ -21,7 +21,7 @@ pidSim must implement the following methods:
   __init__()    creates object that has .update() method
   object.update()   the update method must update the pidaxis in HUB
 """
-from pidSimpleSim import pid as pidSim
+from PID.pidMult import pid as pidSim
 
 
 """
@@ -32,14 +32,14 @@ posSim mus implement the following methods:
   object.update() this method updates the position of seawolf based on locally stored prev value and values in hub
   object.pos() returns 3 value array [x, y, z] containings current location of seawolf
 """
-from posSimpleSim import seawolfPos as posSim
+from Pos.posSimpleSim import seawolfPos as posSim
 
 """
 viewSim is object module to be used to fake camera data, and broadcast on SVR
   init(locations) the setup mehtod is input array with the entities in the water. documentation on what constitutes an entity object is in the Entities folder.
   update(roboPos) the update method is input a 3 piece array [x, y, z] containing the location of the robot and sends out and svr frame for forward and down simulating what the camera's would see. 
 """
-from viewSimpleSim import ViewSimpleSim as viewSim
+from View.viewSimpleSim import ViewSimpleSim as viewSim
 
 
 from Entities import entities

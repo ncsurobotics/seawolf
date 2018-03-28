@@ -53,17 +53,17 @@ def ProcessFrame(frame):
     solidity = contArea / (1.0 * area)
     loc = (int(center[0]), int(center[1]))
     stringOut = "%f" % (solidity)
-    cv2.putText(frameOut, stringOut, loc, cv2.FONT_HERSHEY_SIMPLEX, .5, 255)
+    #cv2.putText(frameOut, stringOut, loc, cv2.FONT_HERSHEY_SIMPLEX, .5, 255)
     
     if area > 1500 and aspectRatio > 3 and aspectRatio < 13 and solidity > .8:
-      angp = abs(ang)
-      angp = abs(angp - round((angp/180.0)) * 180)
-      
+      angp = -1 * ang
+      #angp = angp - round((angp/180.0)) * 180
+      stringOut += ", ang: %d" % (angp)
       cv2.drawContours(frameOut, [cont], -1, (0,0, 0), 3)
       out = obj([True, angp, center[0], center[1]])
       frameOut = out.draw(frameOut)
       
-      
+    cv2.putText(frameOut, stringOut, loc, cv2.FONT_HERSHEY_SIMPLEX, .5, 255)  
   	  
   debugFrame("out", frameOut)
   return out
