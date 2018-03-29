@@ -1,6 +1,9 @@
 import traceback
 import Entities
 
+entityType = type(type)
+env = {k:v for (k,v) in Entities.__dict__.items() if type(v) is entityType}
+
 def readFile(fileName):
   
   try:
@@ -40,7 +43,7 @@ def readFile(fileName):
 COMMENT = '#'
 def removeComment(line):
   try:
-    return line[0:line.index('#')]
+    return line[0:line.index(COMMENT)]
   except:
     return line
 
@@ -97,7 +100,7 @@ def evalEnt(tree):
       val = tuple(val)
     args[key] = val
   #try:
-  return Entities.__dict__[obj](**args)
+  return env[obj](**args)
   #except:
    # print "Available entites are:"
     #print possibleEnts()
@@ -112,8 +115,7 @@ colors = {
 
 def possibleEnts():
   out = ''
-  for k, v in Entities.__dict__.items():
-     if type(v) is type(type):
+  for k, v in env.items():
              out += '------------------\n'
              out += k
              out += '\n'

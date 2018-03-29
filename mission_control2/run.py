@@ -5,6 +5,8 @@ import svr
 import numpy as np
 import sw3
 import cv2
+import sys
+import conf
 
 import missions as ms
 
@@ -46,9 +48,9 @@ def main():
   array of missions to run. all missions should be in the mission module/directory
   missions will run int the order that they are in the array
   """
-  missions = [
-              ms.BuoysPID()
-             ]
+  if len(sys.argv) != 2:
+    raise Exception("TO RUN: python2.7 run.py pathTo.conf")
+  missions = conf.readFile(sys.argv[1])
   
   
   try:

@@ -45,7 +45,7 @@ from View.viewSimpleSim import ViewSimpleSim as viewSim
 from Entities import entities
 
 import sys
-import CONF
+import conf
 """
 array to be used for placing objects in water
 rember that the location is center point of element
@@ -54,7 +54,7 @@ elements must be an Entity, look at entities folder __init__ for available
 def setup():
   if len(sys.argv) != 2:
     raise Exception("Run as: python2.7 sim.py file.conf")
-  return CONF.readFile(sys.argv[1])
+  return conf.readFile(sys.argv[1])
 
 def main():
   #connecting to hub
