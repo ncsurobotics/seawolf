@@ -17,16 +17,12 @@ def readFile(fileName):
       #if the line is empty after removing comments continue to next line
       if not line:
         continue
-           
+      #adding parenthesis to line to make it more lisp like and esier to parse recursively
+      line = '(' + line + ')'
       tokens = tokenizer(line)
-      entity = parser(tokens)
-      if entity:
-        entities.append(entity)
-        
-      
-     
-
-      
+      tree = parser(tokens)
+      entity = evalEnt(tree)
+      ents.append(entity)
   except Exception as e:
     print "ERROR parsing: %d" % (lc)
     print e
@@ -36,6 +32,8 @@ def readFile(fileName):
     f.close()
     if tokens == 'error':
       raise Exception('error reading config file')
+    else:
+      return ents
     
     
 
@@ -51,42 +49,66 @@ def tokenizer(line):
   breaks line up into tokens
   returns list of tokens
   """
-  #splitting based on white space
-  toksTmp = line.split()
-  
-  #searching for/grouping parenthesis
-  i = -1
-  tokens = []
-  while i < len(toksTmp) - 1:
-    i += 1
-    tokens.append(toksTmp[i])
-    #this will not work for nested parenthesis, but there should not be any in config file
-    if '(' in toksTmp[i]:
-      par = i
-      i += 1
-      while ')' not in toksTmp[i]:
-        tokens[par] += toksTmp[i]
-        i += 1
-      tokens[par] += toksTmp[i]
-      
-  return tokens
-      
+  modify =    [
+                (')', ' ) '),
+                ('(', ' ( '),
+                (',', ' ')
+              ]
+  for k, v in modify:
+    line = line.replace(k, v)
+  return line.split()
 
 def parser(tokens):
-  try:
-    #the first token should be the name of the entity
-    obj = tokens[0]
-    #the next should be key value pairs
-    args = {}
-    for i in range(2, len(tokens), step = 2):
-      k = tokens[i - 1]
-      v = tokens[i]
-      try:
-        v = toIntList(v)
-      args[k] = v
+  if len(tokens) == 0:
+    return SyntaxError('Unexpected EOF')
+  token = tokens.pop(0)
+  if token == '(':
+    L = []
+    while tokens[0] != ')':
+      L.append(parser(tokens))
+    tokens.pop(0)
+    return L
+  elif token == ')':
+    raise SyntaxError('unexpected )')
+  else:
+    return atom(token)
+
+
+def atom(token):
+  """
+  try to make everything a number if cant then make it string
+  """
+  try: return float(token)
+  except ValueError:
+    return str(token)  
     
+  
+def evalEnt(tree):
+  obj = tree.pop(0)
+  args = {}
+  while tree:
+    key = tree.pop(0)
+    val = tree.pop(0)
+    if type(val) is not float and type(val) is not list:
+      #val must be a color if it is not a number or a list
+      val = colors[val]
+    if type(val) is list:
+      #if val is a list make it a tuple so colors work with cv2
+      val = tuple(val)
+    args[key] = val
+  #try:
+  return Entities.__dict__[obj](**args)
+  #except:
+   # print "Available entites are:"
+    #print possibleEnts()
+    #raise Exception("Unable to locate entity: " + obj)
 
 
+colors = {
+          'green' : [0, 255, 0],
+          'red'   : [0, 0, 255],
+          'blue'  : [255, 0, 0],
+         }
 
 def possibleEnts():
   out = ''
@@ -96,6 +118,7 @@ def possibleEnts():
              out += k
              out += '\n'
   return out
+
 
       
       

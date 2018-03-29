@@ -23,8 +23,8 @@ cd = np.array([[0,       -0.1,   0],
                [-0.0095,  0,     0]])
                   
 class Pinger(object):
-    def __init__(self, location = [0, 0, 0]):
-        self.location = np.float32(location)
+    def __init__(self, at = [0, 0, 0]):
+        self.location = np.float32(at)
         self.name = NAME
         length = np.float32([0, 0, 1]) * pingerLength
         width = np.float32([1, 0, 0]) * pingerWidth

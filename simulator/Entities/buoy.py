@@ -14,14 +14,14 @@ import numpy as np
 
 from dbEntity import dbEntity
 
-class Bouy(object):
+class Buoy(object):
   
   """
   location = 1 by 3 array containing the centerpoint of the entity
   color = the color of the bouy (b, g, r)
   """
-  def __init__(self, location = [0, 0, 0], color = (0, 0, 255)):
-    self.location = np.float32(location)
+  def __init__(self, at = [0, 0, 0], color = (0, 0, 255)):
+    self.location = np.float32(at)
     self.name = NAME
     self.radius = RAD
     self.color = color

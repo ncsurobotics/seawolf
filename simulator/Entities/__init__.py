@@ -1,6 +1,6 @@
 from dbEntity import dbEntity
 from path import Path
-from bouy import Bouy
+from buoy import Buoy
 from gate import Gate
 from hedge import Hedge
 from pinger import Pinger
@@ -8,7 +8,7 @@ from pinger import Pinger
 entities = {
               "dbEntity"  :   dbEntity,
               "Path"      :   Path,
-              "Bouy"      :   Bouy,
+              "Buoy"      :   Buoy,
               "Gate"      :   Gate,
               "Hedge"     :   Hedge,
               "Pinger"    :   Pinger
