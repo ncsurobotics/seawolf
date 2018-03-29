@@ -33,7 +33,7 @@ def noise():
   return random.gauss(0, .1)
   
 def depthNoise():
-  return random.gauss(0, .01)
+  return  0 #random.gauss(0, .01)
 
 class axis(object):
   """

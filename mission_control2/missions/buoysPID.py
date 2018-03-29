@@ -48,6 +48,10 @@ class BuoysPID(object):
       print('modifying depth by: %.3f' % (heightError / PIXTODEPTH))
       sw3.RelativeDepth(heightError / PIXTODEPTH).start()
       
+      widthError= x - w/2
+      print('setting strafe to: %.3f' % (widthError / PIXTODEPTH))
+      sw3.Strafe(widthError / PIXTODEPTH).start()
+      
       
       
       
