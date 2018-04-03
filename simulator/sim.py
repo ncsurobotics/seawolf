@@ -41,6 +41,16 @@ viewSim is object module to be used to fake camera data, and broadcast on SVR
 """
 from View.viewSimpleSim import ViewSimpleSim as viewSim
 
+"""
+testSim is object module to be used to run automated tests
+  init(tests) the setup method is input an array of test to run when a mission is done, the nofication of a mission finishing will be sent over hub
+  update(roboPos) sends an updated robot position to the test suite
+"""
+from Test.simTest import SimTest  as simTest
+from Test.missionTest import MissionTest as Test
+from Test.utilities import *
+
+
 
 from Entities import entities
 
@@ -64,10 +74,14 @@ def main():
   pid = pidSim()
   robo = posSim(location = [0, 0, 0], axis = [-50, 50], objects= objects)
   view= viewSim(objects)
+  test = simTest([Test(missionName = 'GateSimp', expected = 0, within = 5, actual = yaw),
+                  Test(missionName = 'GateSimp', expected = [0, 0, 0], within = 4, actual = location),
+                  Test(missionName = 'GateXimp', expected = 0, within = 5, actual = yaw)])
   while True:
     pid.updateHeading()
     robo.updatePosition()
     view.updateViews(robo.pos())
+    test.updatePosition(robo.pos())
 
 if __name__ == "__main__":
   main()

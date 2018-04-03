@@ -21,7 +21,7 @@ screen -dr seawolf -X screen -t simulator
 sleep 1.5
 screen -dr seawolf -p simulator -X stuff "cd simulator
 "
-screen -dr seawolf -p simulator -X stuff "python sim.py
+screen -dr seawolf -p simulator -X stuff "python sim.py conf/test.conf
 "
 
 #suite.sh

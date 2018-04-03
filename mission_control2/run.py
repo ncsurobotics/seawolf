@@ -65,20 +65,26 @@ def main():
           frame = getFrame(camera)
           running = mission.processFrame(frame)
           cv2.waitKey(1)
-          
         except Exception as e:
           print "hello"
           print "ERROR running " + mission.getName() + " moving to next"
           print e
           running = False
     
-      print "Done with: " + mission.getName()  
+      print "Done with: " + mission.getName()
+      
+      #send notification over hub that mission is done
+      cmd = ("MISSION_DONE", type(mission).__name__)
+      sw.notify.send(*cmd) #send notification to seawolf
+      
   except Exception as e:
     print e
     print "ERROR occurred when checking errors, stopping running"
   
   finally:
     sw3.Forward(0).start()
+    cmd = ("MISSION_DONE", "DONE")
+    sw.notify.send(*cmd) #send notification to seawolf
     print "done with missions"
     
 
