@@ -1,3 +1,3 @@
-import CONF
+import Conf
 
-print CONF.readFile('./CONF/test.conf')
+print Conf.readFile('./Conf/test.conf')

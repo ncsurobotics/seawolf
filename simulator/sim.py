@@ -55,7 +55,7 @@ from Test.utilities import *
 from Entities import entities
 
 import sys
-import conf
+import Conf
 """
 array to be used for placing objects in water
 rember that the location is center point of element
@@ -64,19 +64,17 @@ elements must be an Entity, look at entities folder __init__ for available
 def setup():
   if len(sys.argv) != 2:
     raise Exception("Run as: python2.7 sim.py file.conf")
-  return conf.readFile(sys.argv[1])
+  return Conf.readFile(sys.argv[1])
 
 def main():
   #connecting to hub
   sw.loadConfig("../conf/seawolf.conf");
   sw.init("Simulator : Main");
-  objects = setup()
+  objects, tests = setup()
   pid = pidSim()
   robo = posSim(location = [0, 0, 0], axis = [-50, 50], objects= objects)
   view= viewSim(objects)
-  test = simTest([Test(missionName = 'GateSimp', expected = 0, within = 5, actual = yaw),
-                  Test(missionName = 'GateSimp', expected = [0, 0, 0], within = 4, actual = location),
-                  Test(missionName = 'GateXimp', expected = 0, within = 5, actual = yaw)])
+  test = simTest(tests)
   while True:
     pid.updateHeading()
     robo.updatePosition()

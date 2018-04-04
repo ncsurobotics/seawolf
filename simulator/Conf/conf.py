@@ -1,8 +1,12 @@
 import traceback
 import Entities
+import Test.utilities
+from Test.missionTest import MissionTest as test
 
 entityType = type(type)
 env = {k:v for (k,v) in Entities.__dict__.items() if type(v) is entityType}
+testLambdas = {k:v for (k,v) in Test.utilities.__dict__.items() if callable(v)}
+
 
 def readFile(fileName):
   
@@ -10,6 +14,7 @@ def readFile(fileName):
     lc = 0
     f = open(fileName, 'r')
     ents = []
+    tests = []
     while True:
       line = f.readline()
       if not line:
@@ -24,8 +29,11 @@ def readFile(fileName):
       line = '(' + line + ')'
       tokens = tokenizer(line)
       tree = parser(tokens)
-      entity = evalEnt(tree)
-      ents.append(entity)
+      entity, test = evalLine(tree)
+      if entity:
+        ents.append(entity)
+      if test:
+        tests.append(test)
   except Exception as e:
     print "ERROR parsing: %d" % (lc)
     print e
@@ -36,7 +44,7 @@ def readFile(fileName):
     if tokens == 'error':
       raise Exception('error reading config file')
     else:
-      return ents
+      return ents, tests
     
     
 
@@ -85,7 +93,21 @@ def atom(token):
   except ValueError:
     return str(token)  
     
+def evalLine(tree):
+  if tree[0].lower() != 'after':
+    return evalEnt(tree), None
+  else:
+    return None, evalTest(tree)
+
+def evalTest(tree):
+  #after GateSimp yaw is within 5 of 0
+  #missionName = 'nameOfMission', actual = None, within = 0, expected = None)
+  #print "test help"
+  #print testLambdas
+  #print tree
+  return test(missionName = tree[1], actual = testLambdas[tree[2].lower()], within = tree[5], expected = tree[7])
   
+
 def evalEnt(tree):
   obj = tree.pop(0)
   args = {}
