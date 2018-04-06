@@ -66,11 +66,10 @@ def setup():
     raise Exception("Run as: python2.7 sim.py file.conf")
   return Conf.readFile(sys.argv[1])
 
-def main():
+def main(objects, tests):
   #connecting to hub
   sw.loadConfig("../conf/seawolf.conf");
   sw.init("Simulator : Main");
-  objects, tests = setup()
   pid = pidSim()
   robo = posSim(location = [0, 0, 0], axis = [-50, 50], objects= objects)
   view= viewSim(objects)
@@ -82,4 +81,4 @@ def main():
     test.updatePosition(robo.pos())
 
 if __name__ == "__main__":
-  main()
+  main(*setup())

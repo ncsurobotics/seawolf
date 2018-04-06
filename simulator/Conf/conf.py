@@ -3,11 +3,15 @@ import Entities
 import Test.utilities
 from Test.missionTest import MissionTest as test
 
+#this is used filter out the entity objects
 entityType = type(type)
+#getting the entities from the Entity package
 env = {k:v for (k,v) in Entities.__dict__.items() if type(v) is entityType}
+#getting functions from test utilities that get actual value from hub to compare to expected
 testLambdas = {k:v for (k,v) in Test.utilities.__dict__.items() if callable(v)}
 
 
+#reads file line by line 
 def readFile(fileName):
   
   try:
@@ -37,7 +41,7 @@ def readFile(fileName):
   except Exception as e:
     print "ERROR parsing: %d" % (lc)
     print e
-    traceback.print_exc()
+    #traceback.print_exc()
     tokens = 'error'
   finally:
     f.close()
@@ -48,6 +52,7 @@ def readFile(fileName):
     
     
 
+#removes comment part from line
 COMMENT = '#'
 def removeComment(line):
   try:
@@ -121,12 +126,12 @@ def evalEnt(tree):
       #if val is a list make it a tuple so colors work with cv2
       val = tuple(val)
     args[key] = val
-  #try:
-  return env[obj](**args)
-  #except:
-   # print "Available entites are:"
-    #print possibleEnts()
-    #raise Exception("Unable to locate entity: " + obj)
+  try:
+    return env[obj](**args)
+  except:
+    print "Available entites are:"
+    print possibleEnts()
+    raise Exception("Unable to locate entity: " + obj)
 
 
 colors = {

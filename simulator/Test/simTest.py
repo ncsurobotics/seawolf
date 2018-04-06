@@ -1,4 +1,3 @@
-from multiprocessing import Process
 import seawolf as sw
 import numpy as np
 
@@ -6,8 +5,6 @@ class SimTest(object):
   
   def __init__(self, tests):
     self.pos = np.float32([0, 0, 0])
-    t = Process(target=runTest, args= (tests, ))
-    t.start()
     
   
   def updatePosition(self, position):
@@ -32,7 +29,6 @@ def runTest(tests):
             test.run()
             print test
     finally:
-      print "in finally"
       for t in [test for test in tests if not test.wasRan()]:
         print t
       
