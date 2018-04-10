@@ -3,6 +3,12 @@ GUI for controlling seawolf for testing.
 """
 
 import cv2
+from gui_graphics import *
+from gui_gui import *
+from gui_component import *
+from gui_textbox import *
+from gui_dial import *
+from gui_slider import *
 import numpy as np
 import math
 import seawolf as sw
@@ -13,119 +19,28 @@ import sw3
 
 #from abc import ABC, abstractmethod
 import abc
-#Helpful functions
-def circle(x, y, r, color, img):
-    pass
-def rect(x, y, w, l, color, img):
-    pass
-def line(x1, y1, x2, y2, thickness, color, img):
-    cv2.line(img, (x1,y1), (x2,y2), color, thickness = 4, lineType = 8, shift = 0)
-    pass
-def textAt(x, y, text, color, size, img):
-    pass
+
 #global variables
-global GREY, WHITE, RED
-GREY = (140,140,140)
-WHITE = (255,255,255)
-RED = (0, 0, 255) #RGB is read backwards in opencv
+global GUI_IMG
+
+
+
+
 """
-class AbstractClassExample(ABC):
- 
-    def __init__(self, value):
-        self.value = value
-        super().__init__()
-    
-    @abstractmethod
-    def do_something(self):
-        pass
+Maps the value given on an input range to a scaled value on an output range. For instance, given the point 1 on the input scale 0 to 5,
+you would want to set this to 2 on the output scale 0 to 10. This function takes parameters for the input point, input scale start, input
+scale end, output scale start, and output scale end, and returns the matching point to the input point, but on the output scale.
+
+p1 - point on input scale to be mapped
+a - start of the input range
+b - end of the input range
+c - start of the output range
+d - end of the output range
+return input point scaled to output range
 """
+def mapValTo(p1,a,b,c,d):
+        return (p1-a)*(d-c)/(b-a)+c
 
-class GUI:
-    #global BACKGROUND_COLOR
-    BACKGROUND_COLOR = (0,0,0)
-    #Components
-    ROLL = 0
-    PITCH = 1
-    YAW = 2
-    DEPTH = 3
-    DEPTH_READER = 4
-    FORWARD = 5
-    BOW = 6
-    STERN = 7
-    PORT = 8
-    STAR = 9
-    STRAFET = 10
-    STRAFEB = 11
-    PLAY_BUTTON = 12
-    def __init__(self):
-        self.components = []
-        self.components.append(Dial(150,150, "Roll"))
-        self.components.append(Dial(150,300, "Pitch"))
-        #append all components
-        pass
-    def handleMouseEvent(self, event, x, y, flags, param):
-        #go througgh each component and handle it just in case
-        for comp in self.components:
-            comp.handleMouseEvent(x,y,event)
-        #print( str(x) + ", " + str(y) )
-        #print(event)
-        pass
-    def drawComponents(self):
-        #for each component in components, component.draw()
-        pass
-class Component:
-    def __init__(self, x, y, title):
-        self.x = x
-        self.y = y
-        self.title = title
-        self.change = False
-    
-    #@abstractmethod
-    def handleMouseEvent(self, x, y):
-        pass
-    #@abstractmethod
-    def draw(self):
-        pass
-    def move(self, x, y):
-        pass
-class Dial(Component):
-    def __init__(self, x, y, title):
-        self.radius = 60
-        self.degree = 0
-        self.desiredBearing = 0
-        self.actualBearing = 0
-        self.following = False
-        self.title = title
-        self.paused = False
-        Component.__init__(self, x, y, title)
-    def handleMouseEvent(self, x, y, event):
-        print(self.title)
-    def draw():
-        pass
-    #move desired bearing toward (x,y), using special 180 and -180 scale
-    def move(self, x, y):
-        pass
-    def moveReadIndicator(self, degrees):
-        pass
-        
-
-class  Slider(Component):
-    def __init__(self, x, y, width, length, min, max, title):
-        self.width = width
-        self.length = length
-        self.min = min
-        self.max = max
-        self.ti
-        Component.__init__(self, x, y, title)
-    
-
-class VerticalSlider(Slider):
-    def __init__(self, x, y, width, length, min, max, title):
-        Slider.__init__(self, x, y, width, length, min, max, title)
-    #move slider horizontally
-    def move(self, x, y):
-        pass
-    
 """
 class HorizontalSlider(Slider):
 class PlayButton(Component):
@@ -133,19 +48,45 @@ class Text(Component):
 """
 
 def main():
-    WIDTH = 500
-    HEIGHT = 1000
-    img = np.zeros((HEIGHT,WIDTH,3), np.uint8)
+    seawolfIsRunning = True
+    if(seawolfIsRunning):
+        sw.loadConfig("../../conf/seawolf.conf")
+        sw.init("GUI")
+    
+    #GUI_IMG = np.zeros((HEIGHT,WIDTH,3), np.uint8)
     cv2.namedWindow('Control Panel')
-
     g = GUI()
-    cv2.rectangle(img, (0, 0), (WIDTH, HEIGHT), g.BACKGROUND_COLOR, thickness=-1, lineType=8, shift=0)
+    down = -1.0
+    up = 1.0
+    g.addComponent(VerticalSlider(290, 590, 20, 150, -3, .5, "Depth"))
+    g.addComponent(HorizontalSlider(40, 800, 150, 20, down, up, "Forward"))
+
+    g.addComponent(Dial(100, 460, "Roll"))
+    g.addComponent(Dial(300, 460, "Pitch"))
+    g.addComponent(Dial(100, 650, "Yaw"))
+
+    g.addComponent(HorizontalSlider(40, 100, 150, 20, down, up, "Bow"))
+    g.addComponent(HorizontalSlider(240, 100, 150, 20, down, up, "Stern"))
+    g.addComponent(HorizontalSlider(40, 200, 150, 20, down, up, "Port"))
+    g.addComponent(HorizontalSlider(240, 200, 150, 20, down, up, "Star"))
+    g.addComponent(HorizontalSlider(40, 300, 150, 20, down, up, "Strafet"))
+    g.addComponent(HorizontalSlider(240, 300, 150, 20, down, up, "Strafeb"))
+    
+    
+   # g.addComponent()
+   
+    
     cv2.setMouseCallback('Control Panel',g.handleMouseEvent)
     while(True):
-        cv2.imshow('Control Panel',img)
+        rect(0, 0, WIDTH, HEIGHT, BLACK)
         g.drawComponents()
+        cv2.imshow('Control Panel',GUI_IMG)
         k = cv2.waitKey(20) & 0xFF
+        #if key is numeric or modifies number, modify number in selected text box
+        if (ord('0') <= k and k <= ord('9')) or k == BACKSPACE or k == ord('\n') or k == ord('.') or k == ord('-'):
+            g.modifySelectedTextBox(k)
         if k == 107 or k == 27 or cv2.getWindowProperty('Control Panel',1) < 1: 
+            sw.close()
             cv2.destroyWindow('Control Panel')
             break
 main()
