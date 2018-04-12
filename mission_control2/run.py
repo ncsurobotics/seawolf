@@ -10,40 +10,34 @@ import conf
 
 import missions as ms
 
-""" connecting to hub """
-sw.loadConfig("../conf/seawolf.conf");
-sw.init("missionControl : Main");
-  
-""" connecting to svr """
-svr.connect()
-"""setting up svr streams """
-forward = svr.Stream("forward")
-forward.unpause()
+def hubConnect():
+  """ connecting to hub """
+  sw.loadConfig("../conf/seawolf.conf");
+  sw.init("missionControl : Main");
 
-down = svr.Stream("down")
-down.unpause()
+def svrConnect():
+  """ connecting to svr """
+  svr.connect()
+  """setting up svr streams """
+  forward = svr.Stream("forward")
+  forward.unpause()
 
-cameras = {
-           "forward" : forward,
-           "down"    : down
-          }
+  down = svr.Stream("down")
+  down.unpause()
 
+  global cameras 
+  cameras = {
+             "forward" : forward,
+             "down"    : down
+            }
 
+DBPRINT = False
 
 
 killName = "MissionReset"
 
 
-
-
-
-
-
-
 def main():
-
-  
-  
   """ 
   array of missions to run. all missions should be in the mission module/directory
   missions will run int the order that they are in the array
@@ -51,8 +45,13 @@ def main():
   if len(sys.argv) != 2:
     raise Exception("TO RUN: python2.7 run.py pathTo.conf")
   missions = conf.readFile(sys.argv[1])
-  
-  
+  runMissions(missions)  
+
+def runMissions(missions, dbprint = False): 
+  hubConnect()
+  svrConnect()
+  global DBPRINT 
+  DBPRINT = dbprint
   try:
     for mission in missions:
       mission.setup()
@@ -60,32 +59,32 @@ def main():
       running = True
       print "Begining to run: " + mission.getName()
       while checkError() and running:
-        print("+++++++++++++++++++++++++++++++++++++++++++++++")
+        dbPrint("+++++++++++++++++++++++++++++++++++++++++++++++")
         try:
           frame = getFrame(camera)
           running = mission.processFrame(frame)
           cv2.waitKey(1)
         except Exception as e:
-          print "hello"
-          print "ERROR running " + mission.getName() + " moving to next"
-          print e
+          dbPrint( "hello" )
+          dbPrint( "ERROR running " + mission.getName() + " moving to next")
+          dbPrint( e )
           running = False
     
-      print "Done with: " + mission.getName()
+      dbPrint("Done with: " + mission.getName())
       
       #send notification over hub that mission is done
       cmd = ("MISSION_DONE", type(mission).__name__)
       sw.notify.send(*cmd) #send notification to seawolf
       
   except Exception as e:
-    print e
-    print "ERROR occurred when checking errors, stopping running"
+    dbPrint( e)
+    dbPrint( "ERROR occurred when checking errors, stopping running")
   
   finally:
     sw3.Forward(0).start()
     cmd = ("MISSION_DONE", "DONE")
     sw.notify.send(*cmd) #send notification to seawolf
-    print "done with missions"
+    dbPrint( "done with missions")
     
 
 """
@@ -96,9 +95,9 @@ some to look for:
 """
 def checkError():
   #checking for killswitch
-  print("checkErr")
+  dbPrint("checkErr")
   killSw = sw.var.get(killName)
-  print("kill switch %.2f"% killSw)
+  dbPrint("kill switch %.2f"% killSw)
   if abs(killSw - 1.0)  < .05:
     #if the kissSw value is equal to 1 then the robot has been killed
     raise BaseException(killName)
@@ -119,7 +118,9 @@ def getFrame(camera):
   return frame
   
   
-  
+def dbPrint(string):
+  if DBPRINT:
+    print(string)
   
 
 

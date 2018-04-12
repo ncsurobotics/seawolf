@@ -24,7 +24,7 @@ class Path(object):
   """
   def __init__(self, at = [0, 0, 0], orientation = 0):
     self.location = np.float32(at)
-    self.orientation = orientation * math.pi/180
+    self.orientation = -1 * orientation * math.pi/180
     self.name = NAME
     line = np.float32([math.sin(self.orientation), math.cos(self.orientation), 0])
     widthLine = np.float32([math.cos(self.orientation), -1*math.sin(self.orientation), 0])

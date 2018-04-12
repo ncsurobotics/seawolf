@@ -1,19 +1,6 @@
 import seawolf as sw
 import numpy as np
 
-class SimTest(object):
-  
-  def __init__(self, tests):
-    self.pos = np.float32([0, 0, 0])
-    
-  
-  def updatePosition(self, position):
-    #updating the position in hub so that test cases can use it, utitlities.py must be modified if these names change
-    sw.var.set('Sim.xLoc', position[0])
-    sw.var.set('Sim.yLoc', position[1])
-    sw.var.set('Sim.zLoc', position[2])
-
-
 
 def runTest(tests):
     sw.loadConfig("../conf/seawolf.conf");
@@ -29,7 +16,7 @@ def runTest(tests):
             test.run()
             print test
     finally:
-      for t in [test for test in tests if not test.wasRan()]:
+      for t in tests:
         print t
       
             

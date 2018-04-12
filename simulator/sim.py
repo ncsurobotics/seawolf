@@ -41,18 +41,8 @@ viewSim is object module to be used to fake camera data, and broadcast on SVR
 """
 from View.viewSimpleSim import ViewSimpleSim as viewSim
 
-"""
-testSim is object module to be used to run automated tests
-  init(tests) the setup method is input an array of test to run when a mission is done, the nofication of a mission finishing will be sent over hub
-  update(roboPos) sends an updated robot position to the test suite
-"""
-from Test.simTest import SimTest  as simTest
-from Test.missionTest import MissionTest as Test
-from Test.utilities import *
 
-
-
-from Entities import entities
+from SimEntities import entities
 
 import sys
 import Conf
@@ -66,19 +56,17 @@ def setup():
     raise Exception("Run as: python2.7 sim.py file.conf")
   return Conf.readFile(sys.argv[1])
 
-def main(objects, tests):
+def main(objects):
   #connecting to hub
   sw.loadConfig("../conf/seawolf.conf");
   sw.init("Simulator : Main");
   pid = pidSim()
   robo = posSim(location = [0, 0, 0], axis = [-50, 50], objects= objects)
   view= viewSim(objects)
-  test = simTest(tests)
   while True:
     pid.updateHeading()
     robo.updatePosition()
     view.updateViews(robo.pos())
-    test.updatePosition(robo.pos())
 
 if __name__ == "__main__":
-  main(*setup())
+  main(setup()[0])

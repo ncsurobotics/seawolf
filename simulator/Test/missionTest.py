@@ -2,7 +2,7 @@ import numpy as np
 
 class MissionTest(object):
   
-  def __init__(self, missionName = 'nameOfMission', actual = None, within = 0, expected = None):
+  def __init__(self, after = 'nameOfMission', that = None, within = 0, of = None):
     """
     missionName is the name of the mission test to run this test after
     tests  is the list of test to run after 
@@ -10,9 +10,9 @@ class MissionTest(object):
     within is the accepted tolerance to the expected
     actual is a lambda/function to get the desired value
     """
-    self.missionName = missionName
-    self.expected = expected
-    self.actual = actual
+    self.missionName = after
+    self.expected = of
+    self.actual = that
     self.within = within
     self.testActual = None
     self.passed = None
