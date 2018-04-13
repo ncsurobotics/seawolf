@@ -437,10 +437,12 @@ d.addPlayButton(100, 100, 250, 800, "Play Button", False)
 cv2.setMouseCallback('Control Panel',d.move)
 
 count = 0
-
+print "hello"
 initializeValues()
+print "vals init"
 while(1):
     cv2.imshow('Control Panel',img)
+    #print "im show"
     d.drawAll()
     k = cv2.waitKey(20) & 0xFF
     count += 1
@@ -525,8 +527,10 @@ while(1):
                             d.setSlideValue(STRAFET, sw.var.get("StrafeT"))
                             d.setSlideValue(STRAFEB, sw.var.get("StrafeB"))
  
-    if k == 107 or k == 27 or cv2.getWindowProperty('Control Panel',1) < 1:     	
+    if k == 107 or k == 27: # or cv2.getWindowProperty('Control Panel',1) < 1:     	
 				sw.close()
+				print k
+				print cv2.getWindowProperty('Control Panel', 1)
 				cv2.destroyWindow('Control Panel')
 				break
 
