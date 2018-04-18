@@ -16,13 +16,6 @@ sleep 1.5
 screen -dr seawolf -p svrd -X stuff "svrd
 "
 
-#simulator
-screen -dr seawolf -X screen -t simulator
-sleep 1.5
-screen -dr seawolf -p simulator -X stuff "cd simulator
-"
-screen -dr seawolf -p simulator -X stuff "python sim.py
-"
 
 #suite.sh
 screen -dr seawolf -X screen -t suite
@@ -74,8 +67,16 @@ screen -dr seawolf -p bash -X stuff "cd mission_control
 screen -dr seawolf -p bash -X stuff "
 "
 
-screen -x
+#simulator
+screen -dr seawolf -X screen -t simulator
+sleep 1.5
+screen -dr seawolf -p simulator -X stuff "cd simulator
+"
+screen -dr seawolf -p simulator -X stuff "python sim.py Conf/test.conf
+"
 
+
+screen -x
 
 
 

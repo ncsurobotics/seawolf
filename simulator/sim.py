@@ -42,30 +42,25 @@ viewSim is object module to be used to fake camera data, and broadcast on SVR
 from View.viewSimpleSim import ViewSimpleSim as viewSim
 
 
-from Entities import entities
+from SimEntities import entities
 
+import sys
+import Conf
 """
 array to be used for placing objects in water
 rember that the location is center point of element
 elements must be an Entity, look at entities folder __init__ for available
 """
 def setup():
-  return [
-          entities["Gate"]([0, 7, -1]),
-          entities["Path"]([0, 0, -5]),
-          #entities["Bouy"]([-1, 10, -1], color = (255, 0, 0)),
-          entities["Bouy"]([0, 10, -1], color = (0, 0, 255)), 
-          #entities["Bouy"]([1, 10, -1], color = (0, 255, 0)),
-          entities["Hedge"]([0, 19,-1]),
-          entities["Path"]([0, 15, -5]),
-          entities["Pinger"]([10, 5, -1])
-         ]
+  if len(sys.argv) != 2:
+    raise Exception("Run as: python2.7 sim.py file.conf")
+  return Conf.readFile(sys.argv[1])
 
-def main():
+
+def main(objects):
   #connecting to hub
   sw.loadConfig("../conf/seawolf.conf");
   sw.init("Simulator : Main");
-  objects = setup()
   pid = pidSim()
   robo = posSim(location = [0, 0, 0], axis = [-50, 50], objects= objects)
   view= viewSim(objects)
@@ -75,4 +70,4 @@ def main():
     view.updateViews(robo.pos())
 
 if __name__ == "__main__":
-  main()
+  main(setup()[0])

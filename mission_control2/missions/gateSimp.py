@@ -5,7 +5,7 @@ import time
 
 
 import sys
-sys.path.append("./../vision2/")
+sys.path.append("../vision2/")
 
 
 from Entities import gateHoughProb as vision

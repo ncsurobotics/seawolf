@@ -103,6 +103,10 @@ class seawolfPos(object):
     self.li.set_xdata(self.Xlocs)
     self.fig.canvas.draw()
     
+    sw.var.set('Sim.xLoc', roboPos[0])
+    sw.var.set('Sim.yLoc', roboPos[1])
+    sw.var.set('Sim.zLoc', roboPos[2])
+    
     return
   
   def pos(self):

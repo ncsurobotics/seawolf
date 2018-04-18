@@ -52,5 +52,11 @@ Solenoid.2           = 0.0,  0,  0
 Servo.0              = 0.0,  0,  0
 Servo.1              = 0.0,  0,  0
 
+#acoustic variables
 Acoustics.Pitch	     = 0.0,  0,  0
 Acoustics.Yaw        = 0.0,  0,  0
+
+#sim location
+Sim.xLoc             = 0.0,  0,  0
+Sim.yLoc             = 0.0,  0,  0
+Sim.zLoc             = 0.0,  0,  0

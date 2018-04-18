@@ -22,9 +22,9 @@ class Path(object):
   location = 1 by 3 array containing the centerpoint of the entity
   orientation = the orientation of the path in degrees, relative to forward/y axis
   """
-  def __init__(self, location = [0, 0, 0], orientation = 0):
-    self.location = np.float32(location)
-    self.orientation = orientation * math.pi/180
+  def __init__(self, at = [0, 0, 0], orientation = 0):
+    self.location = np.float32(at)
+    self.orientation = -1 * orientation * math.pi/180
     self.name = NAME
     line = np.float32([math.sin(self.orientation), math.cos(self.orientation), 0])
     widthLine = np.float32([math.cos(self.orientation), -1*math.sin(self.orientation), 0])

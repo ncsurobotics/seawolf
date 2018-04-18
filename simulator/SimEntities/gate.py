@@ -21,11 +21,12 @@ from dbEntity import dbEntity
 class Gate(object):
   
   """
-  location = 1 by 3 array containing the centerpoint of the entity
+  input dict is expected to contain the following
+  at = 1 by 3 array containing the centerpoint of the entity
   orientation = angles in degrees from the y axis
   """
-  def __init__(self, location = [0, 0, 0], orientation = 0):
-    self.location = np.float32(location)
+  def __init__(self, at = [0, 0, 0], orientation = 0):
+    self.location = np.float32(at)
     self.name = NAME
     
     orientation = math.pi/180 * orientation
