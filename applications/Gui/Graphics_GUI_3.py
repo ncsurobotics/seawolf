@@ -1,7 +1,11 @@
+"""
+Collection of drawing functions.
+Wrappers of opencv drawing functions to reduce boiler plate code.
+"""
+
 import cv2
 import numpy as np
 import math
-global GREY, WHITE, RED, BLACK, BLUE, CHROME_BLUE, GREEN, GUI_IMG, WIDTH, HEIGHT
 WIDTH = 500
 HEIGHT = 1000
 GUI_IMG = np.zeros((HEIGHT,WIDTH,3), np.uint8)
@@ -14,6 +18,11 @@ CHROME_BLUE = (245,140,76)
 BLUE = (255,0,0)
 RED = (0, 0, 255) 
 GREEN = (0, 255, 0)
+DARK = (32,54,76)
+LIGHT_GREY = (200, 200, 200)
+DARK_GREY = (50, 50, 50)
+BACKGROUND_COLOR = DARK_GREY
+
 
 #Helpful functions
 def circle(x, y, radius, color):
@@ -40,25 +49,18 @@ def isInCircle(circleX, circleY, circleRadius, x, y):
 #point (x,y) in rectangle
 def isInRect(rectX, rectY, rectWidth, rectLength, x, y):
     return rectX <= x and x <= rectX + rectWidth and rectY <= y and y <= rectY + rectLength
-#from point (ox,oy) to (x,y)
-def heading(ox,oy,x,y):
-        if(ox<x and oy<y):
-            return math.pi-math.pi/2-math.atan2(x-ox,y-oy)
-        if(x<ox and oy<y):
-            return math.pi-math.pi/2-math.atan2(x-ox,y-oy)
 
-        if(ox<x and y<oy):
-            return math.pi-math.pi/2-math.atan2(x-ox,y-oy)
-        if(x<ox and y<oy):
-            return math.pi-math.pi/2-math.atan2(x-ox,y-oy)
+"""
+Maps the value given on an input range to a scaled value on an output range. For instance, given the point 1 on the input scale 0 to 5,
+you would want to set this to 2 on the output scale 0 to 10. This function takes parameters for the input point, input scale start, input
+scale end, output scale start, and output scale end, and returns the matching point to the input point, but on the output scale.
 
-        if(x==ox and y < oy):
-            return math.pi+math.pi/2
-        if(x==ox and y > oy):
-            return math.pi/2
-        if(x<ox and y == oy):
-            return math.pi
-        if(x>ox and y == oy):
-            return 0
-        
-        return -math.pi;
+p1 - point on input scale to be mapped
+a - start of the input range
+b - end of the input range
+c - start of the output range
+d - end of the output range
+return input point scaled to output range
+"""
+def mapValTo(p1,a,b,c,d):
+        return (p1-a)*(d-c)/(b-a)+c

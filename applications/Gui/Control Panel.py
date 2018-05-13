@@ -156,7 +156,7 @@ def heading(ox,oy,x,y):
         if(x>ox and y == oy):
             return 0
         
-        return -3.14;
+        return -3.14
 ################################################################    Controller
 class Controller:
     global PI, dark, light, grey, white, FONT_HERSHEY_SIMPLEX, font, textDx, textDy
@@ -553,7 +553,9 @@ while(1):
                     d.change[12] = 0
                     if d.toggle[12] == True:
                             sw3.ZeroThrusters().start()
-                            d.setSlideValue(DEPTH, 0)
+                            #d.setSlideValue(DEPTH, sw.var.get("Depth"))
+                            #sw.var.set("DepthPID.Heading", 0)
+                            sw.var.set("DepthPID.Heading", sw.var.get("Depth"))
                             d.setSlideValue(FORWARD, 0)
                             a = sw3.Forward(d.slideValue(5))
                             a.start()
@@ -563,6 +565,17 @@ while(1):
                             d.setSlideValue(STAR, sw.var.get("Star"))
                             d.setSlideValue(STRAFET, sw.var.get("StrafeT"))
                             d.setSlideValue(STRAFEB, sw.var.get("StrafeB"))
+                            #zero out dials
+                            
+                            d.change[ROLL] = 1
+                            d.desiredBearing[ROLL] = -math.pi/2
+
+                            d.change[PITCH] = 1
+                            d.desiredBearing[PITCH] = -math.pi/2
+
+                            d.change[YAW] = 1
+                            d.desiredBearing[YAW] = d.actualBearing[YAW]
+                            #d.actualBearing[YAW] = realToDisplayRadians(math.radians(sw.var.get("SEA.Yaw")))
  
     if k == 107 or k == 27 or cv2.getWindowProperty('Control Panel',1) < 1:     	
 				sw.close()
