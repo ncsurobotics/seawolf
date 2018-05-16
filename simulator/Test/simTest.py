@@ -16,6 +16,7 @@ def runTest(tests):
             test.run()
             print test
     finally:
+      print("---------------DONE PRINTING ALL RESULTS-------------")
       for t in tests:
         print t
       

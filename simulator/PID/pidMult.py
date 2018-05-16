@@ -30,7 +30,7 @@ def dbPrint(msg):
 #function for adding noise to the pid
 #noise will be modified/normalized by time between updates by update function
 def noise():
-  return random.gauss(0, .1)
+  return random.gauss(0, .03)
   
 def depthNoise():
   return random.gauss(0, .001)
@@ -77,7 +77,7 @@ class pid(object):
     #rate of update deg/s 
     updateRate = 10
     self.axis = [axis("SEA.Pitch", "PitchPID.Heading", updateRate, noise),
-                 axis("SEA.Yaw"  , "YawPID.Heading", updateRate, noise),
+                 axis("SEA.Yaw"  , "YawPID.Heading", 20.0, noise),
                  axis("SEA.Roll" , "RollPID.Heading", updateRate, noise),
                  axis("Depth"    , "DepthPID.Heading", .1, depthNoise)
                 ]

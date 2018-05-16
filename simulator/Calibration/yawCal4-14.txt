@@ -1,0 +1,20 @@
+starting
+Obj RelativeYaw, value: 10.00, time 0.682
+waiting before next test
+starting
+Obj RelativeYaw, value: -10.00, time 0.742
+waiting before next test
+starting
+Obj RelativeYaw, value: -20.00, time 1.044
+waiting before next test
+starting
+Obj RelativeYaw, value: 20.00, time 0.945
+waiting before next test
+starting
+Obj RelativeYaw, value: 45.00, time 1.445
+waiting before next test
+starting
+Obj RelativeYaw, value: -45.00, time 1.647
+waiting before next test
+Done with tests
+[Simulator : Calibr

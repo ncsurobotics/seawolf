@@ -18,20 +18,20 @@ makes robot go forward for a while
 
 
 
-try:
-	a = sw3.Forward(.9, timeout = -1)
+def main():
+  speeds = [.2, .4, .6, .8, .95]
+  for speed in speeds:
+    print("Running speed: %.3f" % (speed))
+    a = sw3.Forward(speed, timeout = -1)
+    raw_input("Press enter to start")
+    a.start()
+    startTime = time.time()
+    raw_input("Press enter to stop")
+    sw3.Forward(speed, timeout = -1).start()
+    print ("Total time %5.3f" % (time.time() - startTime))
 
-	a.start()
-	startTime = time.time()
-	i = 0
-	while True:
-		if i == 0:
-			i += 1
-			print("enter ctrl-c to stop and get time")
-		
-
-finally:
-	print ("Total time %5.3f" % (time.time() - startTime))
-	sw3.Forward(0).start()
+if __name__ == "__main__":
+  main()
+	
   
 

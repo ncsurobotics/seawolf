@@ -1,0 +1,32 @@
+starting
+Obj   SetDepth, value:  0.00, time 0.138
+waiting before next test
+starting
+Obj   SetDepth, value:  2.00, time 2.449
+waiting before next test
+starting
+Obj   SetDepth, value:  3.00, time 0.038
+waiting before next test
+starting
+Obj   SetDepth, value:  0.00, time 2.950
+waiting before next test
+starting
+Obj   SetDepth, value:  3.00, time 2.047
+waiting before next test
+starting
+Obj   SetDepth, value:  0.00, time 6.671
+waiting before next test
+starting
+Obj   SetDepth, value:  4.00, time 3.856
+waiting before next test
+starting
+Obj   SetDepth, value:  2.00, time 5.560
+waiting before next test
+starting
+Obj   SetDepth, value:  4.00, time 0.342
+waiting before next test
+starting
+Obj   SetDepth, value:  0.00, time 6.368
+waiting before next test
+Done with tests
+
