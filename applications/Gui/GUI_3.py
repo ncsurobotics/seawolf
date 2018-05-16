@@ -9,6 +9,9 @@ import numpy as np
 import math
 import seawolf as sw
 
+import sys
+
+sys.path.append('GUI_Components')
 from Dial_GUI_3 import *
 from Slider_GUI_3 import *
 from Button_GUI_3 import *
@@ -17,7 +20,7 @@ from Conversions_GUI_3 import *
 
 import time
 
-import sys
+
 sys.path.append('../../mission_control')
 import sw3
 
@@ -103,7 +106,7 @@ Sets all the sliders to zero, including forward and depth. Depth is set to actua
 """
 def zeroSliders():
         Depth.change = True
-        Depth.setSlideValue(sw.var.get("Depth"))
+        Depth.setSlideValue(0)
         writeHub(Depth)
         Forward.setSlideValue(0)
         a = sw3.Forward(0)
