@@ -35,6 +35,7 @@ def noise():
 def depthNoise():
   return random.gauss(0, .001)
 
+
 class axis(object):
   """
   axis to be updated by PID

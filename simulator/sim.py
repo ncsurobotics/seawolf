@@ -56,6 +56,7 @@ def setup():
     raise Exception("Run as: python2.7 sim.py file.conf")
   return Conf.readFile(sys.argv[1])
 
+
 def main(objects):
   #connecting to hub
   sw.loadConfig("../conf/seawolf.conf");
