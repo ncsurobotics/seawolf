@@ -38,6 +38,10 @@ def main():
   #wait until the mission is done
   missionProcess.join()
   
+  #wait for test process to be done
+  testProcess.join()
+ 
+  raw_input("press enter to stop sim")
   #killing the simulator
   simProcess.terminate()
   

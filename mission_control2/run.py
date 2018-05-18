@@ -31,7 +31,7 @@ def svrConnect():
              "down"    : down
             }
 
-DBPRINT = False
+DBPRINT = True #False
 
 
 killName = "MissionReset"
@@ -47,7 +47,7 @@ def main():
   missions = conf.readFile(sys.argv[1])
   runMissions(missions)  
 
-def runMissions(missions, dbprint = False): 
+def runMissions(missions, dbprint = True): 
   hubConnect()
   svrConnect()
   global DBPRINT 
@@ -58,14 +58,13 @@ def runMissions(missions, dbprint = False):
       camera = mission.getCamera()
       running = True
       print "Begining to run: " + mission.getName()
-      while checkError() and running:
+      while running:
         dbPrint("+++++++++++++++++++++++++++++++++++++++++++++++")
         try:
           frame = getFrame(camera)
           running = mission.processFrame(frame)
           cv2.waitKey(1)
         except Exception as e:
-          dbPrint( "hello" )
           dbPrint( "ERROR running " + mission.getName() + " moving to next")
           dbPrint( e )
           running = False

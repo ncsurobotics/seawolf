@@ -22,7 +22,7 @@ class ViewSimpleSim(object):
   def __init__(self, entities = None):
     self.entities = entities
     #setting the scale factor, this means each pixel is one cm when obj is 1m away
-    sf = .0012
+    sf = .0017
     svr.connect()
     
     #making the down camera
