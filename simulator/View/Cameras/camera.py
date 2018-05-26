@@ -169,7 +169,26 @@ class Camera(object):
       cv2.circle(self.frame,(ptc[0], ptc[1]) , rad, color = color, thickness = -1)
     else:
       self.scaleErr(cont, color)
-  
+  """
+  draws a semi circle (a slice of pie), between start and end angle
+  pt = point in 3d space relative to camera in meters of the center of the circle
+  rad = radius in meters of the circle
+  startAngle = start angle of the slice
+  endAngle = end angle of the slice
+  color = (b, g, r)
+  """
+  def drawSlice(self, pt, rad, startAngle, endAngle, color):
+    (cont, pts) = self.scalePts([pt])
+    if cont < 0:
+      return self.scaleErr(cont, color)
+    rad = int(rad * self.getSF(pt))
+    ptc = np.int32(pts[0])
+    dbPrint(pt)
+    dbPrint(rad)
+    if cont > 0:
+      cv2.ellipse(self.frame, (ptc[0], ptc[1]), (rad, rad), 0, startAngle, endAngle, color, -1, 8, 0 )
+    else:
+      self.scaleErr(cont, color)
   
   
   

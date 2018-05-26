@@ -4,6 +4,7 @@ from buoy import Buoy
 from gate import Gate
 from hedge import Hedge
 from pinger import Pinger
+from wheel import Wheel
 
 entities = {
               "dbEntity"  :   dbEntity,
@@ -11,5 +12,6 @@ entities = {
               "Buoy"      :   Buoy,
               "Gate"      :   Gate,
               "Hedge"     :   Hedge,
-              "Pinger"    :   Pinger
+              "Pinger"    :   Pinger,
+	      "Wheel"     :   Wheel
            }
