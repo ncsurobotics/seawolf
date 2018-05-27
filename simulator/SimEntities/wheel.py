@@ -1,6 +1,6 @@
 
 #radius of wheel in meters
-RAD = 2
+RAD = .495
 
 #DB if true, shows graph of where Entity is relative to robot
 DB = False
@@ -44,8 +44,7 @@ class Wheel(object):
     camera.drawSlice(pt, self.radius, 330 + self.spin, 360 + self.spin, (0, 255, 0) )
 
     self.spin += self.rate
-    if self.spin >= 360:
-      self.spin = 0
+    self.spin = self.spin % 360
     return
  
  

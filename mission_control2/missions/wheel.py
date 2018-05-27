@@ -14,7 +14,7 @@ from Entities import buoysHough as vision
 #factor for linearly converting pixels to depth in meters, aka Meters / Pixel
 PIXTODEPTH = 400.0
 
-class RouletteWheel(object):
+class Wheel(object):
 
   def __init__(self):
     self.camera = "down"

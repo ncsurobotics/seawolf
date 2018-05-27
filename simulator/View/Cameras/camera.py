@@ -45,21 +45,27 @@ class Camera(object):
     self.newFrame()
   
   def newFrame(self):
-    self.frame = np.zeros(self.frameSize, np.uint8)
+    #making frame start out as blue background. 
+    background = np.array([140, 110, 12]) * np.ones(self.frameSize)
+    
+    #adding noise to the frame
+    noise =  np.random.normal(loc = 0, scale = 4, size = self.frameSize)
+
+    self.frame = np.array(noise + background, np.uint8)
+    #np.zeros(self.frameSize, np.uint8)
   
   
  
   #displays frame on svr
   def show(self):
-  
-    #adding background to frame
-    background = np.array([160, 130, 32]) * np.ones(self.frame.shape)
+     
     
-    #adding noise to the frame
-    noise = np.random.normal(loc = 0, scale = 3, size = self.frame.shape)
+    #adding positive noise to the frame
+    noise =  np.random.normal(loc = 0, scale = 4, size = self.frame.shape)
+    noise = np.array(np.array([50, 50, 20]) * np.ones(self.frameSize) + noise,self.frame.dtype)
+    self.frame = cv2.add(self.frame, noise)
     
-    background = np.array(noise + background, self.frame.dtype)
-    self.frame = cv2.add(self.frame, background)
+ 
     
   
     #cv2.imshow(self.name, self.frame)

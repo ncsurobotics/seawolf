@@ -22,7 +22,7 @@ def ProcessFrame(frame):
   maxArea = (row * col)/3
   minArea = 200
   red = cv2.medianBlur(red, ksize = 3)
-  ret, thresh = cv2.threshold(red, np.mean(red) - np.std(red) * 2.65, 255, cv2.THRESH_BINARY_INV)
+  ret, thresh = cv2.threshold(red, np.mean(red) - max(np.std(red), 10) * 2.65, 255, cv2.THRESH_BINARY_INV)
   debugFrame("threshOg", thresh)
   kernel = np.ones((7,7),np.uint8)
   thresh = cv2.erode(thresh,kernel, iterations = 2)

@@ -23,7 +23,10 @@ def ProcessFrame(frame):
   #r = frame[:, :, 2]
   r = cv2.GaussianBlur(r, (9, 9), 0)
   debugFrame("red", r)
-  edges = cv2.Canny(r, std * 1.8 , 1.2 * std)
+  if std > 6:
+    edges = cv2.Canny(r, std * 1.8 , std * 1.2)
+  else:
+    edges = cv2.Canny(r, 30 , 20)
   debugFrame("edges", edges)
   
 
