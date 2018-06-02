@@ -2,7 +2,7 @@ import numpy as np
 import math
 import seawolf as sw
 from dbEntity import dbEntity
-
+import time
 
 
 DB = False
@@ -28,7 +28,7 @@ class Pinger(object):
         self.name = NAME
         length = np.float32([0, 0, 1]) * pingerLength
         width = np.float32([1, 0, 0]) * pingerWidth
-        
+        self.time= time.time()
         self.poles = []
         p1 = self.location - width/2
         p2 = self.location + width/2
@@ -73,17 +73,20 @@ class Pinger(object):
         return (np.rad2deg(yaw), np.rad2deg(pitch))
 
     def draw(self, roboPos, COBM, camera):
-        (yaw, pitch) = self.getAngle(np.dot(COBM, self.location - roboPos))
-        
-        # Update the values in hub. Should this be moved to another function?
-        sw.var.set("Acoustics.Pitch", pitch)
-        sw.var.set("Acoustics.Yaw", yaw)
-        
+        #update yaw every 2 seconds
         if DB:
-            self.db.draw(roboPos, COBM, camera)
-            
-            print("Yaw: " + str(yaw))
-            print("Pitch: " + str(pitch))
+            print("TimeSinceLast: %.2f" % (time.time() - self.time))
+        if time.time() - self.time > 2:
+            self.time = time.time()
+            (yaw, pitch) = self.getAngle(np.dot(COBM, self.location - roboPos))
+            # Update the values in hub. Should this be moved to another function?
+            sw.var.set("Acoustics.Pitch", pitch)
+            sw.var.set("Acoustics.Yaw", yaw)
+        
+            if DB:
+                self.db.draw(roboPos, COBM, camera)
+                print("Yaw: " + str(yaw))
+                print("Pitch: " + str(pitch))
             
         for pole in self.poles:
           pts  = []
