@@ -17,4 +17,6 @@ class Timer(object):
   
   def timeLeft(self):
     return self.timeOut > (time.time() - self.startTime)
-    
+  """ For getting remaining time for debugging"""
+  def remainingTime(self):
+    return (time.time() - self.startTime)

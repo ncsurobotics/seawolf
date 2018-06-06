@@ -10,6 +10,10 @@ import conf
 
 import missions as ms
 
+sys.path.append("./missions")
+
+import wheelState
+
 def hubConnect():
   """ connecting to hub """
   sw.loadConfig("../conf/seawolf.conf");
@@ -44,7 +48,8 @@ def main():
   """
   if len(sys.argv) != 2:
     raise Exception("TO RUN: python2.7 run.py pathTo.conf")
-  missions = conf.readFile(sys.argv[1])
+  #missions = conf.readFile(sys.argv[1])
+  missions = [ wheelState.WheelState()  ]
   runMissions(missions)  
 
 def runMissions(missions, dbprint = True): 

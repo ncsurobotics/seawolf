@@ -2,7 +2,7 @@ import cv2
 import sw3
 import numpy as np
 import time
-
+import math
 
 import sys
 sys.path.append("./../vision2/")
@@ -13,13 +13,15 @@ from Entities import buoysHough as vision
 
 #factor for linearly converting pixels to depth in meters, aka Meters / Pixel
 PIXTODEPTH = 400.0
+#how far off the robot can be from being centered on the wheel
+DISTANCE_ERROR = 6
 
 class Wheel(object):
 
   def __init__(self):
     self.camera = "down"
     self.name = "RouletteWheel"
-    self.runtime = 200
+    self.runtime = 2200
     return
   
   def getCamera(self):
@@ -41,16 +43,32 @@ class Wheel(object):
     buoys = vision.ProcessFrame(frame)
     
     if buoys.found:
+      print "BUOYS found -------------------------------------------------"
       (x, y) = buoys.loc()
       h,w,_  = frame.shape
       
       heightError = h/2 - y
-      print('modifying depth by: %.3f' % (heightError / PIXTODEPTH))
-      sw3.RelativeDepth(heightError / PIXTODEPTH).start()
-      
+      print('Height error: %.3f' % heightError)
       widthError= x - w/2
-      print('setting strafe to: %.3f' % (widthError / PIXTODEPTH))
-      sw3.Strafe(widthError / PIXTODEPTH).start()
+      print('Width error: %.3f' % widthError)
+
+      distance = math.sqrt(heightError ** 2 + widthError ** 2)
+      #excluding depth
+      print("Distance from center of wheel: %.3f" % distance)
+
+      if distance <= DISTANCE_ERROR:
+        print("Centered on wheel. Halting.")
+        sw3.Forward(0).start()
+        sw3.Strafe(0).start()
+        #drop balls
+
+      else:
+
+        print('modifying depth by: %.3f' % (heightError / PIXTODEPTH))
+        sw3.Forward(heightError / PIXTODEPTH).start()
+        
+        print('setting strafe to: %.3f' % (widthError / PIXTODEPTH))
+        sw3.Strafe(widthError / PIXTODEPTH).start()
       
       
       
