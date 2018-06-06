@@ -16,7 +16,7 @@ PIXTODEPTH = 400.0
 #how far off the robot can be from being centered on the wheel
 DISTANCE_ERROR = 6
 
-class Wheel(object):
+class WheelMS(object):
 
   def __init__(self):
     self.camera = "down"

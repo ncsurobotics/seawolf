@@ -1,10 +1,16 @@
 
 #length of gate in meters
-gateLength = 1.2
+gateLength = 1.5
 #widht of gate in meters
-gateWidth = 2.4
+gateWidth = 3.0
 #poleDiameter
 poleDiameter = .052
+
+#red patch
+patchL = 1.220
+patchW = .2
+shiftP = 1
+
 
 #DB if true, shows graph of where Entity is relative to robot
 DB = False
@@ -12,6 +18,7 @@ DB = False
 
 #name of the entity
 NAME = "Gate"
+
 
 import math
 import numpy as np
@@ -45,6 +52,18 @@ class Gate(object):
     p2 = self.location + length/2  + width/2
     self.poles.append([p1, p2])
     
+    #making the red bar
+    downLine = np.float32([0, 0, 1])
+    widthLine = np.float32([math.cos(orientation), math.sin(orientation), 0])
+    
+   
+    p1 = self.location - patchL/2 * downLine - widthLine/2 * patchW + [shiftP, 0, 0]
+    p2 = self.location - patchL/2 * downLine + widthLine/2 * patchW + [shiftP, 0, 0]
+    p3 = self.location + patchL/2 * downLine + widthLine/2 * patchW + [shiftP, 0, 0]
+    p4 = self.location + patchL/2 * downLine - widthLine/2 * patchW + [shiftP, 0, 0]
+    
+    self.patch = [p1, p2, p3, p4]
+    
     self.color = (0, 0, 255)
     
     if DB:
@@ -61,6 +80,14 @@ class Gate(object):
       for pt in pole:
         pts.append(np.dot(COBM, pt - roboPos))
       camera.drawLine(pts[0], pts[1], color = self.color, thickness = poleDiameter)
+    
+    #drawing the patch
+    pts = []
+    for pt in self.patch:
+      pts.append(np.dot(COBM, pt - roboPos))
+    
+    camera.drawPoly(pts, self.color)
+    
     return
  
  

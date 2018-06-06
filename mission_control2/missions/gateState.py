@@ -7,7 +7,7 @@ import sys
 sys.path.append("../vision2/")
 
 
-from Entities import gateHoughProb as vision
+from Entities import gateDist as vision
 
 #amount of pixels to be off by to initate turn, aka filter for noise
 SIGPIX = 15

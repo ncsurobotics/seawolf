@@ -42,7 +42,7 @@ def ProcessFrame(frame):
     angp = abs(angp - round((angp/180.0)) * 180)
     stringOut = "%d %d %d" % (angp, area, aspectRatio)
     cv2.putText(frameOut, stringOut, (int(center[0]), int(center[1])), cv2.FONT_HERSHEY_SIMPLEX, .5, 255)
-    if (angp < 10 or angp > 170) and area > minArea and area < maxArea and abs(aspectRatio - 7) <= 3:
+    if (angp < 10 or angp > 170) and area > minArea and area < maxArea and abs(aspectRatio - 9) <= 4:
       possiblePoles.append((cont, center))
       
     
@@ -76,7 +76,7 @@ def ProcessFrame(frame):
   	  cv2.drawContours(frameOut, [left[0], right[0]], -1, (0,0, 0), 3) 
   	  
   debugFrame("out", frameOut)
-  return out.dict()
+  return out
 
 def sortPoles(pole):
   
