@@ -19,7 +19,7 @@ import sys
 sys.path.append("../vision2/")
 
 """ Uses buoysHough to detect circle in image """
-from Entities import buoysHough as vision
+from Entities import wheelHough as vision
 
 #time to search for wheel in secondsF
 SEARCHTIME = 50
