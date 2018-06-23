@@ -13,7 +13,7 @@ sys.path.append("./../vision2/")
 #factor for linearly converting pixels to depth in meters, aka Meters / Pixel
 PIXTODEPTH = 400.0
 #how far off the robot can be from being centered on the wheel, in pixels
-DISTANCE_ERROR = 8
+DISTANCE_ERROR = 20
 
 import sys
 sys.path.append("../vision2/")
@@ -56,7 +56,7 @@ class SearchState(object):
   def __init__(self):
     self.timer = Timer(SEARCHTIME)
     #number of times to see wheel before going to next state
-    self.foundCounter = 6
+    self.foundCounter = 3
   
   def processFrame(self, frame):
     wheel = vision.ProcessFrame(frame)
