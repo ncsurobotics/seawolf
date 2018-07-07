@@ -8,6 +8,7 @@ import pathBase
 import pathDist
 import buoysHough
 import wheelHough
+import wheelMinCircle
 
 VisEntities = { #moduleName       : module
                   "buoysHough"    : buoysHough,
@@ -18,4 +19,5 @@ VisEntities = { #moduleName       : module
                   "gateNorm"      : gateNorm,
                   "pathBase"      : pathBase,
                   "pathDist"      : pathDist, 
-                  "wheelHough"    : wheelHough }
+                  "wheelHough"    : wheelHough,
+                  "wheelMinCircle" : wheelMinCircle }

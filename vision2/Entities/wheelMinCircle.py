@@ -11,8 +11,6 @@ import random
 visObj = "buoys"
 obj = visObjects[visObj]
 keys = obj().out.keys()
-""" For seeing straight lines that the image processes. """
-seeLines = True
 seeCircles = True
 
 
@@ -60,11 +58,11 @@ def ProcessFrame(frame):
   minDeg = 80.0
   s = .8
   d = 3.7 
-  maxrad = 275
-  minrad = 100
+  maxrad = 150
+  minrad = 30
   step = 50
   for radius in range(minrad + step, maxrad + 1, step):
-    circles =  cv2.HoughCircles(image = r, method = cv2.cv.CV_HOUGH_GRADIENT, dp = 4.2, minDist =  2*radius, param2 = int((2 * radius * math.pi)/6.94), minRadius = radius - step, maxRadius = radius)
+    circles =  cv2.HoughCircles(image = r, method = cv2.cv.CV_HOUGH_GRADIENT, dp = 4.2, minDist =  2 * radius, param2 = int((2 * radius * math.pi)/8.94), minRadius = radius - step, maxRadius = radius)
     msg = "minRadius: %d, maxRadius %d" % (radius - step, radius)
     if type(circles) != type(None):
       print msg + " found: %d" % (len(circles))
@@ -74,21 +72,17 @@ def ProcessFrame(frame):
           cv2.circle(frameOut, (circ[0], circ[1]), circ[2], (0,0,0), 2, 8, 0 )
     else:
       print msg + " no circ found"
-  if len(circleList) > 0:
+  if len(circleList) > 2:
     pts = []
-    avgCircle = [0,0,0]
-    circleCount = 0
     for circle in circleList:
       #out.append(circle)
-      maxRad = 0
       if seeCircles:
         cv2.circle(frameOut, (int(circle[0]), int(circle[1])), int(circle[2]), (255,0,0), 2, 8, 0 )
         cv2.circle(frameOut, (int(circle[0]), int(circle[1])), 7, (0,0,0), 2, 8, 0 )
       pts.append([circle[0], circle[1]])
-      if circle[2] > maxRad:
-        for i in range(3):
-          avgCircle = circle
-    out.append([int(avgCircle[0]), int(avgCircle[1]), int(avgCircle[2])])
+    contour = np.array(pts, dtype=np.int32)
+    (x,y), r = cv2.minEnclosingCircle(contour)
+    out.append([int(x), int(y), int(r)])
     #cv2.circle(frameOut, (int(x), int(y)), int(r), (0,0,0), 2, 8, 0 )
     
   

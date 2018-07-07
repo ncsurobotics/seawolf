@@ -13,7 +13,7 @@ sys.path.append("./../vision2/")
 #factor for linearly converting pixels to depth in meters, aka Meters / Pixel
 PIXTODEPTH = 400.0
 #how far off the robot can be from being centered on the wheel, in pixels
-DISTANCE_ERROR = 8
+DISTANCE_ERROR = 18
 
 import sys
 sys.path.append("../vision2/")
