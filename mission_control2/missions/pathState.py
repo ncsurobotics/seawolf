@@ -30,7 +30,7 @@ class PathState(object):
   
   def setup(self):
     sw3.SetDepth(-1).start()
-    sw3.Forward(.8).start()
+    sw3.Forward(.8 ).start()
     self.state = SearchState()
     return
     
@@ -65,7 +65,7 @@ class FoundState(object):
     #after gate has not been seen for 2 secs, quit
     self.pathLost = Timer(2)
     self.centers = []
-    sw3.Forward(.3).start()
+    sw3.Forward(.3 ).start()
     
   def processFrame(self, frame):
     print "found state"

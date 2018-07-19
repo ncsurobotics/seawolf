@@ -13,7 +13,8 @@ import missions as ms
 sys.path.append("./missions")
 
 import wheelState
-import pathSimp
+import pathState
+import pathBentState
 
 def hubConnect():
   """ connecting to hub """
@@ -51,7 +52,7 @@ def main():
     raise Exception("TO RUN: python2.7 run.py pathTo.conf")
   #missions = conf.readFile(sys.argv[1])
   #missions = [ wheelState.WheelState()  ]
-  missions = [ pathSimp.PathSimp() ]
+  missions = [ pathBentState.PathBentState() ]
   runMissions(missions)  
 
 def runMissions(missions, dbprint = True): 

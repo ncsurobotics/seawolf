@@ -64,12 +64,17 @@ class Path(object):
       pts.append(np.dot(COBM, pt - roboPos))
     
     camera.drawPoly(pts, self.color)
+    circ = [(pts[0][0] + pts[1][0])/2.0, (pts[0][1] + pts[1][1])/2.0, pts[0][2]]
+    camera.drawCirc(circ, pathWidth/2, (0,0,255))
 
     pts = []
     for pt in self.points2:
       pts.append(np.dot(COBM, pt - roboPos))
     
     camera.drawPoly(pts, self.color)
+    circ = [(pts[0][0] + pts[1][0])/2.0, (pts[0][1] + pts[1][1])/2.0, pts[0][2]]
+    camera.drawCirc(circ, pathWidth/2, (0,0,255))
+    
     
     
     return

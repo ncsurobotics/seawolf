@@ -64,9 +64,6 @@ class Camera(object):
     noise =  np.random.normal(loc = 0, scale = 4, size = self.frame.shape)
     noise = np.array(np.array([50, 50, 20]) * np.ones(self.frameSize) + noise,self.frame.dtype)
     self.frame = cv2.add(self.frame, noise)
-    
- 
-    
   
     #cv2.imshow(self.name, self.frame)
     

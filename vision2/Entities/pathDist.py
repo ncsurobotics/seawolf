@@ -62,8 +62,8 @@ def ProcessFrame(frame):
       cv2.drawContours(frameOut, [cont], -1, (0,0, 0), 3)
       out = obj([True, angp, center[0], center[1]])
       frameOut = out.draw(frameOut)
-      
-    cv2.putText(frameOut, stringOut, loc, cv2.FONT_HERSHEY_SIMPLEX, .5, 255)  
+    cv2.putText(frameOut, stringOut, loc, cv2.FONT_HERSHEY_SIMPLEX, .5, 255)
+    print stringOut
   	  
   debugFrame("out", frameOut)
   return out
