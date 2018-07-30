@@ -8,7 +8,7 @@ import sw3
 sys.path.insert(0,'../mission_control/sw3')
 from pneumatics import missiles
 
-seawolf.loadConfig("../conf/local-seawolf.conf")
+seawolf.loadConfig("../conf/seawolf.conf")
 seawolf.init("Pneumatics Test")
 
 x = 1;
