@@ -14,13 +14,15 @@ def ProcessFrame(frame):
   frameOut = np.copy(frame)
   frame = norm(frame)
   m = cv2.mean(frame)
-  red = dist(frame, [m[0],  m[1], 255])
+  red = dist(frame, [m[0],  m[1], max(m[2] + 50, 255)])
   debugFrame("red", red)
   (row, col, pages) = frame.shape
   maxArea = 30000
   minArea = 1000
-  ret, thresh = cv2.threshold(red, np.mean(red) - np.std(red) * 1.75, 255, cv2.THRESH_BINARY_INV)
+  ret, thresh = cv2.threshold(red, np.mean(red) - np.std(red) * 1.5, 255, cv2.THRESH_BINARY_INV)
   kernel = np.ones((5,5),np.uint8)
+  kernel[:, 0:1] = 0
+  kernel[:, 3:5] = 0
   debugFrame("threshOg", thresh)
   thresh = cv2.erode(thresh,kernel, iterations = 1)
   thresh = cv2.dilate(thresh, kernel, iterations = 2)

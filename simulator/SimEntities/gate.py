@@ -1,6 +1,6 @@
 
 #length of gate in meters
-gateLength = 1.5
+gateLength = 1.2
 #widht of gate in meters
 gateWidth = 3.0
 #poleDiameter
