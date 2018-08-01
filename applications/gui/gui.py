@@ -11,7 +11,7 @@ import seawolf as sw
 
 import sys
 
-sys.path.append('GUI_Components')
+sys.path.append('components')
 from Dial_GUI_3 import *
 from Slider_GUI_3 import *
 from Button_GUI_3 import *
