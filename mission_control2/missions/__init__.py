@@ -9,4 +9,5 @@ from pathBentState import PathBentState
 from wheelMS import WheelMS
 from acousticState import AcousticState
 from pathAroundState import PathAroundState
+from diceMS import DiceMS
 import util

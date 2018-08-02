@@ -4,6 +4,7 @@ implementation of the gate vision obj
 import numpy as np
 import cv2
 from visobj import VisObj
+import math
 
 keys = ["found", "locX", "locY"]
 
@@ -44,3 +45,13 @@ class buoysVisObj(VisObj):
   """
   def loc(self):
     return self.cp
+  def closestLoc(self, frame):
+    h,w,_  = frame.shape
+    minDist = math.sqrt( (h/2 - self.locations[0][1]) ** 2 + (self.locations[0][0] - w/2) ** 2)
+    closestLoc = self.locations[0]
+    for loc in self.locations:
+      distFromCenter = math.sqrt( (h/2 - loc[1]) ** 2 + (loc[0] - w/2) ** 2)
+      if distFromCenter < minDist:
+        minDist = distFromCenter
+        closestLoc = loc
+    return closestLoc
