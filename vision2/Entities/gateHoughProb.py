@@ -31,9 +31,9 @@ def ProcessFrame(frame):
   debugFrame("edges", edges)
   
 
-  lines = cv2.HoughLinesP(edges, 8, math.pi/180, 145, minLineLength = 180, maxLineGap = 40)
+  lines = cv2.HoughLinesP(edges, 8, math.pi/180, 70, minLineLength = 100, maxLineGap = 20)
   poles = []
-  if isinstance(lines, np.ndarray) and (len(lines[0]) > 14):
+  if isinstance(lines, np.ndarray) and (len(lines[0]) > 30):
     return out
   if isinstance(lines, np.ndarray):
     print "numLines: %d" % len(lines[0])
