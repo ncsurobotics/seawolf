@@ -49,7 +49,7 @@ def main():
   if (not cap.isOpened()):
     error("cannot open file %s" % inputFile)
   while(1):
-      if cv2.waitKey(20) & 0xFF == ord('q'):
+      if cv2.waitKey(10) & 0xFF == ord('q'):
         break
 
     

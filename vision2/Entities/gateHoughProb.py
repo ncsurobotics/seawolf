@@ -17,21 +17,24 @@ def ProcessFrame(frame):
   frameOut = frame.copy()
   frame = norm(frame)
   mean, std = cv2.meanStdDev(frame)
-  r = dist(frame, (mean[0], mean[1], 255))
+  print "r mean: %d" % (mean[2])
+  r = dist(frame, (mean[0], mean[1], max(mean[2], 80)))
   mean, std = cv2.meanStdDev(r)
   print "m: %d, std %d" % (mean, std)
   #r = frame[:, :, 2]
   r = cv2.GaussianBlur(r, (9, 9), 0)
   debugFrame("red", r)
   if std > 6:
-    edges = cv2.Canny(r, std * 1.8 , std * 1.2)
+    edges = cv2.Canny(r, std * 2.0, std * 1.1)
   else:
     edges = cv2.Canny(r, 30 , 20)
   debugFrame("edges", edges)
   
 
-  lines = cv2.HoughLinesP(edges, 4, math.pi/180, 145, minLineLength = 180, maxLineGap = 80)
+  lines = cv2.HoughLinesP(edges, 8, math.pi/180, 145, minLineLength = 180, maxLineGap = 40)
   poles = []
+  if isinstance(lines, np.ndarray) and (len(lines[0]) > 14):
+    return out
   if isinstance(lines, np.ndarray):
     print "numLines: %d" % len(lines[0])
     for line in lines[0]:
@@ -40,7 +43,7 @@ def ProcessFrame(frame):
       dx = p1[0] - p2[0]
       dy = abs(p1[1] - p2[1])
       theta = math.atan2(dy, dx)
-      #cv2.line(frameOut, p1, p2, (255, 0, 0), 5)
+      cv2.line(frameOut, p1, p2, (255, 0, 0), 5)
       if abs(theta - math.pi/2) <  10 *math.pi/180:
         cv2.line(frameOut, p1, p2, (255, 0, 255), 5)
         poles.append(Pole(p1, p2))
