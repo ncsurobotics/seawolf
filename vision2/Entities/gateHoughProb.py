@@ -18,22 +18,19 @@ def ProcessFrame(frame):
   frame = norm(frame)
   mean, std = cv2.meanStdDev(frame)
   print "r mean: %d" % (mean[2])
-  r = dist(frame, (mean[0], mean[1], max(mean[2], 80)))
+  r = dist(frame, (mean[0], mean[1], 255))
   mean, std = cv2.meanStdDev(r)
   print "m: %d, std %d" % (mean, std)
   #r = frame[:, :, 2]
   r = cv2.GaussianBlur(r, (9, 9), 0)
   debugFrame("red", r)
-  if std > 6:
-    edges = cv2.Canny(r, std * 2.0, std * 1.1)
-  else:
-    edges = cv2.Canny(r, 30 , 20)
+  std = std if std > 6 else 6
+  edges = cv2.Canny(r, std * 1.8, std * 1.8)
   debugFrame("edges", edges)
-  
 
-  lines = cv2.HoughLinesP(edges, 8, math.pi/180, 70, minLineLength = 100, maxLineGap = 20)
+  lines = cv2.HoughLinesP(edges, 4, math.pi/180, 40, minLineLength = 70, maxLineGap = 10)
   poles = []
-  if isinstance(lines, np.ndarray) and (len(lines[0]) > 30):
+  if isinstance(lines, np.ndarray) and (len(lines[0]) > 20):
     return out
   if isinstance(lines, np.ndarray):
     print "numLines: %d" % len(lines[0])
