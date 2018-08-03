@@ -46,6 +46,9 @@ class axis(object):
     self.desired = desired
     self.updateRate = updateRate
     self.noise = noise
+    #setting PID to start at 0
+    sw.var.set(self.actual, float(0))
+    sw.var.set(self.desired, float(0))
   
   def updateHeading(self, td):
     updateValue = self.updateRate * td
