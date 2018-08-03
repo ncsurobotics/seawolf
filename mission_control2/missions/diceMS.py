@@ -81,7 +81,7 @@ class FoundState(object):
     self.diceLost = Timer(LOSTTIME)
     self.centers = []
     self.pastDice = False
-    
+    sw3.Forward(.1).start()
   def processFrame(self, frame):
     print "found state"
     dice = vision.ProcessFrame(frame)
@@ -92,12 +92,21 @@ class FoundState(object):
       h,w,_  = frame.shape
       
       heightError = h/2 - y
+      
       print('modifying depth by: %.3f' % (heightError / PIXTODEPTH))
       sw3.RelativeDepth(heightError / PIXTODEPTH).start()
-      
+      print "x is : ", x
       widthError= x - w/2
-      print('setting strafe to: %.3f' % (widthError / PIXTODEPTH))
-      sw3.Strafe(widthError / PIXTODEPTH).start()
+      print "w is : ", widthError
+
+      print('turning: %.3f' % (widthError / PIXTODEPTH))
+      
+      if widthError > 0:
+        print "<<"
+        sw3.RelativeYaw( .0001).start()
+      else:
+        print ">>"
+        sw3.RelativeYaw( -.0001 ).start()
 
     #elif not self.diceLost.timeLeft():
     #  """if the dice has been lost for too long go to path lost state"""

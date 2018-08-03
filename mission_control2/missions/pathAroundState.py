@@ -65,6 +65,25 @@ def moveTo(frame, pt):
     return math.sqrt(heightError ** 2 + widthError ** 2)
 
 """
+Finds the small angle between the vector from pt1 to pt2 and the
+forward direction. Returns the angle.
+"""
+def getAngleFromCenter(pt1, pt2):
+  x1,y1 = pt1
+  x2,y2 = pt2
+  angle = math.atan2(y2 - y1, x2 - x1)
+  angle *= 180.0 / math.pi
+  #gets the angle it needs to turn by
+  if angle < 0:
+    angleDif = abs(angle) - 90
+  elif angle < 90:
+    angleDif = -90 - angle
+  else:
+    angleDif = 270 - angle
+  return angleDif
+
+
+"""
 Turns seawolf to face the angle. Adjusts the angle from
 radians to degrees. Returns the angle.
 """
@@ -142,12 +161,14 @@ class SearchState(object):
         #closest point to center is start point
         h,w,_  = frame.shape
         pt1, pt2 = [[path.p1x, path.p1y], [path.p2x, path.p2y]]
-        dist1 = math.sqrt( (w/2 - pt1[0]) ** 2 + (h/2 - pt1[1]) ** 2 )
-        dist2 = math.sqrt( (w/2 - pt2[0]) ** 2 + (h/2 - pt2[1]) ** 2 )
-        if dist1 < dist2:
-          return TurnState(pt1, pt2)
-        else:
+        center = (path.cx, path.cy)
+        #ideal angle is the angle of the end plank
+        angle1 = getAngleFromCenter(center, pt1)
+        angle2 = getAngleFromCenter(center, pt2)
+        if abs(angle1) < abs(angle2):
           return TurnState(pt2, pt1)
+        else:
+          return TurnState(pt1, pt2)
         
     return self
   
@@ -157,8 +178,8 @@ class SearchState(object):
 
 class TurnState(object):
   def __init__(self, startPt, endPt):
-    #after path has not been seen for 2 secs, quit
-    self.pathLost = Timer(LOSTTIME)
+    #after path has not been seen for 2 secs, move to onward state
+    self.pathLost = Timer(2)
     self.centers = []
     self.startPt = startPt
     self.endPt = endPt
@@ -187,7 +208,7 @@ class TurnState(object):
       
     elif not self.pathLost.timeLeft():
       """if the path has been lost for too long go to path lost state"""
-      return PathLostState()
+      return OnwardState()
     
     print "ret found"
     return self
