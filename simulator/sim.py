@@ -1,5 +1,5 @@
 """
-for now on seawolf wil have the following axis, and move the following ways:
+from now on seawolf wil have the following axis, and move the following ways:
     x axis is left to right where right is positive X
     y axis is forward and back where forward is positive Y
     z axis is up and down where up is positive
@@ -21,7 +21,7 @@ pidSim must implement the following methods:
   __init__()    creates object that has .update() method
   object.update()   the update method must update the pidaxis in HUB
 """
-from pidSimpleSim import pid as pidSim
+from PID.pidMult import pid as pidSim
 
 
 """
@@ -32,41 +32,37 @@ posSim mus implement the following methods:
   object.update() this method updates the position of seawolf based on locally stored prev value and values in hub
   object.pos() returns 3 value array [x, y, z] containings current location of seawolf
 """
-from posSimpleSim import seawolfPos as posSim
+from Pos.posSimpleSim import seawolfPos as posSim
 
 """
 viewSim is object module to be used to fake camera data, and broadcast on SVR
   init(locations) the setup mehtod is input array with the entities in the water. documentation on what constitutes an entity object is in the Entities folder.
   update(roboPos) the update method is input a 3 piece array [x, y, z] containing the location of the robot and sends out and svr frame for forward and down simulating what the camera's would see. 
 """
-from viewSimpleSim import ViewSimpleSim as viewSim
+from View.viewSimpleSim import ViewSimpleSim as viewSim
 
 
-from Entities import entities
+from SimEntities import entities
 
+import sys
+import Conf
 """
 array to be used for placing objects in water
 rember that the location is center point of element
 elements must be an Entity, look at entities folder __init__ for available
 """
 def setup():
-  return [
-          entities["Gate"]([0, 7, -1]),
-          entities["Path"]([0, 0, -5]),
-          entities["Bouy"]([-1, 10, -1], color = (255, 0, 0)),
-          entities["Bouy"]([0, 10, -1], color = (0, 0, 255)), 
-          entities["Bouy"]([1, 10, -1], color = (0, 255, 0)),
-          entities["Hedge"]([0, 19,-1]),
-          entities["Path"]([0, 15, -5])
-         ]
+  if len(sys.argv) != 2:
+    raise Exception("Run as: python2.7 sim.py file.conf")
+  return Conf.readFile(sys.argv[1])
 
-def main():
+
+def main(objects):
   #connecting to hub
-  sw.loadConfig("../conf/seawolf.conf")
-  sw.init("Simulator : Main")
-  objects = setup()
+  sw.loadConfig("../conf/seawolf.conf");
+  sw.init("Simulator : Main");
   pid = pidSim()
-  robo = posSim(location = [0, 0, 0], axis = [-20, 20], objects= objects)
+  robo = posSim(location = [0, 0, 0], axis = [-50, 50], objects= objects)
   view= viewSim(objects)
   while True:
     pid.updateHeading()
@@ -74,4 +70,4 @@ def main():
     view.updateViews(robo.pos())
 
 if __name__ == "__main__":
-  main()
+  main(setup()[0])

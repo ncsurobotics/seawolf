@@ -15,15 +15,15 @@ Depth                = 0.0,  0,  0
 
 DepthPID.Heading     = 0.0,  0,  0
 DepthPID.Paused      = 1.0,  0,  0
-DepthPID.d           = 0.01,  1,  0
+DepthPID.d           = 0.0,  1,  0
 DepthPID.i           = 0.0,  1,  0
-DepthPID.p           = 0.5,  1,  0
+DepthPID.p           = 0.0,  1,  0
 
 PitchPID.Heading     = 0.0,  0,  0
 PitchPID.Paused      = 1.0,  0,  0
-PitchPID.d           = 0.8,  1,  0
-PitchPID.i           = 0.01,  1,  0
-PitchPID.p           = 0.01,  1,  0
+PitchPID.d           = 0.0,  1,  0
+PitchPID.i           = 0.0,  1,  0
+PitchPID.p           = 0.0,  1,  0
 
 RollPID.Heading      = 0.0,  0,  0
 RollPID.Paused       = 1.0,  0,  0
@@ -33,9 +33,9 @@ RollPID.p            = 0.0,  1,  0
 
 YawPID.Heading       = 0.0,  0,  0
 YawPID.Paused        = 1.0,  0,  0
-YawPID.d             = 0.03,  1,  0
+YawPID.d             = 0.0,  1,  0
 YawPID.i             = 0.0,  1,  0
-YawPID.p             = 0.05,  1,  0
+YawPID.p             = 0.0,  1,  0
 
 MissionReset         = 0.0,  0,  0
 StatusLight          = 0.0,  0,  0
@@ -51,3 +51,12 @@ Solenoid.1           = 0.0,  0,  0
 Solenoid.2           = 0.0,  0,  0
 Servo.0              = 0.0,  0,  0
 Servo.1              = 0.0,  0,  0
+
+#acoustic variables
+Acoustics.Pitch	     = 0.0,  0,  0
+Acoustics.Yaw        = 0.0,  0,  0
+
+#sim location
+Sim.xLoc             = 0.0,  0,  0
+Sim.yLoc             = 0.0,  0,  0
+Sim.zLoc             = 0.0,  0,  0
