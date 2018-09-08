@@ -1,5 +1,0 @@
-
-Libvision
-===================================
-
-.. todo:: Document Libvision

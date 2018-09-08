@@ -50,8 +50,8 @@ def set_pitch(value):
 
 
 def set_roll(value):
-    min = -180
-    max = 180
+    min = -10
+    max = 10
 
     if min <= value <= max:
         sw.var.set("RollPID.Heading", value)
@@ -62,8 +62,8 @@ def set_roll(value):
 
 
 def set_depth(value):
-    min = 0
-    max = 20
+    min = -6
+    max = 1
 
     if min <= value <= max:
         sw.var.set("DepthPID.Heading", value)

@@ -1,204 +1,134 @@
-#!/usr/bin/env python
+# this module handles the running of seawolf mission
 
-'''
-The main Seawolf mission control script.
-'''
-
-import sys
-import os
+import seawolf as sw
+import svr
+import numpy as np
 import sw3
-from optparse import OptionParser
-from time import sleep 
+import cv2
+import sys
+import conf
+
+import missions as ms
+
+sys.path.append("./missions")
 
 
-simulator = False
-if __name__ == "__main__":
+def hubConnect():
+  """ connecting to hub """
+  sw.loadConfig("../conf/seawolf.conf");
+  sw.init("missionControl : Main");
 
-    # Parse Arguments
-    opt_parser = OptionParser()
-    opt_parser.add_option("-i", "--initial-mission", action="store", default=0,
-                          dest="initial_mission", type="int",
-                          help="Specifies a mission index to start at.  Default 0.")
-    opt_parser.add_option("-w", "--wait-for-go", action="store_true",
-                          default=False, dest="wait_for_go",
-                          help="Wait for mission go signal. (default)")
-    opt_parser.add_option("-W", "--no-wait-for-go", action="store_false",
-                          dest="wait_for_go",
-                          help="Do not wait fo the go signal.")
-    opt_parser.add_option("-l", "--logfile", dest="logfile")
-    opt_parser.add_option("-c", "--camera", nargs=2, action="append",
-                          type="string", metavar="<camera> <index/filename>",
-                          dest="cameras", default=[],
-                          help="Specifies that the camera given should use the given index or "
-                          "file to capture its frames.  If this option is not given for a "
-                          "camera, SVR is used.")
-    opt_parser.add_option("-d", "--delay", type="int",
-                          dest="delay", default=0,
-                          help="Delay between frames, in milliseconds, or -1 to wait for "
-                          "keypress.  Default is 0.")
-    opt_parser.add_option("-G", "--non-graphical", action="store_false",
-                          dest="graphical", default=True,
-                          help="Takes vision out of debug mode, disallowing windows to be displayed.")
-    opt_parser.add_option("-s", "--simulator", action="store_true",
-                          default=False, dest="simulator",
-                          help="Connect to the simulator instead of starting vision processes.")
-    options, args = opt_parser.parse_args(sys.argv)
+def svrConnect():
+  """ connecting to svr """
+  svr.connect()
+  """setting up svr streams """
+  forward = svr.Stream("forward")
+  forward.unpause()
 
-    if len(args) > 1:
-        opt_parser.error("%prog accepts no positional arguments!")
-    # It seems silly to assign this to another variable, but options will not
-    # be defined if __name__ != "__main__".
-    simulator = options.simulator
+  down = svr.Stream("down")
+  down.unpause()
 
-parent_directory = os.path.realpath(os.path.join(
-    os.path.abspath(__file__),
-    "../.."
-))
-print parent_directory
-#parent_directory = "/home/seawolf/"
-print parent_directory + "vision/"
-vision_directory = os.path.join(parent_directory, "vision/")
-sys.path.append(vision_directory)
-#acoustics_directory = os.path.join(parent_directory, "acoustics/")
-#sys.path.append(acoustics_directory)
-if simulator:
-    print "Using Simulator..."
-    simulator_directory = os.path.join(parent_directory, "utils/simulator/")
-    sys.path.append(simulator_directory)
-else:
-    sys.path.append(parent_directory)
+  global cameras 
+  cameras = {
+             "forward" : forward,
+             "down"    : down
+            }
 
-import vision
-import missions
-#import acoustics
-from mission_controller import MissionController
+DBPRINT = True #False
 
-BUOY_DEPTH = 4
-#
-# Ordered list of tasks.  Can be one of the following types:
-#  * Mission Class - Found in ``missions.<name>Mission``.  Instantiated with no
-#                    arguments.
-#  * Nav routine - Found in ``sw3.nav.<name>``.
-#  * Tuple - First item must be a mission class.  The rest of the tuple is
-#            passed in as arguments to the ``mission.__init__``.
-MISSION_ORDER = [
-    missions.GateMission,   # 01: gate
-    #sw3.Forward(0.5, 3),
-    #sw3.Forward(0.0,2),
-    #sw3.SetDepth(3, 2),
-    #sw3.Forward(0.0, 1),
 
-    missions.PathMission, 
-    #sw3.SetDepth(1),
-    #sw3.Forward(0),
-    #sw3.Forward(0.9,30),
-    #sw3.RelativeYaw(0),
-    #sw3.SetDepth(2),
-    #sw3.Forward(0.9,90),
-    #sw3.Forward(0.9,15),
-    #sw3.RelativeYaw(30,1),
-    #sw3.Forward(0.9,10),
+killName = "MissionReset"
 
-    #sw3.Forward(q,1),
-    #sw3.RelativeYaw(0),  
 
-    #missions.BuoyMission,   
-    #missions.SimpleYellowBuoyMission,
-    #missions.SimpleYellowPullBuoyMission,
-    #missions.PathMission, 
-    #missions.ReverseHedgeMission,
-    #missions.HedgeMission180,
+def main():
+  """ 
+  array of missions to run. all missions should be in the mission module/directory
+  missions will run int the order that they are in the array
+  """
+  if len(sys.argv) != 2:
+    raise Exception("TO RUN: python2.7 run.py pathTo.conf")
+  missions = conf.readFile(sys.argv[1])
+  #missions = [ wheelState.WheelState()  ]
+  #missions = [ pathBentState.PathBentState() ]
+  runMissions(missions)  
 
-    #sw3.Forward(-1,3),     
-    #sw3.Forward(0,.1),      #
-    sw3.SetDepth(4,2,),
-    #missions.AcousticsMission,
-    #missions.AcousticsMission,
+def runMissions(missions, dbprint = True): 
+  hubConnect()
+  svrConnect()
+  global DBPRINT 
+  DBPRINT = dbprint
+  try:
+    for mission in missions:
+      mission.setup()
+      camera = mission.getCamera()
+      running = True
+      print "Begining to run: " + mission.getName()
+      while running:
+        dbPrint("+++++++++++++++++++++++++++++++++++++++++++++++")
+        try:
+          frame = getFrame(camera)
+          running = mission.processFrame(frame)
+          cv2.waitKey(1)
+        except Exception as e:
+          dbPrint( "ERROR running " + mission.getName() + " moving to next")
+          dbPrint( e )
+          running = False
     
-    #sw3.ZeroThrusters(0.1),
-    #(sw3.nav.do, sw3.RelativeYaw(10,5)),
-    #(time.sleep, 2),
-    #missions.PathMission,
-    #missions.ReverseHedgeMission,
-    #missions.HedgeMission,
-    #missions.NewBuoyMission,
-    #missions.SimpleBuoyMission,
-    #sw3.Forward(0.9,10),
-    #sw3.Forward(0,10),
-    #sw3.SetDepth(0),
-    #sw3.Forward(0,10),
-    #sw3.SetDepth(4),
-    #sw3.ZeroThrusters(0.1),
-    #missions.PathMission, 
-    #missions.PathMission, 
-    #missions.PathMission, 
-    #missions.AcousticsMission,
-    #missions.HedgeMission,
-    #(missions.PathMission, True, 1),
-    #sw3.Forward(.5, 1),
-    #missions.NewBinsMission,
-    #(missions.PathMission, True, 1),
-    #missions.HedgeMission,
-    #missions.FakePizzaMission
-    #missions.AcousticsMission1
-]
+      dbPrint("Done with: " + mission.getName())
+      
+      #send notification over hub that mission is done
+      cmd = ("MISSION_DONE", type(mission).__name__)
+      sw.notify.send(*cmd) #send notification to seawolf
+      
+  except Exception as e:
+    dbPrint( e)
+    dbPrint( "ERROR occurred when checking errors, stopping running")
+  
+  finally:
+    sw3.Forward(0).start()
+    cmd = ("MISSION_DONE", "DONE")
+    sw.notify.send(*cmd) #send notification to seawolf
+    dbPrint( "done with missions")
+    
 
-def trace(frame, event, arg):
-    print "%s, %s:%d" % (event, frame.f_code.co_filename, frame.f_lineno)
-    return trace
+"""
+looks for error conditions and decides what to do when that happens
+some to look for:
+    killswitch
+    pneumaticsLeak (if implemented)
+"""
+def checkError():
+  #checking for killswitch
+  dbPrint("checkErr")
+  killSw = sw.var.get(killName)
+  dbPrint("kill switch %.2f"% killSw)
+  if abs(killSw - 1.0)  < .05:
+    #if the kissSw value is equal to 1 then the robot has been killed
+    raise BaseException(killName)
+  return True
+
+
+
+
+"""
+gets the next frame from svr for the desired camera
+camera = string the holds the name for the camera in svr
+returns numpy array of frame from svr
+"""
+def getFrame(camera):
+  frame = cameras[camera].get_frame()
+  #turning frame from cv frame, standard from svr to cv2 frame
+  frame = np.asarray(frame[:, :])
+  return frame
+  
+  
+def dbPrint(string):
+  if DBPRINT:
+    print(string)
+  
+
+
+
 
 if __name__ == "__main__":
-    #sys.settrace(trace)
-
-    # Put camera option into dictionary format
-    cameras_dict = {}
-    for name, index in options.cameras:
-        cameras_dict[name] = index
-
-    if options.graphical and options.delay == 0:
-        options.delay = 10
-
-    if options.logfile:
-        sys.stdout = open(logfile, "a")
-    process_manager = vision.ProcessManager(extra_kwargs={
-        "delay": options.delay,
-        "cameras": cameras_dict,
-        "debug": options.graphical,
-    })
-
-    try:
-        while True:
-
-            mission_controller = MissionController(
-                process_manager,
-                options.wait_for_go,
-            )
-
-            # Add missions
-            for mission in MISSION_ORDER[options.initial_mission:]:
-                if isinstance(mission, sw3.NavRoutine):
-                    mission.reset()
-                    mission_controller.append_mission(mission)
-                else:
-                    if type(mission) is tuple:
-                        mission_cls = mission[0]
-                        args = mission[1:]
-                    else:
-                        mission_cls = mission
-                        args = ()
-                    mission_controller.append_mission(mission_cls(*args))
-
-            try:
-                mission_controller.execute_all()
-            except missions.MissionControlReset:
-                mission_controller.kill()
-                sleep(2)
-                continue
-            except KeyboardInterrupt:
-                break
-            else:
-                break
-
-    finally:
-        process_manager.kill()
-        mission_controller.kill()
+  main()

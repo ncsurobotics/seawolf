@@ -1,1 +1,0 @@
-gcc -o HUD main.c -lX11 -lGL -lGLU -lseawolf
