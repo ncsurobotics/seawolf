@@ -203,7 +203,10 @@ static void* receive_thread(void* _sp) {
     uint8_t frame[3];
 
     while(true) {
+        
+        pthread_mutex_lock(&send_lock);
         Serial_get(sp, frame, 3);
+        pthread_mutex_lock(&send_lock);
         //Logging_log(DEBUG, Util_format("Checking packet from AVR! (0x%02x, 0x%02x, 0x%02x)",
         //                                      frame[0], frame[1], frame[2]));
 
