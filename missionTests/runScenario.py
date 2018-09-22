@@ -8,7 +8,7 @@ from sim import main as simMain
 from Test.simTest import runTest 
 
 #importing the missions
-sys.path.append('../mission_control2')
+sys.path.append('../mission_control')
 from run import *
 
 import time

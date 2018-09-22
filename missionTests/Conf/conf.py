@@ -1,7 +1,7 @@
 import traceback
 import sys
 sys.path.append('../simulator')
-sys.path.append('../mission_control2')
+sys.path.append('../mission_control')
 
 
 import SimEntities
