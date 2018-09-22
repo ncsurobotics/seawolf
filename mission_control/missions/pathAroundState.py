@@ -5,7 +5,7 @@ from util import Timer
 import math
 
 import sys
-sys.path.append("../vision2/")
+sys.path.append("../vision/")
 
 
 from Entities import pathBent as vision

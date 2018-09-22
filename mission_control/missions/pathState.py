@@ -4,7 +4,7 @@ import numpy as np
 from util import Timer
 
 import sys
-sys.path.append("../vision2/")
+sys.path.append("../vision/")
 
 
 from Entities import pathDist as vision

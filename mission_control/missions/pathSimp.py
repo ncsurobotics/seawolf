@@ -5,7 +5,7 @@ import time
 
 
 import sys
-sys.path.append("./../vision2/")
+sys.path.append("./../vision/")
 
 
 from Entities import pathDist as vision

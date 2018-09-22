@@ -4,7 +4,7 @@ import numpy as np
 import seawolf as sw
 
 import sys
-sys.path.append("../vision2/")
+sys.path.append("../vision/")
 
 
 from Entities import gateDist as vision

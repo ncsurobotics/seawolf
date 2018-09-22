@@ -5,7 +5,7 @@ import time
 import math
 
 import sys
-sys.path.append("./../vision2/")
+sys.path.append("./../vision/")
 
 
 from Entities import buoysHough as vision
