@@ -15,9 +15,6 @@ PIXTODEPTH = 400.0
 #how far off the robot can be from being centered on the wheel, in pixels
 DISTANCE_ERROR = 18
 
-import sys
-sys.path.append("../vision2/")
-
 """ Uses buoysHough to detect circle in image """
 from Entities import wheelHough as vision
 
