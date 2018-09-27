@@ -21,7 +21,7 @@ Install these system packages with your package manager. The package names given
 * python-opencv (opencv-python)
 * libjpeg-dev (libjpeg-turbo-devel)
 * ncurses-dev (ncurses-devel) (Try libncurses5-dev and libncursesw5-dev on Ubuntu if ncurses-dev doesn't work)
-* pip
+* python-pip
 
 After installing these, run: pip install matplotlib
 
