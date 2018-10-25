@@ -10,7 +10,12 @@ import conf
 
 import missions as ms
 
-sys.path.append("./missions")
+
+#Oh god for the love of god this isn't right please make srv a global header
+sys.path.append("../../srv")
+import srv
+
+sys.path.append("../seawolf/mission_control/missions")
 
 
 def hubConnect():
@@ -18,15 +23,20 @@ def hubConnect():
   sw.loadConfig("../conf/seawolf.conf");
   sw.init("missionControl : Main");
 
-def svrConnect():
+def srvConnect():
   """ connecting to svr """
-  svr.connect()
+  #svr.connect()
+  sys.path.append("../../srv")
+  import os
+  print "Directory = ", sys.path
+  srv.connect()
   """setting up svr streams """
-  forward = svr.Stream("forward")
-  forward.unpause()
+  forward = srv.stream("forward")
+  #forward.unpause()
 
-  down = svr.Stream("down")
-  down.unpause()
+  down = srv.stream("down")
+  #down.unpause()
+  sys.path.append("../seawolf/mission_control/missions")
 
   global cameras 
   cameras = {
@@ -54,7 +64,7 @@ def main():
 
 def runMissions(missions, dbprint = True): 
   hubConnect()
-  svrConnect()
+  srvConnect()
   global DBPRINT 
   DBPRINT = dbprint
   try:
@@ -116,9 +126,9 @@ camera = string the holds the name for the camera in svr
 returns numpy array of frame from svr
 """
 def getFrame(camera):
-  frame = cameras[camera].get_frame()
+  frame = cameras[camera].getNextFrame()
   #turning frame from cv frame, standard from svr to cv2 frame
-  frame = np.asarray(frame[:, :])
+  #frame = np.asarray(frame[:, :])
   return frame
   
   

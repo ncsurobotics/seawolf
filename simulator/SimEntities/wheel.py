@@ -1,4 +1,4 @@
-
+import cv2
 #radius of wheel in meters
 RAD = .495
 
@@ -13,6 +13,8 @@ import math
 import numpy as np
 
 from dbEntity import dbEntity
+
+
 
 class Wheel(object):
   
@@ -29,6 +31,9 @@ class Wheel(object):
     self.spin = 0
     #rate of spinning, no units yet, just counter
     self.rate = 7
+    #self.pic = cv2.imread('wheel.png', 1)
+    #print "Init pic is: ", self.pic != None
+    
     if DB:
       self.db = dbEntity(self.location, name = self.name)
   
@@ -42,6 +47,8 @@ class Wheel(object):
     camera.drawSlice(pt, self.radius, 180 + self.spin, 255 + self.spin, (20, 20, 20) )
     camera.drawSlice(pt, self.radius, 255 + self.spin, 330 + self.spin, (0, 0, 255) )
     camera.drawSlice(pt, self.radius, 330 + self.spin, 360 + self.spin, (0, 255, 0) )
+    #print "Pic is ", self.pic != None
+    #camera.drawImg(pt, self.radius, img=self.pic)
 
     self.spin += self.rate
     self.spin = self.spin % 360

@@ -193,7 +193,71 @@ class Camera(object):
     else:
       self.scaleErr(cont, color)
   
-  
+  """
+  draws circle in camera plane
+  pt = point in 3d space relative to camera in meters of the center of the circle
+  width = width in meters of the rectangle
+  height = height in meters of the rectangle
+  color = (b, g, r)
+  """
+  def drawRect(self, pt, width, height, color):
+    (cont, pts) = self.scalePts([pt])
+    if cont < 0:
+      return self.scaleErr(cont, color)
+    width = int(width * self.getSF(pt))
+    height = int(height * self.getSF(pt))
+    ptc = np.int32(pts[0])
+    dbPrint(pt)
+    if cont > 0:
+      cv2.rectangle(self.frame, (ptc[0], ptc[1]), (int(ptc[0] + width), int(ptc[1] + height)), color, thickness=-1)
+    else:
+      self.scaleErr(cont, color)
+
+  def drawImg(self, pt, width, img):
+    (cont, pts) = self.scalePts([pt])
+    if cont < 0:
+      return self.scaleErr(cont, (255,255,255))
+    width = int(width * self.getSF(pt))
+    ptc = np.int32(pts[0])
+    dbPrint(pt)
+    dbPrint(width)
+    if cont <= 0:
+      self.scaleErr(cont, (255,255,255))
+    #img = self.pic = cv2.imread('wheel.png', 1)
+    #print "^"*30, img
+    (cont, pts) = self.scalePts([pt])
+    if cont < 0:
+      return self.scaleErr(cont, (0, 0, 0))
+    width = int(width * self.getSF(pt))
+    
+    
+    h1, w1, _ = img.shape
+     
+    percent = width / w1
+    print "****"*50, percent
+    if percent == 0:
+      return
+    percent = 25
+    img = cv2.resize(img, None, fx=percent/100.0, fy=percent/100.0)
+    
+    h1, w1, _ = img.shape
+    h2, w2, _ = self.frame.shape
+    ptc = np.int32(pts[0])
+    x, y = (ptc[0], ptc[1])
+    #x, y = 0, 0
+    self.frame[0:h1, 0:w1] = img
+    """
+    print "1moo ", h1, w1
+    for i in range(0, h1):
+      for j in range(0, w1):
+        
+        try:
+          self.frame[i + y][j + x] = img[i][j]
+          #print "moo"
+        except IndexError:
+          break
+    """
+      
   
   
   
