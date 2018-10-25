@@ -2,7 +2,7 @@
 
 Notes on installing Seawolf stuff.
 
-URC's software was written with Fedora, Debian, Mint, and Ubuntu in mind. All the software _should_ work on Mac as well.
+URC's software was written with Fedora, Debian, Mint, and Ubuntu in mind.
 
 We assume some basic command line knowledge in order to complete this.
 
@@ -21,9 +21,9 @@ Install these system packages with your package manager. The package names given
 * python-opencv (opencv-python)
 * libjpeg-dev (libjpeg-turbo-devel)
 * ncurses-dev (ncurses-devel) (Try libncurses5-dev and libncursesw5-dev on Ubuntu if ncurses-dev doesn't work)
+* python-matplotlib
 
 You can install OpenCV from source if you want. If you do, skip installing the opencv- packages. Instructions for installing OpenCV from source can be found [here](http://docs.opencv.org/doc/tutorials/introduction/linux_install/linux_install.html#linux-installation).
-
 
 ### Software Repositories
 
