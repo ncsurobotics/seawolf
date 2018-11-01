@@ -26,23 +26,30 @@ def hubConnect():
 def srvConnect():
   """ connecting to svr """
   #svr.connect()
-  sys.path.append("../../srv")
-  import os
-  print "Directory = ", sys.path
-  srv.connect()
+  #sys.path.append("../../srv")
+  #import os
+  #print "Directory = ", sys.path
+  #srv.connect()
   """setting up svr streams """
-  forward = srv.stream("forward")
+  #forward = srv.stream("forward")
   #forward.unpause()
 
   down = srv.stream("down")
+
   #down.unpause()
   sys.path.append("../seawolf/mission_control/missions")
 
   global cameras 
+  #cameras = {
+  #           "forward" : forward,
+  #           "down"    : down
+  #          }
   cameras = {
-             "forward" : forward,
-             "down"    : down
-            }
+    "down" : down
+  }
+  for cameraName in cameras:
+    print "Opening: ", cameraName
+    cameras[cameraName].openWindow()
 
 DBPRINT = True #False
 
@@ -127,6 +134,7 @@ returns numpy array of frame from svr
 """
 def getFrame(camera):
   frame = cameras[camera].getNextFrame()
+  cameras[camera].playWindow()
   #turning frame from cv frame, standard from svr to cv2 frame
   #frame = np.asarray(frame[:, :])
   return frame
