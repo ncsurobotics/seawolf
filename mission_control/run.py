@@ -9,12 +9,6 @@ import sys
 import conf
 
 import missions as ms
-
-
-#Oh god for the love of god this isn't right please make srv a global header
-sys.path.append("../../srv")
-import srv
-
 sys.path.append("../seawolf/mission_control/missions")
 
 
@@ -23,34 +17,19 @@ def hubConnect():
   sw.loadConfig("../conf/seawolf.conf");
   sw.init("missionControl : Main");
 
-def srvConnect():
+def svrConnect():
   """ connecting to svr """
-  #svr.connect()
-  #sys.path.append("../../srv")
-  #import os
-  #print "Directory = ", sys.path
-  #srv.connect()
+  svr.connect()
   """setting up svr streams """
-  #forward = srv.stream("forward")
-  #forward.unpause()
-
-  down = srv.stream("down")
-
-  #down.unpause()
-  sys.path.append("../seawolf/mission_control/missions")
-
+  forward = svr.Stream("forward")
+  forward.unpause()
+  down = svr.Stream("down")
+  down.unpause()
   global cameras 
-  #cameras = {
-  #           "forward" : forward,
-  #           "down"    : down
-  #          }
   cameras = {
-    "down" : down
-  }
-  for cameraName in cameras:
-    print "Opening: ", cameraName
-    cameras[cameraName].openWindow()
-
+             "forward" : forward,
+             "down"    : down
+            }
 DBPRINT = True #False
 
 
@@ -65,13 +44,11 @@ def main():
   if len(sys.argv) != 2:
     raise Exception("TO RUN: python2.7 run.py pathTo.conf")
   missions = conf.readFile(sys.argv[1])
-  #missions = [ wheelState.WheelState()  ]
-  #missions = [ pathBentState.PathBentState() ]
   runMissions(missions)  
 
 def runMissions(missions, dbprint = True): 
   hubConnect()
-  srvConnect()
+  svrConnect()
   global DBPRINT 
   DBPRINT = dbprint
   try:
@@ -133,10 +110,9 @@ camera = string the holds the name for the camera in svr
 returns numpy array of frame from svr
 """
 def getFrame(camera):
-  frame = cameras[camera].getNextFrame()
-  cameras[camera].playWindow()
+  frame = cameras[camera].get_frame()
   #turning frame from cv frame, standard from svr to cv2 frame
-  #frame = np.asarray(frame[:, :])
+  frame = np.asarray(frame[:, :])
   return frame
   
   
