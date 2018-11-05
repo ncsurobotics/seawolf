@@ -9,6 +9,9 @@ import sys
 import conf
 
 import missions as ms
+
+import srv
+
 sys.path.append("../seawolf/mission_control/missions")
 
 
@@ -17,19 +20,28 @@ def hubConnect():
   sw.loadConfig("../conf/seawolf.conf");
   sw.init("missionControl : Main");
 
-def svrConnect():
+def srvConnect():
   """ connecting to svr """
-  svr.connect()
-  """setting up svr streams """
-  forward = svr.Stream("forward")
-  forward.unpause()
-  down = svr.Stream("down")
-  down.unpause()
+  #svr.connect()
+  #sys.path.append("../../srv")
+  #import os
+  #print "Directory = ", sys.path
+  #srv.connect()
+  """setting up srv streams """
+  down = srv.stream("down")
+  #temporarily the same stream until srv has 2 cam streams in sim
+  forward = down#srv.stream("forward")
+
+
   global cameras 
   cameras = {
              "forward" : forward,
              "down"    : down
             }
+  for cameraName in cameras:
+    print "Opening: ", cameraName
+    cameras[cameraName].openWindow()
+
 DBPRINT = True #False
 
 
@@ -44,11 +56,13 @@ def main():
   if len(sys.argv) != 2:
     raise Exception("TO RUN: python2.7 run.py pathTo.conf")
   missions = conf.readFile(sys.argv[1])
+  #missions = [ wheelState.WheelState()  ]
+  #missions = [ pathBentState.PathBentState() ]
   runMissions(missions)  
 
 def runMissions(missions, dbprint = True): 
   hubConnect()
-  svrConnect()
+  srvConnect()
   global DBPRINT 
   DBPRINT = dbprint
   try:
@@ -110,9 +124,8 @@ camera = string the holds the name for the camera in svr
 returns numpy array of frame from svr
 """
 def getFrame(camera):
-  frame = cameras[camera].get_frame()
-  #turning frame from cv frame, standard from svr to cv2 frame
-  frame = np.asarray(frame[:, :])
+  frame = cameras[camera].getNextFrame()
+  cameras[camera].playWindow()
   return frame
   
   
@@ -126,3 +139,4 @@ def dbPrint(string):
 
 if __name__ == "__main__":
   main()
+
