@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import svr
+import srv
 
 NEAR = -1
 FAR = -2
@@ -43,6 +43,9 @@ class Camera(object):
     
     #making the next frame
     self.newFrame()
+
+    #connection to srv
+    self.connection = srv.connection.Connection(self.name)
   
   def newFrame(self):
     #making frame start out as blue background. 
@@ -72,7 +75,8 @@ class Camera(object):
     #converting image to type desired by svr
     container = cv2.cv.fromarray(np.copy(self.frame))
     cv_image = cv2.cv.GetImage(container)
-    svr.debug(self.name, cv_image)
+    self.connection.post(self.frame, name=self.name)
+    #svr.debug(self.name, cv_image)
   
   
   """

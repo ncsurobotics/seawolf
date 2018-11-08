@@ -10,7 +10,7 @@ import numpy as np
 import time
 import math
 import seawolf as sw
-import svr
+import srv
 from Cameras import Camera
 
 
@@ -23,7 +23,8 @@ class ViewSimpleSim(object):
     self.entities = entities
     #setting the scale factor, this means each pixel is one cm when obj is 1m away
     sf = .0017
-    svr.connect()
+    #assume svr started
+    #svr.connect()
     
     #making the down camera
     downTransform = np.float32([[1, 0, 0],
