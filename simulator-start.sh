@@ -10,10 +10,10 @@ screen -dr seawolf -p hub -X stuff "cd db
 screen -dr seawolf -p hub -X stuff "seawolf-hub -c ../conf/hub.conf
 "
 
-#svrd
-screen -dr seawolf -X screen -t svrd
+#screen for the srv server
+screen -dr seawolf -X screen -t srv_server
 sleep 1.5
-screen -dr seawolf -p svrd -X stuff "svrd
+screen -dr seawolf -p srv_server -X stuff "srvServerStart
 "
 
 
@@ -45,11 +45,8 @@ screen -dr seawolf -p HUD -X stuff "./bin/depthmonitor2
 screen -dr seawolf -p HUD -X stuff "
 "
 
-# svrwatch
-screen -dr seawolf -X screen -t svrwatch
-sleep 0.5
-screen -dr seawolf -p svrwatch -X stuff "svrwatch -a
-"
+# srvWatch, screen to watch video streams from
+screen -dr seawolf -X screen -t srv_watch
 
 
 # bash
@@ -75,6 +72,10 @@ screen -dr seawolf -p simulator -X stuff "cd simulator
 screen -dr seawolf -p simulator -X stuff "python sim.py Conf/test.conf
 "
 
+# start srv watch command
+sleep 1.5
+screen -dr seawolf -p srv_watch -X stuff "srvWatch
+"
 
 screen -x
 
