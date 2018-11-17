@@ -75,6 +75,13 @@ screen -dr seawolf -p simulator -X stuff "cd simulator
 screen -dr seawolf -p simulator -X stuff "python sim.py Conf/test.conf
 "
 
+#gui
+screen -dr seawolf -X screen -t gui
+sleep 1.5
+screen -dr seawolf -p gui -X stuff "cd applications/gui/
+"
+screen -dr seawolf -p gui -X stuff "python gui.py
+"
 
 screen -x
 
