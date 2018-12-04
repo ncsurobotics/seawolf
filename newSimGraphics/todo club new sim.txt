@@ -1,0 +1,5 @@
+make entities hook up to dummy meshes
+integrate new sim with old sim
+
+automate testing
+update old meshes

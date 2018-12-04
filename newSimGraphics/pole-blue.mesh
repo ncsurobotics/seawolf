@@ -1,0 +1,50 @@
+#here we plot out each 3d point
+#point 0
+#point 1
+#...
+#point n
+#x y z
+
+points:
+#bottom flat piece: 0 - 3
+1 -2 1
+1 -2 -1
+-1 -2 -1
+-1 -2 1
+
+#top flat piece: 4 - 7
+1 2 1
+1 2 -1
+-1 2 -1
+-1 2 1
+
+#here we create a list of faces
+#faces are just made up of indexes of each of the above points
+#faces must be triangles or lines
+
+faces:
+#make bottom flat piece blue
+color 0 1 2 blue
+color 2 3 0 blue
+
+#make top flat piece blue
+color 4 5 6 blue
+color 6 7 4 blue
+
+#make sides blue
+
+#1 side
+color 0 1 4 blue
+color 4 5 1 blue
+
+#2 side
+color 1 2 5 blue
+color 5 6 2 blue
+
+#3 side
+color 2 3 6 blue
+color 6 7 3 blue
+
+#4 side
+color 3 0 7 blue
+color 7 4 0 blue

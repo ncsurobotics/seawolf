@@ -1,0 +1,37 @@
+#here we plot out each 3d point
+#point 0
+#point 1
+#...
+#point n
+#x y z
+
+
+#bottom flat piece: 0 - 3
+1 1 0
+1 -1 0
+-1 -1 0
+-1 1 0
+
+#top flat piece: 4 - 7
+1 1 1
+1 -1 1
+-1 -1 1
+-1 1 1
+
+#here we create a list of faces
+#faces are just made up of indexes of each of the above points
+#faces must be triangles or lines
+
+#make bottom flat piece
+0 1 2 red
+3 0 1 blue
+
+#make triangle sides, since using image, specify triangle
+2 3 0 slots.png 0 0 0 300 300 300
+0 1 2 slots.png 300 300 300 0 0 0
+
+
+#eventually support for rectangles here
+#make top flat piece
+4 5 6 green
+7 4 5 blue

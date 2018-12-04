@@ -1,0 +1,25 @@
+#here we plot out each 3d point
+#point 0
+#point 1
+#...
+#point n
+#x y z
+
+points:
+#bottom flat piece: 0 - 3
+1 -2 1
+1 -2 -1
+-1 -2 -1
+-1 -2 1
+
+#top flat piece: 4 - 7
+1 2 1
+1 2 -1
+-1 2 -1
+-1 2 1
+
+faces:
+#1 side
+color 0 1 4 red
+color 4 5 1 green
+
