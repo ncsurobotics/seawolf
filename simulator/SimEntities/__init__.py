@@ -7,6 +7,7 @@ from pinger import Pinger
 from wheel import Wheel
 from dice import Dice
 from slots import Slots
+from goldchip import GoldChip
 
 entities = {
               "dbEntity"  :   dbEntity,
@@ -15,7 +16,8 @@ entities = {
               "Gate"      :   Gate,
               "Hedge"     :   Hedge,
               "Pinger"    :   Pinger,
-	            "Wheel"     :   Wheel,
+	      "Wheel"     :   Wheel,
               "Dice"      :   Dice,
-              "Slots"     :   Slots
+              "Slots"     :   Slots,
+              "GoldChip"  :   GoldChip
            }
