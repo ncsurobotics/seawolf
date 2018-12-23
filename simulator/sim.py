@@ -57,16 +57,22 @@ def setup():
   return Conf.readFile(sys.argv[1])
 
 
+def updateObjects(objects):
+  for o in objects:
+    if hasattr(o, 'mesh'):
+      o.update()
+
 def main(objects):
   #connecting to hub
-  sw.loadConfig("../conf/seawolf.conf");
-  sw.init("Simulator : Main");
+  sw.loadConfig("../conf/seawolf.conf")
+  sw.init("Simulator : Main")
   pid = pidSim()
   robo = posSim(location = [0, 0, 0], axis = [-50, 50], objects= objects)
   view= viewSim(objects)
   while True:
     pid.updateHeading()
     robo.updatePosition()
+    updateObjects(objects)
     view.updateViews(robo.pos())
 
 if __name__ == "__main__":

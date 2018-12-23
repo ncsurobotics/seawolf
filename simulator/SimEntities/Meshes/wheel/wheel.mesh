@@ -1,0 +1,20 @@
+#here we plot out each 3d point
+#point 0
+#point 1
+#...
+#point n
+#x y z
+
+
+#bottom flat piece: 0 - 3
+points:
+1 0 1
+1 0 -1
+-1 0 -1
+-1 0 1
+
+#make bottom flat piece wheel
+faces:
+image 0 1 2 3 rectangle wheel2.png
+#declare alphas at the end, alpha same dim as img1
+alpha alpha.png real_alpha.png

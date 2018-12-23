@@ -1,0 +1,13 @@
+make entities hook up to dummy meshes
+integrate new sim with old sim
+  -multiple meshes per object
+  -fix vertical coordinates
+  -fix where certain files r located, delete unneeded folders, reorganize 
+
+update old meshes
+
+add alphas to triangle, also triangle point order bug,predo known triangles
+automate testing
+
+
+collisions/events?
