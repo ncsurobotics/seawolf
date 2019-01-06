@@ -14,6 +14,8 @@ import numpy as np
 
 from dbEntity import dbEntity
 
+from View.Cameras.mesh import Mesh
+
 class Buoy(object):
   
   """
@@ -25,6 +27,7 @@ class Buoy(object):
     self.name = NAME
     self.radius = RAD
     self.color = color
+    self.mesh = Mesh('dummy.mesh', at, folder='./SimEntities/Meshes/dummy/')
     if DB:
       self.db = dbEntity(self.location, name = self.name)
   
@@ -34,7 +37,9 @@ class Buoy(object):
     pt = np.dot(COBM, (self.location - roboPos))
     camera.drawCirc(pt, self.radius, self.color)
     return
- 
+  
+  def update(self):
+    self.mesh.turn(.4)
  
   def loc(self):
     return self.location  

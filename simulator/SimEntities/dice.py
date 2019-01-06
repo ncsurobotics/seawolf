@@ -13,6 +13,8 @@ import numpy as np
 
 from dbEntity import dbEntity
 
+from View.Cameras.mesh import Mesh
+
 class Dice(object):
   
   """
@@ -23,6 +25,7 @@ class Dice(object):
     self.location = np.float32(at)
     self.orientation = -1 * orientation * math.pi/180
     self.name = NAME
+    self.mesh = Mesh('dice-4.mesh', at, folder='./SimEntities/Meshes/dice/')
     
     line = np.float32([math.sin(self.orientation), 0,  math.cos(self.orientation)])
 
@@ -53,6 +56,9 @@ class Dice(object):
     
     
     return
+  
+  def update(self):
+    pass
  
  
   def loc(self):

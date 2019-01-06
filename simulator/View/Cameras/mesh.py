@@ -66,6 +66,14 @@ def error(msg, folder, file, line):
   error_msg = "Error in file " + folder + file + " at line: " + str(line) + ", " + msg
   raise ValueError( error_msg )
 
+"""
+Mesh has:
+filename - file it is created from
+folder - folder the file is in
+loc - location
+scale - scales/stretches the mesh aong each axis
+orientation - the way it is turned
+"""
 class Mesh(object):
   #read mesh from file
   def __init__(self, file_name, loc=[0,0,0], scale=[1,1,1], orientation=0, folder=''):
@@ -173,11 +181,16 @@ class Mesh(object):
           error('Incorrectly defined face', folder, file_name, lineIdx)
     #scale
     self.points = [(x*scale[0], y*scale[1], z*scale[2]) for x,y,z in self.points]
+    # swap y and z
+    for i in range(len(self.points)):
+      x, z, y = self.points[i]
+      self.points[i] = x, y, z
+
     #set the location
     x,y,z = loc
-    self.points = [(x+X/2, y+Y/2, z+Z/2 ) for X,Y,Z in self.points]
+    #y = -y #negate the y axis
+    self.points = [(x+X/2, y+Y/2, -z-Z/2 ) for X,Y,Z in self.points]
     pass
-  
   def faceTypeAt(self, idx):
     return self.faces[idx][1].__class__.__name__
   

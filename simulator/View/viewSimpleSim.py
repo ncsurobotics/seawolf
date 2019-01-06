@@ -39,18 +39,19 @@ class ViewSimpleSim(object):
   """
   sorts entities then draws them on frame, and sends frame to svr
   roboPos = position of robot
-  """
+  """ 
   def updateViews(self, roboPos):
     if self.entities == None:
       return
     for cam in self.cams:
       # cam located at where robot is
-      cam.pos = roboPos[:]
+      x,y,z = roboPos[:]
+      cam.pos = x,-z,y
       # swap y and z in cam.pos to convert simulator coordinates to graphics coordinates
       # the vertical axis must be negated as well
-      temp = cam.pos[1]
-      cam.pos[1] = cam.pos[2]
-      cam.pos[2] = temp
+      #temp = cam.pos[1]
+      #cam.pos[1] = cam.pos[2]
+      #cam.pos[2] = temp
       #print "-" * 20, cam.pos
       #cam.pos[1] = -1
       # have camera yaw and pitch be same as robot's

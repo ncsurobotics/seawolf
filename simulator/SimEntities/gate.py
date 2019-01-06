@@ -67,7 +67,7 @@ class Gate(object):
     self.patch = [p1, p2, p3, p4]
     
     self.color = (0, 0, 255)
-    self.mesh = Mesh('pole-red.mesh', [0,.1,7], [1,3,1], orientation=.2, folder='./SimEntities/Meshes/gate/')
+    self.mesh = Mesh('pole-red.mesh', self.location, orientation=.2, folder='./SimEntities/Meshes/gate/')
     
     if DB:
       self.db = dbEntity(self.location, name = self.name)
@@ -94,6 +94,7 @@ class Gate(object):
     return
  
   def update(self):
+    #self.mesh.move([0,0,-.25])
     pass
   
   def loc(self):

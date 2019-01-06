@@ -18,6 +18,8 @@ import numpy as np
 
 from dbEntity import dbEntity
 
+from View.Cameras.mesh import Mesh
+
 class Hedge(object):
   
   """
@@ -30,6 +32,7 @@ class Hedge(object):
     orientation = math.pi/180 * orientation
     length = np.float32([0, 0, 1]) * gateLength
     width  = np.float32([math.cos(orientation), math.sin(orientation), 0]) * gateWidth
+    self.mesh = Mesh('dummy.mesh', at, folder='./SimEntities/Meshes/dummy/')
     
     self.poles = []
     
@@ -63,6 +66,9 @@ class Hedge(object):
         pts.append(np.dot(COBM, pt - roboPos))
       camera.drawLine(pts[0], pts[1], color = self.color, thickness = poleDiameter)
     return
+  
+  def update(self):
+    pass
  
  
   def loc(self):

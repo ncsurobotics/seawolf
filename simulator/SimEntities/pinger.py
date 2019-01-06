@@ -3,7 +3,7 @@ import math
 import seawolf as sw
 from dbEntity import dbEntity
 import time
-
+from View.Cameras.mesh import Mesh
 
 DB = False
 NAME = "Pinger"
@@ -33,6 +33,7 @@ class Pinger(object):
         p1 = self.location - width/2
         p2 = self.location + width/2
         self.poles.append([p1, p2])
+        self.mesh = Mesh('dummy.mesh', at, folder='./SimEntities/Meshes/dummy/')
         
         self.color = (0, 255, 255)
         
@@ -94,7 +95,9 @@ class Pinger(object):
             pts.append(np.dot(COBM, pt - roboPos))
           camera.drawLine(pts[0], pts[1], color = self.color, thickness = pingerDiameter)
         return
-     
+    
+    def update(self):
+        pass
      
     def loc(self):
         return self.location 

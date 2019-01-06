@@ -42,7 +42,7 @@ w,h = 400, 400
 cx,cy = w/2, h/2
 
 # zoom/scale factor used when rendering the objects
-f_factor = 500.0
+f_factor = 200.0
 
 # blue background of the sea
 background = (190, 158, 31)
@@ -50,14 +50,14 @@ background = (190, 158, 31)
 """
 Camera has:
 
-name
-pos
-rot
-rot_offset
-frame
-frameSize
-noise
-noiseTimer
+name - name of the camera
+pos - positon of the camera
+rot - rotation of the camera, how much it has turned from its start location length-2 tuple of (pitch, yaw)
+rot_offset - starting orientation of the camera (down camera starts facing down, forward forwards), also len-2 tuple
+frame - the image the camera is currently seeing
+frameSize - size of the frame, (height, width, channels)
+noise - random static noise in the image
+noiseTimer - how often the nose is generated
 """
 class Cam:
     def __init__(self, name, pos=(0,0,0), rot_offset=(0,0), rot=(0,0)):
@@ -108,16 +108,24 @@ class Cam:
             Record 2d and 3d points, turn 3d vert_list into 2d screen_coords.
             """
             for x,y,z in mesh.points:
+                #z = -z #negate the z
                 x -= self.pos[0]
-                y -= self.pos[1]
-                z -= self.pos[2]
+                z -= self.pos[1]
+                y -= self.pos[2]
+
+                #y = -y
+                #print x,y,z
+                z,y = y,z
 
                 x,z = rotate2d((x,z), self.rot[1] + self.rot_offset[1])
                 y,z = rotate2d((y,z), self.rot[0] + self.rot_offset[0])
 
                 vert_list += [ (x,y,z) ]
 
-                f = f_factor * abs(z) ** -1
+                try:
+                    f = f_factor * abs(z) ** -1
+                except ZeroDivisionError:
+                    f = f_factor * 0.0001 ** -1
                 #f = f_factor * abs(z) ** -.6
                 x, y = x*f, y*f
                 screen_coords += [(cx + int(x), cy+int(y))]
@@ -168,52 +176,6 @@ class Cam:
         self.rot[1] += rad
     def pitch(self, rad):
         self.rot[0] += rad
-
-    def update(self, events):
-        #print self.states['w']
-        if len(events['keyup']) > 0:
-            self.states[chr(events['keyup'].pop(0))] = False
-        if len(events['keydown']) > 0:
-            self.states[chr(events['keydown'].pop(0))] = True
-        s = .1
-        if self.states[' ']:
-            self.pos[1]+=s
-        if self.states['.']:
-            self.pos[1]-=s
-
-        x,y = s * math.sin(self.rot[1] + self.rot_offset[1]), s*math.cos(self.rot[1] + self.rot_offset[1])
-
-        if self.states['w']:
-            #print "W"
-            self.pos[0] += x; self.pos[2] += y
-        if self.states['s']:
-            self.pos[0] -= x; self.pos[2] -= y
-        if self.states['a']:
-            self.pos[0] -= y; self.pos[2] += x
-        if self.states['d']:
-            self.pos[0] += y; self.pos[2] -= x
-        
-        s = 5
-        x = 0
-        y = 0
-        if self.states['l']:
-            x = -1
-        if self.states["'"]:
-            x = 1
-        if self.states['p']:
-            y = -1
-        if self.states[';']:
-            y = 1
-        
-        x /= 200.0
-        y /= 200.0
-
-        self.rot[0] += y * s
-        self.rot[1] += x * s
-
-        if self.states['f']:
-            return 1
-        return 0
 
 
     #displays frame on svr

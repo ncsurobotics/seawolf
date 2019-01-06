@@ -19,6 +19,8 @@ import numpy as np
 
 from dbEntity import dbEntity
 
+from View.Cameras.mesh import Mesh
+
 class GoldChip(object):
   
   """
@@ -32,6 +34,7 @@ class GoldChip(object):
     self.radius = plateRadius
     #degree of direction its facing
     self.spin = 0
+    self.mesh = Mesh('dummy.mesh', at, folder='./SimEntities/Meshes/dummy/')
     
     #degrees into radians
     orientation = math.pi/180 * orientation
@@ -68,6 +71,9 @@ class GoldChip(object):
     camera.drawCirc(pt, self.radius, self.color2)
 
     return
+  
+  def update(self):
+    pass
  
  
   def loc(self):

@@ -1,0 +1,1 @@
+shrink down images to different scale to make training faster

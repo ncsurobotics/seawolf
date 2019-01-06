@@ -16,6 +16,8 @@ import numpy as np
 
 from dbEntity import dbEntity
 
+from View.Cameras.mesh import Mesh
+
 class Path(object):
   
   """
@@ -28,6 +30,7 @@ class Path(object):
     self.orientation = -1 * orientation * math.pi/180
     self.theta = theta * math.pi / 180
     self.name = NAME
+    self.mesh = Mesh('path-bent.mesh', at, folder='./SimEntities/Meshes/pathbent/')
     
     line = np.float32([math.sin(self.orientation), math.cos(self.orientation), 0])
     line2 = np.float32([math.sin(self.orientation + self.theta), math.cos(self.orientation + self.theta), 0])
@@ -74,10 +77,10 @@ class Path(object):
     camera.drawPoly(pts, self.color)
     circ = [(pts[0][0] + pts[1][0])/2.0, (pts[0][1] + pts[1][1])/2.0, pts[0][2]]
     camera.drawCirc(circ, pathWidth/2, (0,0,255))
-    
-    
-    
     return
+
+  def update(self):
+    pass
  
  
   def loc(self):

@@ -31,8 +31,7 @@ class Wheel(object):
     self.spin = 0
     #rate of spinning, no units yet, just counter
     self.rate = 7
-
-    self.mesh = Mesh('wheel.mesh', [0,2,6], folder='./SimEntities/Meshes/wheel/')
+    self.mesh = Mesh('wheel.mesh', at, folder='./SimEntities/Meshes/wheel/')
 
     if DB:
       self.db = dbEntity(self.location, name = self.name)
