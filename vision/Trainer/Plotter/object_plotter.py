@@ -77,7 +77,6 @@ save_directory = './data/'
 while os.path.exists(save_directory):
   save_directory = './data-' + str(n) +'/'
   n += 1
-os.makedirs(save_directory)
 
 # initial frame
 if cap.isOpened():
@@ -187,8 +186,11 @@ def recordRectangles(rectangle_records, rectangles, frame_idx, frame):
   global rectangles_collected
   rectangles_collected += len(rectangles)
   if len(rectangles) and frame.__class__.__name__ != 'NoneType':
-    height, width, _ = frame.shape
-
+    frame_height, frame_width, _ = frame.shape
+    
+    record = [frame_idx, len(rectangles)]
+    # append x,y, w, h
+    print "RECTANGLES"
     for r in rectangles:
       # make sure saved rectangle is within frame bounds
       x_min = r.x
@@ -199,20 +201,39 @@ def recordRectangles(rectangle_records, rectangles, frame_idx, frame):
         x_min = 0
       if y_min < 0:
         y_min = 0
-      if x_max >= width:
-        x_max = width - 1
-      if y_max >= height:
-        y_max = height - 1
+      if x_max >= frame_width:
+        x_max = frame_width - 1
+      if y_max >= frame_height:
+        y_max = frame_height - 1
+      
+      width = x_max - x_min
+      height = y_max - y_min
 
-      record = (frame_idx, width, height, x_min, y_min, x_max, y_max)
-      rectangle_records.append(record)
+      print x_max, x_min
+
+      record.extend([x_min, y_min, width, height])
+    rectangle_records.append(record)
+    print "Records:", record
     print "Collected", rectangles_collected, "frames"
     
 
 def saveRectangles(rectangle_records, img_name='frame', class_name="class", save_frames=True):
+  global save_directory
+  
   if not len(rectangle_records):
+    print "No rectangles drawn, none saved"
     return
+  os.makedirs(save_directory)
   print "Saving rectangle data"
+  # save to text file
+  fix this bug
+  f = open(save_directory + 'pos.info', 'w+')
+  for record in rectangle_records:
+      frame_idx = record[0]
+      file_name = img_name + '-' + str(frame_idx) + '.jpg'
+      writer.writerow( (file_name, width, height, class_name, min_x, min_y, max_x, max_y) )
+  f.close()
+  """
   #save label information into csv file
   with open(save_directory + 'labels.csv', 'wb') as csvfile:
     writer = csv.writer(csvfile , delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -221,7 +242,7 @@ def saveRectangles(rectangle_records, img_name='frame', class_name="class", save
       frame_idx, width, height, min_x, min_y, max_x, max_y = record
       file_name = img_name + '-' + str(frame_idx) + '.jpg'
       writer.writerow( (file_name, width, height, class_name, min_x, min_y, max_x, max_y) )
-    
+  """
   if save_frames:
     print "Saving video frames"
     # reopen the video and save each frame
