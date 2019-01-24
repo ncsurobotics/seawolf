@@ -196,7 +196,7 @@ while( True ):
 
     if(seawolfIsRunning and count == 0):
             #setting values in seawolf to change
-            
+
             #thruster sliders
             writeHub( Bow )
             writeHub( Stern )
@@ -205,7 +205,6 @@ while( True ):
             writeHub( StrafeT )
             writeHub( StrafeB )
             writeHub( Depth )
-            
             #dials
             if Forward.change:
                 a = sw3.Forward(Forward.slideValue())
@@ -214,33 +213,25 @@ while( True ):
                         a.cancel()
                 Forward.change = False
 
-            
             if( writeHub( Roll ) ):
                     setSlidersToHubValues()
-            
             if( writeHub( Pitch ) ):
                     setSlidersToHubValues()
-            
             if( writeHub( Yaw ) ):
                     setSlidersToHubValues()
-            
             #changing values in gui read from seawolf
-            
             Roll.actualBearing = realToDisplayRadians(math.radians(sw.var.get("SEA.Roll")))
             Pitch.actualBearing = realToDisplayRadians(math.radians(sw.var.get("SEA.Pitch")))
             Yaw.actualBearing = realToDisplayRadians(math.radians(sw.var.get("SEA.Yaw")))
-            
             Roll.paused = sw.var.get("RollPID.Paused")
             Pitch.paused = sw.var.get("PitchPID.Paused")
             Yaw.paused = sw.var.get("YawPID.Paused")
-            
             Depth.paused = sw.var.get("DepthPID.Paused")
             setVars()
 
             #print actual depth in red
             rect(330, 555, 80, 30, BACKGROUND_COLOR)
             textAt(330,580, str(round(sw.var.get("Depth"),2)), RED )
-            
             #if sliders need to be reZeroed (for if zeroing the thrusters came undone)
             if reZeroSliders:
                     zeroSliders()
@@ -248,7 +239,6 @@ while( True ):
             if Pause.change:
                     Pause.change = False
                     if Pause.pressed == True:
-                            
                             #zero out dials
 
                             Roll.change = True
@@ -262,14 +252,12 @@ while( True ):
                             Yaw.change = True
                             Yaw.desiredBearing = Yaw.actualBearing
                             writeHub(Yaw)
-                            
-                            
                             #zero out other sliders
                             zeroSliders()
                             reZeroSliders = True
     #if the k key is hit
-    if k == 107 or k == 27 or cv2.getWindowProperty('Control Panel',1) < 1:     	
-				sw.close()
-				cv2.destroyWindow('Control Panel')
-				break
+    if k == 107 or k == 27 or cv2.getWindowProperty('Control Panel',1) < 1:
+            sw.close()
+            cv2.destroyWindow('Control Panel')
+            break
 
