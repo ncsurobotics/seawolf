@@ -13,7 +13,7 @@ screen -dr seawolf -p hub -X stuff "seawolf-hub -c ../conf/hub.conf
 #screen for the srv server
 screen -dr seawolf -X screen -t srv_server
 sleep 1.5
-screen -dr seawolf -p srv_server -X stuff "srvServerStart
+screen -dr seawolf -p srv_server -X stuff "python start/srv/server.py
 "
 
 
@@ -74,7 +74,7 @@ screen -dr seawolf -p simulator -X stuff "python sim.py Conf/test.conf
 
 # start srv watch command
 sleep 1.5
-screen -dr seawolf -p srv_watch -X stuff "srvWatch
+screen -dr seawolf -p srv_watch -X stuff "python start/srv/watch.py
 "
 
 screen -x
