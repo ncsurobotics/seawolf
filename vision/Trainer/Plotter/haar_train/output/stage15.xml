@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<stage15>
+  <maxWeakCount>2</maxWeakCount>
+  <stageThreshold>5.4644268006086349e-02</stageThreshold>
+  <weakClassifiers>
+    <_>
+      <internalNodes>
+        0 -1 122067 -333381649 -1410334865 -5 -113229797 -269995640 -1
+        -1 -1</internalNodes>
+      <leafValues>
+        -8.6842107772827148e-01 9.2592591047286987e-01</leafValues></_>
+    <_>
+      <internalNodes>
+        0 -1 140007 -2147217039 -2147188088 64 8589832 128 129
+        -1069481975 -1952251773</internalNodes>
+      <leafValues>
+        -8.7128168344497681e-01 9.3312078714370728e-01</leafValues></_></weakClassifiers></stage15>
+</opencv_storage>

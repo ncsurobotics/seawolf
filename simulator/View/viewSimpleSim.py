@@ -11,7 +11,7 @@ import time
 import math
 import seawolf as sw
 import srv
-from Cameras import Camera
+from Cameras.camera import Cam
 
 
 
@@ -21,24 +21,16 @@ class ViewSimpleSim(object):
   #entities = array of entities to be seen by robot
   def __init__(self, entities = None):
     self.entities = entities
-    #setting the scale factor, this means each pixel is one cm when obj is 1m away
-    sf = .0017
-    #assume svr started
+
+    self.meshes = []
+    for e in entities:
+      if hasattr(e, 'mesh'):
+        self.meshes.append(e.mesh)
     #svr.connect()
     
-    #making the down camera
-    downTransform = np.float32([[1, 0, 0],
-                                [0, 1, 0],
-                                [0, 0, -1 * sf]])
-    downCam = Camera(name = "down", transform = downTransform)
-    
-    #making the forward camera
-    forTransform = np.float32([[1,      0, 0],
-                               [ 0,      0, 1],
-                               [ 0, sf * 1, 0]])
-    forCam = Camera(name = "forward", transform = forTransform)
-    
-    
+
+    forCam = Cam(name="forward")
+    downCam = Cam(name="down", rot_offset=(math.pi/2,0))
     
     self.cams = [downCam, forCam]
     return
@@ -47,33 +39,26 @@ class ViewSimpleSim(object):
   """
   sorts entities then draws them on frame, and sends frame to svr
   roboPos = position of robot
-  """
+  """ 
   def updateViews(self, roboPos):
     if self.entities == None:
       return
-    self.roboPos = np.float32(roboPos)
-    self.entities = sorted(self.entities, key = self.sort, reverse = True)
-    
-    
-    """
-    this section changes the cordinate system of the object to one where the origin is the robot
-    and the axis match the heading of the robot. aka y is straight ahead of the robot
-    """
-    # getting robot direction and turning it to radians
-    heading = -1 * sw.var.get("SEA.Yaw") * math.pi / 180.0 
-    #creating the Rotation Matrix
-    R = np.array([[-1* math.cos(heading),  math.sin(heading), 0],
-                  [math.sin(heading),      math.cos(heading), 0],
-                  [                0,                 0     , 1]], np.float32)
     for cam in self.cams:
-      cam.newFrame()
-      for ent in self.entities:
-        ent.draw(roboPos, R, cam)
+      # cam located at where robot is
+      x,y,z = roboPos[:]
+      cam.pos = x,-z,y
+      # swap y and z in cam.pos to convert simulator coordinates to graphics coordinates
+      # the vertical axis must be negated as well
+      #temp = cam.pos[1]
+      #cam.pos[1] = cam.pos[2]
+      #cam.pos[2] = temp
+      #print "-" * 20, cam.pos
+      #cam.pos[1] = -1
+      # have camera yaw and pitch be same as robot's
+      cam.rot[1] = -1 * sw.var.get("SEA.Yaw") * math.pi / 180.0
+      cam.rot[0] = sw.var.get("SEA.Pitch") * math.pi / 180.0
+      # draw and display the frame
+      cam.draw(self.meshes)
       cam.show()
     
     return
-  
-  #used by built in sort() to sort entities based on distance to robot, makes it so that things that are closer are drawn last, and such overlap things that are farther away.
-  def sort(self, obj):
-    return np.sum((obj.loc() - self.roboPos)**2)
-  

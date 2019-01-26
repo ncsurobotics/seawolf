@@ -1,0 +1,14 @@
+gate
+path
+path bent - rough
+slot
+dice - rough
+buoys
+gold chip
+roulette wheel - rough
+cash in
+
+figure out circles and ovals
+hook up entity with mesh list
+
+make meshes load picture to square (or triangle) face

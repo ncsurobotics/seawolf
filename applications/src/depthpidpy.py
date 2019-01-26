@@ -86,7 +86,7 @@ def main():
             seawolf.logging.log(seawolf.CRITICAL, "Depth: {}\n".format(depth))
             seawolf.logging.log(seawolf.CRITICAL, "I'm too deep! Rising full force!\n")
 
-            dataOut(-1.0)
+            #dataOut(-1.0)
             time.sleep(panic_time)
         elif(paused == False):
             mv = pid.update(depth)

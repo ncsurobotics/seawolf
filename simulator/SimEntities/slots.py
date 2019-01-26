@@ -14,6 +14,8 @@ import numpy as np
 
 from dbEntity import dbEntity
 
+from View.Cameras.mesh import Mesh
+
 class Slots(object):
   
   """
@@ -25,6 +27,7 @@ class Slots(object):
     self.name = NAME
     self.width = WIDTH
     self.color = color
+    self.mesh = Mesh('dummy.mesh', at, folder='./SimEntities/Meshes/dummy/')
     if DB:
       self.db = dbEntity(self.location, name = self.name)
   
@@ -35,7 +38,9 @@ class Slots(object):
     camera.drawRect(pt, self.width, self.width, self.color)
     return
  
- 
+  def update(self):
+    pass
+
   def loc(self):
     return self.location  
   

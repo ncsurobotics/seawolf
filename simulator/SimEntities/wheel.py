@@ -14,7 +14,7 @@ import numpy as np
 
 from dbEntity import dbEntity
 
-
+from View.Cameras.mesh import Mesh
 
 class Wheel(object):
   
@@ -31,9 +31,8 @@ class Wheel(object):
     self.spin = 0
     #rate of spinning, no units yet, just counter
     self.rate = 7
-    #self.pic = cv2.imread('wheel.png', 1)
-    #print "Init pic is: ", self.pic != None
-    
+    self.mesh = Mesh('wheel.mesh', at, folder='./SimEntities/Meshes/wheel/')
+
     if DB:
       self.db = dbEntity(self.location, name = self.name)
   
@@ -53,7 +52,9 @@ class Wheel(object):
     self.spin += self.rate
     self.spin = self.spin % 360
     return
- 
+  
+  def update(self):
+    self.mesh.turn(.04)
  
   def loc(self):
     return self.location  

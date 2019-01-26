@@ -25,6 +25,8 @@ import numpy as np
 
 from dbEntity import dbEntity
 
+from View.Cameras.mesh import Mesh
+
 class Gate(object):
   
   """
@@ -65,6 +67,7 @@ class Gate(object):
     self.patch = [p1, p2, p3, p4]
     
     self.color = (0, 0, 255)
+    self.mesh = Mesh('pole-red.mesh', self.location, orientation=.2, folder='./SimEntities/Meshes/gate/')
     
     if DB:
       self.db = dbEntity(self.location, name = self.name)
@@ -90,7 +93,10 @@ class Gate(object):
     
     return
  
- 
+  def update(self):
+    #self.mesh.move([0,0,-.25])
+    pass
+  
   def loc(self):
     return self.location 
     

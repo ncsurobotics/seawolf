@@ -1,0 +1,28 @@
+#######here we plot out each 3d point, this will be a cube
+points:
+#bottom flat piece: points 0 - 3
+1 -1 1
+1 -1 -1
+-1 -1 -1
+-1 -1 1
+
+#top flat piece: points 4 - 7
+1 1 1
+1 1 -1
+-1 1 -1
+-1 1 1
+
+######here we create a list of faces, indexes of each point
+faces:
+#make top flat piece
+image 0 1 2 3 rectangle 5.png
+#make bottom flat piece
+image 4 5 6 7 rectangle 5.png
+#1 side
+image 0 1 5 4 rectangle 5.png
+#2 side
+image 1 2 6 5 rectangle 5.png
+#3 side
+image 2 3 7 6 rectangle 5.png
+#4 side
+image 3 0 4 7 rectangle 5.png
