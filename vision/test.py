@@ -3,8 +3,8 @@ import numpy as np
 import cv2
 import time
 import Entities
-
-
+from Entities.Utilities import debugFrame
+from srv.windows import openWindows
 def error(message):
   print "ERROR: %s" % message
   sys.exit(1)
@@ -62,24 +62,19 @@ def main():
   height, width, _ = frame.shape
   height = int(scale * height)
   width = int(scale * width)
-  while(1):
+  while(True):
       if cv2.waitKey(10) & 0xFF == ord('q'):
         break
-
-    
       a, frame = cap.read()
-      frame = cv2.resize(frame, (width, height))
       if not a:
         break
-      cv2.imshow("original", frame)
+      frame = cv2.resize(frame, (width, height))
+      debugFrame("original", frame)
       t = time.time()
       output = vision.ProcessFrame(frame)
       count += 1
       t = time.time() - t
       writeOutput(outputFile, count, t, header, output.dict())
-      '''if (t < .1):
-        time.sleep(.1 - t)'''
-      
   outputFile.close()
   cv2.destroyAllWindows()
   cap.release()

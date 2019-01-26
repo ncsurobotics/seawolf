@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from Utilities import norm
+from Utilities import debugFrame
 
 
 keys = ["leftPole", "rightPole", "centerPoint"]
@@ -63,7 +64,3 @@ def ProcessFrame(frame):
 def sortPoles(pole):
   
   return pole[1][0]
-
-def debugFrame(name, frame):
-	cv2.imshow(name, frame)
-  

@@ -62,6 +62,7 @@ def ProcessFrame(frame):
         out.draw(frameOut)
         
     else:
+      pass
       print msg + " no circ found"
       
   
@@ -71,6 +72,3 @@ def ProcessFrame(frame):
   print "-------------------------------"
   
   return out
-  
-def sortPoles(pole):
-  return pole[0][0]
