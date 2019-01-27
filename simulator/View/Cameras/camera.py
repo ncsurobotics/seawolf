@@ -78,6 +78,9 @@ class Cam:
         for c in "wasd .lp;'f":
             self.states[c] = False
 
+        #connection to srv
+        self.connection = srv.connection.Connection(self.name)
+
     def draw(self, meshes):
         #set frame to background
         self.frame[:] = background + self.noise
@@ -170,7 +173,8 @@ class Cam:
                         faces[i].draw(face_coord_list[i], self.frame)
                     except:
                         pass
-                
+        self.connection.post(self.frame, name=self.name)
+
     def yaw(self, rad):
         self.rot[1] += rad
     def pitch(self, rad):
