@@ -40,6 +40,7 @@ Do this for each of the following URLs
 * `https://github.com/ncsurobotics/swpycv.git`
 * `https://github.com/ncsurobotics/svr.git`
 * `https://github.com/ncsurobotics/seawolf.git`
+* `https://github.com/ncsurobotics/srv.git
 
 In order push changes to our code back to ncsurobotics repositories, you will need to create a github account and have it added to our organization. You will also need to set up an SSH key on your computer by following [these instructions](https://help.github.com/articles/generating-ssh-keys/).
 
@@ -89,6 +90,18 @@ To test python import:
 
     $ python
     >>> import svr
+    
+##### srv
+
+Go into the srv/srv-py directory and run:
+
+    $ sudo pip install -e 
+
+To test srv python import:
+
+    $ python
+    >>> import srv
+
 
 ##### Seawolf
 
