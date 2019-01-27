@@ -1,0 +1,47 @@
+MAINNN
+MY PROCESS QUEUE RESP IS <multiprocessing.queues.Queue object at 0x7f6af298ab90>
+Adding source down ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+QUEUE SORUCE IS <multiprocessing.queues.Queue object at 0x7f6af298ab90> down
+QUEUES ARE {'down': <multiprocessing.queues.Queue object at 0x7f6af298ab90>}
+MY PROCESS QUEUE RESP IS <multiprocessing.queues.Queue object at 0x7f6af24ae350>
+I am the process
+	 I am alive forward
+.
+h
+I am the queue H
+QUITTING THE THing
+KILLED forward
+Adding source forward ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+QUEUE SORUCE IS <multiprocessing.queues.Queue object at 0x7f6af24ae350> forward
+QUEUES ARE {'down': <multiprocessing.queues.Queue object at 0x7f6af298ab90>, 'forward': <multiprocessing.queues.Queue object at 0x7f6af24ae350>}
+MY PROCESS QUEUE RESP IS None
+I am the process
+	 I am alive forward
+.
+h
+I am the queue H
+KILLED forward
+I am the process
+	 I am alive down
+.
+h
+I am the queue H
+KILLED down
+WINDOW LEN:  2
+down 1.0
+forward 1.0
+kill Is the queue
+--------------------------------------------------------------------------------
+KILLLLL KILLL KILLLLLLL ['forward'] forward
+forward was in ignored sources 1
+sources, srvSources ['down', 'forward'] ['down', 'forward'] ['forward']
+	Error: forward not in SRV Sources. Removing forward .
+SOURCES IS NOW ['down']
+SOCKET TIME OUT
+kill Is the queue
+--------------------------------------------------------------------------------
+KILLLLL KILLL KILLLLLLL ['forward'] forward
+FINISHING
+Destroying down
+Destroying forward
+FINISHED ['forward']

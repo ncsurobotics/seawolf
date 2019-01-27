@@ -10,7 +10,7 @@ import numpy as np
 import time
 import math
 import seawolf as sw
-import svr
+import srv
 from Cameras.camera import Cam
 
 
@@ -26,7 +26,7 @@ class ViewSimpleSim(object):
     for e in entities:
       if hasattr(e, 'mesh'):
         self.meshes.append(e.mesh)
-    svr.connect()
+    #svr.connect()
     
 
     forCam = Cam(name="forward")

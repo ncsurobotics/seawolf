@@ -7,8 +7,13 @@ import sw3
 import cv2
 import sys
 import conf
+import datetime
+import os
 
 import missions as ms
+
+import srv
+
 sys.path.append("../seawolf/mission_control/missions")
 
 
@@ -17,19 +22,28 @@ def hubConnect():
   sw.loadConfig("../conf/seawolf.conf");
   sw.init("missionControl : Main");
 
-def svrConnect():
+def srvConnect():
   """ connecting to svr """
-  svr.connect()
-  """setting up svr streams """
-  forward = svr.Stream("forward")
-  forward.unpause()
-  down = svr.Stream("down")
-  down.unpause()
+  #svr.connect()
+  #sys.path.append("../../srv")
+  #import os
+  #print "Directory = ", sys.path
+  #srv.connect()
+  """setting up srv streams """
+  down = srv.stream("down")
+  #temporarily the same stream until srv has 2 cam streams in sim
+  forward = down#srv.stream("forward")
+
+
   global cameras 
   cameras = {
              "forward" : forward,
              "down"    : down
             }
+  for cameraName in cameras:
+    print "Opening: ", cameraName
+    #cameras[cameraName].openWindow()
+
 DBPRINT = True #False
 
 
@@ -44,19 +58,30 @@ def main():
   if len(sys.argv) != 2:
     raise Exception("TO RUN: python2.7 run.py pathTo.conf")
   missions = conf.readFile(sys.argv[1])
+  #missions = [ wheelState.WheelState()  ]
+  #missions = [ pathBentState.PathBentState() ]
   runMissions(missions)  
 
-def runMissions(missions, dbprint = True): 
+def runMissions(missions, dbprint = True, record=False): 
   hubConnect()
-  svrConnect()
+  srvConnect()
   global DBPRINT 
   DBPRINT = dbprint
   try:
+    if record:
+      now = datetime.datetime.now().strftime("%m-%d-%y_%H-%M-%S")
+      os.mkdir('recordings/'+now)
+    
     for mission in missions:
       mission.setup()
       camera = mission.getCamera()
       running = True
       print "Begining to run: " + mission.getName()
+      if record:
+        print "recording", camera
+        file_name = 'recordings/' + now + '/' + mission.getName()
+        srv.record(camera, file_name, False)
+        print "recorded"
       while running:
         dbPrint("+++++++++++++++++++++++++++++++++++++++++++++++")
         try:
@@ -67,7 +92,8 @@ def runMissions(missions, dbprint = True):
           dbPrint( "ERROR running " + mission.getName() + " moving to next")
           dbPrint( e )
           running = False
-    
+      if record:
+        srv.stop_recording()
       dbPrint("Done with: " + mission.getName())
       
       #send notification over hub that mission is done
@@ -79,6 +105,8 @@ def runMissions(missions, dbprint = True):
     dbPrint( "ERROR occurred when checking errors, stopping running")
   
   finally:
+    if record:
+      srv.stop_recording()
     sw3.Forward(0).start()
     cmd = ("MISSION_DONE", "DONE")
     sw.notify.send(*cmd) #send notification to seawolf
@@ -110,9 +138,8 @@ camera = string the holds the name for the camera in svr
 returns numpy array of frame from svr
 """
 def getFrame(camera):
-  frame = cameras[camera].get_frame()
-  #turning frame from cv frame, standard from svr to cv2 frame
-  frame = np.asarray(frame[:, :])
+  frame = cameras[camera].getNextFrame()
+  #cameras[camera].playWindow()
   return frame
   
   
@@ -126,3 +153,4 @@ def dbPrint(string):
 
 if __name__ == "__main__":
   main()
+

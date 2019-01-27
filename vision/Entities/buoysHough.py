@@ -3,6 +3,7 @@ import numpy as np
 import math
 from Utilities import norm
 from Utilities import dist
+from Utilities import debugFrame
 from VisObj import visObjects
 
 
@@ -61,6 +62,7 @@ def ProcessFrame(frame):
         out.draw(frameOut)
         
     else:
+      pass
       print msg + " no circ found"
       
   
@@ -70,9 +72,3 @@ def ProcessFrame(frame):
   print "-------------------------------"
   
   return out
-  
-def sortPoles(pole):
-  return pole[0][0]
-
-def debugFrame(name, frame):
-  cv2.imshow(name, frame) 

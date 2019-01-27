@@ -6,7 +6,7 @@ export CC= gcc
 export CFLAGS= --std=c99 -Wall -pthread -pedantic -Wmissing-prototypes -I$(LIBSEAWOLF_INCLUDE_DIR) -g
 export LDFLAGS= -L$(LIBSEAWOLF_LIB_DIR) -lseawolf
 export BIN_DIR= bin
-export PYTHON_BIN= /usr/bin/env python
+export PYTHON_BIN= /usr/bin/env python2
 
 all: $(BIN_DIR)
 	$(MAKE) -C src

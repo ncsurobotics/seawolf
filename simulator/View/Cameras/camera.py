@@ -2,11 +2,12 @@
 #adapted for opencv
 import cv2
 import numpy as np
+
 import pygame, sys, math
 from triangle import Triangle
 from mesh import Mesh
 from timer import Timer
-import svr
+import srv
 
 def dist(x1,y1,x2,y2):
   return math.sqrt((x2-x1)**2 + (y2-y1)**2)
@@ -23,8 +24,6 @@ def dist3d(v1, v2):
 
 # Find the center of a list of points
 def center(pts):
-    ptSize = len(pts[0])
-    c = [0] * ptSize # makes a list filled with zeros of len ptSize
     for pt in pts:
         for i in range(ptSize):
             c[i] += pt[i]

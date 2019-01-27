@@ -3,6 +3,7 @@ import numpy as np
 from Utilities import dist
 from Utilities import norm
 from VisObj import visObjects
+from Utilities import debugFrame
 
 
 visObj = "gate"
@@ -83,8 +84,3 @@ def ProcessFrame(frame):
 def sortPoles(pole):
   
   return pole[1][0]
-
-def debugFrame(name, frame):
-  a = 1
-  cv2.imshow(name, frame)
-  

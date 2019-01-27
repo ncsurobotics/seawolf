@@ -3,6 +3,7 @@ import numpy as np
 from Utilities import dist
 from Utilities import norm
 from VisObj import visObjects
+from Utilities import debugFrame
 
 minArea = 700
 maxArea = 300
@@ -81,10 +82,4 @@ def ProcessFrame(frame):
   return out
 
 def sortPoles(pole):
-  
   return pole[1][0]
-
-def debugFrame(name, frame):
-  a = 1
-  cv2.imshow(name, frame)
-  
