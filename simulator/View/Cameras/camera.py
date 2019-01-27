@@ -181,4 +181,4 @@ class Cam:
     def show(self):
         container = cv2.cv.fromarray(np.copy(self.frame))
         cv_image = cv2.cv.GetImage(container)
-        svr.debug(self.name, cv_image)
+        #svr.debug(self.name, cv_image)
