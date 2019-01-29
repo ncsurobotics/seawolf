@@ -4,7 +4,22 @@ import cv2
 import time
 import Entities
 from Entities.Utilities import debugFrame
-from srv.windows import openWindows
+import copy
+
+
+"""
+keys:
+
+q to quit
+[ to skip back
+] to skip forward
+r to restart
+
+skip skips 100 frames 
+"""
+
+skip = 100
+
 def error(message):
   print "ERROR: %s" % message
   sys.exit(1)
@@ -29,11 +44,10 @@ def main():
   if len(sys.argv) != 4 and len(sys.argv) != 5:
     error('usage: Entity inputFile outPutfile [scale]\n(for webcam, set inputfile to cam) ')
   if (sys.argv[1] not in Entities.VisEntities):
-    errMsg = "Invalied Entity\nPosiibleEntiies are:\n"
+    errMsg = "Invalied Entity\nPossibleEntiies are:\n"
     for key in Entities.VisEntities:
       errMsg+= "\t" + key + "\n"
     error(errMsg)
-  print("hell")
   vision = Entities.VisEntities[sys.argv[1]]
   inputFile = sys.argv[2]
   outputFile = open(sys.argv[3], 'w')
@@ -62,19 +76,56 @@ def main():
   height, width, _ = frame.shape
   height = int(scale * height)
   width = int(scale * width)
+
+  frame_idx = 0
+
   while(True):
-      if cv2.waitKey(10) & 0xFF == ord('q'):
-        break
-      a, frame = cap.read()
-      if not a:
-        break
-      frame = cv2.resize(frame, (width, height))
-      debugFrame("original", frame)
-      t = time.time()
-      output = vision.ProcessFrame(frame)
-      count += 1
-      t = time.time() - t
-      writeOutput(outputFile, count, t, header, output.dict())
+    key = cv2.waitKey(10) & 0xFF
+
+    # quit
+    if key == ord('q'):
+      break
+    
+    # rewind
+    if key == ord('['):
+      cap.release()
+      cap = cv2.VideoCapture(inputFile)
+      for i in range(max(frame_idx - skip, 0)):
+        a, frame = cap.read()
+        if not a:
+          break
+      frame_idx -= skip
+
+    # skip forward
+    if key == ord(']'):
+      for i in range(skip):
+        a, frame = cap.read()
+        frame_idx += 1
+        if not a:
+          break
+      frame_idx += 1
+    
+    # restart
+    if key == ord('r'):
+      cap.release()
+      cap = cv2.VideoCapture(inputFile)
+      frame_idx = 0
+    
+    
+    if not a:
+      break
+    
+    a, frame = cap.read()
+    frame_idx += 1
+
+    
+    frame = cv2.resize(frame, (width, height))
+    debugFrame("original", frame)
+    t = time.time()
+    output = vision.ProcessFrame(frame)
+    count += 1
+    t = time.time() - t
+    writeOutput(outputFile, count, t, header, output.dict())
   outputFile.close()
   cv2.destroyAllWindows()
   cap.release()
