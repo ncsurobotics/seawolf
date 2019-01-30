@@ -95,7 +95,7 @@ To test python import:
 
 Go into the srv/srv-py directory and run:
 
-    $ sudo pip install -e 
+    $ sudo pip install -e .
 
 To test srv python import:
 
