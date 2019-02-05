@@ -191,13 +191,13 @@ def moveCornerTo(r, corner_idx, x, y, frame):
   if r.w < 0:
     r.w = 0
 
-def recordRectangles(rectangle_records, rectangles, frame_idx, frame):
+def recordRectangles(rectangle_records, rectangles, frame_idx, frame, angle):
   global rectangles_collected
   rectangles_collected += len(rectangles)
   if len(rectangles) and frame.__class__.__name__ != 'NoneType':
     frame_height, frame_width, _ = frame.shape
     
-    record = [frame_idx, len(rectangles)]
+    record = [frame_idx, len(rectangles), angle]
     # append x,y, w, h
     print "RECTANGLES"
     for r in rectangles:
@@ -244,11 +244,11 @@ def saveRectangles(rectangle_records, img_name='frame', class_name="class", save
 
   save_file = open(save_directory + 'pos.info', 'w+')
   for record in rectangle_records:
-    frame_idx, record_count = record[0:2]
+    frame_idx, record_count, angle = record[0:3]
     file_name = img_name + '-' + str(frame_idx) + '.jpg'
     line = [file_name, record_count]
     for i in range(record_count):
-      x, y, width, height = record[2 + i * 4: 2 + i * 4 + 4]
+      x, y, width, height = record[3 + i * 4: 3 + i * 4 + 4]
       line.extend([x, y, width, height])
     line.append('\n')
     save_file.write( ' '.join(str(x) for x in line) )
@@ -276,11 +276,13 @@ def saveRectangles(rectangle_records, img_name='frame', class_name="class", save
     while cap.isOpened() and frame_idx <= last_frame_idx:
       ret, frame = cap.read()
       record_frame_idx = rectangle_records[record_idx][0]
+      angle = rectangle_records[record_idx][2]
 
       if record_frame_idx == frame_idx:
+        rotated_frame, _ = rotate(frame, None, angle)
         frame_save_path = save_directory + 'frame-' + str(frame_idx) + '.jpg'
         if not os.path.isfile(frame_save_path):
-          cv2.imwrite(frame_save_path, frame)
+          cv2.imwrite(frame_save_path, rotated_frame)
         record_idx += 1
       frame_idx += 1
 
@@ -369,7 +371,7 @@ while(cap.isOpened()):
 
   # record the rectangles for this frame
   if not paused and new_frame:
-    recordRectangles(rectangle_records, rectangles, frame_idx, rotated_frame)
+    recordRectangles(rectangle_records, rectangles, frame_idx, rotated_frame, offset_degrees)
 
   # if the current frame was new, it is now old
   new_frame = False
