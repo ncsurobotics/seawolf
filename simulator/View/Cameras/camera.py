@@ -180,9 +180,3 @@ class Cam:
     def pitch(self, rad):
         self.rot[0] += rad
 
-
-    #displays frame on svr
-    def show(self):
-        container = cv2.cv.fromarray(np.copy(self.frame))
-        cv_image = cv2.cv.GetImage(container)
-        #svr.debug(self.name, cv_image)

@@ -203,7 +203,7 @@ class Mesh(object):
         center[i] /= len(self.points)
     return center
 
-  def roll(self, rad):
+  def turn(self, rad):
     #just x and y get rotated
     cx, cy = self.center()[0:2]
     polar = []
@@ -218,7 +218,7 @@ class Mesh(object):
       self.points[i] = [mag * math.cos(rad) + cx, mag * math.sin(rad) + cy, self.points[i][2]]
     pass
 
-  def turn(self, rad):
+  def roll(self, rad):
     #just x and y get rotated
     center = self.center()
     cx, cz = center[0], center[2]

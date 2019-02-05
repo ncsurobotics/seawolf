@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import time
 import Entities
-from Entities.Utilities import debugFrame
+#from Entities.Utilities import debugFrame
 import copy
 
 
@@ -120,7 +120,7 @@ def main():
 
     
     frame = cv2.resize(frame, (width, height))
-    debugFrame("original", frame)
+    cv2.imshow("original", frame)
     t = time.time()
     output = vision.ProcessFrame(frame)
     count += 1

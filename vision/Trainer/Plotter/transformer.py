@@ -56,17 +56,26 @@ def rotate(img, rect, angle):
   new_rect = None
   return dst, new_rect
 
+def rotate_cut(img, rect, angle):
+  h, w, _ = img.shape
+  M = cv2.getRotationMatrix2D((w/2,h/2), -angle,1)
+  
+  dst = cv2.warpAffine(img,M,(w,h))
+  new_rect = None
+  return dst, new_rect
+
 
 def main():
-  name = './data-1/frame-1.jpg'
+  name = '/home/ben/seawolf/vision/Trainer/Plotter/haar_train/pos/frame-131.jpg'
   img = cv2.imread(name)
   img, _ = scale(img, (100, 100, 400, 400), .3)
   deg = 0
   while True:
-    rot_img, _ = rotate(img, None, deg)
+    rot_img, _ = rotate_cut(img, None, deg)
     deg += 10
     cv2.imshow('image', rot_img)
     if cv2.waitKey(0) & 0xff == ord('q'):
       break
   cv2.destroyAllWindows()
-main()
+if __name__ == '__main__':
+  main()

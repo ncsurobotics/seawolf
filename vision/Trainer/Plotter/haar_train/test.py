@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-face_cascade = cv2.CascadeClassifier('out2/cascade.xml')
+face_cascade = cv2.CascadeClassifier('output/cascade.xml')
 print dir(face_cascade)
 cap = cv2.VideoCapture(0)
 

@@ -59,6 +59,6 @@ class ViewSimpleSim(object):
       cam.rot[0] = sw.var.get("SEA.Pitch") * math.pi / 180.0
       # draw and display the frame
       cam.draw(self.meshes)
-      cam.show()
+      #cam.show()
     
     return
