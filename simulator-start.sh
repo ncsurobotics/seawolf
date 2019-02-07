@@ -13,7 +13,7 @@ screen -dr seawolf -p hub -X stuff "seawolf-hub -c ../conf/hub.conf
 #screen for the srv server
 screen -dr seawolf -X screen -t srv_server
 sleep 1.5
-screen -dr seawolf -p srv_server -X stuff "python start/srv/server.py
+screen -dr seawolf -p srv_server -X stuff "python2 start/srv/server.py
 "
 
 
@@ -82,7 +82,7 @@ screen -dr seawolf -p gui -X stuff "python2 gui.py
 
 # start srv watch command
 sleep 1.5
-screen -dr seawolf -p srv_watch -X stuff "python2 start/srv/watch.py
+screen -dr seawolf -p srv_watch -X stuff "python2 start/srv/watch.py"
 
 screen -x
 
