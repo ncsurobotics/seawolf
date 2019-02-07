@@ -10,7 +10,7 @@ import numpy as np
 import time
 import math
 import seawolf as sw
-import svr
+import srv
 from Cameras.camera import Cam
 
 
@@ -26,7 +26,7 @@ class ViewSimpleSim(object):
     for e in entities:
       if hasattr(e, 'mesh'):
         self.meshes.append(e.mesh)
-    svr.connect()
+    #svr.connect()
     
 
     forCam = Cam(name="forward")
@@ -59,6 +59,6 @@ class ViewSimpleSim(object):
       cam.rot[0] = sw.var.get("SEA.Pitch") * math.pi / 180.0
       # draw and display the frame
       cam.draw(self.meshes)
-      cam.show()
+      #cam.show()
     
     return

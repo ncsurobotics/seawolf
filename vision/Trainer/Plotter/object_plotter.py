@@ -7,6 +7,8 @@ To select a box, click on it (it will turn red).
 To delete a box, hit 'k'.
 To pause/unpause, hit the space bar.
 To skip 100 frames, hit 's'. Skip will save the data if it exits the video.
+To rotate left (CC), hit '['
+To rotate right (CW), hit ']'
 
 Hit q to quit and save or x to quit but not save.
 """
@@ -21,6 +23,7 @@ import time
 from subprocess import call
 import csv
 import os
+from transformer import rotate
 
 # constants
 DEFAULT_RECT_WIDTH = 50
@@ -71,13 +74,18 @@ rectangles_collected = 0
 # number of frames skipped when you hit skip
 skip_amount = 100
 
+# number of degrees that the image is rotated
+offset_degrees = 0
+
+# number of degrees that the image is turned when the user rotates it
+rotation_amount = 10
+
 #make a new save directory, labeled data, data-1, data-2, ...
 n = 1
 save_directory = './data/'
 while os.path.exists(save_directory):
   save_directory = './data-' + str(n) +'/'
   n += 1
-os.makedirs(save_directory)
 
 # initial frame
 if cap.isOpened():
@@ -183,12 +191,15 @@ def moveCornerTo(r, corner_idx, x, y, frame):
   if r.w < 0:
     r.w = 0
 
-def recordRectangles(rectangle_records, rectangles, frame_idx, frame):
+def recordRectangles(rectangle_records, rectangles, frame_idx, frame, angle):
   global rectangles_collected
   rectangles_collected += len(rectangles)
   if len(rectangles) and frame.__class__.__name__ != 'NoneType':
-    height, width, _ = frame.shape
-
+    frame_height, frame_width, _ = frame.shape
+    
+    record = [frame_idx, len(rectangles), angle]
+    # append x,y, w, h
+    print "RECTANGLES"
     for r in rectangles:
       # make sure saved rectangle is within frame bounds
       x_min = r.x
@@ -199,20 +210,51 @@ def recordRectangles(rectangle_records, rectangles, frame_idx, frame):
         x_min = 0
       if y_min < 0:
         y_min = 0
-      if x_max >= width:
-        x_max = width - 1
-      if y_max >= height:
-        y_max = height - 1
+      if x_max >= frame_width:
+        x_max = frame_width - 1
+      if y_max >= frame_height:
+        y_max = frame_height - 1
+      
+      width = x_max - x_min
+      height = y_max - y_min
 
-      record = (frame_idx, width, height, x_min, y_min, x_max, y_max)
-      rectangle_records.append(record)
+      print x_max, x_min
+
+      record.extend([x_min, y_min, width, height])
+    rectangle_records.append(record)
+    print "Records:", record
     print "Collected", rectangles_collected, "frames"
     
 
 def saveRectangles(rectangle_records, img_name='frame', class_name="class", save_frames=True):
+  global save_directory
+  
   if not len(rectangle_records):
+    print "No rectangles drawn, none saved"
     return
+  os.makedirs(save_directory)
   print "Saving rectangle data"
+
+
+  """
+  Save to text file, makes a file with lines for each record.
+  Format is file_name record_number_in_frame x1 y1 w1 h1 x2 y2 w2 h2 ...
+  See https://docs.opencv.org/3.4/dc/d88/tutorial_traincascade.html for file format.
+  """
+
+  save_file = open(save_directory + 'pos.info', 'w+')
+  for record in rectangle_records:
+    frame_idx, record_count, angle = record[0:3]
+    file_name = img_name + '-' + str(frame_idx) + '.jpg'
+    line = [file_name, record_count]
+    for i in range(record_count):
+      x, y, width, height = record[3 + i * 4: 3 + i * 4 + 4]
+      line.extend([x, y, width, height])
+    line.append('\n')
+    save_file.write( ' '.join(str(x) for x in line) )
+  save_file.close()
+
+  """
   #save label information into csv file
   with open(save_directory + 'labels.csv', 'wb') as csvfile:
     writer = csv.writer(csvfile , delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
@@ -221,7 +263,7 @@ def saveRectangles(rectangle_records, img_name='frame', class_name="class", save
       frame_idx, width, height, min_x, min_y, max_x, max_y = record
       file_name = img_name + '-' + str(frame_idx) + '.jpg'
       writer.writerow( (file_name, width, height, class_name, min_x, min_y, max_x, max_y) )
-    
+  """
   if save_frames:
     print "Saving video frames"
     # reopen the video and save each frame
@@ -234,11 +276,13 @@ def saveRectangles(rectangle_records, img_name='frame', class_name="class", save
     while cap.isOpened() and frame_idx <= last_frame_idx:
       ret, frame = cap.read()
       record_frame_idx = rectangle_records[record_idx][0]
+      angle = rectangle_records[record_idx][2]
 
       if record_frame_idx == frame_idx:
+        rotated_frame, _ = rotate(frame, None, angle)
         frame_save_path = save_directory + 'frame-' + str(frame_idx) + '.jpg'
         if not os.path.isfile(frame_save_path):
-          cv2.imwrite(frame_save_path, frame)
+          cv2.imwrite(frame_save_path, rotated_frame)
         record_idx += 1
       frame_idx += 1
 
@@ -272,6 +316,17 @@ while(cap.isOpened()):
       prev_frame = frame.copy()
   else:
     frame = prev_frame.copy()
+
+  # rotate frame left
+  if key == ord('['):
+    offset_degrees -= rotation_amount
+  # rotate frame right
+  if key == ord(']'):
+    offset_degrees += rotation_amount
+  
+  rotated_frame, _ = rotate(frame, None, offset_degrees)
+  
+  
   
   # make new rectangle
   if key == ord('n'):
@@ -302,7 +357,7 @@ while(cap.isOpened()):
     if selected_corner != None:
       #print selected_corner
       r, corner_idx = selected_corner
-      moveCornerTo(r, corner_idx, x, y, frame)
+      moveCornerTo(r, corner_idx, x, y, rotated_frame)
   # if the left button isn't down, deselect the corner
   else:
     selected_corner = None
@@ -312,18 +367,18 @@ while(cap.isOpened()):
     selected_corner = closestCorner(rectangles, x, y)
 
   # draw the rectangles
-  drawRectangles(frame, rectangles)
+  drawRectangles(rotated_frame, rectangles)
 
   # record the rectangles for this frame
   if not paused and new_frame:
-    recordRectangles(rectangle_records, rectangles, frame_idx, frame)
+    recordRectangles(rectangle_records, rectangles, frame_idx, rotated_frame, offset_degrees)
 
   # if the current frame was new, it is now old
   new_frame = False
 
   # display the frame
-  if frame.__class__.__name__ != 'NoneType':
-    cv2.imshow(windowName,frame)
+  if rotated_frame.__class__.__name__ != 'NoneType':
+    cv2.imshow(windowName,rotated_frame)
   else:
     break
   # quit the program

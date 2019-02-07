@@ -2,11 +2,13 @@
 #adapted for opencv
 import cv2
 import numpy as np
-import sys, math
+
+import pygame, sys, math
+>>>>>>> f1923b382172bde20a1cb38ebd9792d04e65dfc3
 from triangle import Triangle
 from mesh import Mesh
 from timer import Timer
-import svr
+import srv
 
 def dist(x1,y1,x2,y2):
   return math.sqrt((x2-x1)**2 + (y2-y1)**2)
@@ -23,8 +25,6 @@ def dist3d(v1, v2):
 
 # Find the center of a list of points
 def center(pts):
-    ptSize = len(pts[0])
-    c = [0] * ptSize # makes a list filled with zeros of len ptSize
     for pt in pts:
         for i in range(ptSize):
             c[i] += pt[i]
@@ -78,6 +78,9 @@ class Cam:
 
         for c in "wasd .lp;'f":
             self.states[c] = False
+
+        #connection to srv
+        self.connection = srv.connection.Connection(self.name)
 
     def draw(self, meshes):
         #set frame to background
@@ -171,15 +174,9 @@ class Cam:
                         faces[i].draw(face_coord_list[i], self.frame)
                     except:
                         pass
-                
+        self.connection.post(self.frame, name=self.name)
+
     def yaw(self, rad):
         self.rot[1] += rad
     def pitch(self, rad):
         self.rot[0] += rad
-
-
-    #displays frame on svr
-    def show(self):
-        container = cv2.cv.fromarray(np.copy(self.frame))
-        cv_image = cv2.cv.GetImage(container)
-        svr.debug(self.name, cv_image)

@@ -1,0 +1,9 @@
+
+#View:
+opencv_createsamples -w 48 -h 48 -vec positives.vec
+
+#Train
+opencv_traincascade -data output -vec positives.vec -bg bg.txt -numPos 135 -numNeg 76 -numStages 100 -w 48 -h 48 -featureType LBP
+
+#Create samples:
+opencv_createsamples -vec positives.vec -w 48 -h 48 -info pos.info
