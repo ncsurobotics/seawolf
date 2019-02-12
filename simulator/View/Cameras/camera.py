@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 
 import pygame, sys, math
+>>>>>>> f1923b382172bde20a1cb38ebd9792d04e65dfc3
 from triangle import Triangle
 from mesh import Mesh
 from timer import Timer
@@ -179,4 +180,3 @@ class Cam:
         self.rot[1] += rad
     def pitch(self, rad):
         self.rot[0] += rad
-
