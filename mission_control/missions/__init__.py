@@ -11,4 +11,6 @@ from acousticState import AcousticState
 from pathBentState import PathBentState
 from pathAroundState import PathAroundState
 from diceMS import DiceMS
+from myMission import MyMission
+from newAcousticsMission import NewAcousticsMission
 import util
