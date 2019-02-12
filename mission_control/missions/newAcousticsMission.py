@@ -42,7 +42,9 @@ class NewAcousticsMission(object):
   
   def processFrame(self, frame):
     try:
+      sw.var.set("Acoustics.Yaw", 1)
       acousticsYaw = sw.var.get("Acoustics.Yaw")
+      sw3.RelativeYaw(1).start()
       print "Acoustics yaw is", acousticsYaw
     except:
       print "Couldn't get acoustics yaw"
