@@ -7,6 +7,7 @@ import sw3
 import cv2
 import sys
 import conf
+import time
 
 import missions as ms
 sys.path.append("../seawolf/mission_control/missions")
@@ -46,7 +47,7 @@ def main():
   missions = conf.readFile(sys.argv[1])
   runMissions(missions)  
 
-def runMissions(missions, dbprint = True): 
+def runMissions(missions, dbprint = True, missionFps = 6): 
   hubConnect()
   svrConnect()
   global DBPRINT 
@@ -60,8 +61,11 @@ def runMissions(missions, dbprint = True):
       while running:
         dbPrint("+++++++++++++++++++++++++++++++++++++++++++++++")
         try:
+          start = time.clock()
           frame = getFrame(camera)
           running = mission.processFrame(frame)
+          # wait a frame rate minus the time taken for mission/vision
+          time.sleep(max(1.0/missionFps - (time.clock() - start), 0))
           cv2.waitKey(1)
         except Exception as e:
           dbPrint( "ERROR running " + mission.getName() + " moving to next")
