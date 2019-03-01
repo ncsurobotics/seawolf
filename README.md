@@ -26,7 +26,7 @@ Install these system packages with your package manager. The package names given
 * python-pip
 * python-psutil
 
-You can install OpenCV from source if you want. If you do, skip installing the opencv- packages. Instructions for installing OpenCV from source can be found [here](http://docs.opencv.org/doc/tutorials/introduction/linux_install/linux_install.html#linux-installation).
+~~You can install OpenCV from source if you want. If you do, skip installing the opencv- packages. Instructions for installing OpenCV from source can be found [here](http://docs.opencv.org/doc/tutorials/introduction/linux_install/linux_install.html#linux-installation).~~
 
 ### Software Repositories
 
