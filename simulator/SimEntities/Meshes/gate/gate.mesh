@@ -6,7 +6,7 @@
 #x y z
 
 points:
-#bottom flat piece pole_1: 0 - 3 (CENTER pole_1 = 0,0,0)
+#bottom flat piece pole_1: 0 - 3
 1 0 1
 1 0 0
 0 0 0
@@ -31,49 +31,49 @@ points:
 29 15 1
 
 #bottom flat piece top_pole: 16 - 19
-#30 15 1
-#30 15 0
-#0 15 0
-#0 15 1
+30 15 1
+30 15 0
+0 15 0
+0 15 1
 
 #top flat piece top_pole: 20 - 23
-#30 16 1
-#30 16 0
-#0 16 0
-#0 16 1
+30 16 1
+30 16 0
+0 16 0
+0 16 1
 
 #here we create a list of faces
 #faces are just made up of indexes of each of the above points
 
 faces:
 #make bottom flat piece pole_1
-color 0 1 2 3 darkred
+color 0 1 2 3 red
 #make top flat piece pole_1
-color 4 5 6 7 darkred
+color 4 5 6 7 red
 #sides pole_1
-image 0 1 5 4 rectangle side-pole.png
-image 1 2 6 5 rectangle side-pole.png
-image 2 3 7 6 rectangle side-pole.png
-image 3 0 4 7 rectangle side-pole.png
+color 0 1 5 4 green
+color 1 2 6 5 white
+color 2 3 7 6 green
+color 3 0 4 7 white
 
 #make bottom flat piece pole_2
-color 8 9 10 11 darkred
+color 8 9 10 11 red
 #make top flat piece pole_2
-color 12 13 14 15 darkred
+color 12 13 14 15 red
 #sides pole_2
-image 8 9 13 12 rectangle side-pole.png
-image 9 10 14 13 rectangle side-pole.png
-image 10 11 15 14 rectangle side-pole.png
-image 11 8 12 15 rectangle side-pole.png
+color 8 9 13 12 green
+color 9 10 14 13 white
+color 10 11 15 14 green
+color 11 8 12 15 white
 
 #make bottom flat piece top_pole
-#color 16 17 21 20 black
+color 16 17 21 20 black
 #make top flat piece pole_2
-#color 18 19 23 22 black
+color 18 19 23 22 black
 #sides pole_2
-#image 16 17 18 19 rectangle top_pole.png
-#image 17 18 22 21 rectangle top-pole.png
-#image 20 21 22 23 rectangle top-pole.png
-#image 19 16 20 23 rectangle top-pole.png
+color 16 17 18 19 black
+color 17 18 22 21 white
+color 20 21 22 23 black
+color 19 16 20 23 white
 
 

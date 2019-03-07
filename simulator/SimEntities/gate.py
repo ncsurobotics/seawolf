@@ -67,7 +67,7 @@ class Gate(object):
     self.patch = [p1, p2, p3, p4]
     
     self.color = (0, 0, 255)
-    self.mesh = Mesh('pole-red.mesh', self.location, orientation=.2, folder='./SimEntities/Meshes/gate/')
+    self.mesh = Mesh('gate.mesh', self.location, scale=[.5,.5,.5], orientation=.2, folder='./SimEntities/Meshes/gate/')
     
     if DB:
       self.db = dbEntity(self.location, name = self.name)

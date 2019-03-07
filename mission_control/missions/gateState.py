@@ -22,7 +22,7 @@ class GateState(object):
 
   def __init__(self):
     self.camera = "forward"
-    self.name = "GateSimp"
+    self.name = "GateState"
     return
   
   def getCamera(self):
