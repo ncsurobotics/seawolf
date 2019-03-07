@@ -3,7 +3,7 @@
 import cv2
 import numpy as np
 
-import pygame, sys, math
+import sys, math
 from triangle import Triangle
 from mesh import Mesh
 from timer import Timer
