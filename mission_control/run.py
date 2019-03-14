@@ -8,6 +8,11 @@ import cv2
 import sys
 import conf
 import time
+from subprocess import call, Popen
+from multiprocessing import Process
+import signal
+import datetime
+import os
 
 import missions as ms
 sys.path.append("../seawolf/mission_control/missions")
@@ -47,15 +52,21 @@ def main():
   missions = conf.readFile(sys.argv[1])
   runMissions(missions)  
 
-def runMissions(missions, dbprint = True, missionFps = 6): 
+def runMissions(missions, dbprint = True, missionFps = 6, autoRecord=True): 
   hubConnect()
   svrConnect()
   global DBPRINT 
   DBPRINT = dbprint
   try:
+    if autoRecord:
+      mission_start = datetime.datetime.now().strftime("%m-%d-%y_%H-%M-%S")
+      os.mkdir('recordings/' + mission_start)
     for mission in missions:
       mission.setup()
       camera = mission.getCamera()
+      if autoRecord:
+        recordFile = '../mission_control/recordings/' + mission_start + '/' + mission.getName()
+        recordProc = Popen(["python", "reccordSVR.py", recordFile, camera], cwd="../vision")
       running = True
       print "Begining to run: " + mission.getName()
       while running:
@@ -77,6 +88,11 @@ def runMissions(missions, dbprint = True, missionFps = 6):
       #send notification over hub that mission is done
       cmd = ("MISSION_DONE", type(mission).__name__)
       sw.notify.send(*cmd) #send notification to seawolf
+
+      # stop recording this mission
+      if autoRecord:
+        os.kill(recordProc.pid, signal.SIGABRT)
+
       
   except Exception as e:
     dbPrint( e)
@@ -87,6 +103,9 @@ def runMissions(missions, dbprint = True, missionFps = 6):
     cmd = ("MISSION_DONE", "DONE")
     sw.notify.send(*cmd) #send notification to seawolf
     dbPrint( "done with missions")
+    # stop recording this mission
+    if autoRecord:
+      os.kill(recordProc.pid, signal.SIGABRT)
     
 
 """
