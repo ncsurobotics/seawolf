@@ -1,12 +1,12 @@
 gate - needs color added
-path
+path- todo
 path bent - rough
-slot
+slot - todo
 dice - rough
-buoys
-gold chip
+buoys - todo
+gold chip - todo
 roulette wheel - rough
-cash in
+cash in - todo
 
 figure out circles and ovals
 hook up entity with mesh list
