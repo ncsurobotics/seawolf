@@ -1,4 +1,4 @@
-gate
+gate - needs color added
 path
 path bent - rough
 slot
