@@ -52,7 +52,7 @@ def main():
   missions = conf.readFile(sys.argv[1])
   runMissions(missions)  
 
-def runMissions(missions, dbprint = True, missionFps = 6, autoRecord=True): 
+def runMissions(missions, dbprint = True, missionFps = 1, autoRecord=True): 
   hubConnect()
   svrConnect()
   global DBPRINT 
