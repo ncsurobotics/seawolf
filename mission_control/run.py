@@ -32,7 +32,7 @@ def srvConnect():
   """setting up srv streams """
   down = srv.stream("down")
   #temporarily the same stream until srv has 2 cam streams in sim
-  forward = down#srv.stream("forward")
+  forward = srv.stream("forward")
 
 
   global cameras 
