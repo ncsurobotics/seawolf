@@ -27,7 +27,7 @@ class Camera(object):
                      sf = .01
               ):
    
-    self.live = cv2.VideoCapture(0)
+    
     self.frameSize = frameSize
     offset = np.float32(self.frameSize)[:2]/2
     self.offset = np.float32([offset[1], offset[0]])
@@ -59,10 +59,7 @@ class Camera(object):
   #displays frame on svr
   def show(self):
      
-    if self.live.isOpened():
-      _, self.frame = self.live.read()
-    else:
-      print "not opened"
+    
     #adding positive noise to the frame
     """
     noise =  np.random.normal(loc = 0, scale = 4, size = self.frame.shape)
@@ -262,7 +259,3 @@ class Camera(object):
         except IndexError:
           break
     """
-      
-  
-  
-  
