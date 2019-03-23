@@ -14,6 +14,7 @@ import diceContour
 import pathBentHough
 import diceHough
 import pathBentPool
+import slots
 VisEntities = { #moduleName       : module
                   "buoysHough"    : buoysHough,
                   "diceContour"   : diceContour,
@@ -28,6 +29,7 @@ VisEntities = { #moduleName       : module
                   "pathBentHough" : pathBentHough, 
                   "pathBentPool"  : pathBentPool,
                   "pathBent"      : pathBent,
+                  "slots"         : slots,
                   "wheelHough"    : wheelHough,
                   "wheelMinCircle" : wheelMinCircle
                    }
