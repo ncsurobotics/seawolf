@@ -1,20 +1,15 @@
+
+
 #here we plot out each 3d point
 #x y z
 
 #bottom flat piece: 0 - 3
 points:
-0.039 0 -.096
-.706 0 .605
-.618 0 .789
--.075 0 .118
--1.01 0 .114
--.996 0 -.123
+1 0 1
+1 0 0
+0 0 0
+0 0 1
 
-#center 261 0 61
-
-#part 1 of bend
 faces:
-color 0 1 2 red
-color 2 3 0 red
-color 3 4 5 red
-color 0 3 5 red
+image 0 1 2 3 rectangle path.png
+
