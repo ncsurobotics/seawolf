@@ -1,0 +1,15 @@
+
+
+#here we plot out each 3d point
+#x y z
+
+#bottom flat piece: 0 - 3
+points:
+1 1 0
+1 0 0
+0 0 0
+0 1 0
+
+faces:
+image 0 1 2 3 rectangle slots.png
+

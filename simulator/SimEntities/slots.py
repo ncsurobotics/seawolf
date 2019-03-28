@@ -27,7 +27,7 @@ class Slots(object):
     self.name = NAME
     self.width = WIDTH
     self.color = color
-    self.mesh = Mesh('dummy.mesh', at, folder='./SimEntities/Meshes/dummy/')
+    self.mesh = Mesh('slots.mesh', at, scale=[8,14,8], folder='./SimEntities/Meshes/slots/')
     if DB:
       self.db = dbEntity(self.location, name = self.name)
   
