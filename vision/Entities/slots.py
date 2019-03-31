@@ -35,7 +35,9 @@ def ProcessFrame(frame):
   minArea = 200
   red = cv2.medianBlur(red, ksize = 3)
   # multiplier of                                     std dev init was   2.65
-  ret, thresh = cv2.threshold(yellow, 100, 255, cv2.THRESH_BINARY_INV)
+  #ret, thresh = cv2.threshold(yellow, 100, 255, cv2.THRESH_BINARY_INV)
+  w = 10
+  ret, thresh = cv2.threshold(yellow, 213 - w, 213 + w, cv2.THRESH_BINARY_INV)
   debugFrame("threshOg", thresh)
   kernel = np.ones((7,7),np.uint8)
   thresh = cv2.erode(thresh,kernel, iterations = 2)
@@ -75,15 +77,26 @@ def ProcessFrame(frame):
     # then S should be sqrt(a) or p / 4
     area_side = math.sqrt(area)
     perimeter_side = perimeter / 4
-    print "area", area
+    x,y,w,h = cv2.boundingRect(contours[i])
+    area_bound = w * h
     MIN_HOLE_AREA = 400
-    
-    if len(approx) == 4 and abs(area_side - perimeter_side) < 2 and area > MIN_HOLE_AREA:
+
+    bound_actual_area_ratio = 0
+    if area_bound != 0 and area != 0:
+      bound_actual_area_ratio = area_bound / area
+      if area > 1:
+        bound_actual_area_ratio = area / area_bound
+
+    print "area", area, bound_actual_area_ratio
+    possible_lens = [4]
+    # and abs(area_side - perimeter_side) < 2
+    if len(approx) in possible_lens and bound_actual_area_ratio > .5 and area > MIN_HOLE_AREA:
       cv2.fillConvexPoly(frameOut, approx, (255,0,0))
-      hole = x,y,w,h = cv2.boundingRect(contours[i])
+      hole = x,y,w,h
       holes.append(hole)
   
   out = obj([True, holes])
+  out.updateHistory(holes)
   frameOut = out.draw(frameOut)
   debugFrame("out", frameOut)
   return out
