@@ -11,17 +11,25 @@ import wheelHough
 import wheelMinCircle
 import pathBent
 import diceContour
-
+import pathBentHough
+import diceHough
+import pathBentPool
+import slots
 VisEntities = { #moduleName       : module
                   "buoysHough"    : buoysHough,
+                  "diceContour"   : diceContour,
+                  "diceHough"     : diceHough,
                   "gateBase"      : gateBase,
                   "gateDist"      : gateDist,
                   "gateHoughProb" : gateHoughProb,
                   "gateHoughReg"  : gateHoughReg,
                   "gateNorm"      : gateNorm,
                   "pathBase"      : pathBase,
-                  "pathDist"      : pathDist, 
-                  "wheelHough"    : wheelHough,
-                  "wheelMinCircle" : wheelMinCircle,
+                  "pathDist"      : pathDist,
+                  "pathBentHough" : pathBentHough, 
+                  "pathBentPool"  : pathBentPool,
                   "pathBent"      : pathBent,
-                  "diceContour"   : diceContour }
+                  "slots"         : slots,
+                  "wheelHough"    : wheelHough,
+                  "wheelMinCircle" : wheelMinCircle
+                   }

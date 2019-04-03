@@ -74,6 +74,8 @@ def main(objects):
     robo.updatePosition()
     updateObjects(objects)
     view.updateViews(robo.pos())
+    #sw.var.set('Sim.vel', 0.0)
+    #print sw.var.get('Sim.vel')
 
 if __name__ == "__main__":
   main(setup()[0])
