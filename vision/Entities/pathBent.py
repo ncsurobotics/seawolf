@@ -40,7 +40,7 @@ def ProcessFrame(frame):
   r = cv2.GaussianBlur(r, (9, 9), 0)
   
   for i in range(len(contours)):
-      epsilon = 0.085*cv2.arcLength(contours[i],True)
+      epsilon = 0.055*cv2.arcLength(contours[i],True)
       approx = cv2.approxPolyDP(contours[i],epsilon,True)
       #check if shape triangle
       cv2.fillConvexPoly(frameOut, approx, (255,0,0))
