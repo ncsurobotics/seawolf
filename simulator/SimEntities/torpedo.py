@@ -15,6 +15,7 @@ import numpy as np
 from dbEntity import dbEntity
 
 from View.Cameras.mesh import Mesh
+import seawolf as sw
 
 class Torpedo(object):
   
@@ -33,6 +34,8 @@ class Torpedo(object):
     self.rate = 7
     self.mesh = Mesh('wheel.mesh', at, folder='./SimEntities/Meshes/wheel/')
     self.hidden = False
+    sw.loadConfig("../conf/seawolf.conf")
+    sw.init("Simulator : Pneumatics Torpedo")
 
     if DB:
       self.db = dbEntity(self.location, name = self.name)
@@ -55,7 +58,13 @@ class Torpedo(object):
     return
   
   def update(self):
-    self.mesh.turn(.04)
+    delta_x = math.cos(sw.var.get('Sim.torpedoYaw'))  * sw.var.get('Sim.torpedoVel')
+    delta_y = math.sin(sw.var.get('Sim.torpedoYaw')) * sw.var.get('Sim.torpedoVel')
+    self.mesh.move([delta_x, delta_y, 0])
+    #self.location[1] = sw.var.get('Sim.yTorpedo')
+    #self.location[2] = sw.var.get('Sim.zTorpedo')
+    print "TORPEDO AT", delta_x, delta_y, sw.var.get('Sim.torpedoVel')
+    
  
   def loc(self):
     return self.location  

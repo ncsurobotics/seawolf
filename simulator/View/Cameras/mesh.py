@@ -180,6 +180,7 @@ class Mesh(object):
 
         else:
           error('Incorrectly defined face', folder, file_name, lineIdx)
+    self.originalPoints = self.points[::]
     #scale
     self.points = [(x*scale[0], y*scale[1], z*scale[2]) for x,y,z in self.points]
     # swap y and z
@@ -237,6 +238,8 @@ class Mesh(object):
   def move(self, delta):
     for i in range(len(self.points)):
       self.points[i] = (self.points[i][0] + delta[0], self.points[i][1] + delta[1], self.points[i][2] + delta[2])
+  def resetPos(self):
+    self.points = self.originalPoints[::]
     #print "moving", self.points
     
 """

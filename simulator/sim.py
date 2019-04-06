@@ -44,6 +44,8 @@ from View.viewSimpleSim import ViewSimpleSim as viewSim
 
 from SimEntities import entities
 
+from Pneumatics import torpedo
+
 import sys
 import Conf
 """
@@ -72,6 +74,7 @@ def main(objects):
   while True:
     pid.updateHeading()
     robo.updatePosition()
+    torpedo.moveTorpedo()
     updateObjects(objects)
     view.updateViews(robo.pos())
     #sw.var.set('Sim.vel', 0.0)
