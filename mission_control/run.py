@@ -1,7 +1,7 @@
 # this module handles the running of seawolf mission
 
 import seawolf as sw
-import svr
+#import svr
 import numpy as np
 import sw3
 import cv2
