@@ -1,6 +1,6 @@
 import seawolf as sw
 
-TORPEDO_SPEED = 1
+TORPEDO_SPEED = .5
 
 def fireTorpedo():
   print "Firing torpedo", torpedo
