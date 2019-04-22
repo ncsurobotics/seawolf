@@ -36,6 +36,7 @@ class Pneumatics(object):
 
         if (subsystem=='PN'):
             cmd = ("PNEUMATICS_REQUEST", "fire %d" % ID)
+            print "CMD is", cmd
             sw.notify.send(*cmd) #send notification to seawolf
 
             #print what just happend
