@@ -8,6 +8,7 @@ from wheel import Wheel
 from dice import Dice
 from slots import Slots
 from goldchip import GoldChip
+from cashin import CashIn
 
 entities = {
               "dbEntity"  :   dbEntity,
@@ -19,5 +20,6 @@ entities = {
 	      "Wheel"     :   Wheel,
               "Dice"      :   Dice,
               "Slots"     :   Slots,
-              "GoldChip"  :   GoldChip
+              "GoldChip"  :   GoldChip,
+	      "CashIn"    :   CashIn
            }
