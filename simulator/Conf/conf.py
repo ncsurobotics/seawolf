@@ -129,9 +129,10 @@ def evalLine(tree):
     args[key] = val
   try:
     return env[obj](**args)
-  except:
+  except Exception as e:
     print "Available entites are:"
     print possibleEnts()
+    print "Error constructing entity:", e
     raise Exception("Unable to locate entity: " + obj)
 
 

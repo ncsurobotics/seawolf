@@ -23,7 +23,9 @@ class CashIn(object):
   def __init__(self, at = [0, 0, 0], orientation = 0):
     self.location = np.float32(at)
     self.name = NAME
-    
+
+    gateLength = 1
+    gateWidth = 1  
     orientation = math.pi/180 * orientation
     length = np.float32([0, 0, 1]) * gateLength
     width  = np.float32([math.cos(orientation), math.sin(orientation), 0]) * gateWidth
