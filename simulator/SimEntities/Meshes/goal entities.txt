@@ -1,10 +1,10 @@
 gate - needs color added
-path- todo
+path- rough
 path bent - rough
 slot - todo
 dice - rough
 buoys - todo
-gold chip - todo
+gold chip - rough
 roulette wheel - rough
 cash in - todo
 

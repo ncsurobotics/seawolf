@@ -34,7 +34,7 @@ class GoldChip(object):
     self.radius = plateRadius
     #degree of direction its facing
     self.spin = 0
-    self.mesh = Mesh('dummy.mesh', at, folder='./SimEntities/Meshes/dummy/')
+    self.mesh = Mesh('gold-chip.mesh', self.location, scale = [.2,.2,.2], folder='./SimEntities/Meshes/goldchip/')
     
     #degrees into radians
     orientation = math.pi/180 * orientation
