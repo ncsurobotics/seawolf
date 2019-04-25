@@ -20,8 +20,17 @@ class Pneumatics(object):
     def connect(self, path):
         print "Connecting to", path
         self.port = serial.Serial(path, BAUD)
-        self.port.write(struct.pack("B",0xfe ))
-        time.sleep(1.5)
+        
+
+        
+        while True:
+            # write to let arduino no who we are
+            self.port.write("{ID|Seawolf}")
+            time.sleep(.1)
+            # check message from ardunio to make sure its proper arduino
+            msg = str(self.port.readline())
+            if "{ID|Pneumatics}" in msg:
+                break
         print "Connected to Pneumatics Arduino"
         
     """fires corresponding pneumatics valve"""
