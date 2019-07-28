@@ -3,7 +3,7 @@ viewSim is the module to be used to fake camera data, and broadcast on SVR
   init(locations) the setup mehtod is input a array of entities
   update(roboPos) the update method is input a 3 piece array [x, y, z] containing the location of the robot and sends out and svr frame for forward and down simulating what the camera's would see.
 """
-
+# TODO: store render address and sim address in hub
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,8 +12,10 @@ import math
 import seawolf as sw
 import svr
 from Cameras import Camera
-
-
+import renderCom as rc
+import cv2
+from bytesMailBox import BytesMailBox
+import comAddresses
 
 class ViewSimpleSim(object):
   
@@ -36,8 +38,8 @@ class ViewSimpleSim(object):
                                [ 0,      0, 1],
                                [ 0, sf * 1, 0]])
     forCam = Camera(name = "forward", transform = forTransform)
-    
-    
+
+    self.mailBox = BytesMailBox(ip_and_port=comAddresses.VIEW_ADDRESS)
     
     self.cams = [downCam, forCam]
     return
@@ -48,6 +50,23 @@ class ViewSimpleSim(object):
   roboPos = position of robot
   """
   def updateViews(self, roboPos):
+    rotPos = 0
+    while(True):
+      rotPos += .1
+      data = rc.Message("ROT", [rotPos, 0]).serialize()
+
+      self.mailBox.send(data, comAddresses.RENDER_ADDRESS)
+      img_bytes = self.mailBox.receive()[0]
+
+      frame = cv2.imdecode(np.fromstring(img_bytes, dtype=np.uint8), 1)
+
+      # Display the resulting frame
+      cv2.imshow('frame', frame)
+      if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+    cv2.destroyAllWindows()
+
     if self.entities == None:
       return
     self.roboPos = np.float32(roboPos)
