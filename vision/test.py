@@ -54,6 +54,7 @@ def main():
 
     
       a, frame = cap.read()
+      #frame = frame[61 : 420, 0 : 720]
       if not a:
         break
       cv2.imshow("original", frame)

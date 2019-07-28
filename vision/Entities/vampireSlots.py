@@ -8,7 +8,13 @@ from VisObj import visObjects
 visObj = "slots"
 obj = visObjects[visObj]
 keys = obj([False, []]).keys
-SCREEN_AREA = 200000
+SCREEN_AREA = 5000 #200000
+
+vampireHoles = [(.187, .131), (.842, .134), (.596, .625)]
+casinoHoles = [(.187, .131), (.842, .134), (.524, .888)]
+
+# gradient coordinate of holes on slots rectangle
+EXPECTED_HOLES = vampireHoles
 
 def sortKeyVal(keyVal):
   return keyVal[1][0]
@@ -31,6 +37,17 @@ def mostCommonFrequencies(freqs, num=1):
   print "keys is", keys
   
   return keys
+
+#isNearHole(EXPECTED_HOLES, (x, y), (x_min, y_min, width, height), 15)
+def isNearHole(holes, contour_loc, board, cutoffDist):
+  board_w, board_h = board
+  contour_x, contour_y = contour_loc
+  for hole in holes:
+    abs_x, abs_y = board_w * hole[0], board_h * hole[1]
+    print("RAEL DIST", math.sqrt( (abs_x - contour_x) ** 2 + (abs_y - contour_y) ** 2 ), abs_x, abs_y, contour_x, contour_y)
+    if math.sqrt( (abs_x - contour_x) ** 2 + (abs_y - contour_y) ** 2 ) <= cutoffDist:
+      return True
+  return False
 
 """
 Finds bent path in image where path is bends 45 degrees midway through.
@@ -60,6 +77,7 @@ def ProcessFrame(frame):
   w = 10
   ret, thresh = cv2.threshold(yellow, 213 - w, 213 + w, cv2.THRESH_BINARY_INV)
   debugFrame("threshOg", thresh)
+  threshOg = thresh[::]
   kernel = np.ones((7,7),np.uint8)
   thresh = cv2.erode(thresh,kernel, iterations = 2)
   debugFrame("thresh", thresh)
@@ -152,7 +170,7 @@ def ProcessFrame(frame):
       #  cv2.line(frameOut,(x, 0),(x, 100),(255,255,255),5)
       x_min, x_max = min(x_list), max(x_list)
 
-      """
+      
       max_num = 4
       if len(horiz) < max_num:
         max_num = len(horiz)
@@ -161,81 +179,72 @@ def ProcessFrame(frame):
       #for y in y_list:
       #  cv2.line(frameOut,(0, y),(100, y),(255,255,255),5)
       y_min, y_max = min(y_list), max(y_list)
-      """
 
-      throwOut = abs(x_max - x_min) < min_width #or abs(y_max - y_min) < min_height
+      # height of the slots over the width
+      targ_aspect_ratio = 1.7
+
+      forceThrowOut = False
+      try:
+        actual_targ_aspect_ratio = float(y_max - y_min) / float(x_max - x_min)
+      except Exception as e:
+        forceThrowOut = False
+
+      throwOut = forceThrowOut or abs(x_max - x_min) < min_width or abs(actual_targ_aspect_ratio - targ_aspect_ratio) > .4 #or abs(y_max - y_min) < min_height
 
       if not throwOut:
         h, w, _ = frame.shape
-        #cv2.rectangle(frameOut, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (255, 0, 0), thickness=7, lineType=8, shift=0)
-        cv2.rectangle(frameOut, (int(x_min), int(0)), (int(x_max), int(h)), (255, 0, 0), thickness=7, lineType=8, shift=0)
-        targ_x =  
-        cv2.rectangle(frameOut, (int(x_min), int(0)), (int(x_max), int(h)), (255, 0, 0), thickness=7, lineType=8, shift=0)
+        cv2.rectangle(frameOut, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (255, 255, 0), thickness=7, lineType=8, shift=0)
+        #cv2.rectangle(frameOut, (int(x_min), int(0)), (int(x_max), int(h)), (255, 0, 0), thickness=7, lineType=8, shift=0)
+        #targ_x =  
+        #cv2.rectangle(frameOut, (int(x_min), int(0)), (int(x_max), int(h)), (255, 0, 0), thickness=7, lineType=8, shift=0)
         
-        print "*" * 15, x_min, x_max
-        sub = frame[0:h, x_min:x_max]
+        print "*" * 15, targ_aspect_ratio, 
+
+        sub = thresh[y_min:y_max, x_min:x_max]
         debugFrame("sub", sub)
-      
+
+        #contours, _ = cv2.findContours(sub, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        #contour_img = np.copy(frame[0:h, x_min:x_max])
+
+        """
+        Contours
+        """
+    
+        contours, _ = cv2.findContours(sub, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contour_img = np.copy(frame[y_min:y_max, x_min:x_max])
+        real_contours = []
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            # this is the area of the screen
+            # often, the whole sceen is detected as a contour :/
+            # here, we remove it
+            #h, w, _ = sub.shape
+            x, y, w, h = cv2.boundingRect(cnt)
+            aspectRatio = float(h) / w
+            if area < SCREEN_AREA and .5 <= aspectRatio and aspectRatio <= 2 and isNearHole(EXPECTED_HOLES, (x + w / 2, y + h / 2), (x_max - x_min, y_max - y_min), 30):
+              cv2.drawContours(contour_img, [cnt], 0, (0,255,0), 3)
+              real_contours.append(cnt)
+        debugFrame("contours", contour_img)
+        contours = real_contours
+
+        holes = []
+        for cnt in real_contours:
+          x, y, w, h = cv2.boundingRect(cnt)
+          holes.append((x + x_min, y + y_min, w, h))
+
+          """
+          possible_lens = [4]
+          # and abs(area_side - perimeter_side) < 2
+          if len(approx) in possible_lens and bound_actual_area_ratio > .5 and area > MIN_HOLE_AREA:
+            cv2.fillConvexPoly(frameOut, approx, (255,0,0))
+            hole = x,y,w,h
+            holes.append(hole)
+          """
+        out = obj([True, holes])
+
     except ValueError as e:
       print "Not enough nums"
-
-
   
-  """
-  Contours
-  """
-  
-  """
-  contours, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-  contour_img = np.copy(frame)
-  real_contours = []
-  for cnt in contours:
-      area = cv2.contourArea(cnt)
-      # this is the area of the screen
-      # often, the whole sceen is detected as a contour :/
-      # here, we remove it
-      if area < SCREEN_AREA / 10:
-        cv2.drawContours(contour_img, [cnt], 0, (0,255,0), 3)
-        real_contours.append(cnt)
-  debugFrame("contours", contour_img)
-  contours = real_contours
-
-  mean, std = cv2.meanStdDev(frame)
-  r = dist(frame, (mean[0], mean[1], mean[2]))
-  mean, std = cv2.meanStdDev(r)
-  r = cv2.GaussianBlur(r, (9, 9), 0)
-
-  holes = []
-  for i in range(len(contours)):
-    epsilon = 0.02*cv2.arcLength(contours[i],True)
-    approx = cv2.approxPolyDP(contours[i],epsilon,True)
-    perimeter = cv2.arcLength(contours[i], True)
-    area = cv2.contourArea(contours[i])
-    # 4 sides means this may be a rectangle
-    # if rectangle, then perimeter = 2 * (L + W) and area = L * W
-    # if pretend rectangle is square, L = W -> p = 4 * S, a = S ^ 2
-    # then S should be sqrt(a) or p / 4
-    area_side = math.sqrt(area)
-    perimeter_side = perimeter / 4
-    x,y,w,h = cv2.boundingRect(contours[i])
-    area_bound = w * h
-    MIN_HOLE_AREA = 400
-
-    bound_actual_area_ratio = 0
-    if area_bound != 0 and area != 0:
-      bound_actual_area_ratio = area_bound / area
-      if area > 1:
-        bound_actual_area_ratio = area / area_bound
-
-    possible_lens = [4]
-    # and abs(area_side - perimeter_side) < 2
-    if len(approx) in possible_lens and bound_actual_area_ratio > .5 and area > MIN_HOLE_AREA:
-      cv2.fillConvexPoly(frameOut, approx, (255,0,0))
-      hole = x,y,w,h
-      holes.append(hole)
-  """
-  
-  #out = obj([True, holes])
   #out.updateHistory(holes)
   frameOut = out.draw(frameOut)
   debugFrame("out", frameOut)
