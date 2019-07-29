@@ -98,7 +98,7 @@ class Mesh:
         for i in range(len(coords)):
           coords[i] = float(coords[i])
         verts.append(coords)
-      elif line.strip(' ').startswith('f'):
+      elif line.strip(' ').startswith('f '):
         s = line.split(' ')
         s = s[1 : len(s) + 1]
         for i in range(len(s)):
@@ -154,7 +154,7 @@ class Model:
 
     def __init__(self, loc=[0,0,0]):
         self.batch = pyglet.graphics.Batch()
-        self.mesh = Mesh('pyramid.obj')
+        self.mesh = Mesh('slots.obj')
 
         # maps the texture
         tex_coords_quad = ('t2f',(0,0, 1,0, 1,1, 0,1, ))
@@ -243,7 +243,7 @@ class Window(pyglet.window.Window):
             for j in range(1):
                 self.models.append(Model(loc=[j,0,-i]))
         self.player = Player((0.5,1.5,1.5),(-30,0))
-        self.set_visible(False)
+        self.set_visible(True)
 
     def on_mouse_motion(self,x,y,dx,dy):
       #print('x')

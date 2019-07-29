@@ -1,0 +1,16 @@
+# Exported from 3D Builder
+
+newmtl Mat_0
+Kd 1.000000 1.000000 1.000000
+map_Kd vamp2.png
+
+newmtl Mat_1
+Kd 1.000000 1.000000 1.000000
+map_Kd vamp1.png
+
+newmtl Mat_2
+Kd 1.000000 1.000000 1.000000
+map_Kd vamp3.png
+
+newmtl White_0
+Kd 1.0 1.0 1.0
