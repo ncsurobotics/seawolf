@@ -14,7 +14,7 @@ vampireHoles = [(.187, .131), (.842, .134), (.596, .625)]
 casinoHoles = [(.187, .131), (.842, .134), (.524, .888)]
 
 # gradient coordinate of holes on slots rectangle
-EXPECTED_HOLES = vampireHoles
+EXPECTED_HOLES = casinoHoles
 
 def sortKeyVal(keyVal):
   return keyVal[1][0]
@@ -193,7 +193,7 @@ def ProcessFrame(frame):
 
       if not throwOut:
         h, w, _ = frame.shape
-        cv2.rectangle(frameOut, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (255, 255, 0), thickness=7, lineType=8, shift=0)
+        cv2.rectangle(frameOut, (int(x_min), int(y_min)), (int(x_max), int(y_max)), (0, 0, 255), thickness=7, lineType=8, shift=0)
         #cv2.rectangle(frameOut, (int(x_min), int(0)), (int(x_max), int(h)), (255, 0, 0), thickness=7, lineType=8, shift=0)
         #targ_x =  
         #cv2.rectangle(frameOut, (int(x_min), int(0)), (int(x_max), int(h)), (255, 0, 0), thickness=7, lineType=8, shift=0)

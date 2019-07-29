@@ -6,7 +6,7 @@ map_Kd vamp2.png
 
 newmtl Mat_1
 Kd 1.000000 1.000000 1.000000
-map_Kd vamp1.png
+map_Kd vamp_1.png
 
 newmtl Mat_2
 Kd 1.000000 1.000000 1.000000

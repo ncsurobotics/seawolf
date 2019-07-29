@@ -181,17 +181,6 @@ class Model:
                     self.batch.add(4, GL_QUADS, face.material.image, ('v3f', vertices), tex_coords_quad)
         self.loc = loc
 
-    def draw_box(self):
-        glLoadIdentity()
-        x, y, z = self.loc
-        glTranslated(x, y, z)
-        glRotatef(0, 0.0, 1.0, 0.0)
-        glRotatef(-25.0, 1.0, 0.0, 0.0)
-        glRotatef(45.0, 0.0, 0.0, 1.0)
-
-        visualization.draw(self.box)
-
-
     def draw(self):
         #self.draw_box()
         self.batch.draw()
@@ -228,8 +217,11 @@ class Window(pyglet.window.Window):
     def set2d(self): self.Projection(); gluOrtho2D(0,self.width,0,self.height); self.Model()
     def set3d(self): self.Projection(); gluPerspective(70,self.width/self.height,0.05,1000); self.Model()
 
-    def setLock(self,state): self.lock = state; self.set_exclusive_mouse(state)
-    lock = False; mouse_lock = property(lambda self:self.lock,setLock)
+    def setLock(self,state):
+      self.lock = state
+      self.set_exclusive_mouse(state)
+      lock = False
+      mouse_lock = property(lambda self:self.lock,setLock)
 
     def __init__(self,*args,**kwargs):
         super().__init__(*args,**kwargs)
